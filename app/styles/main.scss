@@ -1,5 +1,6 @@
 $icon-font-path: '../fonts/';
-
+@import url(https://fonts.googleapis.com/css?family=Lato:400,300,700,900);
+@import "bower_components/font-awesome/scss/font-awesome.scss";
 // bower:scss
 @import "bower_components/bootstrap-sass/assets/stylesheets/_bootstrap.scss";
 // endbower
@@ -94,4 +95,5 @@ aside{
     }
   }
 }
+
 
