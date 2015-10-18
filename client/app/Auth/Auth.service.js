@@ -66,7 +66,10 @@ angular.module('webappApp')
           
         },
 
-        team : 'd'
+        team : 'd',
+        getCurrentTeam : function(){
+            
+        }
     };
 
     

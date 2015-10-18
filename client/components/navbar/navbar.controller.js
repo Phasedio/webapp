@@ -2,10 +2,17 @@
 
 angular.module('webappApp')
   .controller('NavbarCtrl', function ($scope, $location) {
-    $scope.menu = [{
-      'title': 'Home',
+    $scope.menu = [
+    {
+      'title': 'Team',
       'link': '/'
-    }];
+    },
+    {
+      'title': 'Billing',
+      'link': '/billing'
+    }
+    
+    ];
 
     $scope.isCollapsed = true;
 

@@ -1,0 +1,56 @@
+<div ng-include="'components/navbar/navbar.html'"></div>
+
+<header class="hero-unit" id="banner">
+  <div class="container">
+    <h1>'Allo, {{user}}!</h1>
+  </div>
+</header>
+
+<div class="container">
+  <div class="row">
+   <div class="col-lg-4">
+     <h1>{{currentTeam.length}}</h1>
+     <h5>Members</h5>
+   </div>
+   <div class="col-lg-4">
+     <h1>$3.00USD</h1>
+     <h5>Per member/ per month</h5>
+   </div>
+   <div class="col-lg-4">
+     <h1>${{currentTeam.length * 3}}.00</h1>
+     <h5>Total per month</h5>
+   </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-12">
+      <h1 class="page-header">Payment:</h1>
+      <form name="ccForm" ng-submit="charge(card)" novalidate>
+        <div class="form-group">
+          <label for="card-number">Card Number</label>
+          <input type="text" class="form-control" id="cardNumber" cc-number name="ccNumber" ng-model="card.number">
+        </div>
+        <div class="form-group">
+          <label for="cvc">CVC</label>
+          <input type="text" class="form-control" id="cvc" cc-cvc cc-type="ccForm.ccNumber.$ccType" name="ccCvc" ng-model="card.cvc">
+        </div>
+        <div class="form-group">
+          <label for="card-number">Expiration</label>
+          <div class="row" cc-exp>
+            <div class="col-xs-3">
+              <input placeholder="MM" type="text" class="form-control" cc-exp-month name="ccExpMonth" ng-model="card.exp_month">
+            </div>
+            <div class="col-xs-3">
+              <input placeholder="YY" type="text" class="form-control" cc-exp-year name="ccExpYear" ng-model="card.exp_year">
+            </div>
+          </div>
+          <input type="submit" class="btn btn-info">
+      </form>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+      <p>Phased.io v0.0.1 </p>
+  </div>
+</footer>
