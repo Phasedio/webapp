@@ -52,7 +52,7 @@ angular.module('webappApp')
     console.log('wohohohohoo');
     var team = teamData;
     console.log(team);
-    if(team.billing.stripeid){
+    if(team.billing){
       $scope.billinInfo = team.billing;
       console.log('wohohohohoo');
       $http.post('./api/pays/find',{customer:team.billing.stripeid}).success(function(data){
@@ -78,7 +78,7 @@ angular.module('webappApp')
       });
     }else{
       $scope.viewType = 'notPaid';
-      //$scope.$apply();
+      $scope.$apply();
     }
   }
 

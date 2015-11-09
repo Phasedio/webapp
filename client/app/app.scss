@@ -1,10 +1,51 @@
 $icon-font-path: "/bower_components/bootstrap-sass-official/vendor/assets/fonts/bootstrap/";
 $fa-font-path: "/bower_components/font-awesome/fonts";
 
-@import url(https://fonts.googleapis.com/css?family=Lato:400,100,300,700);
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,300,600);
 @import 'bootstrap-sass-official/vendor/assets/stylesheets/bootstrap';
 @import 'font-awesome/scss/font-awesome';
 
+
+// Mixin 
+
+@function parseInt($n) { 
+  @return $n / ($n * 0 + 1);
+}
+
+@mixin rem($property, $values) {
+  $px : (); /* 3 */
+  $rem: (); /* 3 */
+
+  @each $value in $values { /* 4 */
+
+    @if $value == 0 or $value == auto { /* 5 */
+      $px : append($px , $value);
+      $rem: append($rem, $value);
+    }
+
+    @else {
+      $unit: unit($value);    /* 6 */
+      $val: parseInt($value); /* 6 */
+
+      @if $unit == "px" {  /* 7 */
+        $px : append($px,  $value);
+        $rem: append($rem, ($val / 10 + rem));
+      }
+
+      @if $unit == "rem" { /* 7 */
+        $px : append($px,  ($val * 10 + px));
+        $rem: append($rem, $value);
+      }
+    }
+  }
+
+  @if $px == $rem {     /* 8 */
+    #{$property}: $px;  /* 9 */
+  } @else {
+    #{$property}: $px;  /* 9 */
+    #{$property}: $rem; /* 9 */
+  }
+}
 
 /**
  * App-wide Styles
@@ -12,14 +53,38 @@ $fa-font-path: "/bower_components/font-awesome/fonts";
 
 .browsehappy {
     margin: 0.2em 0;
-    background: #ccc;
+    background: #ccc; 
     color: #000;
     padding: 0.2em 0;
+}
+body{
+	background:#084D54;
+	color:#fff;
 }
 .navbar{
 	height:80px;
 	padding: 1.4rem 1rem 1rem;
+	background:#359C8A;
+	border-color: #359C8A;
+	color:#fff;
 }
+
+.navbar-default{
+	.navbar-brand{
+		color:#fff;
+	}
+	.navbar-nav > .active > a{
+		background:#36BEA6;
+		color:#fff;
+	}
+	.navbar-nav > li > a{
+		color:#fff;
+		&:hover{
+			color:#084D54;
+
+		}
+	} 
+} 
 
 // Component styles are injected through grunt
 // injector

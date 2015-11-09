@@ -67,9 +67,9 @@ angular.module('webappApp')
         },
 
         team : 'd',
-        getCurrentTeam : function(){
+        currentTeam : ''
             
-        }
+        
     };
 
     
@@ -104,10 +104,18 @@ angular.module('webappApp')
       }
   };
 
+  //if user is loged in get team
+  if(Auth.user.uid){
+    ref.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
+        data = data.val();
+        Auth.currentTeam = data;
+    });
+  }
 
     auth.$onAuth(function(authData) {
         if (authData) {
             angular.copy(authData, Auth.user);
+            
           }
         //     Auth.user.profile = $firebase(ref.child('profile').child(authData.uid)).$asObject();
         //     console.log(Auth.user.profile);

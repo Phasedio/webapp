@@ -1,7 +1,9 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('NavbarCtrl', function ($scope, $location, Auth) {
+  .controller('NavbarCtrl', function ($scope, $location, Auth,FURL) {
+    $scope.team = Auth.currentTeam;
+
     $scope.menu = [
     {
       'title': 'Team',
@@ -18,13 +20,6 @@ angular.module('webappApp')
     {
       'title': 'Change Team',
       'link': '/switchteam'
-    },
-    {
-      'title': 'Logout',
-      'link': '',
-      'click': function(){
-        logout();
-      }
     }
     
     ];
@@ -34,8 +29,17 @@ angular.module('webappApp')
     $scope.isActive = function(route) {
       return route === $location.path();
     };
-    function logout(){
+    $scope.logout = function(){
       console.log('logging you out');
       Auth.logout();
+      $location.path('/login');
     }
+
+    //Not a fan of this!!!
+    window.setInterval(function () {
+    $scope.team = Auth.currentTeam;
+    $scope.$apply();
+    //console.log('yo');
+    }, 500);
+    
   });

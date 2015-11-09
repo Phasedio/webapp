@@ -33,11 +33,12 @@ angular.module('webappApp')
 
    $scope.checkPlanStatus = function(teamName){
     var ref = new Firebase(FURL);
-    ref.child('team').child(teamName).child('all').child(Auth.user.uid).once('value',function(data){
+    console.log('sup');
+    ref.child('team').child(teamName).once('value',function(data){
       data = data.val();
-      var team = data;
+      var team = data; 
       console.log(team);
-      if(team.billing && team.billing.stripeid){
+      if(team.billing){
         $scope.billinInfo = team.billing;
         console.log('wohohohohoo');
         $http.post('./api/pays/find',{customer:team.billing.stripeid}).success(function(data){
@@ -57,13 +58,13 @@ angular.module('webappApp')
             $scope.viewType = 'notPaid';
           }
           console.log($scope.viewType);
-          //$scope.$apply();
+          $scope.$apply();
         }).error(function(data){
           console.log(data);
         });
       }else{
         $scope.viewType = 'notPaid';
-        //$scope.$apply();
+        $scope.$apply();
       }
     });
     
@@ -116,6 +117,7 @@ angular.module('webappApp')
       ref.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
         data = data.val();
         $scope.team.name = data;
+        console.log('sup');
         $scope.checkPlanStatus($scope.team.name);
         $scope.checkStatus();
 
