@@ -61,12 +61,42 @@ body{
 	background:#084D54;
 	color:#fff;
 }
+
+.button-phased{
+  border-color:#084D54;
+  background:transparent;
+  color:#084D54;
+  font-weight:300;
+  text-transform:uppercase;
+  font-size:14px;
+  &:hover{
+    background:#084D54;
+    color:#fff;
+  }
+}
+
+.button-phased-wht{
+  border-color:#fff;
+  background:transparent;
+  color:#fff;
+  font-weight:300;
+  text-transform:uppercase;
+  font-size:14px;
+  &:hover{
+    border-color:#084D54;
+    background:#084D54;
+    color:#fff;
+  }
+}
+
+
 .navbar{
 	height:80px;
 	padding: 1.4rem 1rem 1rem;
 	background:#359C8A;
 	border-color: #359C8A;
 	color:#fff;
+  margin-bottom:0;
 }
 
 .navbar-default{

@@ -6,6 +6,10 @@ angular.module('webappApp')
 
     $scope.menu = [
     {
+      'title': 'Feed',
+      'link': '/feed'
+    },
+    {
       'title': 'Team',
       'link': '/'
     },

@@ -2,12 +2,19 @@
 
 angular.module('webappApp')
   .controller('MainCtrl', function ($scope, $http, stripe, Auth, FURL) {
+    $scope.showMember = false;
     $scope.team = {
       name : '',
       members : []
     };
     $scope.viewType = 'notPaid';
 
+    $scope.selectedUser = {
+        name : '',
+        gravatar : '',
+        uid : '',
+        history: []
+      };
     /**
     * 
     */
@@ -108,6 +115,34 @@ angular.module('webappApp')
           console.log(data);
           window.open('../api/downloads/'+data);
         });
+      });
+    }
+
+    $scope.viewUser = function(user){
+      $scope.showMember = true;
+      console.log(user);
+      $scope.selectedUser = {
+        name : user.name,
+        gravatar : user.pic,
+        uid : user.uid,
+        history: []
+      };
+      
+      var ref = new Firebase(FURL);
+      var startTime = new Date().getTime();
+      var endTime = startTime - 86400000;
+      console.log(startTime);
+
+
+      ref.child('team').child($scope.team.name).child('all').child(user.uid).orderByChild('time').startAt(endTime).once('value',function(data){
+        data = data.val();
+        console.log(data);
+        var keys = Object.keys(data);
+        for(var i = 0; i < keys.length; i++){
+          $scope.selectedUser.history.push(data[keys[i]]);
+        }
+        
+        $scope.$apply();
       });
     }
 

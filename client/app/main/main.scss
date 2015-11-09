@@ -25,7 +25,7 @@
 .footer {
     text-align: center;
     padding: 30px 0;
-    margin-top: 70px;
+    margin-top: 0;
     border-top: 1px solid #E5E5E5;
 }
 
@@ -47,20 +47,36 @@
 }
 
 .teamDirectory-addMember{
-    float:right;
-    margin-top: 20px;
-    margin-bottom: 10px;
-    
-    
-}
 
+}
+ 
+
+.teamDirectory-members{
+    background:#359C8A;
+    //padding-top:0.5rem;
+    padding-bottom:2rem;
+    min-height: 90vh;
+    h1,h2,h3,h4,h5,h6,p,a{
+        color:#fff;
+    }
+    h5{
+        font-weight:300;
+        text-transform:uppercase;
+        margin-bottom:2rem;
+    } 
+
+    button{
+        margin-top:2rem;
+    }
+}
 
 .teamDirectory-member{
     overflow:auto;
-    h1,h2,h3,h4,h5,h6,p,a{
-        color:#3d3d3d;
-    } 
+    cursor:pointer;
     color:#3d3d3d;
+    background:transparent;
+    margin-top:1rem;
+    margin-bottom:1rem;
     img{
         float:left;
         display:inline-block;
@@ -69,12 +85,14 @@
         margin-left:1rem;
         float:left;
         display:inline-block;
-        max-width: 338px;
-        h2,p{
+        //max-width: 338px;
+        h4{
             margin:0;
+
         }
         p{
-            margin-top:1rem;
+            margin:0;
+            margin-top:0.5rem;
         }
     }
 }

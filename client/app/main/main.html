@@ -2,49 +2,57 @@
 
 <div class="container-fluid">
   <div class="row">
-    <div class="col-xs-3 col-xs-offset-3">
-      <h2>Team Directory</h2>
-    </div>
-    <div class="col-xs-3">
-      <div class="teamDirectory-addMember">
-        <button class="btn"><i class="fa fa-plus"></i> Add Member</button>
-      </div>
-    </div>
-  </div>
-  <div class="col-xs-6 col-xs-offset-3 teamDirectory-members">
-    <div class="panel panel-default teamDirectory-member" ng-repeat="member in team.members">
-      <div class="panel-body ">
-        <div class="row">
-          <div class="col-xs-9">
-            <img width="75" src="{{member.pic}}">
-            <div class="member-names">
-              <h2>{{member.name}}</h3>
-              <p>{{member.task}}</p>
-            </div>
-          </div> 
-          <div class="col-xs-3">
+    <div class="col-xs-3  teamDirectory-members">
+      <h5>Team members</h5>
+      <div class=" teamDirectory-member" ng-repeat="member in team.members | orderBy: 'name'" ng-click="viewUser(member)">
+          
+        <img width="45" src="{{member.pic}}">
+        <div class="member-names">
+          <h4>{{member.name}}</h4>
+          <p>{{member.task}}</p>
+
+          <!-- <div class="col-xs-3">
             <button class="btn btn-block btn-ghost-phased" ng-class="{disabled : viewType == 'notPaid'}" ng-click="getHistory(member.uid)"><i class="fa fa-history"></i> Download History</button>
-          </div> 
+          </div>  -->
         </div>
-        <div class="row">
-          <div class="col-xs-10 col-xs-offset-2">
+      </div>
+      <div class="teamDirectory-addMember">
+        <button class="btn btn-block button-phased-wht">Add Member</button>
+      </div>
+    </div>
+    <div class="col-xs-9" ng-show="showMember">
+      <div class="col-xs-3">
+        <img src="http://placehold.it/175x175">
+      </div>
+      <div class="col-xs-9">
+        <h1>{{selectedUser.name}}</h1>
+         <button class="btn btn-ghost-phased" ng-class="{disabled : viewType == 'notPaid'}" ng-click="getHistory(selectedUser.uid)"><i class="fa fa-history"></i> Download History</button>
+      </div>
+      <div class="col-xs-12">
+        <h4>24 hours  7 days  30 days  6 months  all time</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Category</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="item in selectedUser.history |orderBy:'-time'">
+              <td>{{item.name}}</td>
+              <td>example</td>
+              <td>{{item.time}}</td>
+            </tr>
             
-          </div> 
-        </div>
-        <div class="row">
-          <div class="col-xs-12">
-            
-          </div> 
-        </div>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
+  
 </div>
 
   
 
-<footer class="footer">
-  <div class="container">
-      <p>Phased.io v0.0.1 </p>
-  </div>
-</footer>
+
