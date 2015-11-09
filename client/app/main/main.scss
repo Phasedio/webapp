@@ -32,3 +32,43 @@
 .navbar-text {
   margin-left: 15px;
 }
+
+.btn-ghost-phased{
+    background:none;
+    text-align:right;
+    i{
+        color:#2cb456;
+    }
+}
+
+.btn-ghost-danger{
+    background:none;
+    border: 2px solid #2cb456;
+}
+
+.teamDirectory-addMember{
+    float:right;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+
+.teamDirectory-member{
+    overflow:auto;
+    img{
+        float:left;
+        display:inline-block;
+    }
+    .member-names{
+        margin-left:1rem;
+        float:left;
+        display:inline-block;
+        h2,p{
+            margin:0;
+        }
+        p{
+            margin-top:1rem;
+        }
+    }
+}
+

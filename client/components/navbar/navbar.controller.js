@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('NavbarCtrl', function ($scope, $location) {
+  .controller('NavbarCtrl', function ($scope, $location, Auth) {
     $scope.menu = [
     {
       'title': 'Team',
@@ -10,6 +10,21 @@ angular.module('webappApp')
     {
       'title': 'Billing',
       'link': '/billing'
+    },
+    {
+      'title': 'Get App',
+      'link': 'https://chrome.google.com/webstore/detail/phasedio/pjjndifgelimoaljdogpjjdjhklajgfj?authuser=0'
+    },
+    {
+      'title': 'Change Team',
+      'link': '/switchteam'
+    },
+    {
+      'title': 'Logout',
+      'link': '',
+      'click': function(){
+        logout();
+      }
     }
     
     ];
@@ -19,4 +34,8 @@ angular.module('webappApp')
     $scope.isActive = function(route) {
       return route === $location.path();
     };
+    function logout(){
+      console.log('logging you out');
+      Auth.logout();
+    }
   });

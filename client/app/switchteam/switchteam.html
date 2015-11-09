@@ -1,0 +1,23 @@
+<div ng-include="'components/navbar/navbar.html'"></div>
+
+<div class="container">
+  <div class="row">
+
+  	<div class="col-xs-4 col-xs-offset-4">
+  		<div class="panel panel-default" ng-repeat="item in teamList track by $index" ng-click="switchTeams(item)" ng-class="{active : item == $parent.activeTeam}">
+	      <div class="panel-body teamDirectory-member">
+	        <div class="row">
+	         <div class="col-xs-12">
+	         	<p align="center">{{item}}</p>
+	         </div>
+	        </div>
+	      </div>
+	    </div>
+  	</div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+      <p>Phased.io v0.0.1 </p>
+  </div>
+</footer>

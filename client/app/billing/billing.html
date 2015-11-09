@@ -6,7 +6,7 @@
   </div>
 </header>
 
-<div class="container">
+<div class="container" ng-show="viewType == 'notPaid'">
   <div class="row">
    <div class="col-lg-4">
      <h1>{{currentTeam.length}}</h1>
@@ -43,8 +43,35 @@
               <input placeholder="YY" type="text" class="form-control" cc-exp-year name="ccExpYear" ng-model="card.exp_year">
             </div>
           </div>
+        </div>
           <input type="submit" class="btn btn-info">
       </form>
+    </div>
+  </div>
+</div>
+
+<div class="container" ng-show="viewType == 'active'">
+  <div class="row">
+    <div class="col-xs-12">
+      <h1>Thank you for paying for Phased.io!!</h1>
+      <p>If you have questions about your account or wish to cancel please email <a href="mailto:colin@phased.io">colin@phased.io</a></p>
+      <p>Account holder: {{billinInfo.email}}</p>
+    </div>
+  </div>
+</div>
+<div class="container" ng-show="viewType == 'problem'">
+  <div class="row">
+    <div class="col-xs-12">
+      <h1>There is a problem with your account!</h1>
+      <p>Please contact <a href="mailto:colin@phased.io">colin@phased.io</a> to resolve this issue.</p>
+      <p>Account holder: {{billinInfo.email}}</p>
+    </div>
+  </div>
+</div>
+<div class="container" ng-show="viewType == ''">
+  <div class="row">
+    <div class="col-xs-12">
+      
     </div>
   </div>
 </div>

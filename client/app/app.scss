@@ -1,8 +1,10 @@
 $icon-font-path: "/bower_components/bootstrap-sass-official/vendor/assets/fonts/bootstrap/";
 $fa-font-path: "/bower_components/font-awesome/fonts";
 
+@import url(https://fonts.googleapis.com/css?family=Lato:400,100,300,700);
 @import 'bootstrap-sass-official/vendor/assets/stylesheets/bootstrap';
 @import 'font-awesome/scss/font-awesome';
+
 
 /**
  * App-wide Styles
@@ -14,11 +16,16 @@ $fa-font-path: "/bower_components/font-awesome/fonts";
     color: #000;
     padding: 0.2em 0;
 }
+.navbar{
+	height:80px;
+	padding: 1.4rem 1rem 1rem;
+}
 
 // Component styles are injected through grunt
 // injector
 @import 'billing/billing.scss';
 @import 'login/login.scss';
 @import 'main/main.scss';
+@import 'switchteam/switchteam.scss';
 @import 'modal/modal.scss';
 // endinjector

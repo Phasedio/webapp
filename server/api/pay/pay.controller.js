@@ -10,16 +10,17 @@ exports.index = function(req, res) {
 };
 
 exports.create = function(req, res) {
-
+	var amount = req.body.amount;
 	stripe.customers.create({
-	  description: 'Customer for test@example.com',
-	  email : 'brian@phased.io',
+	  description: 'Pays for team: ' + req.body.team,
+	  email : req.body.email,
 	  source: req.body.token // obtained with Stripe.js
 	}, function(err, customer) {
 	  // asynchronously called
 	  if (err) {
 		     // bad things
 		        console.log(err);
+		        res.send({err:err});
 	  } else {
 		    // successful charge
 		     console.log(customer.id);
@@ -27,19 +28,41 @@ exports.create = function(req, res) {
 		     	customer.id,
 		     	{
 		     		plan: 'basic',
-		     		quantity : 5
+		     		quantity : amount
 		     	},
 		     	function(err, sub){
 		     		if(err){
 		     			console.log(err);
+		     			res.send({err:err});
 		     		}
 		     		else{
 		     			console.log(sub);
+		     			res.send({success:true, customer : customer.id});
 		     		}
 		     	}
 		     	)
 		 }
 	});
 	console.log(req.body);
-  	res.send(req.body);
+  	
+};
+exports.find = function(req, res) {
+	var user = req.body.customer;
+  stripe.customers.retrieve(
+	  user,
+	  function(err, customer) {
+	    // asynchronously called
+	    if (err){
+	    	res.send({err:err});
+	    }else{
+	    	if(customer.subscriptions.data[0]){
+	    		res.send({status:customer.subscriptions.data[0].status});
+	    	}else{
+	    		res.send({err:'no subs'});
+	    	}
+
+	    }
+
+	  }
+	);
 };

@@ -1,25 +1,47 @@
 <div ng-include="'components/navbar/navbar.html'"></div>
 
-<header class="hero-unit" id="banner">
-  <div class="container">
-    <h1>'Allo,!</h1>
-  </div>
-</header>
-
-<div class="container">
+<div class="container-fluid">
   <div class="row">
-    <div class="col-xs-12">
-      <ul>
-        <li ng-repeat="member in team.members">
-          <img width="50" src="{{member.pic}}">
-          {{member.name}}
-          {{member.task}}
-          <button class="btn" ng-click="getHistory(member.uid)">Download History</button>
-        </li>
-      </ul>
+    <div class="col-xs-3 col-xs-offset-3">
+      <h2>Team Directory</h2>
+    </div>
+    <div class="col-xs-3">
+      <div class="teamDirectory-addMember">
+        <button class="btn"><i class="fa fa-plus"></i> Add Member</button>
+      </div>
+    </div>
+  </div>
+  <div class="col-xs-6 col-xs-offset-3 teamDirectory-members">
+    <div class="panel panel-default" ng-repeat="member in team.members">
+      <div class="panel-body teamDirectory-member">
+        <div class="row">
+          <div class="col-xs-9">
+            <img width="75" src="{{member.pic}}">
+            <div class="member-names">
+              <h2>{{member.name}}</h3>
+              <p>{{member.task}}</p>
+            </div>
+          </div> 
+          <div class="col-xs-3">
+            <button class="btn btn-block btn-ghost-phased" ng-class="{disabled : viewType == 'notPaid'}" ng-click="getHistory(member.uid)"><i class="fa fa-history"></i> Download History</button>
+          </div> 
+        </div>
+        <div class="row">
+          <div class="col-xs-10 col-xs-offset-2">
+            
+          </div> 
+        </div>
+        <div class="row">
+          <div class="col-xs-12">
+            
+          </div> 
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+  
 
 <footer class="footer">
   <div class="container">
