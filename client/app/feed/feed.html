@@ -1,0 +1,16 @@
+<div ng-include="'components/navbar/navbar.html'"></div>
+<div class="container-fluid">
+	<div class="col-xs-12">
+		<ul class="cbp_tmtimeline">
+			<li ng-repeat="item in team.history |orderBy: '-time'">
+				<time class="cbp_tmtime" datetime="2013-04-10 18:30"><span>{{item.time | amDateFormat:'MM/DD/YY'}}</span> <span>{{item.time | amDateFormat:'HH:mm'}}</span></time>
+				<div class="cbp_tmicon fa fa-rss"></div>
+				<div class="cbp_tmlabel">
+					<h2>{{item.name}}</h2>
+					<p>{{$parent.team.members[item.user].name}}</p>
+				</div>
+			</li>
+			
+		</ul>
+	</div>
+</div>

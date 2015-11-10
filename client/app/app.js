@@ -8,7 +8,8 @@ angular.module('webappApp', [
   'ui.bootstrap',
   'angular-stripe',
   'credit-cards',
-  'firebase'
+  'firebase',
+  'angularMoment'
 ])
 .config(function (stripeProvider) {
     stripeProvider.setPublishableKey('pk_test_WFDUVuvY0pcVHTnquFTLvTSX');

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('MainCtrl', function ($scope, $http, stripe, Auth, FURL) {
+  .controller('MainCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment) {
     $scope.showMember = false;
     $scope.team = {
       name : '',

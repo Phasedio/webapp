@@ -21,15 +21,18 @@
       </div>
     </div>
     <div class="col-xs-9" ng-show="showMember">
+      <h2>Click on a team member to see more information</h2>
+    </div>
+    <div class="col-xs-9" ng-show="showMember">
       <div class="col-xs-3">
-        <img src="http://placehold.it/175x175">
+        <img src="{{selectedUser.gravatar}}" width="175px" height="175px">
       </div>
       <div class="col-xs-9">
         <h1>{{selectedUser.name}}</h1>
          <button class="btn btn-ghost-phased" ng-class="{disabled : viewType == 'notPaid'}" ng-click="getHistory(selectedUser.uid)"><i class="fa fa-history"></i> Download History</button>
       </div>
       <div class="col-xs-12">
-        <h4>24 hours  7 days  30 days  6 months  all time</h4>
+        <h4>24 hours</h4>
         <table class="table">
           <thead>
             <tr>
@@ -42,7 +45,7 @@
             <tr ng-repeat="item in selectedUser.history |orderBy:'-time'">
               <td>{{item.name}}</td>
               <td>example</td>
-              <td>{{item.time}}</td>
+              <td>{{item.time | amDateFormat:'MM.DD.YYYY HH:mm:ss'}}</td>
             </tr>
             
           </tbody>
