@@ -19,7 +19,7 @@ angular.module('webappApp')
     },
     {
       'title': 'Get App',
-      'link': 'https://chrome.google.com/webstore/detail/phasedio/pjjndifgelimoaljdogpjjdjhklajgfj?authuser=0'
+      'link': '/getapp'
     },
     {
       'title': 'Change Team',
