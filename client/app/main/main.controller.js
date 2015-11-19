@@ -5,7 +5,10 @@ angular.module('webappApp')
     $scope.showMember = false;
     $scope.team = {
       name : '',
-      members : []
+      members : {},
+      history : [],
+      categorySelect : [],
+      categoryObj : {}
     };
     $scope.viewType = 'notPaid';
 
@@ -146,6 +149,55 @@ angular.module('webappApp')
       });
     }
 
+    $scope.getCategories = function(){
+      var team = $scope.team.name;
+      new Firebase(FURL).child('team').child(team).child('category').once('value', function(cat) {
+        cat = cat.val();
+        console.log(cat);
+        if(typeof cat !== 'undefined' && cat != null){
+          
+          var keys = Object.keys(cat);
+          $scope.team.categoryObj = cat;
+            for(var i = 0; i < keys.length; i++){
+              var obj = {
+                name : cat[keys[i]].name,
+                color : cat[keys[i]].color,
+                key : keys[i]
+              }
+                $scope.team.categorySelect.push(obj);
+            }
+            console.log($scope.team);
+        }else{
+          //they have no categories so add them
+          var obj = [
+            {
+              name : 'Communication',
+              color : '#ffcc00'
+            },
+            {
+              name : 'Planning',
+              color : '#5ac8fb'
+            }
+          ];
+          new Firebase(FURL).child('team').child(team).child('category').set(obj);
+          new Firebase(FURL).child('team').child(team).child('category').once('value', function(cat) {
+            cat = cat.val();
+            var keys = Object.keys(cat);
+            $scope.team.categoryObj = cat;
+              for(var i = 0; i < keys.length; i++){
+                var obj = {
+                  name : cat[keys[i]].name,
+                  color : cat[keys[i]].color,
+                  key : keys[i]
+                }
+                  $scope.team.categorySelect.push(obj);
+              }
+              console.log($scope.team);
+          });
+        }
+      });
+    };
+
     $scope.init = function(){
       var ref = new Firebase(FURL);
       console.log(Auth.user);
@@ -154,6 +206,7 @@ angular.module('webappApp')
         $scope.team.name = data;
         console.log('sup');
         $scope.checkPlanStatus($scope.team.name);
+        $scope.getCategories();
         $scope.checkStatus();
 
       })

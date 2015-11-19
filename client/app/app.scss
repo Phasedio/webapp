@@ -118,7 +118,9 @@ body{
 
 // Component styles are injected through grunt
 // injector
+@import 'addcategory/addcategory.scss';
 @import 'billing/billing.scss';
+@import 'editcategory/editcategory.scss';
 @import 'feed/feed.scss';
 @import 'getapp/getapp.scss';
 @import 'login/login.scss';

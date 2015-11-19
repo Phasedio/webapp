@@ -18,6 +18,8 @@
       </div>
       <div class="teamDirectory-addMember">
         <button class="btn btn-block button-phased-wht">Add Member</button>
+        <a href="/team/addcategory" class="btn btn-block button-phased-wht">Add Category</a>
+        <a href="/team/editcategory" class="btn btn-block button-phased-wht">Edit Categories</a>
       </div>
     </div>
     <div class="col-xs-9" ng-show="!showMember">
@@ -44,7 +46,7 @@
           <tbody>
             <tr ng-repeat="item in selectedUser.history |orderBy:'-time'">
               <td>{{item.name}}</td>
-              <td>example</td>
+              <td>{{$parent.team.categoryObj[item.cat].name}} </td>
               <td>{{item.time | amDateFormat:'MM.DD.YYYY HH:mm:ss'}}</td>
             </tr>
             
