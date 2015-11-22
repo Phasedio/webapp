@@ -1,27 +1,31 @@
-<div ng-include="'components/navbar/navbar.html'"></div>
-
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-xs-3  teamDirectory-members">
-      <h5>Team members</h5>
-      <div class=" teamDirectory-member" ng-repeat="member in team.members | orderBy: 'name'" ng-click="viewUser(member)">
-          
-        <img width="45" src="{{member.pic}}">
-        <div class="member-names">
-          <h4>{{member.name}}</h4>
-          <p>{{member.task}}</p>
-
-          <!-- <div class="col-xs-3">
-            <button class="btn btn-block btn-ghost-phased" ng-class="{disabled : viewType == 'notPaid'}" ng-click="getHistory(member.uid)"><i class="fa fa-history"></i> Download History</button>
-          </div>  -->
+<!-- <div ng-include="'components/navbar/navbar.html'"></div> -->
+<aside>
+  <h5>Team members</h5>
+    <div class="teamDirectory-members">
+      <div class=" teamDirectory-member" ng-repeat="member in team.members | orderBy: 'name'" ng-click="viewUser(member)">  
+          <img width="25" src="{{member.pic}}">
+          <div class="member-names">
+            <h6>{{member.name}}</h6>
+          </div>
         </div>
-      </div>
-      <div class="teamDirectory-addMember">
-        <button class="btn btn-block button-phased-wht">Add Member</button>
-        <a href="/team/addcategory" class="btn btn-block button-phased-wht">Add Category</a>
-        <a href="/team/editcategory" class="btn btn-block button-phased-wht">Edit Categories</a>
-      </div>
+        <div class="teamDirectory-addMember">
+          <button class="btn btn-block button-phased-wht">Add Member</button>
+          <a href="/team/addcategory" class="btn btn-block button-phased-wht">Add Category</a>
+          <a href="/team/editcategory" class="btn btn-block button-phased-wht">Edit Categories</a>
+        </div>
     </div>
+        
+</aside>
+<section>
+  <div class="container-fluid">
+  <!-- <div class="row sub-navbar">
+    <div class="col-xs-6 col-xs-offset-1">
+      <a href="" class="btn button-phased-wht active">Members</a>
+      <a href="/team/editcategory" class="btn button-phased-wht">Categories</a>
+      <a href="" class="btn button-phased-wht active" disabled>Statistics</a>
+    </div>
+  </div> -->
+  <div class="row">
     <div class="col-xs-9" ng-show="!showMember">
       <h2>Click on a team member to see more information</h2>
     </div>
@@ -57,6 +61,8 @@
   </div>
   
 </div>
+</section>
+
 
   
 

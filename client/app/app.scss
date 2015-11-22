@@ -82,7 +82,13 @@ body{
   font-weight:300;
   text-transform:uppercase;
   font-size:14px;
+  border-radius:0;
   &:hover{
+    border-color:#084D54;
+    background:#084D54;
+    color:#fff;
+  }
+  &.active{
     border-color:#084D54;
     background:#084D54;
     color:#fff;
@@ -93,9 +99,16 @@ body{
 .navbar{
 	height:80px;
 	padding: 1.4rem 1rem 1rem;
-	background:#359C8A;
-	border-color: #359C8A;
+	//background:transparent;
+  background: rgba(34,34,34,0.01);
+	border-color:transparent;
 	color:#fff;
+  margin-bottom:0;
+}
+.sub-navbar{
+  background:#359C8A;
+  border-color: #359C8A;
+  color:#fff;
   margin-bottom:0;
 }
 
@@ -115,6 +128,30 @@ body{
 		}
 	} 
 } 
+
+.blur-effect {
+  /* Absolutely position it, but stretch it to all four corners, then put it just behind #search's z-index */
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  left: 0px;
+  z-index: 99;
+
+  /* Pull the background 70px higher to the same place as #bg's */
+  background-position: center -70px;
+  filter: url('http://jordanhollinger.com/media/blur.svg');
+  -webkit-filter: blur(50px);
+  filter: blur(50px);
+}
+.blur-holder{
+   /* Put this on top of the blurred layer */
+  //position: relative;
+  z-index: 100;
+  //padding: 20px;
+  //background: rgb(34,34,34); /* for IE */
+  //background: rgba(34,34,34,0.75);
+}
 
 // Component styles are injected through grunt
 // injector

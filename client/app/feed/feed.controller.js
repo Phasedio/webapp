@@ -10,7 +10,26 @@ angular.module('webappApp')
       categorySelect : [],
       categoryObj : {}
     };
+    $scope.selectedCategory = '';
 
+
+
+    //get day image
+    var monImage =  "weekdayPhotos/mon.jpg";
+  var tuesImage =  "weekdayPhotos/tues.jpg";
+  var wedImage =  "weekdayPhotos/wed.jpg";
+  var thursImage =  "weekdayPhotos/thurs.jpg";
+  var friImage = "weekdayPhotos/fri.jpg";
+  var satImage = "weekdayPhotos/sat.jpg";
+  var sunImage = "weekdayPhotos/sun.jpg";
+
+  var d=new Date();
+  console.log(d.getDay());
+
+  //console.log('the image is ', monImage);
+
+  var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
+  $scope.dayImage = backgroundImage[d.getDay()];
 
     //on load we need to get a list of all the updates that have happened today.
     $scope.init = function(){
@@ -29,7 +48,7 @@ angular.module('webappApp')
      new Firebase(FURL).child('team').child(team).child('task').on('value', function(users) {
      $scope.team.history = [];
        users = users.val();
-       
+
        if(users){
          var teamUID = Object.keys(users);
 
@@ -63,7 +82,7 @@ angular.module('webappApp')
           uid : memberID,
           photo:style
         };
-               
+
         $scope.team.members[memberID] = teamMember;
         var startTime = new Date().getTime();
 	    var endTime = startTime - 86400000;
@@ -78,10 +97,10 @@ angular.module('webappApp')
 	        	for(var i = 0; i < keys.length; i++){
 	          		$scope.team.history.push(data[keys[i]]);
 	       		}
-	        
+
 	      	//$scope.$apply();
 	    	}
-	    	
+
 	     });
 
         });
@@ -93,7 +112,7 @@ angular.module('webappApp')
     		cat = cat.val();
     		console.log(cat);
     		if(typeof cat !== 'undefined' && cat != null){
-    			
+
     			var keys = Object.keys(cat);
     			$scope.team.categoryObj = cat;
 	        	for(var i = 0; i < keys.length; i++){
@@ -143,9 +162,9 @@ angular.module('webappApp')
     	}else{
     		console.log(update);
 		    var taskPrefix = '';
-		    
-		    var weather,city,lat,long,photo;
-		    //weather = $scope.weatherIcon != '' ? $scope.weatherIcon : 0;
+
+		    var weather,city,lat,long,photo,cat;
+		    cat = $scope.selectedCategory ? $scope.selectedCategory : '';
 		    city = $scope.city ? $scope.city : 0;
 		    lat = $scope.lat ? $scope.lat : 0;
 		    long = $scope.long ? $scope.long : 0;
@@ -154,7 +173,7 @@ angular.module('webappApp')
 		      name: taskPrefix+update.name,
 		      time: new Date().getTime(),
 		      user:Auth.user.uid,
-		      cat : update.cat,
+		      cat : $scope.selectedCategory,
 		      city:city,
 		      weather:'',
 		      taskPrefix : taskPrefix,
@@ -184,7 +203,8 @@ angular.module('webappApp')
 		    });
 
 		$scope.task = update;
-        $scope.taskName = '';
+        $scope.task.name = '';
+
 		$scope.showTaskView = true;
         $scope.taskTime = status.time; // we didnt have status.time so i think this fixes the problem(?)
       // maybe we need a timeout function here to run around out $apply()??
@@ -198,6 +218,17 @@ angular.module('webappApp')
 
     }
 
+    $scope.moreCat = function(){
+      $('#catModal').modal('toggle');
+    };
+
+    $scope.categoryChoice = function(key,close){
+      $scope.selectedCategory = key;
+      if(close){
+        $('#catModal').modal('toggle');
+      }
+    }
+
 
     $scope.init();
 
@@ -205,5 +236,5 @@ angular.module('webappApp')
     $scope.$apply();
   }, 500);
 
-    
-  }); 
+
+  });

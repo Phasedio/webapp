@@ -10,7 +10,7 @@ angular.module('webappApp')
       categorySelect : [],
       categoryObj : {}
     };
-    $scope.viewType = 'notPaid';
+    $scope.viewType = 'active';
 
     $scope.selectedUser = {
         name : '',
@@ -205,7 +205,7 @@ angular.module('webappApp')
         data = data.val();
         $scope.team.name = data;
         console.log('sup');
-        $scope.checkPlanStatus($scope.team.name);
+        //$scope.checkPlanStatus($scope.team.name);
         $scope.getCategories();
         $scope.checkStatus();
 

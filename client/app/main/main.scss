@@ -1,3 +1,17 @@
+aside{
+    height:100vh;
+    width:100%;
+    max-width:25rem;
+    background:#000;
+    display:inline-block;
+    float:left;
+}
+section{
+    //padding-left:30rem;
+    display:inline-block;
+    float:left;
+}
+
 .thing-form {
     margin: 20px 0;
 }

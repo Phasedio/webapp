@@ -1,5 +1,12 @@
 <div ng-include="'components/navbar/navbar.html'"></div>
 <div class="container-fluid">
+  <div class="row sub-navbar">
+    <div class="col-xs-6 col-xs-offset-1">
+      <a href="/team" class="btn button-phased-wht">Members</a>
+      <a href="" class="btn button-phased-wht active">Categories</a>
+      <button class="btn" disabled>Statistics</button>
+    </div>
+  </div>
   <div class="row">
   	<div class="col-xs-12">
   		<table class="table ">
@@ -18,6 +25,7 @@
   				</tr>
   			</tbody>
   		</table>
+      <a href="/team/addcategory" class="btn btn-block button-phased-wht">Add Category</a>
   	</div>
   </div>
 </div>
