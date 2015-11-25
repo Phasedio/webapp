@@ -2,6 +2,7 @@
 
 angular.module('webappApp')
   .controller('EditcategoryCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,$location) {
+    ga('send', 'pageview', '/editcategory');
     var ref = new Firebase(FURL);
     $scope.team = {
       name : '',
@@ -26,7 +27,7 @@ angular.module('webappApp')
     		cat = cat.val();
     		console.log(cat);
     		if(typeof cat !== 'undefined' && cat != null){
-    			
+
     			var keys = Object.keys(cat);
     			$scope.team.categoryObj = cat;
 	        	for(var i = 0; i < keys.length; i++){

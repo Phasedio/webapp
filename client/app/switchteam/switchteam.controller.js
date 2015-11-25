@@ -2,6 +2,7 @@
 
 angular.module('webappApp')
   .controller('SwitchteamCtrl', function ($scope,FURL,Auth,$http) {
+    ga('send', 'pageview', '/switchteam');
     $scope.teamList = [];
     $scope.activeTeam = '';
 

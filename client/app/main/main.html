@@ -34,6 +34,7 @@
         <div class="col-xs-9">
           <h1>{{selectedUser.name}}</h1>
            <button class="btn btn-ghost-phased" ng-class="{disabled : viewType == 'notPaid'}" ng-click="getHistory(selectedUser.uid)"><i class="fa fa-history"></i> Download History</button>
+           <p ng-show="viewType == 'notPaid'">Contact Colin at <a href="mailto:colin@phased.io">colin@phased.io</a> to upgrade to premium features</p>
         </div>
         <div class="col-xs-12">
           <h4>24 hours</h4>

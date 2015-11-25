@@ -2,12 +2,13 @@
 
 angular.module('webappApp')
   .controller('LoginCtrl', function ($scope, Auth,$location,FURL) {
+    ga('send', 'pageview', '/login');
     var ref = new Firebase(FURL);
 
   $scope.forms = "login";
 
     $scope.loginUser = function(user){
-
+        ga('send', 'event', 'Login', 'Login User');
         Auth.login(user).then(function() {
 
          $location.path("/");
@@ -17,8 +18,10 @@ angular.module('webappApp')
     }
 
     $scope.regUser = function(user){
+
     console.log('will show new modal here');
         Auth.register(user).then(function() {
+          ga('send', 'event', 'Register', 'new user');
 
       console.log('will show new modal here');
       $location.path("/");
@@ -26,18 +29,22 @@ angular.module('webappApp')
   }
 
     $scope.makeAccount = function(){
+      ga('send', 'event', 'Register', 'Show form');
         $scope.forms = "reg";
     }
     $scope.loginAccount = function(){
+      ga('send', 'event', 'Login', 'Show form');
         $scope.forms = "login";
     };
 
   $scope.forgotPassword = function(email){
+
     console.log("will send email to :", email);
     ref.resetPassword({
       email : email
     }, function(error) {
       if (error === null) {
+        ga('send', 'event', 'Forgot Passord', 'Sent email');
         console.log("Password reset email sent successfully");
       } else {
         console.log("Error sending password reset email:", error);

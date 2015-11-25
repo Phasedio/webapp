@@ -2,6 +2,7 @@
 
 angular.module('webappApp')
   .controller('ProfileCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment) {
+    ga('send', 'pageview', '/profile');
     $scope.team = {
       name : '',
       members : {},

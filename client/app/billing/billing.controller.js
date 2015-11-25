@@ -2,6 +2,7 @@
 
 angular.module('webappApp')
   .controller('BillingCtrl', function ($scope, $http, stripe, Auth, FURL) {
+    ga('send', 'pageview', '/billing');
     var ref = new Firebase(FURL);
     $scope.user = '';
     $scope.currentTeam = {};
@@ -12,7 +13,7 @@ angular.module('webappApp')
   	};
 
     /**
-    * charge 
+    * charge
     */
     $scope.charge = function (card) {
     	console.log(card);
@@ -91,13 +92,13 @@ angular.module('webappApp')
       ref.child('team').child(data.curTeam).once('value',function(data){
         data = data.val();
         console.log(data);
-        
+
         $scope.currentTeam = Object.keys(data.task);
         console.log($scope.currentTeam);
-        
+
         $scope.checkPlanStatus(data);
       });
-      
+
     });
 
 

@@ -2,6 +2,7 @@
 
 angular.module('webappApp')
   .controller('AddcategoryCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,$location) {
+    ga('send', 'pageview', '/addcategory');
     var ref = new Firebase(FURL);
     $scope.team = {
       name : '',
@@ -22,6 +23,7 @@ angular.module('webappApp')
         });
     };
     $scope.addCat = function(cat){
+      ga('send', 'event', 'Category', 'Added new');
     	console.log(cat);
     	cat.created = new Date().getTime();
     	cat.user = Auth.user.uid;

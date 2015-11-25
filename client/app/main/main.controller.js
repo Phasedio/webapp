@@ -2,6 +2,7 @@
 
 angular.module('webappApp')
   .controller('MainCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,toaster) {
+    ga('send', 'pageview', '/team');
     $scope.showMember = false;
     $scope.team = {
       name : '',
@@ -10,7 +11,7 @@ angular.module('webappApp')
       categorySelect : [],
       categoryObj : {}
     };
-    $scope.viewType = 'active';
+    $scope.viewType = 'notPaid';
 
     $scope.selectedUser = {
         name : '',
@@ -122,6 +123,7 @@ angular.module('webappApp')
     }
 
     $scope.viewUser = function(user){
+      ga('send', 'event', 'Team', 'View user');
       $scope.showMember = true;
       console.log(user);
       $scope.selectedUser = {
@@ -200,6 +202,7 @@ angular.module('webappApp')
 
 
     $scope.addMembers = function(names){
+    ga('send', 'event', 'Team', 'Member added');
     //_gaq.push(['_trackEvent', 'Team', 'Add member']);
   	var ref = new Firebase(FURL);
     // grab all users and see if they match an email in the system
@@ -272,6 +275,7 @@ angular.module('webappApp')
 
   };
   $scope.addMemberModel = function(){
+    ga('send', 'event', 'Modal', 'Member add');
     $('#myModal').modal('toggle');
   }
 

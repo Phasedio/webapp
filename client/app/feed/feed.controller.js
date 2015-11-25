@@ -2,6 +2,7 @@
 
 angular.module('webappApp')
   .controller('FeedCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment) {
+    ga('send', 'pageview', '/feed');
     var ref = new Firebase(FURL);
     $scope.team = {
       name : '',
@@ -38,6 +39,7 @@ angular.module('webappApp')
     	ref.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
         	data = data.val();
         	$scope.team.name = data;
+          ga('set', 'Team Name', data);
         	$scope.getCategories();
         	$scope.checkStatus();
         });
@@ -156,6 +158,7 @@ angular.module('webappApp')
     }
 
     $scope.addTask = function(update){
+      ga('send', 'event', 'Update', 'submited');
     	var team = $scope.team.name;
     	if($scope.taskForm.$error.maxlength){
     		alert('Your update is too long!');
@@ -219,10 +222,12 @@ angular.module('webappApp')
     }
 
     $scope.moreCat = function(){
+      ga('send', 'event', 'Modal', 'Category');
       $('#catModal').modal('toggle');
     };
 
     $scope.categoryChoice = function(key,close){
+      ga('send', 'event', 'Update', 'Category selected');
       $scope.selectedCategory = key;
       if(close){
         $('#catModal').modal('toggle');
