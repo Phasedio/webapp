@@ -6,9 +6,9 @@ $fa-font-path: "/bower_components/font-awesome/fonts";
 @import 'font-awesome/scss/font-awesome';
 
 
-// Mixin 
+// Mixin
 
-@function parseInt($n) { 
+@function parseInt($n) {
   @return $n / ($n * 0 + 1);
 }
 
@@ -53,7 +53,7 @@ $fa-font-path: "/bower_components/font-awesome/fonts";
 
 .browsehappy {
     margin: 0.2em 0;
-    background: #ccc; 
+    background: #ccc;
     color: #000;
     padding: 0.2em 0;
 }
@@ -123,11 +123,11 @@ body{
 	.navbar-nav > li > a{
 		color:#fff;
 		&:hover{
-			color:#084D54;
+			color:#36BEA6;
 
 		}
-	} 
-} 
+	}
+}
 
 .blur-effect {
   /* Absolutely position it, but stretch it to all four corners, then put it just behind #search's z-index */
@@ -162,6 +162,7 @@ body{
 @import 'getapp/getapp.scss';
 @import 'login/login.scss';
 @import 'main/main.scss';
+@import 'profile/profile.scss';
 @import 'switchteam/switchteam.scss';
 @import 'modal/modal.scss';
 // endinjector

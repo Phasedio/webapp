@@ -9,7 +9,9 @@ angular.module('webappApp', [
   'angular-stripe',
   'credit-cards',
   'firebase',
-  'angularMoment'
+  'angularMoment',
+  'ngAnimate',
+  'toaster'
 ])
 .config(function (stripeProvider) {
     stripeProvider.setPublishableKey('pk_test_WFDUVuvY0pcVHTnquFTLvTSX');

@@ -63,13 +63,13 @@ section{
 .teamDirectory-addMember{
 
 }
- 
+
 
 .teamDirectory-members{
-    background:#359C8A;
+    //background:#359C8A;
     //padding-top:0.5rem;
     padding-bottom:2rem;
-    min-height: 90vh;
+    //min-height: 90vh;
     h1,h2,h3,h4,h5,h6,p,a{
         color:#fff;
     }
@@ -77,7 +77,7 @@ section{
         font-weight:300;
         text-transform:uppercase;
         margin-bottom:2rem;
-    } 
+    }
 
     button{
         margin-top:2rem;
@@ -94,6 +94,7 @@ section{
     img{
         float:left;
         display:inline-block;
+        border-radius: 100px;
     }
     .member-names{
         margin-left:1rem;
@@ -111,3 +112,23 @@ section{
     }
 }
 
+.teamDirectory-category{
+  overflow: auto;
+  .td-category{
+    width: 25px;
+    height:25px;
+    float:left;
+    display:inline-block;
+    border-radius: 100px;
+  }
+  h6{
+    float:left;
+    margin-left:1rem;
+    color:#fff;
+    display:inline-block;
+  }
+
+}
+.team-aside{
+  
+}

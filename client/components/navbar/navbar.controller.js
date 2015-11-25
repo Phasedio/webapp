@@ -14,18 +14,18 @@ angular.module('webappApp')
       'link': '/'
     },
     {
-      'title': 'Billing',
-      'link': '/billing'
+      'title': 'Profile',
+      'link' : '/profile'
     },
+    // {
+    //   'title': 'Billing',
+    //   'link': '/billing'
+    // },
     {
       'title': 'Get App',
       'link': '/getapp'
-    },
-    {
-      'title': 'Change Team',
-      'link': '/switchteam'
     }
-    
+
     ];
 
     $scope.isCollapsed = true;
@@ -45,5 +45,5 @@ angular.module('webappApp')
     $scope.$apply();
     //console.log('yo');
     }, 500);
-    
+
   });

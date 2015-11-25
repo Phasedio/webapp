@@ -5,7 +5,7 @@
     text-shadow: none;
   }
   img{
-    
+
     display:block;
     margin:0 auto;
     margin-top: 5rem;
@@ -34,9 +34,9 @@
       border-bottom:2px solid rgba(8,77,84,0.5);
     }
 
-    
+
   }
-  
+
   .item{
     background: transparent;
     border-color: transparent;
@@ -58,7 +58,7 @@
     }
   }
   .item-input{
-    
+
     @include rem(margin-bottom, 10px);
     label{
       //font-family: $regFont;
@@ -66,7 +66,7 @@
       color:rgba(29,29,38,0.5);
       @include rem(letter-spacing, 1px);
       @include rem(font-size, 10px);
-    } 
+    }
   }
   h4{
     //font-family: $regFont;
@@ -87,6 +87,28 @@
     text-trasform:uppercase;
     &:focus{
       color:#fff;
+    }
+  }
+}
+
+.login-drk{
+  .item{
+    background: transparent;
+    border-color: transparent;
+    border: 1px solid transparent;
+  }
+  .item-input{
+    label{
+      //font-family: $regFont;
+      text-transform: uppercase;
+      color:rgba(219,219,218,0.5);
+
+    }
+  }
+  .loginInput{
+
+    &:focus{
+      border-bottom:2px solid rgba(255,255,255,0.5);
     }
   }
 }
