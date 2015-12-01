@@ -1,0 +1,134 @@
+aside{
+    height:100vh;
+    width:100%;
+    max-width:25rem;
+    background:#000;
+    display:inline-block;
+    float:left;
+}
+section{
+    //padding-left:30rem;
+    display:inline-block;
+    float:left;
+}
+
+.thing-form {
+    margin: 20px 0;
+}
+
+#banner {
+    border-bottom: none;
+    margin-top: -20px;
+}
+
+#banner h1 {
+    font-size: 60px;
+    line-height: 1;
+    letter-spacing: -1px;
+}
+
+.hero-unit {
+    position: relative;
+    padding: 30px 15px;
+    color: #F5F5F5;
+    text-align: center;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+    background: #4393B9;
+}
+
+.footer {
+    text-align: center;
+    padding: 30px 0;
+    margin-top: 0;
+    border-top: 1px solid #E5E5E5;
+}
+
+.navbar-text {
+  margin-left: 15px;
+}
+
+.btn-ghost-phased{
+    background:none;
+    text-align:right;
+    i{
+        color:#2cb456;
+    }
+}
+
+.btn-ghost-danger{
+    background:none;
+    border: 2px solid #2cb456;
+}
+
+.teamDirectory-addMember{
+
+}
+
+
+.teamDirectory-members{
+    //background:#359C8A;
+    //padding-top:0.5rem;
+    padding-bottom:2rem;
+    //min-height: 90vh;
+    h1,h2,h3,h4,h5,h6,p,a{
+        color:#fff;
+    }
+    h5{
+        font-weight:300;
+        text-transform:uppercase;
+        margin-bottom:2rem;
+    }
+
+    button{
+        margin-top:2rem;
+    }
+}
+
+.teamDirectory-member{
+    overflow:auto;
+    cursor:pointer;
+    color:#3d3d3d;
+    background:transparent;
+    margin-top:1rem;
+    margin-bottom:1rem;
+    img{
+        float:left;
+        display:inline-block;
+        border-radius: 100px;
+    }
+    .member-names{
+        margin-left:1rem;
+        float:left;
+        display:inline-block;
+        //max-width: 338px;
+        h4{
+            margin:0;
+
+        }
+        p{
+            margin:0;
+            margin-top:0.5rem;
+        }
+    }
+}
+
+.teamDirectory-category{
+  overflow: auto;
+  .td-category{
+    width: 25px;
+    height:25px;
+    float:left;
+    display:inline-block;
+    border-radius: 100px;
+  }
+  h6{
+    float:left;
+    margin-left:1rem;
+    color:#fff;
+    display:inline-block;
+  }
+
+}
+.team-aside{
+  
+}

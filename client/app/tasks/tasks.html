@@ -1,0 +1,87 @@
+<div ng-include="'components/navbar/navbar.html'"></div>
+
+<section class="container">
+  <div class="row">
+    <div class="col-xs-3 team-aside">
+      <h5>Tasks</h5>
+      <div class="teamDirectory-members">
+        <div class=" teamDirectory-member" ng-repeat="member in team.members | orderBy: 'name'" ng-click="viewUser(member)">
+            <img width="25" src="{{member.pic}}">
+            <div class="member-names">
+              <h6>{{member.name}}</h6>
+            </div>
+          </div>
+          <button class="btn btn-block button-phased-wht" ng-click=" addTaskModal();">Add Task</button>
+
+      </div>
+      <h5>Categories</h5>
+      <div class="teamDirectory-category">
+        <div class=" teamDirectory-member" style="cursor:default" ng-repeat="(key, category) in team.categoryObj | orderBy: 'name'" >
+          <div class="td-category" style="background:{{category.color}}"></div>
+          <h6>{{category.name}}</h6>
+        </div>
+      <a href="/team/addcategory" class="btn btn-block button-phased-wht">Add Category</a>
+    </div>
+  </div>
+    <div class="col-xs-9">
+      <div ng-show="!showMember">
+        <h2 align="center">Click on a member to view history</h2>
+      </div>
+      <div ng-show="showMember">
+        <div class="col-xs-3">
+          <img src="{{selectedUser.gravatar}}" width="175px" height="175px">
+        </div>
+        <div class="col-xs-9">
+          <h1>{{selectedUser.name}}</h1>
+           <button class="btn btn-ghost-phased" ng-class="{disabled : viewType == 'notPaid'}" ng-click="getHistory(selectedUser.uid)"><i class="fa fa-history"></i> Download History</button>
+           <p ng-show="viewType == 'notPaid'">Contact Colin at <a href="mailto:colin@phased.io">colin@phased.io</a> to upgrade to premium features</p>
+        </div>
+        <div class="col-xs-12">
+          <h4>24 hours</h4>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Category</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="item in selectedUser.history |orderBy:'-time'">
+                <td>{{item.name}}</td>
+                <td>{{$parent.team.categoryObj[item.cat].name}} </td>
+                <td>{{item.time | amDateFormat:'MM.DD.YYYY HH:mm:ss'}}</td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- add task -->
+<div class="modal fade" id="myModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+    <form name="addmember" ng-submit="addMembers(user)" novalidation>
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 style="color:#000;" class="modal-title no-shadow">Add task</h4>
+      </div>
+      <div class="modal-body">
+      	<label style="color:#000;" for="addEmail">Task name</label>
+       	<input type="text" id="addEmail" placeholder="Build a rocket">
+
+        <label style="color:#000;" for="otherFields">Other fields</label>
+        <input type="text" id="otherFields" placeholder="Categories, assign to someone (opt, defaults to self)" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <input type="submit" class="btn btn-primary" value="Add task">
+      </div>
+      </form>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

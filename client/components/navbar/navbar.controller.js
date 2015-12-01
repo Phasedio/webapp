@@ -17,6 +17,10 @@ angular.module('webappApp')
       'title': 'Profile',
       'link' : '/profile'
     },
+    {
+      'title': 'Tasks',
+      'link' : '/tasks'
+    },
     // {
     //   'title': 'Billing',
     //   'link': '/billing'
