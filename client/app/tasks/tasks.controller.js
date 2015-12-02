@@ -20,10 +20,7 @@ angular.module('webappApp')
         uid : '',
         history: []
       };
-    $scope.assignments = {
-      to_me : [],
-      by_me : []
-    }
+    $scope.myID = Auth.user.uid;
 
 
   /**
@@ -35,20 +32,26 @@ angular.module('webappApp')
   *   - own updates (in progress) 
   */
   $scope.checkStatus = function(){
-   var team = $scope.team.name;
-   new Firebase(FURL).child('team').child(team).child('task').on('value', function(users) {
-    $scope.team.members = [];
-    users = users.val();
+    var team = $scope.team.name;
+    new Firebase(FURL).child('team').child(team).child('task').on('value', function(users) {
+      $scope.team.members = [];
+      users = users.val();
 
-    if (users) {
-      var teamUID = Object.keys(users);
-      for (var i = 0; i < teamUID.length; i++) {
-        $scope.getTeamTasks(teamUID[i], users);
+      if (users) {
+        var teamUID = Object.keys(users);
+        for (var i = 0; i < teamUID.length; i++) {
+          $scope.getUserDetails(teamUID[i], users);
+        }
+
+        // ugly debounce to get around having to wait for multiple callbacks
+        var interval = window.setInterval(function() { 
+          if ($scope.team.members && $scope.team.members[$scope.myID]) {
+            window.clearInterval(interval);
+            $scope.setWatchAssignments();
+          }
+        }, 100);
       }
-      $scope.watchAssignments();
-    }
-
-   });
+    });
   };
 
 
@@ -59,70 +62,65 @@ angular.module('webappApp')
   *   - own assignments (to self or to others) all/(me)/assigned_by_me
   *   - assignments to me by others all/(me)/assigned_to_me
   */
-  $scope.watchAssignments = function() {
-    var meRef = new Firebase(FURL).child('team/' + $scope.team.name + '/all/' + Auth.user.uid);
-    meRef.child('assigned_to_me').on('value', function(data) {
-      $scope.assignments.to_me = data.val(); // whole task objects already here
-    });
+  $scope.setWatchAssignments = function() {
+    var allRef = new Firebase(FURL).child('team/' + $scope.team.name + '/all');
+  
+    // collection of assigned_to_me collections to keep up to date
+    $scope.watched = [];
+    
+    // watch own
+    watchMember($scope.myID, allRef);
 
-    meRef.child('assigned_by_me').on('value', function(data) {
+    // check others to watch
+    allRef.child(Auth.user.uid + '/assigned_by_me').on('value', function(data) {
       data = data.val();
-      $scope.assignments.by_me = {};
+
       for (var i in data) {
-        getAssignment(data[i].user, data[i].task);
+        watchMember(data[i].user, allRef);
       }
     });
   }
 
   /**
   *
-  * retrieves data for a single task in a user's assigned_to_me key
+  * sets watchers for others, allowing changes to be pushed
   *
-  * 1. check if data exists in local memory (at $scope.members[memberID].assigned_to_me)
-  * 1.b   if not, retrieves from db
+  * 1. check if a watcher is already set (ie, user.watched == true)
+  * 2. if not, immediately set user.watched, then set up watcher
+  * 3. watcher simply keeps member.assigned_to_me up to date
   *
-  * 2. sets the assignment in $scope.assignments.by_me async in firebase callback
   */
-
-  var getAssignment = function (memberID, taskID) {
+  var watchMember = function(memberID, allRef) {
     var thisMember = $scope.team.members[memberID];
 
-    // 2.
-    var addToABM = function() {
-      var thisTask = thisMember.assigned_to_me[taskID];
-      thisTask.assignee = thisMember.uid;
-      $scope.assignments.by_me[taskID] = thisTask;
-    }
+    // 1
+    if (!thisMember.watched) {
+      // 2
+      thisMember.watched = true;
+      $scope.watched.push(thisMember);
 
-    // 1.
-    // second condition needed for new additions
-    if (!thisMember.assigned_to_me || !thisMember.assigned_to_me[taskID]) {
-      // 1.b
-      var ref = new Firebase(FURL).child('team/' + $scope.team.name + '/all/' + memberID + '/assigned_to_me');
-      ref.once('value', function(data) {
+      allRef.child(memberID + '/assigned_to_me').on('value', function(data) {
+        // 3
         thisMember.assigned_to_me = data.val();
-        addToABM();
       });
-    } else {
-      addToABM();
     }
   }
 
+
   /**
   *
-  * retrofit to getOwnTasks
   * called by checkStatus
   */
-  $scope.getTeamTasks = function(memberID, users){
+  $scope.getUserDetails = function(memberID, users){
     var userrefs = new Firebase(FURL + 'profile/' + memberID);
     userrefs.once("value", function(data) {
              //console.log(memberID);
       var p = data.val();
              //console.log(p);
       var pic,style;
-      if(users[memberID].photo){
+      if (users[memberID].photo){
         style = "background:url("+users[memberID].photo+") no-repeat center center fixed; -webkit-background-size: cover;-moz-background-size: cover; -o-background-size: cover; background-size: cover";
-      } else{
+      } else {
         style = false;
       }
       var teamMember = {
@@ -130,16 +128,16 @@ angular.module('webappApp')
         pic : p.gravatar,
         task : users[memberID].name,
         time : users[memberID].time,
-        weather:users[memberID].weather,
-        city:users[memberID].city,
+        weather: users[memberID].weather,
+        city: users[memberID].city,
         uid : memberID,
-        photo:style
+        photo: style
       };
 
       $scope.team.members[memberID] = teamMember;
       $scope.$apply();
 
-      });
+    });
   }
 
   // gets history for a user
@@ -378,7 +376,6 @@ angular.module('webappApp')
   */
   $scope.init = function(){
     var ref = new Firebase(FURL);
-    console.log(Auth.user);
     ref.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
       data = data.val();
       $scope.team.name = data;
@@ -386,7 +383,7 @@ angular.module('webappApp')
       $scope.getCategories();
       $scope.getTaskStatuses();
       $scope.checkStatus(); // start stream
-      // $scope.watchAssignments(); // now called from checkStatus to be in sequence
+      // $scope.setWatchAssignments(); // now called from checkStatus to be in sequence
 
     })
   }
