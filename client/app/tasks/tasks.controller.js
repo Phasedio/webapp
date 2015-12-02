@@ -11,6 +11,7 @@ angular.module('webappApp')
       categorySelect : [],
       categoryObj : {}
     };
+    $scope.taskStatuses = {};
     $scope.viewType = 'notPaid';
 
     $scope.selectedUser = {
@@ -127,20 +128,19 @@ angular.module('webappApp')
     var team = $scope.team.name;
     new Firebase(FURL).child('team').child(team).child('category').once('value', function(cat) {
       cat = cat.val();
-      console.log(cat);
+      console.log('cat', cat);
       if(typeof cat !== 'undefined' && cat != null){
-
         var keys = Object.keys(cat);
         $scope.team.categoryObj = cat;
-          for(var i = 0; i < keys.length; i++){
+          for (var i = 0; i < keys.length; i++){
             var obj = {
               name : cat[keys[i]].name,
               color : cat[keys[i]].color,
               key : keys[i]
             }
-              $scope.team.categorySelect.push(obj);
+            $scope.team.categorySelect.push(obj);
           }
-          console.log($scope.team);
+          console.log('team', $scope.team);
       }else{
         //they have no categories so add them
         var obj = [
@@ -171,6 +171,42 @@ angular.module('webappApp')
       }
     });
   };
+
+  // fills out the task status types in $scope.taskStatuses
+  $scope.getTaskStatuses = function() {
+    new Firebase(FURL).child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
+      tS = tS.val();
+      // console.log('taskStatuses', tS);
+      if (typeof tS !== 'undefined' && tS != null){
+        // assign keys to obj, set obj to $scope
+        for (var i in tS) {
+          tS[i]['key'] = i;
+        }
+        $scope.taskStatuses = tS;
+        // console.log('$scope.taskStatuses', $scope.taskStatuses);
+      } else {
+        // no status types exist, add defaults
+        var obj = [
+          { name : 'In Progress' },
+          { name : 'Complete' },
+          { name : 'Assigned'  }
+        ];
+
+         // save to db
+        new Firebase(FURL).child('taskStatuses').set(obj);
+        // get data from db to ensure synchronicity
+        new Firebase(FURL).child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
+          tS = tS.val();
+          // assign keys to obj and set to $scope
+          for (var i in tS) {
+            tS[i]['key'] = i;
+          }
+          $scope.taskStatuses = tS;
+          // console.log('$scope.taskStatuses', $scope.taskStatuses);
+        });
+      }
+    });
+  }
 
   /**
   *
@@ -328,6 +364,7 @@ angular.module('webappApp')
       $scope.team.name = data;
 
       $scope.getCategories();
+      $scope.getTaskStatuses();
       $scope.checkStatus(); // start stream
 
     })
