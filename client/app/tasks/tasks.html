@@ -5,6 +5,10 @@
     <div class="col-xs-3 team-aside">
       <h5>Tasks assigned to me</h5>
       <div class="teamDirectory-members">
+        <div ng-repeat="assignment in assignments.to_me | orderBy : 'time'">
+          <h6>{{assignment.name}}</h6>
+          <p>on {{assignment.time | date}} by {{team.members[assignment.assigned_by].name}}</p>
+        </div>
           <!-- <div class=" teamDirectory-member" ng-repeat="member in team.members | orderBy: 'name'" ng-click="viewUser(member)">
             <img width="25" src="{{member.pic}}">
             <div class="member-names">
@@ -15,7 +19,10 @@
       </div>
       <h5>Tasks I've assigned to others</h5>
       <div>
-
+        <div ng-repeat="ref in assignments.by_me">
+          <h6>assignment id: {{ref.task}}</h6>
+          <p>assigned to member {{ref.user}}</p>
+        </div>
       </div>
       <!-- <h5>Categories</h5>
       <div class="teamDirectory-category">
@@ -83,7 +90,7 @@
 
           <label for="assignee">Assign to</label>
           <!-- this should default to self -->
-          <select ng-options="member as member.name for member in team.members | orderBy:'name'" ng-model="newTask.assignee" id="assignee"></select>
+          <select ng-options="member as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee"></select>
         
         </div>
         <div class="modal-footer">

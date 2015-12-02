@@ -20,32 +20,54 @@ angular.module('webappApp')
         uid : '',
         history: []
       };
+    $scope.assignments = {
+      to_me : [],
+      by_me : []
+    }
     /**
     * 
     * updates stream?
     * if so, retrofit to only watch own tasks
     * 
     * task streams to watch:
-    *   - own updates (in progress)
-    *   - own assignments (to self or to others)
-    *   - assignments to me by others
+    *   - own updates (in progress) 
+    *   - own assignments (to self or to others) all/(me)/assigned_by_me
+    *   - assignments to me by others all/(me)/assigned_to_me
     */
     $scope.checkStatus = function(){
      var team = $scope.team.name;
      new Firebase(FURL).child('team').child(team).child('task').on('value', function(users) {
-     $scope.team.members = [];
-       users = users.val();
+      $scope.team.members = [];
+      users = users.val();
 
-       if (users) {
-         var teamUID = Object.keys(users);
-
-            for (var i = 0; i < teamUID.length; i++) {
-                $scope.getTeamTasks(teamUID[i], users);
-            }
-       }
+      if (users) {
+        var teamUID = Object.keys(users);
+        for (var i = 0; i < teamUID.length; i++) {
+          $scope.getTeamTasks(teamUID[i], users);
+        }
+      }
 
      });
   };
+
+
+  /**
+  *
+  * sets up watchers for current users task assignments - to and by
+  *
+  */
+  $scope.watchAssignments = function() {
+    var meRef = new Firebase(FURL).child('team/' + $scope.team.name + '/all/' + Auth.user.uid);
+    meRef.child('assigned_to_me').on('value', function(data) {
+      $scope.assignments.to_me = data.val(); // whole task objects already here
+    });
+
+
+    meRef.child('assigned_by_me').on('value', function(data) {
+      $scope.assignments.by_me = data.val();
+      console.log($scope.assignments.by_me);
+    });
+  }
 
   /**
   *
@@ -75,7 +97,7 @@ angular.module('webappApp')
         photo:style
       };
 
-      $scope.team.members.push(teamMember);
+      $scope.team.members[memberID] = teamMember;
       $scope.$apply();
 
       });
@@ -281,8 +303,10 @@ angular.module('webappApp')
     var newTaskRef = all.child(newTask.assignee.uid).child('assigned_to_me').push(status);
 
     // 2
-    var assignmentReference = [];
-    assignmentReference[newTaskRef.key()] = newTask.assignee.uid;
+    var assignmentReference = {
+      user : newTask.assignee.uid,
+      task: newTaskRef.key()
+    }
     all.child(Auth.user.uid).child('assigned_by_me').push(assignmentReference);
 
 
@@ -321,6 +345,7 @@ angular.module('webappApp')
       $scope.getCategories();
       $scope.getTaskStatuses();
       $scope.checkStatus(); // start stream
+      $scope.watchAssignments();
 
     })
   }
