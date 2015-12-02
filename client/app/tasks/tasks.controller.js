@@ -311,7 +311,8 @@ angular.module('webappApp')
         lat : $scope.lat ? $scope.lat : 0,
         long : $scope.long ? $scope.long : 0
       },
-      assignee : newTask.assignee.uid
+      assignee : newTask.assignee.uid,
+      status: 2 // "Assigned", there should be a more elegant way to set this
     };
 
     // babbys first status
