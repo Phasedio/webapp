@@ -7,6 +7,7 @@ angular.module('webappApp')
     $scope.team = {
       name : '',
       members : {},
+      lastUpdated : [],
       history : [],
       categorySelect : [],
       categoryObj : {}
@@ -43,6 +44,7 @@ angular.module('webappApp')
           ga('set', 'Team Name', data);
         	$scope.getCategories();
         	$scope.checkStatus();
+
         });
     };
 
@@ -50,6 +52,8 @@ angular.module('webappApp')
      var team = $scope.team.name;
      new Firebase(FURL).child('team').child(team).child('task').on('value', function(users) {
      $scope.team.history = [];
+     $scope.team.lastUpdated = [];
+
        users = users.val();
 
        if(users){
@@ -61,6 +65,7 @@ angular.module('webappApp')
             }
 
             //console.log($scope.teamMembers);
+
             //$scope.$apply();
        }
 
@@ -88,6 +93,7 @@ angular.module('webappApp')
         };
 
         $scope.team.members[memberID] = teamMember;
+        $scope.team.lastUpdated.push(teamMember);
         var startTime = new Date().getTime();
 	    var endTime = startTime - 86400000;
 	    console.log(startTime);

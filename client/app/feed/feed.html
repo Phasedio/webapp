@@ -118,9 +118,9 @@
 								<p class="semi">members <span>{{teamLength}}</span>
 						</div>
 						<div class="ph-members">
-							<div class="ph-member-head" ng-repeat="(key, memeber) in team.members | orderBy : 'team.members[key].time':false ">
+							<div class="ph-member-head" ng-repeat="memeber in team.lastUpdated | orderBy : 'time':true ">
 								<img src="{{memeber.pic}}" width="40px" height="40px">
-								<p>Last update <span am-time-ago="memeber.time"></span></p>
+								<p>Last update <span am-time-ago="memeber.time"></span> </p>
 							</div>
 
 
