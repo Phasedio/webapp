@@ -81,7 +81,7 @@ angular.module('webappApp')
       });
   }
 
-  // probably not needed
+  // gets history for a user
   $scope.getHistory = function(uid){
     var ref = new Firebase(FURL);
     ref.child('team').child($scope.team.name).child('all').child(uid).once('value',function(data){
@@ -244,7 +244,8 @@ angular.module('webappApp')
     
 
     // format object to send to db
-    var taskPrefix = '';
+    var taskPrefix = '',
+      weather = '';
     var status = {
       name: taskPrefix + newTask.name,
       time: new Date().getTime(),
@@ -265,18 +266,27 @@ angular.module('webappApp')
     // babbys first status
     console.log('status', status);
 
-    return; // tmp
+    // return; // tmp
 
     // push new task to db
+
+    // 1. add task to team/(teamname)/all/(newTask.assignee.uid)/assigned_to_me
+    // 2. add reference { (task_id) : (assignee_id) } to team/(teamname)/all/(Auth.user)/assigned_by_me
+
     var teamRef = new Firebase(FURL),
-      team = $scope.team.name;
+      team = $scope.team.name,
+      all = teamRef.child('team').child(team).child('all');
 
-    // add to user but don't set to their active task
-    teamRef.child('team').child(team).child('all').child(newTask.assignee).push(status, function(){
-      console.log('status set');
-      $scope.updateStatus = ''; // reset modal
-    });
+    // 1
+    var newTaskRef = all.child(newTask.assignee.uid).child('assigned_to_me').push(status);
 
+    // 2
+    var assignmentReference = [];
+    assignmentReference[newTaskRef.key()] = newTask.assignee.uid;
+    all.child(Auth.user.uid).child('assigned_by_me').push(assignmentReference);
+
+
+    return;
 
     //reset current task in feed
     // (all old stuff)
