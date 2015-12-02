@@ -94,7 +94,7 @@ angular.module('webappApp')
     var thisMember = $scope.team.members[memberID];
 
     // 1
-    if (!thisMember.watched) {
+    if (thisMember && !thisMember.watched) {
       // 2
       thisMember.watched = true;
       $scope.watched.push(thisMember);
@@ -358,6 +358,42 @@ angular.module('webappApp')
 
     $scope.showTaskView = true;
     $scope.taskTime = status.time; 
+  }
+
+  /**
+  *
+  * sets an assigned task to the user's active task
+  * and sets status of that task to "In Progress" (0)
+  *
+  */
+  $scope.activateTask = function(assignment, assignmentID) {
+    ga('send', 'event', 'Update', 'submitted');
+
+    // copy task so we don't damage the original assignment
+    var task = angular.copy(assignment);
+
+    // update time to now and place to here (feature pending)
+    task.time = new Date().getTime();
+    task.lat = $scope.lat ? $scope.lat : 0;
+    task.long = $scope.long ? $scope.long : 0;
+
+    // delete attrs not used by feed
+    delete task.status;
+    delete task.assigned_by;
+
+    console.log('activating task', task, assignment);
+    // return;
+
+    // update original assignment status to In Progress
+    var ref = new Firebase(FURL).child('team/' + $scope.team.name);
+    ref.child('all/' + $scope.myID + '/assigned_to_me/' + assignmentID + '/status').set(0);
+
+    // publish to stream
+    ref.child('task/' + Auth.user.uid).set(task);
+    ref.child('all/' + Auth.user.uid).push(task, function() {
+      console.log('status update complete');
+    });
+
   }
 
   /**
