@@ -11,6 +11,7 @@ angular.module('webappApp')
       categorySelect : [],
       categoryObj : {}
     };
+    $scope.teamLength = 0;
     $scope.selectedCategory = '';
 
 
@@ -53,6 +54,7 @@ angular.module('webappApp')
 
        if(users){
          var teamUID = Object.keys(users);
+         $scope.teamLength = teamUID.length;
 
             for (var i = 0; i < teamUID.length; i++) {
                 $scope.getTeamTasks(teamUID[i], users);

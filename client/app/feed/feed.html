@@ -1,9 +1,10 @@
 <style>
 	body {
-	  background:  linear-gradient(
+	  /*background:  linear-gradient(
       rgba(0, 0, 0, 0.25),
       rgba(0, 0, 0, 0.25)
-    ), url(assets/images/{{dayImage}}) no-repeat center center fixed;
+    ), url(assets/images/{{dayImage}}) no-repeat center center fixed;*/
+		background: #F2F2F2;
 	  -webkit-background-size: cover;
 	  -moz-background-size: cover;
 	  -o-background-size: cover;
@@ -11,7 +12,132 @@
 	}
 </style>
 
-<div ng-include="'components/navbar/navbar.html'"></div>
+<div class="feedarea">
+	<nav class="navbar navbar-default">
+	  <div class="container-fluid">
+	    <!-- Brand and toggle get grouped for better mobile display -->
+	    <div class="navbar-header">
+	      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+	        <span class="sr-only">Toggle navigation</span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	      </button>
+	      <a class="navbar-brand" href="#"><img src="assets/images/phased-logo.svg" width="22px" height=27px></a>
+	    </div>
+
+	    <!-- Collect the nav links, forms, and other content for toggling -->
+	    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+	      <ul class="nav navbar-nav navbar-right">
+	        <li><a href="#">feed <span class="sr-only">(current)</span></a></li>
+	        <li><a href="#">reports</a></li>
+					<li><a href="#">team</a></li>
+					<li><a href="#">profile</a></li>
+	      </ul>
+
+	    </div><!-- /.navbar-collapse -->
+	  </div><!-- /.container-fluid -->
+	</nav>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-xs-12 col-md-3">
+				<div class="ph-card ph-team">
+					<div class="ph-team-info">
+						<p class="semi">team : Phased</p>
+					</div>
+					<div class="ph-team-stat">
+						<ul>
+							<li><span>status updates</span> <span>1000</span></li>
+							<li><span>members</span> <span>10</span></li>
+							<li><span>categories</span> <span>5</span></li>
+						</ul>
+					</div>
+				</div>
+				<div class="visible-md ph-card">
+					<div class="ph-member-total">
+							<p class="semi">members <span>{{teamLength}}</span>
+					</div>
+					<div class="ph-members">
+						<div class="ph-member-head" ng-repeat="item in team.members">
+							<img src="{{item.pic}}" width="40px" height="40px">
+						</div>
+
+
+					</div>
+
+				</div>
+			</div>
+			<div class="col-xs-12 col-md-9 col-lg-6 ph-update-area">
+				<div class="ph-card">
+					<form class="ph-form-feed" name="taskForm" ng-submit="addTask(task)" novalidation>
+						<input type="text" ng-model="task.name" ng-trim="false" maxlength="150" placeholder="enter your status here" required>
+						<div class="ph-form-extras">
+							<div class="ph-cat-list">
+								<button type="button"  ng-repeat="(key, category) in team.categoryObj" ng-show="$index<6" class="btn button-phased-wht" ng-class="{active : key == selectedCategory}" style="outline: none; color:#000; font-size:1.2rem;" ng-click="categoryChoice(key)">
+            <div class="feed-cat-color" style="width: 1rem; height: 1rem; margin-right:0.5rem; display: inline-block; background-color:{{category.color}}"></div>
+            {{category.name}}
+          </button>
+							</div>
+							<button type="button">+</button>
+							<button type="submit">submit</button>
+
+						</div>
+					</form>
+				</div>
+				<div class="ph-card no-padding">
+
+					<div class="ph-feed-filter">
+						<div class="ph-feed-total">
+							<p class="semi">updates <span>{{team.history.length}}</span>
+						</div>
+					</div>
+					<div class="ph-feed-roll">
+						<div class="ph-update" ng-repeat="item in team.history | orderBy : 'time':true ">
+							<div class="ph-feed-head">
+								<img src="{{$parent.team.members[item.user].pic}}" width="40px" height="40px">
+							</div>
+							<div class="ph-feed-status">
+								<p><span class="update-name">{{$parent.team.members[item.user].name}}</span> {{item.name}}</p>
+							</div>
+							<div class="ph-feed-meta">
+								<span am-time-ago="item.time"></span>
+								<div class="ph-feed-cat">
+									<div class="ph-cat-box" style="background: {{$parent.team.categoryObj[item.cat].color}}"></div>
+									<span>{{$parent.team.categoryObj[item.cat].name}}</span>
+								</div>
+							</div>
+						</div>
+
+
+					</div>
+				</div>
+			</div>
+			<div class="visible-lg col-lg-3">
+					<div class="ph-card">
+						<div class="ph-member-total">
+								<p class="semi">members <span>{{teamLength}}</span>
+						</div>
+						<div class="ph-members">
+							<div class="ph-member-head" ng-repeat="(key, memeber) in team.members | orderBy : 'team.members[key].time':false ">
+								<img src="{{memeber.pic}}" width="40px" height="40px">
+								<p>Last update <span am-time-ago="memeber.time"></span></p>
+							</div>
+
+
+						</div>
+
+					</div>
+			</div>
+
+		</div>
+
+</div>
+
+
+
+
+<!-- <div ng-include="'components/navbar/navbar.html'"></div>
+
 <div class="container-fluid">
 	<div class="col-xs-6 col-xs-offset-3">
 		<form name="taskForm" ng-submit="addTask(task)" class="greeting" novalidation>
@@ -26,7 +152,7 @@
           <button type="button" class="btn button-phased-wht" style="outline: none" ng-click="moreCat()">+ More</button>
         </div>
         <p ><small ng-show="taskForm.$error.maxlength">Your update is too long!</small>&nbsp;</p>
-			<!-- <select ng-model='task.cat' ng-options="item.key as item.name for item in team.categorySelect"></select> -->
+
 			<button type="submit" ><i class="fa fa-arrow-right"></i></button>
 		</form>
 		<div class="card card--small" ng-repeat="item in team.history | orderBy : 'time':true ">
@@ -35,15 +161,13 @@
 	            <h5 class="card__subtitle">{{$parent.team.members[item.user].name}} &nbsp;<span>{{item.time | amDateFormat:'HH:mm MM/DD/YY'}}</span></h5>
 	            <h2 class="card__title no-shadow">{{item.name | limitTo : 25 }}{{item.name.length > 25 ? '...' : ''}}</h2>
 	          </div>
-	          <!-- <div class="card__meta">
-	              <button class="btn"><i class="fa fa-heart-o"></i></button>
-	          </div> -->
+
 	       </div>
 	</div>
-</div>
+</div> -->
 
 <!--Categories Modal-->
-<div class="modal fade" id="catModal">
+<!-- <div class="modal fade" id="catModal">
 <div class="modal-dialog" style="width:60%">
 	<div class="modal-content">
 		<div class="modal-header">
@@ -64,6 +188,6 @@
 				</button>
 			</div>
 		</div>
-	</div><!-- /.modal-content -->
-</div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+	</div>
+</div>
+</div> /.modal -->
