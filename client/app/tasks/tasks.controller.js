@@ -21,9 +21,14 @@ angular.module('webappApp')
         history: []
       };
     /**
-    * ???
+    * 
     * updates stream?
     * if so, retrofit to only watch own tasks
+    * 
+    * task streams to watch:
+    *   - own updates (in progress)
+    *   - own assignments (to self or to others)
+    *   - assignments to me by others
     */
     $scope.checkStatus = function(){
      var team = $scope.team.name;
@@ -31,7 +36,7 @@ angular.module('webappApp')
      $scope.team.members = [];
        users = users.val();
 
-       if(users){
+       if (users) {
          var teamUID = Object.keys(users);
 
             for (var i = 0; i < teamUID.length; i++) {
@@ -76,6 +81,7 @@ angular.module('webappApp')
       });
   }
 
+  // probably not needed
   $scope.getHistory = function(uid){
     var ref = new Firebase(FURL);
     ref.child('team').child($scope.team.name).child('all').child(uid).once('value',function(data){
@@ -89,7 +95,7 @@ angular.module('webappApp')
 
   /**
   *
-  * retrofit to viewTask
+  * retrofit to viewTask?
   */
   $scope.viewUser = function(user){
     ga('send', 'event', 'Team', 'View user');
@@ -122,7 +128,8 @@ angular.module('webappApp')
 
   /**
   *
-  * keep
+  * fills out $scope.team.categories
+  * called in $scope.init()
   */
   $scope.getCategories = function(){
     var team = $scope.team.name;
@@ -172,7 +179,12 @@ angular.module('webappApp')
     });
   };
 
-  // fills out the task status types in $scope.taskStatuses
+  /**
+  *
+  * fills out the task status types in $scope.taskStatuses
+  * called in $scope.init()
+  */
+
   $scope.getTaskStatuses = function() {
     new Firebase(FURL).child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
       tS = tS.val();
@@ -208,81 +220,16 @@ angular.module('webappApp')
     });
   }
 
+
   /**
   *
-  * retrofit to addTask
+  * assigns new task to a user, possibly self
+  *
+  * 1. check input / format input
+  * 2. push to db
+  * 3. reset modal
+  *
   */
-  $scope.addMembers = function(names){
-    ga('send', 'event', 'Team', 'Member added');
-    //_gaq.push(['_trackEvent', 'Team', 'Add member']);
-  	var ref = new Firebase(FURL);
-    // grab all users and see if they match an email in the system
-    ref.child('profile').once('value', function(data){
-      data = data.val();
-
-      var selectedUID = Object.keys(data);
-      var isSet = false;
-
-      // if this email matches the one from the profile page assign this team to their account
-      for(var y = 0; y < selectedUID.length; y++){
-        console.log('test3');
-        if(names.email == data[selectedUID[y]].email){
-          isSet = true;
-          //get the key of the uid
-
-          //save to new node so that zapier can email.
-          ref.child('team-invite-existing-member').push({teams : { 0 : Auth.team},email : names.email, inviteEmail: $scope.currentUser.email, inviteName: $scope.currentUser.name });
-
-          //push new team to member
-          ref.child('profile').child(selectedUID[y]).child('teams').push(Auth.team);
-          break;
-        }
-      }
-      // if no matches are found create a profile-in-waiting with this team assigned.
-      if(!isSet){
-        console.log(names.email, $scope.currentUser);
-
-        // loop profile-in-waiting to find a match
-        ref.child('profile-in-waiting').once('value', function(data){
-          data = data.val();
-          var selectedUID = Object.keys(data);
-          var thisSet = false;
-          for(var y = 0; y < selectedUID.length; y++){
-            console.log(data[selectedUID[y]].email);
-            if(names.email == data[selectedUID[y]].email){
-              thisSet = true;
-              //check if email already has team attached
-              var userTeams = Object.keys(data[selectedUID[y]].teams);
-              var profileOfUser = data[selectedUID[y]];
-              var change = false;
-
-              for(var u = 0; u < userTeams.length; u++){
-                if(profileOfUser.teams[userTeams[u]] == Auth.team){
-                  break;
-                }else{
-                  change = true;
-                  break;
-                }
-              }
-              if(change){
-                //push new team to member
-                ref.child('profile-in-waiting').child(selectedUID[y]).child('teams').push(Auth.team);
-                //sendTheMail(msg);
-                break;
-              }
-            }
-          }
-          if(!thisSet){
-            ref.child('profile-in-waiting').push({teams : { 0 : Auth.team},email : names.email, inviteEmail: $scope.currentUser.email, inviteName: $scope.currentUser.name });
-            ref.child('profile-in-waiting2').push({teams : { 0 : Auth.team},email : names.email, inviteEmail: $scope.currentUser.email, inviteName: $scope.currentUser.name });
-          }
-        });
-      }
-    });
-    $('#myModal').modal('toggle');
-  };
-
-
   $scope.addTask = function(newTask){
     ga('send', 'event', 'task', 'task added');
 
@@ -301,7 +248,7 @@ angular.module('webappApp')
     var status = {
       name: taskPrefix + newTask.name,
       time: new Date().getTime(),
-      user: Auth.user.uid,
+      user: newTask.assignee.uid,
       cat : newTask.category ? newTask.category : '',
       city: $scope.city ? $scope.city : 0,
       weather: weather,
@@ -311,7 +258,7 @@ angular.module('webappApp')
         lat : $scope.lat ? $scope.lat : 0,
         long : $scope.long ? $scope.long : 0
       },
-      assignee : newTask.assignee.uid,
+      assigned_by : Auth.user.uid,
       status: 2 // "Assigned", there should be a more elegant way to set this
     };
 
@@ -320,43 +267,40 @@ angular.module('webappApp')
 
     return; // tmp
 
-    // push update to db
+    // push new task to db
     var teamRef = new Firebase(FURL),
       team = $scope.team.name;
-    teamRef.child('team').child(team).child('task').child(Auth.user.uid).set(status);
-    teamRef.child('team').child(team).child('all').child(Auth.user.uid).push(status,function(){
-      console.log('status set');
-      $scope.updateStatus = '';
-      //we are getting the user.uid, we need to extract the member off the user.uid.
-      //then we can do a scope.setSelected off that member.
 
-        //Send push notifications to team
-      // $http.get('http://45.55.200.34:8080/push/update/'+team+'/'+Auth.user.name+'/'+status.name,'').success(function(data){
-      //   //alert(data);
-      // });
+    // add to user but don't set to their active task
+    teamRef.child('team').child(team).child('all').child(newTask.assignee).push(status, function(){
+      console.log('status set');
+      $scope.updateStatus = ''; // reset modal
     });
 
 
-    //reset scope
+    //reset current task in feed
+    // (all old stuff)
     $scope.task = update;
     $scope.task.name = '';
 
     $scope.showTaskView = true;
-    $scope.taskTime = status.time; // we didnt have status.time so i think this fixes the problem(?)
-    // maybe we need a timeout function here to run around out $apply()??
-
-    //$scope.$apply();
-
-    //need to find out what the member/who is
-    //$scope.getTaskHistory(member);
+    $scope.taskTime = status.time; 
   }
 
+  /**
+  * pop open add task modal
+  */
   $scope.addTaskModal = function(){
-    ga('send', 'event', 'Modal', 'Member add');
+    ga('send', 'event', 'Modal', 'Task add');
     $('#myModal').modal('toggle');
   }
 
 
+  /**
+  *
+  *   ~*~ $scope.init ~*~
+  *
+  */
   $scope.init = function(){
     var ref = new Firebase(FURL);
     console.log(Auth.user);
