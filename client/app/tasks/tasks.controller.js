@@ -348,16 +348,9 @@ angular.module('webappApp')
     }
     all.child(Auth.user.uid).child('assigned_by_me').push(assignmentReference);
 
-
-    return;
-
     //reset current task in feed
-    // (all old stuff)
-    $scope.task = update;
-    $scope.task.name = '';
-
-    $scope.showTaskView = true;
-    $scope.taskTime = status.time; 
+    $('#myModal').modal('toggle');
+    $scope.newTask = {};
   }
 
   /**
