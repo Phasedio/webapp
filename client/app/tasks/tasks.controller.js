@@ -84,21 +84,27 @@ angular.module('webappApp')
   * 2. sets the assignment in $scope.assignments.by_me async in firebase callback
   */
 
-  function getAssignment (memberID, taskID) {
+  var getAssignment = function (memberID, taskID) {
     var thisMember = $scope.team.members[memberID];
 
+    // 2.
+    var addToABM = function() {
+      var thisTask = thisMember.assigned_to_me[taskID];
+      thisTask.assignee = thisMember.uid;
+      $scope.assignments.by_me[taskID] = thisTask;
+    }
+
     // 1.
-    if (!thisMember.assigned_to_me) {
+    // second condition needed for new additions
+    if (!thisMember.assigned_to_me || !thisMember.assigned_to_me[taskID]) {
       // 1.b
       var ref = new Firebase(FURL).child('team/' + $scope.team.name + '/all/' + memberID + '/assigned_to_me');
       ref.once('value', function(data) {
         thisMember.assigned_to_me = data.val();
-        // 2.
-        var thisTask = thisMember.assigned_to_me[taskID];
-        thisTask.assignee = thisMember.uid;
-        $scope.assignments.by_me[taskID] = thisTask;
-        console.log('abm', $scope.assignments.by_me);
+        addToABM();
       });
+    } else {
+      addToABM();
     }
   }
 
