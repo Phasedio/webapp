@@ -2,17 +2,18 @@
 
 <section class="container">
   <div class="row">
+
     <!-- ASSIGNED BY ME -->
     <div class="col-xs-4">
       <h2>Tasks I've assigned to others</h2>
       <button class="btn btn-block button-phased-wht" ng-click=" addTaskModal();">Assign a task</button>
-      <div>
-        <div ng-repeat="member in watched">
-          <h3>{{member.name}}</h3>
-          <div ng-repeat="assignment in member.assigned_to_me | orderBy : 'time'">
-            <h4>{{assignment.name}}</h4>
-            <p>on {{assignment.time | date:'short'}}</p>
-          </div>
+      <div ng-repeat="member in watched">
+        <h3>{{member.name}}</h3>
+        <div ng-repeat="assignment in member.assigned_to_me | orderBy : 'time'" class="task">
+          <h4>{{assignment.name}}</h4>
+          <p>on {{assignment.time | date:'short'}}</p>
+          <p>in {{team.categoryObj[assignment.cat].name}}</p>
+          <p>status: {{taskStatuses[assignment.status].name}}</p>
         </div>
       </div>
     </div>
@@ -21,9 +22,12 @@
     <div class="col-xs-4 team-aside">
       <h2>Tasks assigned to me</h2>
       <div>
-        <div ng-repeat="assignment in team.members[myID].assigned_to_me | orderBy : 'time'">
+        <div ng-repeat="assignment in team.members[myID].assigned_to_me | orderBy : 'time'" class="task">
           <h4>{{assignment.name}}</h4>
+          <h5><a href="#">work on this</a></h5>
           <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
+          <p>in {{team.categoryObj[assignment.cat].name}}</p>
+          <p>status: {{taskStatuses[assignment.status].name}}</p>
         </div>
       </div>
     </div>
