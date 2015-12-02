@@ -24,30 +24,31 @@ angular.module('webappApp')
       to_me : [],
       by_me : []
     }
-    /**
-    * 
-    * updates stream?
-    * if so, retrofit to only watch own tasks
-    * 
-    * task streams to watch:
-    *   - own updates (in progress) 
-    *   - own assignments (to self or to others) all/(me)/assigned_by_me
-    *   - assignments to me by others all/(me)/assigned_to_me
-    */
-    $scope.checkStatus = function(){
-     var team = $scope.team.name;
-     new Firebase(FURL).child('team').child(team).child('task').on('value', function(users) {
-      $scope.team.members = [];
-      users = users.val();
 
-      if (users) {
-        var teamUID = Object.keys(users);
-        for (var i = 0; i < teamUID.length; i++) {
-          $scope.getTeamTasks(teamUID[i], users);
-        }
+
+  /**
+  * 
+  * updates stream?
+  * if so, retrofit to only watch own tasks
+  * 
+  * task streams to watch:
+  *   - own updates (in progress) 
+  */
+  $scope.checkStatus = function(){
+   var team = $scope.team.name;
+   new Firebase(FURL).child('team').child(team).child('task').on('value', function(users) {
+    $scope.team.members = [];
+    users = users.val();
+
+    if (users) {
+      var teamUID = Object.keys(users);
+      for (var i = 0; i < teamUID.length; i++) {
+        $scope.getTeamTasks(teamUID[i], users);
       }
+      $scope.watchAssignments();
+    }
 
-     });
+   });
   };
 
 
@@ -55,6 +56,8 @@ angular.module('webappApp')
   *
   * sets up watchers for current users task assignments - to and by
   *
+  *   - own assignments (to self or to others) all/(me)/assigned_by_me
+  *   - assignments to me by others all/(me)/assigned_to_me
   */
   $scope.watchAssignments = function() {
     var meRef = new Firebase(FURL).child('team/' + $scope.team.name + '/all/' + Auth.user.uid);
@@ -62,11 +65,41 @@ angular.module('webappApp')
       $scope.assignments.to_me = data.val(); // whole task objects already here
     });
 
-
     meRef.child('assigned_by_me').on('value', function(data) {
-      $scope.assignments.by_me = data.val();
-      console.log($scope.assignments.by_me);
+      data = data.val();
+      $scope.assignments.by_me = {};
+      for (var i in data) {
+        getAssignment(data[i].user, data[i].task);
+      }
     });
+  }
+
+  /**
+  *
+  * retrieves data for a single task in a user's assigned_to_me key
+  *
+  * 1. check if data exists in local memory (at $scope.members[memberID].assigned_to_me)
+  * 1.b   if not, retrieves from db
+  *
+  * 2. sets the assignment in $scope.assignments.by_me async in firebase callback
+  */
+
+  function getAssignment (memberID, taskID) {
+    var thisMember = $scope.team.members[memberID];
+
+    // 1.
+    if (!thisMember.assigned_to_me) {
+      // 1.b
+      var ref = new Firebase(FURL).child('team/' + $scope.team.name + '/all/' + memberID + '/assigned_to_me');
+      ref.once('value', function(data) {
+        thisMember.assigned_to_me = data.val();
+        // 2.
+        var thisTask = thisMember.assigned_to_me[taskID];
+        thisTask.assignee = thisMember.uid;
+        $scope.assignments.by_me[taskID] = thisTask;
+        console.log('abm', $scope.assignments.by_me);
+      });
+    }
   }
 
   /**
@@ -114,6 +147,8 @@ angular.module('webappApp')
       });
     });
   }
+
+
 
   /**
   *
@@ -345,7 +380,7 @@ angular.module('webappApp')
       $scope.getCategories();
       $scope.getTaskStatuses();
       $scope.checkStatus(); // start stream
-      $scope.watchAssignments();
+      // $scope.watchAssignments(); // now called from checkStatus to be in sequence
 
     })
   }

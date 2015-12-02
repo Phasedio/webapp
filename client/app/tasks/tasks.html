@@ -7,7 +7,7 @@
       <div class="teamDirectory-members">
         <div ng-repeat="assignment in assignments.to_me | orderBy : 'time'">
           <h6>{{assignment.name}}</h6>
-          <p>on {{assignment.time | date}} by {{team.members[assignment.assigned_by].name}}</p>
+          <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
         </div>
           <!-- <div class=" teamDirectory-member" ng-repeat="member in team.members | orderBy: 'name'" ng-click="viewUser(member)">
             <img width="25" src="{{member.pic}}">
@@ -19,9 +19,9 @@
       </div>
       <h5>Tasks I've assigned to others</h5>
       <div>
-        <div ng-repeat="ref in assignments.by_me">
-          <h6>assignment id: {{ref.task}}</h6>
-          <p>assigned to member {{ref.user}}</p>
+        <div ng-repeat="assignment in assignments.by_me | orderBy : 'time'">
+          <h6>{{assignment.name}}</h6>
+          <p>on {{assignment.time | date:'short'}} to {{team.members[assignment.assignee].name}}</p>
         </div>
       </div>
       <!-- <h5>Categories</h5>
