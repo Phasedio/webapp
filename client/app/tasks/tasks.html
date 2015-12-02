@@ -3,29 +3,33 @@
 <section class="container">
   <div class="row">
     <div class="col-xs-3 team-aside">
-      <h5>Tasks</h5>
+      <h5>Tasks assigned to me</h5>
       <div class="teamDirectory-members">
-        <div class=" teamDirectory-member" ng-repeat="member in team.members | orderBy: 'name'" ng-click="viewUser(member)">
+          <!-- <div class=" teamDirectory-member" ng-repeat="member in team.members | orderBy: 'name'" ng-click="viewUser(member)">
             <img width="25" src="{{member.pic}}">
             <div class="member-names">
               <h6>{{member.name}}</h6>
             </div>
-          </div>
-          <button class="btn btn-block button-phased-wht" ng-click=" addTaskModal();">Add Task</button>
+          </div> -->
+        <button class="btn btn-block button-phased-wht" ng-click=" addTaskModal();">Add Task</button>
+      </div>
+      <h5>Tasks I've assigned to others</h5>
+      <div>
 
       </div>
-      <h5>Categories</h5>
+      <!-- <h5>Categories</h5>
       <div class="teamDirectory-category">
         <div class=" teamDirectory-member" style="cursor:default" ng-repeat="(key, category) in team.categoryObj | orderBy: 'name'" >
           <div class="td-category" style="background:{{category.color}}"></div>
           <h6>{{category.name}}</h6>
         </div>
-      <a href="/team/addcategory" class="btn btn-block button-phased-wht">Add Category</a>
+        <a href="/team/addcategory" class="btn btn-block button-phased-wht">Add Category</a>
+      </div> -->
     </div>
-  </div>
+
     <div class="col-xs-9">
       <div ng-show="!showMember">
-        <h2 align="center">Click on a member to view history</h2>
+        <h2 align="center">Click on a task to view details</h2>
       </div>
       <div ng-show="showMember">
         <div class="col-xs-3">
@@ -65,22 +69,27 @@
 <div class="modal fade" id="myModal">
   <div class="modal-dialog">
     <div class="modal-content">
-    <form name="addmember" ng-submit="addMembers(user)" novalidation>
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 style="color:#000;" class="modal-title no-shadow">Add task</h4>
-      </div>
-      <div class="modal-body">
-      	<label style="color:#000;" for="addEmail">Task name</label>
-       	<input type="text" id="addEmail" placeholder="Build a rocket">
+      <form name="addmember" ng-submit="addTask(newTask)" novalidation>
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 style="color:#000;" class="modal-title no-shadow">Add task</h4>
+        </div>
+        <div class="modal-body">
+        	<label for="taskName">Task name</label>
+         	<input type="text" id="taskName" ng-model="newTask.name" placeholder="Build a rocket">
 
-        <label style="color:#000;" for="otherFields">Other fields</label>
-        <input type="text" id="otherFields" placeholder="Categories, assign to someone (opt, defaults to self)" />
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <input type="submit" class="btn btn-primary" value="Add task">
-      </div>
+          <label for="category">Category</label>
+          <select ng-options="key as category.name for (key, category) in team.categoryObj" ng-model="newTask.category" id="assignee"></select>
+
+          <label for="assignee">Assign to</label>
+          <!-- this should default to self -->
+          <select ng-options="member as member.name for member in team.members | orderBy:'name'" ng-model="newTask.assignee" id="assignee"></select>
+        
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <input type="submit" class="btn btn-primary" value="Add task">
+        </div>
       </form>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->

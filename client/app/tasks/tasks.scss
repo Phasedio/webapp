@@ -132,3 +132,12 @@ section{
 .team-aside{
   
 }
+
+.modal-content {
+    input[type="text"],
+    label {
+        color: #000;
+        display: block;
+        width: 100%;
+    }
+}
