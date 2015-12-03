@@ -1,6 +1,40 @@
 'use strict';
 
 angular.module('webappApp')
+  /**
+  * filters tasks by status
+  *
+  * (preface statusID with ! to filter out statuses)
+  */
+  .filter('filterTaskByStatus', function() {
+    return function(input, statusID) {
+      if (!input) return input;
+      if (!statusID) return input;
+      var expected = ('' + statusID).toLowerCase(); // compare lowercase strings
+      var result = {}; // output obj
+
+      if (expected[0] === '!') {
+        expected = expected.slice(1); // remove leading !
+        // negative filter -- filter out tasks with status
+        angular.forEach(input, function(value, key) {
+          var actual = ('' + value.status).toLowerCase(); // current task's status
+          if (actual !== expected) {
+            result[key] = value; // preserves index
+          }
+        });
+      } else {
+        // only include tasks with status
+        angular.forEach(input, function(value, key) {
+          var actual = ('' + value.status).toLowerCase(); // current task's status
+          if (actual === expected) {
+            result[key] = value; // preserves index
+          }
+        });
+      }
+
+      return result;
+    }
+  })
   .controller('TasksCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,toaster) {
     ga('send', 'pageview', '/tasks');
     $scope.showMember = false;
@@ -262,7 +296,7 @@ angular.module('webappApp')
         var obj = [
           { name : 'In Progress' },
           { name : 'Complete' },
-          { name : 'Assigned'  }
+          { name : 'Assigned' }
         ];
 
          // save to db
@@ -377,16 +411,44 @@ angular.module('webappApp')
     console.log('activating task', task, assignment);
     // return;
 
-    // update original assignment status to In Progress
-    var ref = new Firebase(FURL).child('team/' + $scope.team.name);
-    ref.child('all/' + $scope.myID + '/assigned_to_me/' + assignmentID + '/status').set(0);
+    // update original assignment status to In Progress (0)
+    setAssignmentStatus(assignmentID, 0);
 
     // publish to stream
     ref.child('task/' + Auth.user.uid).set(task);
     ref.child('all/' + Auth.user.uid).push(task, function() {
       console.log('status update complete');
     });
+  }
 
+
+  /**
+  *
+  * sets assignment status to Complete (1)
+  */
+  $scope.setTaskCompleted = function(assignment, assignmentID) {
+    ga('send', 'event', 'Task', 'completed');
+    setAssignmentStatus(assignmentID, 1);
+  }
+
+
+  /**
+  *
+  * convenience function to set an assignment's status
+  * defaults to current user
+  * should fail if newStatus isn't valid
+  */
+  var setAssignmentStatus = function(assignmentID, newStatus, userID) {
+    userID = userID ? userID : $scope.myID; // default to me
+
+    if (!(newStatus in $scope.taskStatuses)) {
+      console.log(newStatus + ' is not a valid status ID');
+      return;
+    }
+
+    // push to database
+    var ref = new Firebase(FURL).child('team/' + $scope.team.name);
+    ref.child('all/' + userID + '/assigned_to_me/' + assignmentID + '/status').set(newStatus);
   }
 
   /**
