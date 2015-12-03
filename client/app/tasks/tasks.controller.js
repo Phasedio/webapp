@@ -431,9 +431,15 @@ angular.module('webappApp')
     var setAssignmentStatus = function(assignmentID, newStatus, userID) {
       userID = userID ? userID : $scope.myID; // default to me
 
-      if (!(newStatus in $scope.taskStatuses)) {
-        console.log(newStatus + ' is not a valid status ID');
-        return;
+      if (!(newStatus in $scope.taskStatuses)) { // not a valid ID
+        var i = $scope.taskStatuses.indexOf(newStatus);
+        if (i !== -1) {
+          console.log(newStatus + ' is a valid status name');
+          newStatus = i;
+        } else {
+          console.log('err: ' + newStatus + ' is not a valid status name or ID');
+          return;
+        }
       }
 
       // push to database
