@@ -429,7 +429,7 @@ angular.module('webappApp')
     * fails if newStatus isn't valid
     */
     var setAssignmentStatus = function(assignmentID, newStatus, userID) {
-      userID = userID ? userID : $scope.myID; // default to me
+      userID = (userID && userID in $scope.team.members) ? userID : $scope.myID; // default to me
 
       if (!(newStatus in $scope.taskStatuses)) { // not a valid ID
         var i = $scope.taskStatuses.indexOf(newStatus);
