@@ -51,7 +51,8 @@ angular.module('webappApp')
         IN_PROGRESS : 0,
         COMPLETE : 1,
         ASSIGNED : 2
-      }
+      },
+      FBRef = new Firebase(FURL);
 
 
     /**
@@ -60,8 +61,7 @@ angular.module('webappApp')
     *
     */
     var init = function(){
-      var ref = new Firebase(FURL);
-      ref.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
+      FBRef.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
         data = data.val();
         $scope.team.name = data;
 
@@ -92,7 +92,7 @@ angular.module('webappApp')
     var startStream = function() {
       // 1.
       var team = $scope.team.name;
-      new Firebase(FURL).child('team').child(team).child('task').on('value', function(users) {
+      FBRef.child('team').child(team).child('task').on('value', function(users) {
         $scope.team.members = [];
         users = users.val();
 
@@ -124,7 +124,7 @@ angular.module('webappApp')
     *   - assignments to me by others all/(me)/assigned_to_me
     */
     var setWatchAssignments = function() {
-      var allRef = new Firebase(FURL).child('team/' + $scope.team.name + '/all');
+      var allRef = FBRef.child('team/' + $scope.team.name + '/all');
     
       // collection of assigned_to_me collections to keep up to date
       $scope.watched = [];
@@ -137,7 +137,7 @@ angular.module('webappApp')
         data = data.val();
 
         for (var i in data) {
-          watchMember(data[i].user, allRef);
+          watchMember(data[i].user);
         }
       });
     }
@@ -151,7 +151,7 @@ angular.module('webappApp')
     * 3. watcher simply keeps member.assigned_to_me up to date
     *
     */
-    var watchMember = function(memberID, allRef) {
+    var watchMember = function(memberID) {
       var thisMember = $scope.team.members[memberID];
 
       // 1
@@ -160,7 +160,7 @@ angular.module('webappApp')
         thisMember.watched = true;
         $scope.watched.push(thisMember);
 
-        allRef.child(memberID + '/assigned_to_me').on('value', function(data) {
+        FBRef.child('team/' + $scope.team.name + '/all/' + memberID + '/assigned_to_me').on('value', function(data) {
           // 3
           thisMember.assigned_to_me = data.val();
         });
@@ -173,7 +173,7 @@ angular.module('webappApp')
     * called by startStream
     */
     var getUserDetails = function(memberID, users){
-      var userrefs = new Firebase(FURL + 'profile/' + memberID);
+      var userrefs = FBRef.child('profile/' + memberID);
       userrefs.once("value", function(data) {
                //console.log(memberID);
         var p = data.val();
@@ -209,7 +209,7 @@ angular.module('webappApp')
     */
     var getCategories = function(){
       var team = $scope.team.name;
-      new Firebase(FURL).child('team').child(team).child('category').once('value', function(cat) {
+      FBRef.child('team').child(team).child('category').once('value', function(cat) {
         cat = cat.val();
         console.log('cat', cat);
         if(typeof cat !== 'undefined' && cat != null){
@@ -224,7 +224,7 @@ angular.module('webappApp')
               $scope.team.categorySelect.push(obj);
             }
             console.log('team', $scope.team);
-        }else{
+        } else {
           //they have no categories so add them
           var obj = [
             {
@@ -236,8 +236,8 @@ angular.module('webappApp')
               color : '#5ac8fb'
             }
           ];
-          new Firebase(FURL).child('team').child(team).child('category').set(obj);
-          new Firebase(FURL).child('team').child(team).child('category').once('value', function(cat) {
+          FBRef.child('team/' + team + '/category').set(obj);
+          FBRef.child('team/' + team + '/category').once('value', function(cat) {
             cat = cat.val();
             var keys = Object.keys(cat);
             $scope.team.categoryObj = cat;
@@ -262,7 +262,7 @@ angular.module('webappApp')
     */
 
     var getTaskStatuses = function() {
-      new Firebase(FURL).child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
+      FBRef.child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
         tS = tS.val();
         // console.log('taskStatuses', tS);
         if (typeof tS !== 'undefined' && tS != null){
@@ -281,9 +281,9 @@ angular.module('webappApp')
           ];
 
            // save to db
-          new Firebase(FURL).child('taskStatuses').set(obj);
+          FBRef.child('taskStatuses').set(obj);
           // get data from db to ensure synchronicity
-          new Firebase(FURL).child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
+          FBRef.child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
             tS = tS.val();
             // assign keys to obj and set to $scope
             for (var i in tS) {
@@ -356,9 +356,8 @@ angular.module('webappApp')
       // 1. add task to team/(teamname)/all/(newTask.assignee.uid)/assigned_to_me
       // 2. add reference { (task_id) : (assignee_id) } to team/(teamname)/all/(Auth.user)/assigned_by_me
 
-      var teamRef = new Firebase(FURL),
-        team = $scope.team.name,
-        all = teamRef.child('team').child(team).child('all');
+      var team = $scope.team.name,
+        all = FBRef.child('team/' + team + '/all');
 
       // 1
       var newTaskRef = all.child(newTask.assignee.uid).child('assigned_to_me').push(status);
@@ -404,7 +403,7 @@ angular.module('webappApp')
       setAssignmentStatus(assignmentID, StatusID.IN_PROGRESS);
 
       // publish to stream
-      var ref = new Firebase(FURL).child('team/' + $scope.team.name);
+      var ref = FBRef.child('team/' + $scope.team.name);
       ref.child('task/' + Auth.user.uid).set(task);
       ref.child('all/' + Auth.user.uid).push(task, function() {
         console.log('status update complete');
@@ -443,8 +442,7 @@ angular.module('webappApp')
       }
 
       // push to database
-      var ref = new Firebase(FURL).child('team/' + $scope.team.name);
-      ref.child('all/' + userID + '/assigned_to_me/' + assignmentID + '/status').set(newStatus);
+      FBRef.child('team/' + $scope.team.name + '/all/' + userID + '/assigned_to_me/' + assignmentID + '/status').set(newStatus);
     }
 
     /**
