@@ -37,7 +37,6 @@ angular.module('webappApp')
   })
   .controller('TasksCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,toaster) {
     ga('send', 'pageview', '/tasks');
-    $scope.showMember = false;
     $scope.team = {
       name : '',
       members : {},
@@ -47,22 +46,15 @@ angular.module('webappApp')
     };
     $scope.taskStatuses = {};
     $scope.viewType = 'notPaid';
-
-    $scope.selectedUser = {
-        name : '',
-        gravatar : '',
-        uid : '',
-        history: []
-      };
     $scope.myID = Auth.user.uid;
 
 
     /**
     *
-    *   ~*~ $scope.init ~*~
+    *   ~*~ init ~*~
     *
     */
-    $scope.init = function(){
+    var init = function(){
       var ref = new Firebase(FURL);
       ref.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
         data = data.val();
@@ -70,13 +62,12 @@ angular.module('webappApp')
 
         getCategories();
         getTaskStatuses();
-        checkStatus(); // start stream
-        // $scope.setWatchAssignments(); // now called from checkStatus to be in sequence
+        startStream();
 
       })
     }
 
-    $scope.init();
+    init();
 
 
     /**
@@ -87,24 +78,27 @@ angular.module('webappApp')
 
     /**
     * 
-    * updates stream?
-    * if so, retrofit to only watch own tasks
-    * 
-    * task streams to watch:
-    *   - own updates (in progress) 
+    * starts the data stream 
+    * 1. watches the team's tasks
+    * 1.b  when a new task is posted, it refreshes the team membership
+    * 2. after the users have all been updated, appropriate streams are watched
+    *
     */
-    var checkStatus = function(){
+    var startStream = function() {
+      // 1.
       var team = $scope.team.name;
       new Firebase(FURL).child('team').child(team).child('task').on('value', function(users) {
         $scope.team.members = [];
         users = users.val();
 
         if (users) {
+          // 1.b
           var teamUID = Object.keys(users);
           for (var i = 0; i < teamUID.length; i++) {
             getUserDetails(teamUID[i], users);
           }
 
+          // 2.
           // ugly debounce to get around having to wait for multiple callbacks
           var interval = window.setInterval(function() { 
             if ($scope.team.members && $scope.team.members[$scope.myID]) {
@@ -171,7 +165,7 @@ angular.module('webappApp')
     /**
     *
     * fills out $scope.team.members details
-    * called by checkStatus
+    * called by startStream
     */
     var getUserDetails = function(memberID, users){
       var userrefs = new Firebase(FURL + 'profile/' + memberID);
@@ -206,7 +200,7 @@ angular.module('webappApp')
     /**
     *
     * fills out $scope.team.categories
-    * called in $scope.init()
+    * called in init()
     */
     var getCategories = function(){
       var team = $scope.team.name;
@@ -259,7 +253,7 @@ angular.module('webappApp')
     /**
     *
     * fills out the task status types in $scope.taskStatuses
-    * called in $scope.init()
+    * called in init()
     */
 
     var getTaskStatuses = function() {
@@ -315,7 +309,7 @@ angular.module('webappApp')
     *
     */
     $scope.addTask = function(newTask){
-      ga('send', 'event', 'task', 'task added');
+      ga('send', 'event', 'Task', 'task added');
 
       // incoming object
       console.log('newTask', newTask);
@@ -384,6 +378,7 @@ angular.module('webappApp')
     */
     $scope.activateTask = function(assignment, assignmentID) {
       ga('send', 'event', 'Update', 'submitted');
+      ga('send', 'event', 'Task', 'activated');
 
       // copy task so we don't damage the original assignment
       var task = angular.copy(assignment);
