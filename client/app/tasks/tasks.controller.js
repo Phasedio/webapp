@@ -47,6 +47,11 @@ angular.module('webappApp')
     $scope.taskStatuses = {};
     $scope.viewType = 'notPaid';
     $scope.myID = Auth.user.uid;
+    var StatusID = {
+        IN_PROGRESS : 0,
+        COMPLETE : 1,
+        ASSIGNED : 2
+      }
 
 
     /**
@@ -395,8 +400,8 @@ angular.module('webappApp')
       console.log('activating task', task, assignment);
       // return;
 
-      // update original assignment status to In Progress (0)
-      setAssignmentStatus(assignmentID, 0);
+      // update original assignment status to In Progress
+      setAssignmentStatus(assignmentID, StatusID.IN_PROGRESS);
 
       // publish to stream
       var ref = new Firebase(FURL).child('team/' + $scope.team.name);
@@ -409,11 +414,11 @@ angular.module('webappApp')
 
     /**
     *
-    * sets assignment status to Complete (1)
+    * sets assignment status to Complete
     */
     $scope.setTaskCompleted = function(assignment, assignmentID) {
       ga('send', 'event', 'Task', 'completed');
-      setAssignmentStatus(assignmentID, 1);
+      setAssignmentStatus(assignmentID, StatusID.COMPLETE);
     }
 
 
