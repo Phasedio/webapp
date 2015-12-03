@@ -29,7 +29,7 @@ angular.module('webappApp')
   var d=new Date();
   console.log(d.getDay());
 
-  //console.log('the image is ', monImage);
+  
 
   var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
   $scope.dayImage = backgroundImage[d.getDay()];
