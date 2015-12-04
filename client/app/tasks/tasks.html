@@ -15,6 +15,7 @@
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
           <p ng-if="assignment.priority">priority: {{taskPriorities[assignment.priority].name}}</p>
+          <p ng-if="assignment.deadline">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
         </div>
       <!-- </div> -->
     </div>
@@ -30,6 +31,7 @@
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
           <p ng-if="assignment.priority">priority: {{taskPriorities[assignment.priority].name}}</p>
+          <p ng-if="assignment.deadline">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
         </div>
       </div>
 
@@ -47,10 +49,10 @@
 
     <!-- MY FEED -->
     <div class="col-xs-2">
-      <h3>All assignments</h3>
-      <div ng-repeat="assignment in assignments.all">
+      <h3>~*~ extra ui room ~*~</h3>
+      <!-- <div ng-repeat="assignment in assignments.all">
         <pre>{{assignment}}</pre>
-      </div>
+      </div> -->
     </div>
   </div>
 </section>
@@ -73,6 +75,10 @@
 
           <label for="priority">Priority</label>
           <select ng-options="key as priority.name for (key, priority) in taskPriorities" ng-model="newTask.priority" id="priority"></select>
+
+          <label for="deadline">Deadline</label>
+          <p><em>use yyyy-MM-dd format if you don't know HTML5</em></p>
+          <input type="date" ng-model="newTask.deadline" min="{{today | date : 'yyyy-MM-dd'}}" />
 
           <label for="assignee">Assign to</label>
           <!-- this should default to self -->

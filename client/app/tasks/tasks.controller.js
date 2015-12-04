@@ -47,6 +47,7 @@ angular.module('webappApp')
     $scope.taskStatuses = {};
     $scope.viewType = 'notPaid';
     $scope.myID = Auth.user.uid;
+    $scope.today = new Date().getTime();
     var StatusID = {
         IN_PROGRESS : 0,
         COMPLETE : 1,
@@ -487,6 +488,9 @@ angular.module('webappApp')
         status: StatusID.ASSIGNED,
         priority : parseInt($scope.newTask.priority)
       };
+
+      if (newTask.deadline)
+        status.deadline = newTask.deadline.getTime();
 
       // babbys first status
       console.log('status', status);
