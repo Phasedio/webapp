@@ -54,6 +54,19 @@ angular.module('webappApp')
       },
       FBRef = new Firebase(FURL);
 
+    $scope.assignments = {
+      all : {}, // all of the team's assignments
+      to_me : {}, // assigned to me (reference to objects in all)
+      by_me : {}, // assigned by me (reference to objects in all)
+      unassigned : {} // unassigned (reference to objects in all)
+    }
+    // lists of assignment IDs used internally
+    // set by updateAssignedTo(), etc
+    var assignmentIDs = {
+      to_me : [],
+      by_me : [],
+      unassigned : []
+    }
 
     /**
     *
@@ -65,9 +78,14 @@ angular.module('webappApp')
         data = data.val();
         $scope.team.name = data;
 
+        // get metadata
         getCategories();
         getTaskStatuses();
+        getTaskPriorities();
+
+        // start streaming
         startStream();
+        setWatchAssignments();
 
       })
     }
@@ -86,7 +104,6 @@ angular.module('webappApp')
     * starts the data stream 
     * 1. watches the team's tasks
     * 1.b  when a new task is posted, it refreshes the team membership
-    * 2. after the users have all been updated, appropriate streams are watched
     *
     */
     var startStream = function() {
@@ -102,15 +119,6 @@ angular.module('webappApp')
           for (var i = 0; i < teamUID.length; i++) {
             getUserDetails(teamUID[i], users);
           }
-
-          // 2.
-          // ugly debounce to get around having to wait for multiple callbacks
-          var interval = window.setInterval(function() { 
-            if ($scope.team.members && $scope.team.members[$scope.myID]) {
-              window.clearInterval(interval);
-              setWatchAssignments();
-            }
-          }, 100);
         }
       });
     };
@@ -119,52 +127,143 @@ angular.module('webappApp')
     /**
     *
     * sets up watchers for current users task assignments - to and by
+    * and also unassigned tasks
     *
-    *   - own assignments (to self or to others) all/(me)/assigned_by_me
-    *   - assignments to me by others all/(me)/assigned_to_me
+    *   - own assignments (to self or to others) assignments/to/(me)
+    *   - assignments to me by others assignments/by/(me)
+    *   - unassigned tasks assignments/un
     */
     var setWatchAssignments = function() {
-      var allRef = FBRef.child('team/' + $scope.team.name + '/all');
-    
-      // collection of assigned_to_me collections to keep up to date
-      $scope.watched = [];
-      
-      // watch own
-      watchMember($scope.myID, allRef);
+      var refString = 'team/' + $scope.team.name + '/assignments';
 
-      // check others to watch
-      allRef.child(Auth.user.uid + '/assigned_by_me').on('value', function(data) {
-        data = data.val();
-
-        for (var i in data) {
-          watchMember(data[i].user);
-        }
-      });
+      FBRef.child(refString + '/all').on('value', updateAllAssignments);
+      FBRef.child(refString + '/to/' + Auth.user.uid).on('value', updateAssignedTo);
+      FBRef.child(refString + '/by/' + Auth.user.uid).on('value', updateAssignedBy);
+      // FBRef.child(refString + '/un').on('value', updateUnassigned);
     }
 
     /**
     *
-    * sets watchers for others, allowing changes to be pushed
+    * STUB
+    * updates $scope.assignments.all
     *
-    * 1. check if a watcher is already set (ie, user.watched == true)
-    * 2. if not, immediately set user.watched, then set up watcher
-    * 3. watcher simply keeps member.assigned_to_me up to date
+    * instead of replacing the whole object, compares assignments and props, then updates
+    * allowing for persistent references throughout the app
     *
     */
-    var watchMember = function(memberID) {
-      var thisMember = $scope.team.members[memberID];
-
-      // 1
-      if (thisMember && !thisMember.watched) {
-        // 2
-        thisMember.watched = true;
-        $scope.watched.push(thisMember);
-
-        FBRef.child('team/' + $scope.team.name + '/all/' + memberID + '/assigned_to_me').on('value', function(data) {
-          // 3
-          thisMember.assigned_to_me = data.val();
-        });
+    var updateAllAssignments = function(data) {
+      data = data.val();
+      if (!data) {
+        $scope.assignments.all = {};
+        return;
       }
+      var all = $scope.assignments.all;
+
+      console.log('updateAllAssignments STUB', data);
+
+      // 1. if assignment doesn't exist in all, add it, end of story
+      // 2. else, check its properties and update those that are out of sync
+      // (i is the assignment uid)
+      for (var i in data) {
+        if (!(i in all)) {
+          // 1.
+          all[i] = data[i];
+
+        } else {
+          // 2.
+          // a. sync extant properties in all, delete those no longer in data
+          // b. add new properties from data
+          // (j is property name)
+
+          for (var j in all[i]) {
+            // a.
+            if (j in data[i]) {
+              all[i][j] = data[i][j];
+            } else {
+              delete all[i][j];
+            }
+          }
+
+          for (var j in data[i]) {
+            // b.
+            if (!(j in all[i])) {
+              all[i][j] = data[i][j];
+            }
+          }
+
+        }
+      } // for var i in data
+
+      // if assignment isn't in data, delete it
+      for (var i in all) {
+        if (!(i in data)) {
+          delete all[i];
+        }
+      }
+
+      // sync all containers
+      for (var i in assignmentIDs) {
+        syncAssignments(i);
+      }
+
+      console.log('all updated', $scope.assignments.all);
+    } // updateAllAssignments()
+
+    /**
+    *
+    * STUB
+    * updates $scope.assignedTo
+    *
+    */
+    var updateAssignedTo = function(data) {
+      data = data.val();
+      console.log('updateAssignedTo STUB', data);
+      assignmentIDs['to_me'] = data || [];
+      syncAssignments('to_me');
+    }
+
+    /**
+    *
+    * STUB
+    * updates $scope.assignedBy
+    *
+    */
+    var updateAssignedBy = function(data) {
+      data = data.val();
+      console.log('updateAssignedBy STUB', data);
+      assignmentIDs['by_me'] = data || [];
+      syncAssignments('by_me');
+    }
+
+    /**
+    *
+    * STUB
+    * updates $scope.unassigned
+    *
+    */
+    var updateUnassigned = function(data) {
+      data = data.val();
+      console.log('updateUnassigned STUB', data);
+      assignmentIDs['unassigned'] = data || [];
+    }
+
+    /**
+    *
+    * syncs assignments (in assignments.all) listed in the UIDContainer to the assignmentContainer
+    *
+    */
+    var syncAssignments = function(assignmentContainerName) {
+      var assignmentContainer = {},
+        UIDContainer = assignmentIDs[assignmentContainerName];
+
+      for (var i in UIDContainer) {
+        var assignmentID = UIDContainer[i];
+        if (assignmentID in $scope.assignments.all)
+          assignmentContainer[assignmentID] = $scope.assignments.all[assignmentID];
+      }
+
+      $scope.assignments[assignmentContainerName] = assignmentContainer;
+      console.log('syncAssignments', assignmentContainerName, $scope.assignments);
     }
 
     /**
@@ -297,6 +396,15 @@ angular.module('webappApp')
     }
 
 
+    /**
+    *
+    * STUB
+    * fills out the task priority types in $scope.taskPriorities
+    * called in init()
+    */
+    var getTaskPriorities = function() {
+      console.log('getTaskPriorities STUB');
+    }
 
     /**
     **
@@ -342,8 +450,8 @@ angular.module('webappApp')
           lat : $scope.lat ? $scope.lat : 0,
           long : $scope.long ? $scope.long : 0
         },
-        assigned_by : Auth.user.uid,
-        status: 2 // "Assigned", there should be a more elegant way to set this
+        assigned_by : $scope.myID,
+        status: StatusID.ASSIGNED
       };
 
       // babbys first status
@@ -353,21 +461,30 @@ angular.module('webappApp')
 
       // push new task to db
 
-      // 1. add task to team/(teamname)/all/(newTask.assignee.uid)/assigned_to_me
-      // 2. add reference { (task_id) : (assignee_id) } to team/(teamname)/all/(Auth.user)/assigned_by_me
+      // 1. add task to team/(teamname)/assignments/all
+      // 2. add references to /to/assignee and /by/me
 
       var team = $scope.team.name,
-        all = FBRef.child('team/' + team + '/all');
+        assignments = FBRef.child('team/' + team + '/assignments');
 
       // 1
-      var newTaskRef = all.child(newTask.assignee.uid).child('assigned_to_me').push(status);
-
+      var newTaskRef = assignments.child('all').push(status);
+      var newTaskID = newTaskRef.key();
       // 2
-      var assignmentReference = {
-        user : newTask.assignee.uid,
-        task: newTaskRef.key()
-      }
-      all.child(Auth.user.uid).child('assigned_by_me').push(assignmentReference);
+      // var assignmentReference = {
+      //   user : newTask.assignee.uid,
+      //   task: newTaskRef.key()
+      // }
+      assignmentIDs['by_me'].push(newTaskID);
+      assignments.child('by/' + Auth.user.uid).set(assignmentIDs['by_me']);
+
+      // get array, push (array style), send back to server
+      assignments.child('to/' + newTask.assignee.uid).once('value', function(data) {
+        data = data.val();
+        data = data || [];
+        data.push(newTaskID);
+        assignments.child('to/' + newTask.assignee.uid).set(data);
+      });
 
       //reset current task in feed
       $('#myModal').modal('toggle');
@@ -376,6 +493,7 @@ angular.module('webappApp')
 
     /**
     *
+    * MODIFY
     * sets an assigned task to the user's active task
     * and sets status of that task to "In Progress" (0)
     *
@@ -423,6 +541,7 @@ angular.module('webappApp')
 
     /**
     *
+    * MODIFY
     * convenience function to set an assignment's status
     * defaults to current user
     * fails if newStatus isn't valid
@@ -443,6 +562,16 @@ angular.module('webappApp')
 
       // push to database
       FBRef.child('team/' + $scope.team.name + '/all/' + userID + '/assigned_to_me/' + assignmentID + '/status').set(newStatus);
+    }
+
+    /**
+    *
+    * STUB
+    * convenience functionto set an assignment's priority
+    *
+    */
+    var setAssignmentPriority = function(assignmentID, newPriority) {
+      console.log('setAssignmentPriority STUB');
     }
 
     /**
