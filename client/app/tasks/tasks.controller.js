@@ -52,6 +52,11 @@ angular.module('webappApp')
         COMPLETE : 1,
         ASSIGNED : 2
       },
+      PriorityID = {
+        HIGH : 0,
+        MEDIUM : 1,
+        LOW : 2
+      },
       FBRef = new Firebase(FURL);
 
     $scope.assignments = {
@@ -131,7 +136,7 @@ angular.module('webappApp')
     *
     *   - own assignments (to self or to others) assignments/to/(me)
     *   - assignments to me by others assignments/by/(me)
-    *   - unassigned tasks assignments/unassigned
+    *   - unassigned tasks assignments/un
     */
     var setWatchAssignments = function() {
       var refString = 'team/' + $scope.team.name + '/assignments';
@@ -209,7 +214,6 @@ angular.module('webappApp')
 
     /**
     *
-    * STUB
     * updates $scope.assignedTo
     *
     */
@@ -222,7 +226,6 @@ angular.module('webappApp')
 
     /**
     *
-    * STUB
     * updates $scope.assignedBy
     *
     */
@@ -235,7 +238,6 @@ angular.module('webappApp')
 
     /**
     *
-    * STUB
     * updates $scope.unassigned
     *
     */
@@ -397,12 +399,44 @@ angular.module('webappApp')
 
     /**
     *
-    * STUB
     * fills out the task priority types in $scope.taskPriorities
     * called in init()
     */
     var getTaskPriorities = function() {
-      console.log('getTaskPriorities STUB');
+      console.log('getTaskPriorities');
+      FBRef.child('taskPriorities').once('value', function(tP /*taskPriorities*/ ) {
+        tP = tP.val();
+        // console.log('taskPriorities', tP);
+        if (typeof tP !== 'undefined' && tP != null){
+          // assign keys to obj, set obj to $scope
+          for (var i in tP) {
+            tP[i]['key'] = i;
+          }
+          $scope.taskPriorities = tP;
+        } else {
+          // no status priorities exist, add defaults
+          var obj = [
+            { name : 'High' },
+            { name : 'Medium' },
+            { name : 'Low' }
+          ];
+
+          // save to db
+          FBRef.child('taskPriorities').set(obj);
+          // get data from db to ensure synchronicity
+          FBRef.child('taskPriorities').once('value', function(tP /*taskPriorities*/ ) {
+            tP = tP.val();
+            // assign keys to obj and set to $scope
+            for (var i in tP) {
+              tP[i]['key'] = i;
+            }
+            $scope.taskPriorities = tP;
+            // console.log('$scope.taskPriorities', $scope.taskPriorities);
+          });
+
+          console.log('priorities set', $scope.taskPriorities);
+        }
+      });
     }
 
     /**
@@ -450,7 +484,8 @@ angular.module('webappApp')
           long : $scope.long ? $scope.long : 0
         },
         assigned_by : $scope.myID,
-        status: StatusID.ASSIGNED
+        status: StatusID.ASSIGNED,
+        priority : parseInt($scope.newTask.priority)
       };
 
       // babbys first status

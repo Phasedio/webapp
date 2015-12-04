@@ -14,6 +14,7 @@
           <p>on {{assignment.time | date:'short'}}</p>
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
+          <p ng-if="assignment.priority">priority: {{taskPriorities[assignment.priority].name}}</p>
         </div>
       <!-- </div> -->
     </div>
@@ -22,12 +23,13 @@
     <div class="col-xs-5 team-aside">
       <h2>Tasks assigned to me</h2>
       <div>
-        <div ng-repeat="(id, assignment) in assignments.to_me | filterTaskByStatus : '!1' | orderBy : 'time'" class="task">
+        <div ng-repeat="(id, assignment) in assignments.to_me | filterTaskByStatus : '!1' | orderBy : 'priority'" class="task">
           <h4>{{assignment.name}}</h4>
           <h5><a href="#" ng-click="activateTask(assignment, id)">work on this</a> &middot; <a href="#" ng-click="setTaskCompleted(assignment, id)">archive</a></h5>
           <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
+          <p ng-if="assignment.priority">priority: {{taskPriorities[assignment.priority].name}}</p>
         </div>
       </div>
 
@@ -67,7 +69,10 @@
          	<input type="text" id="taskName" ng-model="newTask.name" placeholder="Build a rocket">
 
           <label for="category">Category</label>
-          <select ng-options="key as category.name for (key, category) in team.categoryObj" ng-model="newTask.category" id="assignee"></select>
+          <select ng-options="key as category.name for (key, category) in team.categoryObj" ng-model="newTask.category" id="category"></select>
+
+          <label for="priority">Priority</label>
+          <select ng-options="key as priority.name for (key, priority) in taskPriorities" ng-model="newTask.priority" id="priority"></select>
 
           <label for="assignee">Assign to</label>
           <!-- this should default to self -->
