@@ -131,7 +131,7 @@ angular.module('webappApp')
     *
     *   - own assignments (to self or to others) assignments/to/(me)
     *   - assignments to me by others assignments/by/(me)
-    *   - unassigned tasks assignments/un
+    *   - unassigned tasks assignments/unassigned
     */
     var setWatchAssignments = function() {
       var refString = 'team/' + $scope.team.name + '/assignments';
@@ -139,7 +139,7 @@ angular.module('webappApp')
       FBRef.child(refString + '/all').on('value', updateAllAssignments);
       FBRef.child(refString + '/to/' + Auth.user.uid).on('value', updateAssignedTo);
       FBRef.child(refString + '/by/' + Auth.user.uid).on('value', updateAssignedBy);
-      // FBRef.child(refString + '/un').on('value', updateUnassigned);
+      FBRef.child(refString + '/un').on('value', updateUnassigned);
     }
 
     /**
@@ -158,8 +158,6 @@ angular.module('webappApp')
         return;
       }
       var all = $scope.assignments.all;
-
-      console.log('updateAllAssignments STUB', data);
 
       // 1. if assignment doesn't exist in all, add it, end of story
       // 2. else, check its properties and update those that are out of sync
@@ -206,7 +204,7 @@ angular.module('webappApp')
         syncAssignments(i);
       }
 
-      console.log('all updated', $scope.assignments.all);
+      console.log('assignments.all updated', $scope.assignments.all);
     } // updateAllAssignments()
 
     /**
@@ -217,7 +215,7 @@ angular.module('webappApp')
     */
     var updateAssignedTo = function(data) {
       data = data.val();
-      console.log('updateAssignedTo STUB', data);
+      console.log('updateAssignedTo');
       assignmentIDs['to_me'] = data || [];
       syncAssignments('to_me');
     }
@@ -230,7 +228,7 @@ angular.module('webappApp')
     */
     var updateAssignedBy = function(data) {
       data = data.val();
-      console.log('updateAssignedBy STUB', data);
+      console.log('updateAssignedBy');
       assignmentIDs['by_me'] = data || [];
       syncAssignments('by_me');
     }
@@ -243,8 +241,9 @@ angular.module('webappApp')
     */
     var updateUnassigned = function(data) {
       data = data.val();
-      console.log('updateUnassigned STUB', data);
+      console.log('updateUnassigned');
       assignmentIDs['unassigned'] = data || [];
+      syncAssignments('unassigned');
     }
 
     /**
@@ -263,7 +262,7 @@ angular.module('webappApp')
       }
 
       $scope.assignments[assignmentContainerName] = assignmentContainer;
-      console.log('syncAssignments', assignmentContainerName, $scope.assignments);
+      console.log('syncAssignments - ' + assignmentContainerName);
     }
 
     /**
