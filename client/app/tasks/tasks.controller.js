@@ -567,7 +567,7 @@ angular.module('webappApp')
     *
     * sets assignment status to Complete
     */
-    $scope.setTaskCompleted = function(assignment, assignmentID) {
+    $scope.setTaskCompleted = function(assignmentID) {
       ga('send', 'event', 'Task', 'completed');
       setAssignmentStatus(assignmentID, StatusID.COMPLETE);
     }
@@ -575,14 +575,10 @@ angular.module('webappApp')
 
     /**
     *
-    * MODIFY
     * convenience function to set an assignment's status
-    * defaults to current user
     * fails if newStatus isn't valid
     */
-    var setAssignmentStatus = function(assignmentID, newStatus, userID) {
-      userID = (userID && userID in $scope.team.members) ? userID : $scope.myID; // default to me
-
+    var setAssignmentStatus = function(assignmentID, newStatus) {
       if (!(newStatus in $scope.taskStatuses)) { // not a valid ID
         var i = $scope.taskStatuses.indexOf(newStatus);
         if (i !== -1) {
@@ -595,17 +591,30 @@ angular.module('webappApp')
       }
 
       // push to database
-      FBRef.child('team/' + $scope.team.name + '/all/' + userID + '/assigned_to_me/' + assignmentID + '/status').set(newStatus);
+      FBRef.child('team/' + $scope.team.name + '/assignments/all/' + assignmentID + '/status').set(newStatus);
     }
 
     /**
     *
-    * STUB
     * convenience functionto set an assignment's priority
-    *
+    * fails if new priority isn't valid
     */
     var setAssignmentPriority = function(assignmentID, newPriority) {
-      console.log('setAssignmentPriority STUB');
+      console.log('setAssignmentPriority');
+
+      if (!(newPriority in $scope.taskPriorities)) { // not a valid ID
+        var i = $scope.taskPriorities.indexOf(newPriority);
+        if (i !== -1) {
+          console.log(newPriority + ' is a valid status name');
+          newPriority = i;
+        } else {
+          console.log('err: ' + newPriority + ' is not a valid status name or ID');
+          return;
+        }
+      }
+
+      // push to database
+      FBRef.child('team/' + $scope.team.name + '/assignments/all/' + assignmentID + '/priority').set(newPriority);
     }
 
     /**
