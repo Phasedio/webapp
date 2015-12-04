@@ -525,7 +525,6 @@ angular.module('webappApp')
 
     /**
     *
-    * MODIFY
     * sets an assigned task to the user's active task
     * and sets status of that task to "In Progress" (0)
     *
@@ -561,6 +560,27 @@ angular.module('webappApp')
       ref.child('all/' + Auth.user.uid).push(task, function() {
         console.log('status update complete');
       });
+    }
+
+    /**
+    *
+    * moves a task from /unassigned into /to/(me)
+    * without touching status
+    *
+    */
+    $scope.takeTask = function(assignmentID) {
+      var assignmentsPath = 'team/' + $scope.team.name + '/assignments/';
+
+      // 1. remove task from /unassigned
+      delete assignmentIDs.unassigned[assignmentIDs.unassigned.indexOf(assignmentID)];
+      FBRef.child(assignmentsPath + 'unassigned').set(assignmentIDs.unassigned);
+
+      // 2. add task to /to/(me)
+      assignmentIDs.to_me.push(assignmentID);      
+      FBRef.child(assignmentsPath + 'to/' + $scope.myID ).set(assignmentIDs.to_me);
+
+      // 3. set user attr
+      FBRef.child(assignmentsPath + 'all/' + assignmentID + '/user').set($scope.myID);
     }
 
 

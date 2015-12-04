@@ -26,7 +26,11 @@
       <div>
         <div ng-repeat="(id, assignment) in assignments.to_me | filterTaskByStatus : '!1' | orderBy : 'priority'" class="task">
           <h4>{{assignment.name}}</h4>
-          <h5><a href="#" ng-click="activateTask(assignment, id)">work on this</a> &middot; <a href="#" ng-click="setTaskCompleted(id)">finished</a></h5>
+          <h5>
+            <a href="#" ng-click="activateTask(assignment, id)" ng-if="assignment.status != 0">work on this</a> 
+            <span ng-if="assignment.status == 0">current task</span>
+            &middot; 
+            <a href="#" ng-click="setTaskCompleted(id)">finished</a></h5>
           <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
@@ -52,6 +56,7 @@
       <h3>Unassigned tasks</h3>
         <div ng-repeat="(id, assignment) in assignments.unassigned | orderBy : 'priority'" class="task">
           <h4>{{assignment.name}}</h4>
+          <a href="#" ng-click="takeTask(id)">take this task</a>
           <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
