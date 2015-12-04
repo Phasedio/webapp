@@ -26,16 +26,16 @@
       <div>
         <div ng-repeat="(id, assignment) in assignments.to_me | filterTaskByStatus : '!1' | orderBy : 'priority'" class="task">
           <h4>{{assignment.name}}</h4>
-          <h5><a href="#" ng-click="activateTask(assignment, id)">work on this</a> &middot; <a href="#" ng-click="setTaskCompleted(id)">archive</a></h5>
+          <h5><a href="#" ng-click="activateTask(assignment, id)">work on this</a> &middot; <a href="#" ng-click="setTaskCompleted(id)">finished</a></h5>
           <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
-          <p ng-if="assignment.priority">priority: {{taskPriorities[assignment.priority].name}}</p>
-          <p ng-if="assignment.deadline">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
+          <p ng-if="assignment.priority >= 0">priority: {{taskPriorities[assignment.priority].name}}</p>
+          <p ng-if="assignment.deadline >= 0">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
         </div>
       </div>
 
-      <!-- ARCHIVE -->
+      <!-- COMPLETED -->
       <h2>Completed tasks</h2>
       <div>
         <div ng-repeat="(id, assignment) in assignments.to_me | filterTaskByStatus : '1' | orderBy : 'time'" class="task">
@@ -47,12 +47,17 @@
       </div>
     </div>
 
-    <!-- MY FEED -->
+    <!-- UNASSIGNED -->
     <div class="col-xs-2">
-      <h3>~*~ extra ui room ~*~</h3>
-      <!-- <div ng-repeat="assignment in assignments.all">
-        <pre>{{assignment}}</pre>
-      </div> -->
+      <h3>Unassigned tasks</h3>
+        <div ng-repeat="(id, assignment) in assignments.unassigned | orderBy : 'priority'" class="task">
+          <h4>{{assignment.name}}</h4>
+          <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
+          <p>in {{team.categoryObj[assignment.cat].name}}</p>
+          <p>status: {{taskStatuses[assignment.status].name}}</p>
+          <p ng-if="assignment.priority >= 0">priority: {{taskPriorities[assignment.priority].name}}</p>
+          <p ng-if="assignment.deadline >= 0">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
+        </div>
     </div>
   </div>
 </section>
@@ -81,8 +86,11 @@
           <input type="date" ng-model="newTask.deadline" min="{{today | date : 'yyyy-MM-dd'}}" />
 
           <label for="assignee">Assign to</label>
-          <!-- this should default to self -->
-          <select ng-options="member as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee"></select>
+          <!-- this should default to unassigned -->
+          <select ng-options="member as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee" ng-disabled="newTask.unassigned"></select>
+
+          <label for="unassigned">Unassigned</label>
+          <input type="checkbox" ng-model="newTask.unassigned" />
         
         </div>
         <div class="modal-footer">

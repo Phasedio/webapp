@@ -145,7 +145,7 @@ angular.module('webappApp')
       FBRef.child(refString + '/all').on('value', updateAllAssignments);
       FBRef.child(refString + '/to/' + Auth.user.uid).on('value', updateAssignedTo);
       FBRef.child(refString + '/by/' + Auth.user.uid).on('value', updateAssignedBy);
-      FBRef.child(refString + '/un').on('value', updateUnassigned);
+      FBRef.child(refString + '/unassigned').on('value', updateUnassigned);
     }
 
     /**
@@ -210,7 +210,7 @@ angular.module('webappApp')
         syncAssignments(i);
       }
 
-      console.log('assignments.all updated', $scope.assignments.all);
+      console.log($scope.assignments);
     } // updateAllAssignments()
 
     /**
@@ -220,7 +220,6 @@ angular.module('webappApp')
     */
     var updateAssignedTo = function(data) {
       data = data.val();
-      console.log('updateAssignedTo');
       assignmentIDs['to_me'] = data || [];
       syncAssignments('to_me');
     }
@@ -232,7 +231,6 @@ angular.module('webappApp')
     */
     var updateAssignedBy = function(data) {
       data = data.val();
-      console.log('updateAssignedBy');
       assignmentIDs['by_me'] = data || [];
       syncAssignments('by_me');
     }
@@ -244,7 +242,6 @@ angular.module('webappApp')
     */
     var updateUnassigned = function(data) {
       data = data.val();
-      console.log('updateUnassigned');
       assignmentIDs['unassigned'] = data || [];
       syncAssignments('unassigned');
     }
@@ -265,7 +262,6 @@ angular.module('webappApp')
       }
 
       $scope.assignments[assignmentContainerName] = assignmentContainer;
-      console.log('syncAssignments - ' + assignmentContainerName);
     }
 
     /**
@@ -312,7 +308,6 @@ angular.module('webappApp')
       var team = $scope.team.name;
       FBRef.child('team').child(team).child('category').once('value', function(cat) {
         cat = cat.val();
-        console.log('cat', cat);
         if(typeof cat !== 'undefined' && cat != null){
           var keys = Object.keys(cat);
           $scope.team.categoryObj = cat;
@@ -324,7 +319,6 @@ angular.module('webappApp')
               }
               $scope.team.categorySelect.push(obj);
             }
-            console.log('team', $scope.team);
         } else {
           //they have no categories so add them
           var obj = [
@@ -404,7 +398,6 @@ angular.module('webappApp')
     * called in init()
     */
     var getTaskPriorities = function() {
-      console.log('getTaskPriorities');
       FBRef.child('taskPriorities').once('value', function(tP /*taskPriorities*/ ) {
         tP = tP.val();
         // console.log('taskPriorities', tP);
@@ -474,7 +467,7 @@ angular.module('webappApp')
       var status = {
         name: taskPrefix + newTask.name,
         time: new Date().getTime(),
-        user: newTask.assignee.uid,
+        // user: newTask.assignee.uid,
         cat : newTask.category ? newTask.category : '',
         city: $scope.city ? $scope.city : 0,
         weather: weather,
@@ -500,7 +493,7 @@ angular.module('webappApp')
       // push new task to db
 
       // 1. add task to team/(teamname)/assignments/all
-      // 2. add references to /to/assignee and /by/me
+      // 2. add references to /to/assignee or /unassigned and /by/me
 
       var team = $scope.team.name,
         assignments = FBRef.child('team/' + team + '/assignments');
@@ -517,11 +510,12 @@ angular.module('webappApp')
       assignments.child('by/' + Auth.user.uid).set(assignmentIDs['by_me']);
 
       // get array, push (array style), send back to server
-      assignments.child('to/' + newTask.assignee.uid).once('value', function(data) {
+      var path = newTask.unassigned ? 'unassigned' : 'to/' + newTask.assignee.uid;
+      assignments.child(path).once('value', function(data) {
         data = data.val();
         data = data || [];
         data.push(newTaskID);
-        assignments.child('to/' + newTask.assignee.uid).set(data);
+        assignments.child(path).set(data);
       });
 
       //reset current task in feed
@@ -547,6 +541,9 @@ angular.module('webappApp')
       task.time = new Date().getTime();
       task.lat = $scope.lat ? $scope.lat : 0;
       task.long = $scope.long ? $scope.long : 0;
+
+      // in case of unassigned tasks, which don't have a user property
+      task.user = $scope.myID;
 
       // delete attrs not used by feed
       delete task.status;
