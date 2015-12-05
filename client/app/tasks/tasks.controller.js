@@ -35,6 +35,20 @@ angular.module('webappApp')
       return result;
     }
   })
+  .filter('orderObjectBy', function() {
+    return function(items, field, reverse) {
+      var filtered = [];
+      for (var i in items) {
+        items[i].key = i;
+        filtered.push(items[i]);
+      }
+      filtered.sort(function (a, b) {
+        return (a[field] > b[field] ? 1 : -1);
+      });
+      if(reverse) filtered.reverse();
+      return filtered;
+    };
+  })
   .controller('TasksCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,toaster) {
     ga('send', 'pageview', '/tasks');
     $scope.team = {
@@ -87,6 +101,10 @@ angular.module('webappApp')
       unassigned : []
     }
     $scope.showArchive = false;
+
+    $scope.sortable = [
+      'cat', 'deadline', 'priority', 'name', 'date', 'assigned_by'
+    ]
 
     /**
     *
@@ -218,6 +236,7 @@ angular.module('webappApp')
       for (var i in assignmentIDs) {
         syncAssignments(i);
       }
+      console.log('$scope', $scope);
     } // updateAllAssignments()
 
     /**

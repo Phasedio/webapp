@@ -24,13 +24,19 @@
     <div class="col-xs-5 team-aside">
       <h2>Tasks assigned to me</h2>
       <div>
-        <div ng-repeat="(id, assignment) in assignments.to_me | filterTaskByStatus : '!1' | orderBy : 'priority'" class="task">
+        <p>sort by 
+          <select ng-options="sortable for sortable in sortable" ng-model="sortBy"></select>
+          reverse? <input type="checkbox" ng-model="sortReverse" />
+        </p>
+      </div>
+      <div>
+        <div ng-repeat="assignment in assignments.to_me | filterTaskByStatus : '!1' | orderObjectBy : sortBy : sortReverse" class="task" >
           <h4>{{assignment.name}}</h4>
           <h5>
-            <a href="#" ng-click="activateTask(assignment, id)" ng-if="assignment.status != 0">work on this</a> 
+            <a href="#" ng-click="activateTask(assignment, assignment.key)" ng-if="assignment.status != 0">work on this</a> 
             <span ng-if="assignment.status == 0">current task</span>
             &middot; 
-            <a href="#" ng-click="setTaskCompleted(id)">finished</a></h5>
+            <a href="#" ng-click="setTaskCompleted(assignment.key)">finished</a></h5>
           <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
