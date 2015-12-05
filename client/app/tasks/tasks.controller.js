@@ -320,6 +320,9 @@ angular.module('webappApp')
         path += 'archive/';
         idsContainer = archiveIDs;
         assignmentContainer = $scope.archive;
+        ga('send', 'event', 'Task', 'task unarchived');
+      } else {
+        ga('send', 'event', 'Task', 'task archived');
       }
 
       // 1.
@@ -780,6 +783,7 @@ angular.module('webappApp')
     *
     */
     $scope.takeTask = function(assignmentID) {
+      ga('send', 'event', 'Task', 'task taken');
       var assignmentsPath = 'team/' + $scope.team.name + '/assignments/';
 
       // 1. remove task from /unassigned
