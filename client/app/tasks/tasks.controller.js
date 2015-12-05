@@ -74,29 +74,33 @@ angular.module('webappApp')
       unassigned : []
     }
 
+    // similar structure for archive
+    $scope.archive = {};
+    var archiveIDs = {
+      to_me : [],
+      by_me : [],
+      unassigned : []
+    }
+
     /**
     *
     *   ~*~ init ~*~
     *
     */
-    var init = function(){
-      FBRef.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
-        data = data.val();
-        $scope.team.name = data;
+    FBRef.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
+      data = data.val();
+      $scope.team.name = data;
 
-        // get metadata
-        getCategories();
-        getTaskStatuses();
-        getTaskPriorities();
+      // get metadata
+      getCategories();
+      getTaskStatuses();
+      getTaskPriorities();
 
-        // start streaming
-        startStream();
-        setWatchAssignments();
+      // start streaming
+      startStream();
+      setWatchAssignments();
 
-      })
-    }
-
-    init();
+    });
 
 
     /**
@@ -150,7 +154,6 @@ angular.module('webappApp')
 
     /**
     *
-    * STUB
     * updates $scope.assignments.all
     *
     * instead of replacing the whole object, compares assignments and props, then updates
@@ -262,6 +265,105 @@ angular.module('webappApp')
       }
 
       $scope.assignments[assignmentContainerName] = assignmentContainer;
+    }
+
+    $scope.moveToArchive = function(assignment, assignmentID) {
+      // remove from /to/(me) or /unassigned
+      //   (note which)
+      // remove from /by
+      // remove from /all
+
+      // add to archive/to/(me) or archive/unassigned
+      //   depending on which it was removed from
+      // add to archive/by
+      // add to archive/all
+    }
+
+    $scope.moveFromArchive = function(assignment, assignmentID) {
+      // remove from archive/to/(me) or archive/unassigned
+      //   (note which)
+      // remove from archive/by
+      // remove from archive/all
+
+      // add to /to/(me) or /unassigned
+      //   depending on which it was removed from
+      // add to /by
+      // add to /all
+    }
+
+    /**
+    *
+    * gets archived tasks at the requested address
+    *
+    * 1. checks that address is valid
+    * 2. makes firebase calls that fill $scope.archive.all and archiveIDs[address]
+    * 3. calls syncArchive which fills out $scope.archive[address]
+    *
+    * on demand, not watched
+    * can get to_me, by_me, and unassigned
+    */
+    $scope.getArchiveFor = function(address) {
+      var archivePath = 'team/' + $scope.team.name + '/assignments/archive/',
+        pathSuffix = '';
+
+      // 1
+      switch(address) {
+        case 'to_me' : 
+          pathSuffix = 'to/' + $scope.myID;
+          break;
+        case 'by_me' : 
+          pathSuffix = 'by/' + $scope.myID;
+          break;
+        case 'unassigned' : 
+          pathSuffix = 'unassigned';
+          break;
+        default:
+          return;
+      }
+
+      console.log('getArchiveFor ' + address);
+
+      // 2
+      // get entire archive :S
+      FBRef.child(archivePath).once('value', function(data){
+        $scope.archive.all = data.val();
+
+        // if other call is complete
+        if (archiveIDs[address])
+          sortArchiveInto(address); // 3
+      });
+
+      // get appropriate IDs
+      FBRef.child(archivePath + pathSuffix).once('value', function(data){
+        archiveIDs[address] = data.val();
+
+        // if other call is complete
+        if ($scope.archive.all)
+          sortArchiveInto(address); // 3
+      });
+    }
+
+
+    /**
+    *
+    * links up the archived tasks from the archiveContainerName to the appropriate $scope.archive address
+    * (sim to syncAssignments())
+    */
+    var syncArchive = function(archiveContainerName) {
+      console.log('syncArchive for ' + archiveContainerName);
+
+      if (!(archiveContainerName in archiveIDs && 'all' in $scope.archive)) return; // ensures valid address and enough data
+
+      var archiveContainer = {},
+            UIDContainer = assignmentIDs[archiveContainerName];
+
+      for (var i in UIDContainer) {
+        var assignmentID = UIDContainer[i];
+        if (assignmentID in $scope.assignments.all)
+          archiveContainer[assignmentID] = $scope.assignments.all[assignmentID];
+      }
+
+      $scope.archive[archiveContainerName] = archiveContainer;
     }
 
     /**
