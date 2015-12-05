@@ -47,6 +47,7 @@
           <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
+          <p><a href="#" ng-click="moveToArchive(assignment, id)">archive task</a></p>
         </div>
       </div>
     </div>
@@ -54,15 +55,25 @@
     <!-- UNASSIGNED -->
     <div class="col-xs-2">
       <h3>Unassigned tasks</h3>
-        <div ng-repeat="(id, assignment) in assignments.unassigned | orderBy : 'priority'" class="task">
-          <h4>{{assignment.name}}</h4>
-          <a href="#" ng-click="takeTask(id)">take this task</a>
-          <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
-          <p>in {{team.categoryObj[assignment.cat].name}}</p>
-          <p>status: {{taskStatuses[assignment.status].name}}</p>
-          <p ng-if="assignment.priority >= 0">priority: {{taskPriorities[assignment.priority].name}}</p>
-          <p ng-if="assignment.deadline >= 0">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
-        </div>
+      <div ng-repeat="(id, assignment) in assignments.unassigned | orderBy : 'priority'" class="task">
+        <h4>{{assignment.name}}</h4>
+        <a href="#" ng-click="takeTask(id)">take this task</a>
+        <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
+        <p>in {{team.categoryObj[assignment.cat].name}}</p>
+        <p>status: {{taskStatuses[assignment.status].name}}</p>
+        <p ng-if="assignment.priority >= 0">priority: {{taskPriorities[assignment.priority].name}}</p>
+        <p ng-if="assignment.deadline >= 0">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
+      </div>
+
+      <!-- ARCHIVE -->
+      <h3>Archive</h3>
+      <a href="#" ng-click="getArchiveFor('to_me')" ng-if="!showArchive">Get archived tasks</a>
+      <div ng-if="showArchive" ng-repeat="(id, assignment) in archive.to_me | orderBy : 'priority'" class="task">
+        <h4>{{assignment.name}}</h4>
+        <p><a href="#" ng-click="moveFromArchive(assignment, id)">unarchive</a></p>
+        <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
+        <p>in {{team.categoryObj[assignment.cat].name}}</p>
+      </div>
     </div>
   </div>
 </section>

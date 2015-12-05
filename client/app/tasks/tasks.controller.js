@@ -75,12 +75,18 @@ angular.module('webappApp')
     }
 
     // similar structure for archive
-    $scope.archive = {};
+    $scope.archive = {
+      all : {},
+      to_me : {},
+      by_me : {},
+      unassigned : {}
+    };
     var archiveIDs = {
       to_me : [],
       by_me : [],
       unassigned : []
     }
+    $scope.showArchive = false;
 
     /**
     *
@@ -267,17 +273,85 @@ angular.module('webappApp')
       $scope.assignments[assignmentContainerName] = assignmentContainer;
     }
 
+    /**
+    *
+    * moves a task to the archive
+    *
+    * 1.A remove from /to/(me) or /unassigned (& note which)
+    * 1.B remove from /by
+    * 1.C remove from /all
+    *
+    * 2.A add to archive/to/(me) or archive/unassigned
+    *   depending on which it was removed from
+    * 2.B add to archive/by
+    * 2.C add to archive/all
+    * 2.D add to $scope.archive.all and run sync, since archive isn't watched
+    */
     $scope.moveToArchive = function(assignment, assignmentID) {
-      // remove from /to/(me) or /unassigned
-      //   (note which)
-      // remove from /by
-      // remove from /all
+      console.log('archiving task', assignment);
+      var path = "team/" + $scope.team.name + "/assignments/",
+        to_me = false;
 
-      // add to archive/to/(me) or archive/unassigned
-      //   depending on which it was removed from
-      // add to archive/by
-      // add to archive/all
+      // 1.
+
+      // 1.A
+      if (assignmentIDs.to_me.indexOf(assignmentID) > -1) {
+        to_me = true;
+        FBRef.child(path + 'to/' + $scope.myID).set(popFromList(assignmentID, assignmentIDs['to_me']));
+      }
+      else if (assignmentIDs.unassigned.indexOf(assignmentID) > -1) {
+        to_me = false;
+        FBRef.child(path + 'unassigned').set(popFromList(assignmentID, assignmentIDs['unassigned']));
+      }
+      else {
+        return;
+      }
+
+      // 1.B
+      FBRef.child(path + 'by/' + $scope.myID).set(popFromList(assignmentID, assignmentIDs['by_me']));
+
+      // 1.C
+      FBRef.child(path + 'all/' + assignmentID).remove();
+
+      // 2.
+      path += 'archive/';
+
+      // 2.A
+      // for this and 2.B, have to get list from server
+      if (to_me) {
+        FBRef.child(path + 'to/' + $scope.myID).once('value', function(data){
+          data = data.val();
+          archiveIDs['to_me'] = data || [];
+          archiveIDs['to_me'].push(assignmentID);
+          FBRef.child(path + 'to/' + $scope.myID).set(archiveIDs['to_me']);
+          if ($scope.showArchive) syncArchive('to_me');
+        });
+      }
+      else {
+        FBRef.child(path + 'unassigned').once('value', function(data){
+          data = data.val();
+          archiveIDs['unassigned'] = data || [];
+          archiveIDs['unassigned'].push(assignmentID);
+          FBRef.child(path + 'unassigned').set();
+          if ($scope.showArchive) syncArchive('unassigned');
+        });
+      }
+
+      // 2.B
+      FBRef.child(path + 'by/' + $scope.myID).once('value', function(data){
+        data = data.val();
+        archiveIDs['by_me'] = data || [];
+        archiveIDs['by_me'].push(assignmentID);
+        FBRef.child(path + 'by/' + $scope.myID).set(archiveIDs['by_me']);
+      });
+
+      // 2.C
+      FBRef.child(path + 'all/' + assignmentID).set(assignment); // remote
+
+      // 2.D
+      $scope.archive.all[assignmentID] = assignment; // local, since archive isn't watched
     }
+
 
     $scope.moveFromArchive = function(assignment, assignmentID) {
       // remove from archive/to/(me) or archive/unassigned
@@ -324,13 +398,14 @@ angular.module('webappApp')
       console.log('getArchiveFor ' + address);
 
       // 2
-      // get entire archive :S
-      FBRef.child(archivePath).once('value', function(data){
+      // get archive/all
+      FBRef.child(archivePath + 'all').once('value', function(data){
         $scope.archive.all = data.val();
 
         // if other call is complete
         if (archiveIDs[address])
-          sortArchiveInto(address); // 3
+          syncArchive(address); // 3
+        $scope.showArchive = true;
       });
 
       // get appropriate IDs
@@ -339,7 +414,7 @@ angular.module('webappApp')
 
         // if other call is complete
         if ($scope.archive.all)
-          sortArchiveInto(address); // 3
+          syncArchive(address); // 3
       });
     }
 
@@ -350,17 +425,17 @@ angular.module('webappApp')
     * (sim to syncAssignments())
     */
     var syncArchive = function(archiveContainerName) {
-      console.log('syncArchive for ' + archiveContainerName);
+      console.log('syncArchive for ' + archiveContainerName, $scope.archive);
 
-      if (!(archiveContainerName in archiveIDs && 'all' in $scope.archive)) return; // ensures valid address and enough data
+      if (!(archiveContainerName in archiveIDs)) return; // ensures valid address
 
       var archiveContainer = {},
-            UIDContainer = assignmentIDs[archiveContainerName];
+            UIDContainer = archiveIDs[archiveContainerName];
 
       for (var i in UIDContainer) {
         var assignmentID = UIDContainer[i];
-        if (assignmentID in $scope.assignments.all)
-          archiveContainer[assignmentID] = $scope.assignments.all[assignmentID];
+        if (assignmentID in $scope.archive.all)
+          archiveContainer[assignmentID] = $scope.archive.all[assignmentID];
       }
 
       $scope.archive[archiveContainerName] = archiveContainer;
@@ -738,6 +813,21 @@ angular.module('webappApp')
 
       // push to database
       FBRef.child('team/' + $scope.team.name + '/assignments/all/' + assignmentID + '/priority').set(newPriority);
+    }
+
+    /**
+    *
+    * convenience function for removing an item from an array
+    * returns the new array
+    *
+    */
+    var popFromList = function(item, list) { 
+      var i = list.indexOf(item);
+      while (i > -1) {
+        delete list[i];
+        i = list.indexOf(item);
+      }
+      return list;
     }
 
     /**
