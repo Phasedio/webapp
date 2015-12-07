@@ -82,8 +82,8 @@ angular.module('webappApp')
     */
 
     /**
-    * 
-    * starts the data stream 
+    *
+    * starts the data stream
     * 1. watches the team's tasks
     * 1.b  when a new task is posted, it refreshes the team membership
     * 2. after the users have all been updated, appropriate streams are watched
@@ -93,7 +93,7 @@ angular.module('webappApp')
       // 1.
       var team = $scope.team.name;
       FBRef.child('team').child(team).child('task').on('value', function(users) {
-        $scope.team.members = [];
+        $scope.team.members = {};
         users = users.val();
 
         if (users) {
@@ -105,7 +105,7 @@ angular.module('webappApp')
 
           // 2.
           // ugly debounce to get around having to wait for multiple callbacks
-          var interval = window.setInterval(function() { 
+          var interval = window.setInterval(function() {
             if ($scope.team.members && $scope.team.members[$scope.myID]) {
               window.clearInterval(interval);
               setWatchAssignments();
@@ -125,10 +125,10 @@ angular.module('webappApp')
     */
     var setWatchAssignments = function() {
       var allRef = FBRef.child('team/' + $scope.team.name + '/all');
-    
+
       // collection of assigned_to_me collections to keep up to date
       $scope.watched = [];
-      
+
       // watch own
       watchMember($scope.myID, allRef);
 
@@ -324,7 +324,7 @@ angular.module('webappApp')
       //   alert('Your update is too long!');
       //   return;
       // }
-      
+
 
       // format object to send to db
       var taskPrefix = '',
