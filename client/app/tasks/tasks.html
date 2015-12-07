@@ -50,12 +50,43 @@
         <!-- member area -->
         <div class="task-action-members">
           <div class="member-img" ng-repeat="(key, item) in team.members">
-            {{item}}
             <img src="{{item.pic}}" width="40px" height="40px">
           </div>
         </div>
       </div>
     </div>
+
+    <!-- TASK STREAM -->
+    <div class="col-xs-8 task-stream">
+      <div class="task ph-card" ng-repeat="(id, assignment) in team.members[myID].assigned_to_me | filterTaskByStatus : '!1' | orderBy : 'time'">
+        <div class="task-header">
+          <div class="task-main">
+            <h1>{{assignment.name}}</h1>
+          </div>
+
+          <div class="task-second">
+            <div class="task-title">
+              <h1>{{taskStatuses[assignment.status].name}}</h1>
+              <img src="{{team.members['simplelogin:1'].pic}}" width="40px" height="40px">
+            </div>
+          </div>
+        </div>
+
+
+        <div class="task-details">
+          <p class="semi-bold">Category: {{team.categoryObj[assignment.cat].name}}</p>
+          <p class="semi-bold">Assigned by: Carl</p>
+
+          <p class="semi-bold">Due date: May, 17</p>
+        </div>
+
+        <div class="task-archive">
+          <button class="btn btn-phased-blue" ng-click="activateTask(assignment, id)">Start</button>
+          <button class="btn btn-phased-blue" ng-click="setTaskCompleted(assignment, id)">complete</button>
+        </div>
+      </div>
+    </div>
+
 
     <!-- ASSIGNED BY ME -->
     <!-- <div class="col-xs-5">

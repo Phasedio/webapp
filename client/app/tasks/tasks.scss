@@ -159,6 +159,11 @@ p{
   color:#BDBDBD;
   font-size: 12px;
 }
+.semi-bold{
+  font-family: 'open_sanssemibold';
+  color:#B2B2B3;
+  text-transform: uppercase;
+}
 .ph-card{
   background: #FFFFFF;
   padding:40px;
@@ -224,4 +229,58 @@ p{
     }
 
   }
+}
+
+.task-action-members{
+  .member-img{
+    display: inline-block;
+    img{
+      border-radius: 100px;
+    }
+  }
+}
+
+.task{
+  overflow: auto;
+  .task-header{
+    overflow: auto;
+  }
+  .task-main,.task-second{
+    width: 50%;
+    display: inline-block;
+    float: left;
+  }
+  .task-main{
+    p{
+      margin-top: 1rem;
+    }
+  }
+  .task-title{
+    overflow: auto;
+    margin-bottom: 1.5rem;
+    h1,img{
+      display: inline-block;
+    }
+    h1{ float: left;color:#B2B2B3;}
+    img{  float: right; border-radius: 100px;}
+
+  }
+  h1{
+    font-family: "open_sanslight",sans-serif;
+    text-transform: none;
+    line-height: 46px;
+    color: #595959;
+    margin: 0;
+  }
+
+
+  .task-details{
+    display: block;
+    overflow: auto;
+    p{
+      display: inline-block;
+      width: 32%;
+    }
+  }
+
 }
