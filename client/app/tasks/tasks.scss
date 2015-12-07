@@ -184,6 +184,7 @@ p{
   }
 }
 .task-action-dis{
+  margin-bottom: 20px;
   p{
     min-width: 50px;
     width: 70%;
@@ -192,6 +193,7 @@ p{
 }
 
 .task-action-filter{
+  margin-bottom: 20px;
   ul{
     margin: 0;
     padding: 0;
@@ -201,6 +203,7 @@ p{
   li{
     overflow: auto;
     margin-bottom: 18px;
+    cursor: pointer;
   }
   .filter-selection{
 
@@ -219,6 +222,12 @@ p{
       display: inline-block;
     }
   }
+  .active{
+    color:#595959;
+    div{
+      background: #595959;
+    }
+  }
 
   .filter-category{
     margin-top: 50px;
@@ -234,6 +243,8 @@ p{
 .task-action-members{
   .member-img{
     display: inline-block;
+    margin-left: 20px;
+    margin-bottom:20px;
     img{
       border-radius: 100px;
     }
@@ -246,14 +257,21 @@ p{
     overflow: auto;
   }
   .task-main,.task-second{
-    width: 50%;
+
     display: inline-block;
     float: left;
   }
   .task-main{
+    width: 75%;
+    h1:nth-child(2){
+      color:#B2B2B3;
+    }
     p{
       margin-top: 1rem;
     }
+  }
+  .task-second{
+    width: 25%;
   }
   .task-title{
     overflow: auto;
@@ -275,6 +293,8 @@ p{
 
 
   .task-details{
+    margin-top: 1rem;
+    margin-bottom:1rem;
     display: block;
     overflow: auto;
     p{

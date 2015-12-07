@@ -30,13 +30,13 @@
         <div class="task-action-dis">
           <h1>Phased</h1>
           <p>this is a task area that you can see tasks assigned to you and create new tasks</p>
-          <button class="btn btn-phased-blue">New task</button>
+          <button class="btn btn-phased-blue" ng-click="addTaskModal();">New task</button>
         </div>
         <!-- filter area -->
         <div class="task-action-filter">
           <ul>
             <li><div class="filter-selection">all <div></div></div></li>
-            <li><div class="filter-selection">asigned to me <div></div></div></li>
+            <li><div class="filter-selection active">asigned to me <div></div></div></li>
             <li><div class="filter-selection">my created tasks <div></div></div></li>
             <li><div class="filter-selection">closed tasks <div></div></div></li>
           </ul>
@@ -62,11 +62,12 @@
         <div class="task-header">
           <div class="task-main">
             <h1>{{assignment.name}}</h1>
+            <h1>{{taskStatuses[assignment.status].name}}</h1>
           </div>
 
           <div class="task-second">
             <div class="task-title">
-              <h1>{{taskStatuses[assignment.status].name}}</h1>
+
               <img src="{{team.members['simplelogin:1'].pic}}" width="40px" height="40px">
             </div>
           </div>
@@ -75,7 +76,7 @@
 
         <div class="task-details">
           <p class="semi-bold">Category: {{team.categoryObj[assignment.cat].name}}</p>
-          <p class="semi-bold">Assigned by: Carl</p>
+          <p class="semi-bold">Assigned by: {{team.members[assignment.assigned_by].name}}</p>
 
           <p class="semi-bold">Due date: May, 17</p>
         </div>
