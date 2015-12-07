@@ -153,18 +153,6 @@ angular.module('webappApp')
           for (var i = 0; i < teamUID.length; i++) {
             getUserDetails(teamUID[i], users);
           }
-<<<<<<< HEAD
-
-          // 2.
-          // ugly debounce to get around having to wait for multiple callbacks
-          var interval = window.setInterval(function() {
-            if ($scope.team.members && $scope.team.members[$scope.myID]) {
-              window.clearInterval(interval);
-              setWatchAssignments();
-            }
-          }, 100);
-=======
->>>>>>> 764161b961cc3457ec365c4835760529c562401b
         }
       });
     };
@@ -180,17 +168,7 @@ angular.module('webappApp')
     *   - unassigned tasks assignments/un
     */
     var setWatchAssignments = function() {
-<<<<<<< HEAD
-      var allRef = FBRef.child('team/' + $scope.team.name + '/all');
-
-      // collection of assigned_to_me collections to keep up to date
-      $scope.watched = [];
-
-      // watch own
-      watchMember($scope.myID, allRef);
-=======
       var refString = 'team/' + $scope.team.name + '/assignments';
->>>>>>> 764161b961cc3457ec365c4835760529c562401b
 
       FBRef.child(refString + '/all').on('value', updateAllAssignments);
       FBRef.child(refString + '/to/' + Auth.user.uid).on('value', updateAssignedTo);
@@ -374,7 +352,7 @@ angular.module('webappApp')
         idsContainer = assignmentIDs;
         assignmentContainer = $scope.assignments;
       } else {
-        path += 'archive/'; 
+        path += 'archive/';
         idsContainer = archiveIDs;
         assignmentContainer = $scope.archive;
       }
@@ -441,13 +419,13 @@ angular.module('webappApp')
 
       // 1
       switch(address) {
-        case 'to_me' : 
+        case 'to_me' :
           pathSuffix = 'to/' + $scope.myID;
           break;
-        case 'by_me' : 
+        case 'by_me' :
           pathSuffix = 'by/' + $scope.myID;
           break;
-        case 'unassigned' : 
+        case 'unassigned' :
           pathSuffix = 'unassigned';
           break;
         default:
@@ -813,7 +791,7 @@ angular.module('webappApp')
       FBRef.child(assignmentsPath + 'unassigned').set(assignmentIDs.unassigned);
 
       // 2. add task to /to/(me)
-      assignmentIDs.to_me.push(assignmentID);      
+      assignmentIDs.to_me.push(assignmentID);
       FBRef.child(assignmentsPath + 'to/' + $scope.myID ).set(assignmentIDs.to_me);
 
       // 3. set user attr
@@ -881,7 +859,7 @@ angular.module('webappApp')
     * returns the new array
     *
     */
-    var popFromList = function(item, list) { 
+    var popFromList = function(item, list) {
       var i = list.indexOf(item);
       while (i > -1) {
         delete list[i];
