@@ -1,0 +1,81 @@
+<div ng-include="'components/navbar/navbar.html'"></div>
+
+<section class="container">
+  <div class="row">
+
+    <!-- ASSIGNED BY ME -->
+    <div class="col-xs-5">
+      <h2>Tasks I've assigned to others</h2>
+      <button class="btn btn-block button-phased-wht" ng-click=" addTaskModal();">Assign a task</button>
+      <div ng-repeat="member in watched">
+        <h3>{{member.name}}</h3>
+        <div ng-repeat="assignment in member.assigned_to_me | orderBy : 'time'" class="task">
+          <h4>{{assignment.name}}</h4>
+          <p>on {{assignment.time | date:'short'}}</p>
+          <p>in {{team.categoryObj[assignment.cat].name}}</p>
+          <p>status: {{taskStatuses[assignment.status].name}}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASSIGNED TO ME -->
+    <div class="col-xs-5 team-aside">
+      <h2>Tasks assigned to me</h2>
+      <div>
+        <div ng-repeat="(id, assignment) in team.members[myID].assigned_to_me | filterTaskByStatus : '!1' | orderBy : 'time'" class="task">
+          <h4>{{assignment.name}}</h4>
+          <h5><a href="#" ng-click="activateTask(assignment, id)">work on this</a> &middot; <a href="#" ng-click="setTaskCompleted(assignment, id)">archive</a></h5>
+          <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
+          <p>in {{team.categoryObj[assignment.cat].name}}</p>
+          <p>status: {{taskStatuses[assignment.status].name}}</p>
+        </div>
+      </div>
+
+      <!-- ARCHIVE -->
+      <h2>Completed tasks</h2>
+      <div>
+        <div ng-repeat="(id, assignment) in team.members[myID].assigned_to_me | filterTaskByStatus : '1' | orderBy : 'time'" class="task">
+          <h4>{{assignment.name}}</h4>
+          <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
+          <p>in {{team.categoryObj[assignment.cat].name}}</p>
+          <p>status: {{taskStatuses[assignment.status].name}}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY FEED -->
+    <div class="col-xs-2">
+      <h3>My current activity <em>(maybe?)</em></h3>
+    </div>
+  </div>
+</section>
+
+<!-- add task -->
+<div class="modal fade" id="myModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form name="addmember" ng-submit="addTask(newTask)" novalidation>
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 style="color:#000;" class="modal-title no-shadow">Add task</h4>
+        </div>
+        <div class="modal-body">
+        	<label for="taskName">Task name</label>
+         	<input type="text" id="taskName" ng-model="newTask.name" placeholder="Build a rocket">
+
+          <label for="category">Category</label>
+          <select ng-options="key as category.name for (key, category) in team.categoryObj" ng-model="newTask.category" id="assignee"></select>
+
+          <label for="assignee">Assign to</label>
+          <!-- this should default to self -->
+          <select ng-options="member as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee"></select>
+        
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <input type="submit" class="btn btn-primary" value="Add task">
+        </div>
+      </form>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
