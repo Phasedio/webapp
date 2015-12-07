@@ -93,46 +93,97 @@
     <!-- <div class="col-xs-5">
       <h2>Tasks I've assigned to others</h2>
       <button class="btn btn-block button-phased-wht" ng-click=" addTaskModal();">Assign a task</button>
-      <div ng-repeat="member in watched">
-        <h3>{{member.name}}</h3>
-        <div ng-repeat="assignment in member.assigned_to_me | orderBy : 'time'" class="task">
+      <!-- <div ng-repeat="member in watched"> -->
+        <!-- <h3>{{member.name}}</h3> -->
+        <div ng-repeat="assignment in assignments.by_me | orderBy : 'time'" class="task">
           <h4>{{assignment.name}}</h4>
           <p>on {{assignment.time | date:'short'}}</p>
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
+          <p ng-if="assignment.priority">priority: {{taskPriorities[assignment.priority].name}}</p>
+          <p ng-if="assignment.deadline">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
         </div>
+<<<<<<< HEAD
       </div>
     </div> -->
+=======
+      <!-- </div> -->
+    </div>
+>>>>>>> 764161b961cc3457ec365c4835760529c562401b
 
     <!-- ASSIGNED TO ME -->
     <!-- <div class="col-xs-5 team-aside">
       <h2>Tasks assigned to me</h2>
       <div>
-        <div ng-repeat="(id, assignment) in team.members[myID].assigned_to_me | filterTaskByStatus : '!1' | orderBy : 'time'" class="task">
+        <p>sort by 
+          <select ng-options="sortable for sortable in sortable" ng-model="sortBy"></select>
+          reverse? <input type="checkbox" ng-model="sortReverse" />
+        </p>
+      </div>
+      <div>
+        <div ng-repeat="assignment in assignments.to_me | filterTaskByStatus : '!1' | orderObjectBy : sortBy : sortReverse" class="task" >
           <h4>{{assignment.name}}</h4>
-          <h5><a href="#" ng-click="activateTask(assignment, id)">work on this</a> &middot; <a href="#" ng-click="setTaskCompleted(assignment, id)">archive</a></h5>
+          <h5>
+            <a href="#" ng-click="activateTask(assignment, assignment.key)" ng-if="assignment.status != 0">work on this</a> 
+            <span ng-if="assignment.status == 0">current task</span>
+            &middot; 
+            <a href="#" ng-click="setTaskCompleted(assignment.key)">finished</a></h5>
           <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
+          <p ng-if="assignment.priority >= 0">priority: {{taskPriorities[assignment.priority].name}}</p>
+          <p ng-if="assignment.deadline >= 0">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
         </div>
       </div> -->
 
+<<<<<<< HEAD
       <!-- ARCHIVE -->
       <!-- <h2>Completed tasks</h2>
+=======
+      <!-- COMPLETED -->
+      <h2>Completed tasks</h2>
+>>>>>>> 764161b961cc3457ec365c4835760529c562401b
       <div>
-        <div ng-repeat="(id, assignment) in team.members[myID].assigned_to_me | filterTaskByStatus : '1' | orderBy : 'time'" class="task">
+        <div ng-repeat="(id, assignment) in assignments.to_me | filterTaskByStatus : '1' | orderBy : 'time'" class="task">
           <h4>{{assignment.name}}</h4>
           <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
           <p>in {{team.categoryObj[assignment.cat].name}}</p>
           <p>status: {{taskStatuses[assignment.status].name}}</p>
+          <p><a href="#" ng-click="moveToArchive(assignment, id)">archive task</a></p>
         </div>
       </div>
     </div> -->
 
+<<<<<<< HEAD
     <!-- MY FEED -->
     <!-- <div class="col-xs-2">
       <h3>My current activity <em>(maybe?)</em></h3>
     </div> -->
+=======
+    <!-- UNASSIGNED -->
+    <div class="col-xs-2">
+      <h3>Unassigned tasks</h3>
+      <div ng-repeat="(id, assignment) in assignments.unassigned | orderBy : 'priority'" class="task">
+        <h4>{{assignment.name}}</h4>
+        <a href="#" ng-click="takeTask(id)">take this task</a>
+        <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
+        <p>in {{team.categoryObj[assignment.cat].name}}</p>
+        <p>status: {{taskStatuses[assignment.status].name}}</p>
+        <p ng-if="assignment.priority >= 0">priority: {{taskPriorities[assignment.priority].name}}</p>
+        <p ng-if="assignment.deadline >= 0">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
+      </div>
+
+      <!-- ARCHIVE -->
+      <h3>Archive</h3>
+      <a href="#" ng-click="getArchiveFor('to_me')" ng-if="!showArchive">Get archived tasks</a>
+      <div ng-if="showArchive" ng-repeat="(id, assignment) in archive.to_me | orderBy : 'priority'" class="task">
+        <h4>{{assignment.name}}</h4>
+        <p><a href="#" ng-click="moveFromArchive(assignment, id)">unarchive</a></p>
+        <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
+        <p>in {{team.categoryObj[assignment.cat].name}}</p>
+      </div>
+    </div>
+>>>>>>> 764161b961cc3457ec365c4835760529c562401b
   </div>
 </section>
 
@@ -150,12 +201,28 @@
          	<input type="text" id="taskName" ng-model="newTask.name" placeholder="Build a rocket">
 
           <label for="category">Category</label>
-          <select ng-options="key as category.name for (key, category) in team.categoryObj" ng-model="newTask.category" id="assignee"></select>
+          <select ng-options="key as category.name for (key, category) in team.categoryObj" ng-model="newTask.category" id="category"></select>
+
+          <label for="priority">Priority</label>
+          <select ng-options="key as priority.name for (key, priority) in taskPriorities" ng-model="newTask.priority" id="priority"></select>
+
+          <label for="deadline">Deadline</label>
+          <p><em>use yyyy-MM-dd format if you don't know HTML5</em></p>
+          <input type="date" ng-model="newTask.deadline" min="{{today | date : 'yyyy-MM-dd'}}" />
 
           <label for="assignee">Assign to</label>
+<<<<<<< HEAD
           <!-- this should default to self -->
           <select ng-options="member as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee"></select>
 
+=======
+          <!-- this should default to unassigned -->
+          <select ng-options="member as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee" ng-disabled="newTask.unassigned"></select>
+
+          <label for="unassigned">Unassigned</label>
+          <input type="checkbox" ng-model="newTask.unassigned" />
+        
+>>>>>>> 764161b961cc3457ec365c4835760529c562401b
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
