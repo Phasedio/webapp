@@ -58,7 +58,7 @@
 
     <!-- TASK STREAM -->
     <div class="col-xs-8 task-stream">
-      <div class="task ph-card" ng-repeat="(id, assignment) in team.members[myID].assigned_to_me | filterTaskByStatus : '!1' | orderBy : 'time'">
+      <div class="task ph-card" ng-repeat="(id, assignment) in assignments.to_me | filterTaskByStatus : '!1' | orderObjectBy : 'time'">
         <div class="task-header">
           <div class="task-main">
             <h1>{{assignment.name}}</h1>
