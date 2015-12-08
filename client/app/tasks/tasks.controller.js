@@ -49,7 +49,7 @@ angular.module('webappApp')
       return filtered;
     };
   })
-  .controller('TasksCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,toaster) {
+  .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster) {
     ga('send', 'pageview', '/tasks');
     $scope.team = {
       name : '',
@@ -113,17 +113,27 @@ angular.module('webappApp')
     */
     FBRef.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
       data = data.val();
-      $scope.team.name = data;
+      $scope.team = Phased.team;
+      $scope.viewType = Phased.viewType;
+      $scope.taskPriorities = Phased.taskPriorities;
+      $scope.taskStatuses = Phased.taskStatuses;
 
-      // get metadata
-      getCategories();
-      getTaskStatuses();
-      getTaskPriorities();
+      // get metadata -- now in PhasedProvider
+      // getCategories();
+      // getTaskStatuses();
+      // getTaskPriorities();
 
       // start streaming
-      startStream();
-      setWatchAssignments();
+      // startStream(); // now in PhasedProvider
 
+      // formerly setWatchAssignments(), now in PhasedProvider
+      var callbacks = {
+        all : updateAllAssignments,
+        to_me : updateAssignedTo,
+        by_me : updateAssignedBy,
+        unassigned : updateUnassigned
+      }
+      Phased.watchAssignments(callbacks);
     });
 
 
@@ -135,49 +145,6 @@ angular.module('webappApp')
 
     /**
     *
-    * starts the data stream
-    * 1. watches the team's tasks
-    * 1.b  when a new task is posted, it refreshes the team membership
-    *
-    */
-    var startStream = function() {
-      // 1.
-      var team = $scope.team.name;
-      FBRef.child('team').child(team).child('task').on('value', function(users) {
-        $scope.team.members = {};
-        users = users.val();
-
-        if (users) {
-          // 1.b
-          var teamUID = Object.keys(users);
-          for (var i = 0; i < teamUID.length; i++) {
-            getUserDetails(teamUID[i], users);
-          }
-        }
-      });
-    };
-
-
-    /**
-    *
-    * sets up watchers for current users task assignments - to and by
-    * and also unassigned tasks
-    *
-    *   - own assignments (to self or to others) assignments/to/(me)
-    *   - assignments to me by others assignments/by/(me)
-    *   - unassigned tasks assignments/un
-    */
-    var setWatchAssignments = function() {
-      var refString = 'team/' + $scope.team.name + '/assignments';
-
-      FBRef.child(refString + '/all').on('value', updateAllAssignments);
-      FBRef.child(refString + '/to/' + Auth.user.uid).on('value', updateAssignedTo);
-      FBRef.child(refString + '/by/' + Auth.user.uid).on('value', updateAssignedBy);
-      FBRef.child(refString + '/unassigned').on('value', updateUnassigned);
-    }
-
-    /**
-    *
     * updates $scope.assignments.all
     *
     * instead of replacing the whole object, compares assignments and props, then updates
@@ -186,6 +153,7 @@ angular.module('webappApp')
     */
     var updateAllAssignments = function(data) {
       data = data.val();
+      console.log('all: ', data);
       if (!data) {
         $scope.assignments.all = {};
         return;
@@ -477,92 +445,6 @@ angular.module('webappApp')
 
       $scope.archive[archiveContainerName] = archiveContainer;
     }
-
-    /**
-    *
-    * fills out $scope.team.members details
-    * called by startStream
-    */
-    var getUserDetails = function(memberID, users){
-      var userrefs = FBRef.child('profile/' + memberID);
-      userrefs.once("value", function(data) {
-               //console.log(memberID);
-        var p = data.val();
-               //console.log(p);
-        var pic,style;
-        if (users[memberID].photo){
-          style = "background:url("+users[memberID].photo+") no-repeat center center fixed; -webkit-background-size: cover;-moz-background-size: cover; -o-background-size: cover; background-size: cover";
-        } else {
-          style = false;
-        }
-        var teamMember = {
-          name : p.name,
-          pic : p.gravatar,
-          task : users[memberID].name,
-          time : users[memberID].time,
-          weather: users[memberID].weather,
-          city: users[memberID].city,
-          uid : memberID,
-          photo: style
-        };
-
-        $scope.team.members[memberID] = teamMember;
-        $scope.$apply();
-
-      });
-    }
-
-
-    /**
-    *
-    * fills out $scope.team.categories
-    * called in init()
-    */
-    var getCategories = function(){
-      var team = $scope.team.name;
-      FBRef.child('team').child(team).child('category').once('value', function(cat) {
-        cat = cat.val();
-        if(typeof cat !== 'undefined' && cat != null){
-          var keys = Object.keys(cat);
-          $scope.team.categoryObj = cat;
-            for (var i = 0; i < keys.length; i++){
-              var obj = {
-                name : cat[keys[i]].name,
-                color : cat[keys[i]].color,
-                key : keys[i]
-              }
-              $scope.team.categorySelect.push(obj);
-            }
-        } else {
-          //they have no categories so add them
-          var obj = [
-            {
-              name : 'Communication',
-              color : '#ffcc00'
-            },
-            {
-              name : 'Planning',
-              color : '#5ac8fb'
-            }
-          ];
-          FBRef.child('team/' + team + '/category').set(obj);
-          FBRef.child('team/' + team + '/category').once('value', function(cat) {
-            cat = cat.val();
-            var keys = Object.keys(cat);
-            $scope.team.categoryObj = cat;
-              for(var i = 0; i < keys.length; i++){
-                var obj = {
-                  name : cat[keys[i]].name,
-                  color : cat[keys[i]].color,
-                  key : keys[i]
-                }
-                  $scope.team.categorySelect.push(obj);
-              }
-              console.log($scope.team);
-          });
-        }
-      });
-    };
 
     /**
     *
