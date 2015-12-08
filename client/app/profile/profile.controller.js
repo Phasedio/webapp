@@ -11,10 +11,7 @@ angular.module('webappApp')
       categoryObj : {}
     };
 
-    new Firebase(FURL).child('profile').child(Auth.user.uid).once('value', function(user) {
-      user = user.val();
-      $scope.currentUser = user;
-    });
+
 
     // Update Account
   $scope.updateUser = function(update){
@@ -118,6 +115,35 @@ angular.module('webappApp')
         }
       });
     };
+    $scope.viewUser = function(){
+      //$scope.showMember = true;
+      //console.log(user);
+      // $scope.selectedUser = {
+      //   name : user.name,
+      //   gravatar : user.pic,
+      //   uid : user.uid,
+      //   history: []
+      // };
+
+      var ref = new Firebase(FURL);
+      var startTime = new Date().getTime();
+      var endTime = startTime - 86400000;
+      console.log(startTime);
+
+
+      ref.child('team').child($scope.team.name).child('all').child(Auth.user.uid).orderByChild('time').startAt(endTime).once('value',function(data){
+        data = data.val();
+        console.log(data);
+        var keys = Object.keys(data);
+        for(var i = 0; i < keys.length; i++){
+          $scope.team.history.push(data[keys[i]]);
+        }
+        console.log($scope.team.history);
+        $scope.$apply();
+      });
+    }
+
+
 
     $scope.init = function(){
       var ref = new Firebase(FURL);
@@ -126,8 +152,15 @@ angular.module('webappApp')
         data = data.val();
         $scope.team.name = data;
         console.log('sup');
+        //Get history for this user... This is baaaaaaaaaad
+        new Firebase(FURL).child('profile').child(Auth.user.uid).once('value', function(user) {
+          user = user.val();
+          $scope.currentUser = user;
+          $scope.viewUser();
+        });
         //$scope.checkPlanStatus($scope.team.name);
         $scope.getCategories();
+
         //$scope.checkStatus();
 
       })

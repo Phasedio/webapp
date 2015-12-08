@@ -1,6 +1,121 @@
+<style>
+	body {
+	  /*background:  linear-gradient(
+      rgba(0, 0, 0, 0.25),
+      rgba(0, 0, 0, 0.25)
+    ), url(assets/images/{{dayImage}}) no-repeat center center fixed;*/
+		background: #F2F2F2;
+	  -webkit-background-size: cover;
+	  -moz-background-size: cover;
+	  -o-background-size: cover;
+	  background-size: cover;
+	}
+</style>
+
 <div ng-include="'components/navbar/navbar.html'"></div>
 
-<section class="container">
+
+<section class="container-fluid">
+  <div class="row">
+    <div class="col-xs-3">
+      <div class="ph-profile-dp">
+        <img src="assets/images/phased-logo.svg" alt="" />
+        <img src="{{currentUser.gravatar}}" alt="" />
+      </div>
+      <div class="ph-card">
+        <div class="profile-user">
+          <h5>{{currentUser.name}}</h5>
+          <a href="">Edit</a>
+        </div>
+        <div class="profile-contact-info">
+          <div class="profile-contact-email">
+            <p class="contact-title">Contact</p>
+            <p>
+              brian@phased.io
+            </p>
+          </div>
+          <div class="profile-contact-holder">
+            <div class="profile-contact">
+              <p class="contact-title">Title</p>
+              <p>
+                CTO
+              </p>
+              <p class="contact-title">Twitter</p>
+              <p>
+                @brianbest
+              </p>
+            </div>
+            <div class="profile-contact">
+              <p class="contact-title">Slack</p>
+              <p>
+                @brian
+              </p>
+              <p class="contact-title">LinkedIn</p>
+              <p>
+                brianbest101
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-6">
+      <div class="ph-card profile-history">
+        <h6>history</h6>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>
+                Task
+              </th>
+              <th>
+                Category
+              </th>
+              <th>
+                Time
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="item in team.history | orderBy : 'time':true">
+              <td>
+                {{item.name}}
+              </td>
+              <td>
+                {{$parent.team.categoryObj[item.cat].name}}
+              </td>
+              <td>
+                <span am-time-ago="item.time"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-xs-3 profile-stats">
+
+      <div class="ph-card stat-card ">
+        <h6>CATEGORY BREAKDOWN</h6>
+        <h5 align="center">Your most active category</h5>
+        <h2 align="center">Building features</h2>
+      </div>
+      <div class="ph-card profile-spacing stat-card">
+        <h6>CATEGORY BREAKDOWN</h6>
+        <div class="fake-pie"></div>
+      </div>
+
+      <div class="ph-card profile-spacing stat-card">
+        <h2 align="center">See more stats</h2>
+      </div>
+
+
+    </div>
+  </div>
+</section>
+
+
+<!-- <section class="container">
   <div class = "row">
         <div class="col-xs-4">
           <img style="height: 120px; width: 120px; border-radius: 50%" src="{{currentUser.gravatar}}">
@@ -46,8 +161,7 @@
           </form>
 
 
-        <!--<button ng-click="saveChange()" class="btn btn-primary btn-lg btn-block button-phased">Save Changes</button>-->
         </div>
       </div>
     </div>
-</section>
+</section> -->
