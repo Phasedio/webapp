@@ -42,26 +42,39 @@ angular.module('webappApp')
         unassigned : []
       };
 
+    var _Auth, FBRef; // tacked on to PhasedProvider
 
     /**
-    * External vars
-    * (exposed by this.$get())
+    *
+    * The provider itself (all hail)
+    * returned by this.$get
     */
-    var _Auth,
-      _viewType = 'notPaid',  // Phased.viewType
-      _billingInfo, // Phased.billing
-      _taskPriorities, // Phased.TASK_PRIORITIES
-      _taskStatuses, // Phased.TASK_STATUSES
-      _team = {}, // Phased.team
-      _currentUser = '', // Phased.user
-      FBRef = '', // Phased.FBRef
-      _assignments = { // Phased.assignments
-        all : {}, // all of the team's assignments
-        to_me : {}, // assigned to me (reference to objects in all)
-        by_me : {}, // assigned by me (reference to objects in all)
-        unassigned : {} // unassigned (reference to objects in all)
-      },
-      _archive = {}; // Phased.archive
+    var PhasedProvider = {
+        user : {},
+        team : {},
+        viewType : 'notPaid',
+        billing : {},
+        TASK_PRIORITIES : {},
+        TASK_PRIORITY_ID : {
+          HIGH : 0,
+          MEDIUM : 1,
+          LOW : 2
+        },
+        TASK_STATUSES : {},
+        TASK_STATUS_ID : {
+          IN_PROGRESS : 0,
+          COMPLETE : 1,
+          ASSIGNED : 2
+        },
+        assignments : { // Phased.assignments
+          all : {}, // all of the team's assignments
+          to_me : {}, // assigned to me (reference to objects in all)
+          by_me : {}, // assigned by me (reference to objects in all)
+          unassigned : {} // unassigned (reference to objects in all)
+        },
+        archive : {},
+        FBRef : FBRef // set in setFBRef
+      };
 
     /**
     *
@@ -72,9 +85,10 @@ angular.module('webappApp')
     */
 
     this.init = function(Auth) {
+      console.log('init');
       _Auth = Auth;
-      _currentUser = Auth.user;
-      _team.name = Auth.currentTeam;
+      PhasedProvider.user = Auth.user;
+      PhasedProvider.team.name = Auth.currentTeam;
 
       checkPlanStatus();
       setUpTeamMembers();
@@ -93,38 +107,24 @@ angular.module('webappApp')
     *
     */
     this.$get = function() {
-      return {
-        user : _currentUser,
-        team : _team,
-        viewType : _viewType,
-        billing : _billingInfo,
-        TASK_PRIORITIES : _taskPriorities,
-        TASK_PRIORITY_ID : {
-          HIGH : 0,
-          MEDIUM : 1,
-          LOW : 2
-        },
-        TASK_STATUSES : _taskStatuses,
-        TASK_STATUS_ID : {
-          IN_PROGRESS : 0,
-          COMPLETE : 1,
-          ASSIGNED : 2
-        },
-        FBRef : FBRef,
-        watchAssignments : _watchAssignments,
-        assignments : _assignments,
-        getArchiveFor : _getArchiveFor,
-        archive : _archive,
-        moveToFromArchive : _moveToFromArchive,
-        activateTask : _activateTask,
-        takeTask : _takeTask,
-        addTask : _addTask
-      }
+      // register functions listed after this in the script...
+      PhasedProvider.watchAssignments = _watchAssignments;
+      PhasedProvider.assignments = PhasedProvider.assignments;
+      PhasedProvider.getArchiveFor = _getArchiveFor;
+      PhasedProvider.archive = PhasedProvider.archive;
+      PhasedProvider.moveToFromArchive = _moveToFromArchive;
+      PhasedProvider.activateTask = _activateTask;
+      PhasedProvider.takeTask = _takeTask;
+      PhasedProvider.addTask = _addTask;
+
+      console.log('$get');
+      return PhasedProvider;
     };
 
     // must be called in config or everything breaks
     this.setFBRef = function(FURL) {
       FBRef = new Firebase(FURL);
+      PhasedProvider.FBRef = FBRef;
     }
 
     /**
@@ -176,7 +176,9 @@ angular.module('webappApp')
           for (var i in tP) {
             tP[i]['key'] = i;
           }
-          _taskPriorities = tP;
+          PhasedProvider.TASK_PRIORITIES = tP;
+
+          console.log('priorities:', PhasedProvider.TASK_PRIORITIES);
 
         } else {
           // no status priorities exist, add defaults
@@ -191,17 +193,17 @@ angular.module('webappApp')
           // get data from db to ensure synchronicity
           FBRef.child('taskPriorities').once('value', function(tP /*taskPriorities*/ ) {
             tP = tP.val();
-            // assign keys to obj and set to _taskPriorities
+            // assign keys to obj and set to PhasedProvider.TASK_PRIORITIES
             for (var i in tP) {
               tP[i]['key'] = i;
             }
-            _taskPriorities = tP;
+            PhasedProvider.TASK_PRIORITIES = tP;
           });
         }
       });
     }
 
-    // gathers task Statuses, adds to _taskStatuses
+    // gathers task Statuses, adds to PhasedProvider.TASK_STATUSES
     var getTaskStatuses = function() {
       FBRef.child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
         tS = tS.val();
@@ -211,8 +213,8 @@ angular.module('webappApp')
           for (var i in tS) {
             tS[i]['key'] = i;
           }
-          _taskStatuses = tS;
-          // console.log('_taskStatuses', _taskStatuses);
+          PhasedProvider.TASK_STATUSES = tS;
+          // console.log('PhasedProvider.TASK_STATUSES', PhasedProvider.TASK_STATUSES);
         } else {
           // no status types exist, add defaults
           var obj = [
@@ -226,12 +228,12 @@ angular.module('webappApp')
           // get data from db to ensure synchronicity
           FBRef.child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
             tS = tS.val();
-            // assign keys to obj and set to _taskStatuses
+            // assign keys to obj and set to PhasedProvider.TASK_STATUSES
             for (var i in tS) {
               tS[i]['key'] = i;
             }
-            _taskStatuses = tS;
-            // console.log('_taskStatuses', _taskStatuses);
+            PhasedProvider.TASK_STATUSES = tS;
+            // console.log('PhasedProvider.TASK_STATUSES', PhasedProvider.TASK_STATUSES);
           });
         }
       });
@@ -249,9 +251,9 @@ angular.module('webappApp')
     */
     var setUpTeamMembers = function() {
       // get members
-      FBRef.child('team').child(_team.name).child('task').on('value', function(users) {
+      FBRef.child('team').child(PhasedProvider.team.name).child('task').on('value', function(users) {
         users = users.val();
-        _team.members = {};
+        PhasedProvider.team.members = {};
 
         if (users) {
           for (var id in users) {
@@ -276,7 +278,7 @@ angular.module('webappApp')
                   photo: style
                 };
 
-                _team.members[id] = user;
+                PhasedProvider.team.members[id] = user;
               });
             })(id, users);
           }
@@ -284,23 +286,23 @@ angular.module('webappApp')
       });
     }
 
-    // gathers team categories data and adds to _team
+    // gathers team categories data and adds to PhasedProvider.team
     var getCategories = function() {
       var team = _Auth.currentTeam;
       FBRef.child('team').child(team).child('category').once('value', function(cat) {
         cat = cat.val();
-        _team.categorySelect = [];
+        PhasedProvider.team.categorySelect = [];
 
         if(typeof cat !== 'undefined' && cat != null){
           var keys = Object.keys(cat);
-          _team.categoryObj = cat;
+          PhasedProvider.team.categoryObj = cat;
             for (var i = 0; i < keys.length; i++){
               var obj = {
                 name : cat[keys[i]].name,
                 color : cat[keys[i]].color,
                 key : keys[i]
               }
-              _team.categorySelect.push(obj);
+              PhasedProvider.team.categorySelect.push(obj);
             }
         } else {
           //they have no categories so add them
@@ -318,14 +320,14 @@ angular.module('webappApp')
           FBRef.child('team/' + team + '/category').once('value', function(cat) {
             cat = cat.val();
             var keys = Object.keys(cat);
-            _team.categoryObj = cat;
+            PhasedProvider.team.categoryObj = cat;
               for(var i = 0; i < keys.length; i++){
                 var obj = {
                   name : cat[keys[i]].name,
                   color : cat[keys[i]].color,
                   key : keys[i]
                 }
-                _team.categorySelect.push(obj);
+                PhasedProvider.team.categorySelect.push(obj);
               }
           });
         }
@@ -340,7 +342,7 @@ angular.module('webappApp')
         var team = data.val();
 
         if (team.billing){
-          _billingInfo = team.billing;
+          PhasedProvider.billingInfo = team.billing;
 
           $.post('./api/pays/find', {customer: team.billing.stripeid})
             .success(function(data){
@@ -350,22 +352,21 @@ angular.module('webappApp')
               }
               if (data.status == "active"){
                 //Show thing for active
-                _viewType = 'active';
+                PhasedProvider.viewType = 'active';
 
               } else if (data.status == 'past_due' || data.status == 'unpaid'){
                 //Show thing for problem with account
-                _viewType = 'problem';
+                PhasedProvider.viewType = 'problem';
               } else if (data.status == 'canceled'){
                 //Show thing for problem with canceled
-                _viewType = 'notPaid';
+                PhasedProvider.viewType = 'notPaid';
               }
-              console.log("viewType: " + _viewType);
             })
             .error(function(data){
               console.log(data);
             });
         } else {
-          _viewType = 'notPaid';
+          PhasedProvider.viewType = 'notPaid';
         }
       });
     }
@@ -380,7 +381,7 @@ angular.module('webappApp')
     /**
     *
     * sets up watchers for current users task assignments (to and by
-    * and also unassigned tasks), filling Phased.assignments (as _assignments)
+    * and also unassigned tasks), filling Phased.assignments (as PhasedProvider.assignments)
     * for use in a controller
     *
     *   - own assignments (to self or to others) assignments/to/(me)
@@ -396,7 +397,7 @@ angular.module('webappApp')
 
       /**
       *
-      * updates _assignments.all
+      * updates PhasedProvider.assignments.all
       *
       * instead of replacing the whole object, compares assignments and props, then updates
       * allowing for persistent references throughout the app
@@ -406,10 +407,10 @@ angular.module('webappApp')
         data = data.val();
         console.log('all: ', data);
         if (!data) {
-          _assignments.all = {};
+          PhasedProvider.assignments.all = {};
           return;
         }
-        var all = _assignments.all;
+        var all = PhasedProvider.assignments.all;
 
         // 1. if assignment doesn't exist in all, add it, end of story
         // 2. else, check its properties and update those that are out of sync
@@ -472,9 +473,9 @@ angular.module('webappApp')
 
       /**
       *
-      * syncs assignments (in _assignments.all) listed in the UIDContainer to the assignmentContainer
-      * used to maintain a running list of references in the container, eg, _assignments.by_me, that point to 
-      * the right assignment objects in _assignments.all
+      * syncs assignments (in PhasedProvider.assignments.all) listed in the UIDContainer to the assignmentContainer
+      * used to maintain a running list of references in the container, eg, PhasedProvider.assignments.by_me, that point to 
+      * the right assignment objects in PhasedProvider.assignments.all
       *
       */
       var syncAssignments = function(assignmentContainerName) {
@@ -483,24 +484,24 @@ angular.module('webappApp')
 
         for (var i in UIDContainer) {
           var assignmentID = UIDContainer[i];
-          if (assignmentID in _assignments.all)
-            assignmentContainer[assignmentID] = _assignments.all[assignmentID];
+          if (assignmentID in PhasedProvider.assignments.all)
+            assignmentContainer[assignmentID] = PhasedProvider.assignments.all[assignmentID];
         }
 
-        _assignments[assignmentContainerName] = assignmentContainer;
+        PhasedProvider.assignments[assignmentContainerName] = assignmentContainer;
       }
 
       // set up watchers
-      var refString = 'team/' + _team.name + '/assignments';
+      var refString = 'team/' + PhasedProvider.team.name + '/assignments';
 
       FBRef.child(refString + '/all').on('value', updateAllAssignments);
     
-      FBRef.child(refString + '/to/' + _currentUser.uid).on('value', function(data) {
+      FBRef.child(refString + '/to/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'to_me');
       });
     
-      FBRef.child(refString + '/by/' + _currentUser.uid).on('value', function(data) {
+      FBRef.child(refString + '/by/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'by_me');
       });
@@ -517,8 +518,8 @@ angular.module('webappApp')
     * gets archived tasks at the requested address
     *
     * 1. checks that address is valid
-    * 2. makes firebase calls that fill _archive.all and archiveIDs[address]
-    * 3. calls syncArchive which fills out _archive[address]
+    * 2. makes firebase calls that fill PhasedProvider.archive.all and archiveIDs[address]
+    * 3. calls syncArchive which fills out PhasedProvider.archive[address]
     *
     * on demand, not watched
     * can get to_me, by_me, and unassigned
@@ -541,23 +542,23 @@ angular.module('webappApp')
 
         for (var i in UIDContainer) {
           var assignmentID = UIDContainer[i];
-          if (assignmentID in _archive.all)
-            archiveContainer[assignmentID] = _archive.all[assignmentID];
+          if (assignmentID in PhasedProvider.archive.all)
+            archiveContainer[assignmentID] = PhasedProvider.archive.all[assignmentID];
         }
 
-        _archive[archiveContainerName] = archiveContainer;
+        PhasedProvider.archive[archiveContainerName] = archiveContainer;
       }
 
-      var archivePath = 'team/' + _team.name + '/assignments/archive/',
+      var archivePath = 'team/' + PhasedProvider.team.name + '/assignments/archive/',
         pathSuffix = '';
 
       // 1
       switch(address) {
         case 'to_me' :
-          pathSuffix = 'to/' + _currentUser.uid;
+          pathSuffix = 'to/' + PhasedProvider.currentUser.uid;
           break;
         case 'by_me' :
-          pathSuffix = 'by/' + _currentUser.uid;
+          pathSuffix = 'by/' + PhasedProvider.currentUser.uid;
           break;
         case 'unassigned' :
           pathSuffix = 'unassigned';
@@ -571,7 +572,7 @@ angular.module('webappApp')
       // 2
       // get archive/all
       FBRef.child(archivePath + 'all').once('value', function(data){
-        _archive.all = data.val() || [];
+        PhasedProvider.archive.all = data.val() || [];
 
         // if other call is complete
         if (archiveIDs[address])
@@ -583,7 +584,7 @@ angular.module('webappApp')
         archiveIDs[address] = objToArray(data.val());
 
         // if other call is complete
-        if ('all' in _archive)
+        if ('all' in PhasedProvider.archive)
           syncArchive(address); // 3
       });
     }
@@ -611,28 +612,28 @@ angular.module('webappApp')
     }
 
     var doMoveToFromArchive = function(args) {
-      var path = "team/" + _team.name + "/assignments/",
+      var path = "team/" + PhasedProvider.team.name + "/assignments/",
         to_me = false,
         idsContainer = assignmentIDs,
-        assignmentContainer = _assignments,
+        assignmentContainer = PhasedProvider.assignments,
         assignmentID = args.assignmentID,
         unarchive = args.unarchive || false,
         assignment;
 
       // ensure assignment is where it should be and get a reference
       if (unarchive) {
-        // assignment should be in _archive.all
-        if (assignmentID in _archive.all)
-          assignment = _archive.all[assignmentID];
+        // assignment should be in PhasedProvider.archive.all
+        if (assignmentID in PhasedProvider.archive.all)
+          assignment = PhasedProvider.archive.all[assignmentID];
         else {
           // not where it should be, break
           console.log('assignment ' + assignmentID + ' missing from memory');
           return false;
         }
       } else {
-        // assignment should be in _assignments.all
-        if (assignmentID in _assignments.all)
-          assignment = _assignments.all[assignmentID];
+        // assignment should be in PhasedProvider.assignments.all
+        if (assignmentID in PhasedProvider.assignments.all)
+          assignment = PhasedProvider.assignments.all[assignmentID];
         else {
           // not where it should be, break
           console.log('assignment ' + assignmentID + ' missing from memory');
@@ -642,11 +643,11 @@ angular.module('webappApp')
 
       // -1.A
       // reverse everything if unarchive is true:
-      // remove from archiveIDs and _archive here...
+      // remove from archiveIDs and PhasedProvider.archive here...
       if (unarchive) {
         path += 'archive/';
         idsContainer = archiveIDs;
-        assignmentContainer = _archive;
+        assignmentContainer = PhasedProvider.archive;
         ga('send', 'event', 'Task', 'task unarchived');
       } else {
         ga('send', 'event', 'Task', 'task archived');
@@ -657,7 +658,7 @@ angular.module('webappApp')
       // 1.A
       if (idsContainer.to_me.indexOf(assignmentID) > -1) {
         to_me = true;
-        FBRef.child(path + 'to/' + _currentUser.uid).set(popFromList(assignmentID, idsContainer['to_me']));
+        FBRef.child(path + 'to/' + PhasedProvider.currentUser.uid).set(popFromList(assignmentID, idsContainer['to_me']));
       }
       else if (idsContainer.unassigned.indexOf(assignmentID) > -1) {
         to_me = false;
@@ -668,20 +669,20 @@ angular.module('webappApp')
       }
 
       // 1.B
-      FBRef.child(path + 'by/' + _currentUser.uid).set(popFromList(assignmentID, idsContainer['by_me']));
+      FBRef.child(path + 'by/' + PhasedProvider.currentUser.uid).set(popFromList(assignmentID, idsContainer['by_me']));
 
       // 1.C
       FBRef.child(path + 'all/' + assignmentID).remove();
 
       // -1.B
       if (unarchive) {
-        path = "team/" + _team.name + "/assignments/";
+        path = "team/" + PhasedProvider.team.name + "/assignments/";
         idsContainer = assignmentIDs;
-        assignmentContainer = _assignments;
+        assignmentContainer = PhasedProvider.assignments;
       } else {
         path += 'archive/';
         idsContainer = archiveIDs;
-        assignmentContainer = _archive;
+        assignmentContainer = PhasedProvider.archive;
       }
 
       // 2.
@@ -689,12 +690,12 @@ angular.module('webappApp')
       // 2.A
       // for this and 2.B, have to get list from server (in add to archive case)
       if (to_me) {
-        FBRef.child(path + 'to/' + _currentUser.uid).once('value', function(data){
+        FBRef.child(path + 'to/' + PhasedProvider.currentUser.uid).once('value', function(data){
           data = data.val();
           idsContainer['to_me'] = data || [];
           idsContainer['to_me'].push(assignmentID);
-          FBRef.child(path + 'to/' + _currentUser.uid).set(idsContainer['to_me']);
-          if ('all' in _archive) syncArchive('to_me');
+          FBRef.child(path + 'to/' + PhasedProvider.currentUser.uid).set(idsContainer['to_me']);
+          if ('all' in PhasedProvider.archive) syncArchive('to_me');
         });
       }
       else { // unassigned
@@ -703,16 +704,16 @@ angular.module('webappApp')
           idsContainer['unassigned'] = data || [];
           idsContainer['unassigned'].push(assignmentID);
           FBRef.child(path + 'unassigned').set();
-          if ('all' in _archive) syncArchive('unassigned');
+          if ('all' in PhasedProvider.archive) syncArchive('unassigned');
         });
       }
 
       // 2.B
-      FBRef.child(path + 'by/' + _currentUser.uid).once('value', function(data){
+      FBRef.child(path + 'by/' + PhasedProvider.currentUser.uid).once('value', function(data){
         data = data.val();
         idsContainer['by_me'] = data || [];
         idsContainer['by_me'].push(assignmentID);
-        FBRef.child(path + 'by/' + _currentUser.uid).set(idsContainer['by_me']);
+        FBRef.child(path + 'by/' + PhasedProvider.currentUser.uid).set(idsContainer['by_me']);
       });
 
       // 2.C
@@ -720,9 +721,9 @@ angular.module('webappApp')
 
       // 2.D
       if (unarchive)
-        delete _archive.all[assignmentID];
+        delete PhasedProvider.archive.all[assignmentID];
       else
-        _archive.all[assignmentID] = assignment; // local, since archive isn't watched
+        PhasedProvider.archive.all[assignmentID] = assignment; // local, since archive isn't watched
     }
 
     /**
@@ -801,7 +802,7 @@ angular.module('webappApp')
       // 2A add task to team/(teamname)/assignments/all
       // 2B add references to /to/assignee or /unassigned and /by/me
 
-      var team = $scope.team.name,
+      var team = PhasedProvider.team.name,
         assignmentsRef = FBRef.child('team/' + team + '/assignments');
 
       // 2A
@@ -809,7 +810,7 @@ angular.module('webappApp')
       var newTaskID = newTaskRef.key();
       // 2B
       assignmentIDs['by_me'].push(newTaskID);
-      assignmentsRef.child('by/' + _currentUser.uid).set(assignmentIDs['by_me']);
+      assignmentsRef.child('by/' + PhasedProvider.currentUser.uid).set(assignmentIDs['by_me']);
 
       // get array, push (array style), send back to server
       var path = newTask.unassigned ? 'unassigned' : 'to/' + newTask.assignee.uid;
@@ -836,7 +837,7 @@ angular.module('webappApp')
       ga('send', 'event', 'Task', 'activated');
 
       // copy task so we don't damage the original assignment
-      var task = angular.copy(_assignments.all[assignmentID]);
+      var task = angular.copy(PhasedProvider.assignments.all[assignmentID]);
 
       // update time to now and place to here (feature pending)
       task.time = new Date().getTime();
@@ -844,15 +845,15 @@ angular.module('webappApp')
       // task.long = $scope.long ? $scope.long : 0;
 
       // in case of unassigned tasks, which don't have a user property
-      task.user = _currentUser.uid;
+      task.user = PhasedProvider.currentUser.uid;
 
       // update original assignment status to In Progress
       _setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.IN_PROGRESS);
 
       // publish to stream
-      var ref = FBRef.child('team/' + _team.name);
-      ref.child('task/' + _currentUser.uid).set(task);
-      ref.child('all/' + _currentUser.uid).push(task, function() {
+      var ref = FBRef.child('team/' + PhasedProvider.team.name);
+      ref.child('task/' + PhasedProvider.currentUser.uid).set(task);
+      ref.child('all/' + PhasedProvider.currentUser.uid).push(task, function() {
         console.log('status update complete');
       });
     }
@@ -873,8 +874,8 @@ angular.module('webappApp')
     var doSetAssignmentStatus = function(args) {
       var assignmentID = args.assignmentID,
         newStatus = args.newStatus;
-      if (!(newStatus in _taskStatuses)) { // not a valid ID
-        var i = _taskStatuses.indexOf(newStatus);
+      if (!(newStatus in PhasedProvider.TASK_STATUSES)) { // not a valid ID
+        var i = PhasedProvider.TASK_STATUSES.indexOf(newStatus);
         if (i !== -1) {
           console.log(newStatus + ' is a valid status name');
           newStatus = i; // set newStatus to be status ID, not name
@@ -883,10 +884,10 @@ angular.module('webappApp')
           return;
         }
       }
-      ga('send', 'event', 'Task', 'status update: ' + _taskStatuses[newStatus]);
+      ga('send', 'event', 'Task', 'status update: ' + PhasedProvider.TASK_STATUSES[newStatus]);
 
       // push to database
-      FBRef.child('team/' + _team.name + '/assignments/all/' + assignmentID + '/status').set(newStatus);
+      FBRef.child('team/' + PhasedProvider.team.name + '/assignments/all/' + assignmentID + '/status').set(newStatus);
     }
 
     /**
@@ -901,7 +902,7 @@ angular.module('webappApp')
 
     var doTakeTask = function(assignmentID) {
       ga('send', 'event', 'Task', 'task taken');
-      var assignmentsPath = 'team/' + _team.name + '/assignments/';
+      var assignmentsPath = 'team/' + PhasedProvider.team.name + '/assignments/';
 
       // 1. remove task from /unassigned
       delete assignmentIDs.unassigned[assignmentIDs.unassigned.indexOf(assignmentID)];
@@ -909,10 +910,10 @@ angular.module('webappApp')
 
       // 2. add task to /to/(me)
       assignmentIDs.to_me.push(assignmentID);
-      FBRef.child(assignmentsPath + 'to/' + _currentUser.uid).set(assignmentIDs.to_me);
+      FBRef.child(assignmentsPath + 'to/' + PhasedProvider.currentUser.uid).set(assignmentIDs.to_me);
 
       // 3. set user attr
-      FBRef.child(assignmentsPath + 'all/' + assignmentID + '/user').set(_currentUser.uid);
+      FBRef.child(assignmentsPath + 'all/' + assignmentID + '/user').set(PhasedProvider.currentUser.uid);
     }
 
     /**
