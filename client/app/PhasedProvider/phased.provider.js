@@ -35,6 +35,11 @@ angular.module('webappApp')
         to_me : [],
         by_me : [],
         unassigned : []
+      },
+      archiveIDs = {
+        to_me : [],
+        by_me : [],
+        unassigned : []
       };
 
 
@@ -55,6 +60,12 @@ angular.module('webappApp')
         to_me : {}, // assigned to me (reference to objects in all)
         by_me : {}, // assigned by me (reference to objects in all)
         unassigned : {} // unassigned (reference to objects in all)
+      },
+      _archive = { // Phased.archive
+        all : {},
+        to_me : {},
+        by_me : {},
+        unassigned : {}
       };
 
     /**
@@ -106,7 +117,9 @@ angular.module('webappApp')
         },
         FBRef : FBRef,
         watchAssignments : _watchAssignments,
-        assignments : _assignments
+        assignments : _assignments,
+        getArchiveFor : _getArchiveFor,
+        archive : _archive
       }
     };
 
@@ -499,6 +512,82 @@ angular.module('webappApp')
       });
     }; // end doWatchAssignments()
 
+
+    /**
+    *
+    * gets archived tasks at the requested address
+    *
+    * 1. checks that address is valid
+    * 2. makes firebase calls that fill _archive.all and archiveIDs[address]
+    * 3. calls syncArchive which fills out _archive[address]
+    *
+    * on demand, not watched
+    * can get to_me, by_me, and unassigned
+    */
+    var _getArchiveFor = function(address) {
+      registerAsync(doGetArchiveFor, address);
+    }
+
+    var doGetArchiveFor = function(address) {
+      /**
+      *
+      * links up the archived tasks from the archiveContainerName to the appropriate $scope.archive address
+      * (sim to syncAssignments())
+      */
+      var syncArchive = function(archiveContainerName) {
+        if (!(archiveContainerName in archiveIDs)) return; // ensures valid address
+
+        var archiveContainer = {},
+          UIDContainer = archiveIDs[archiveContainerName];
+
+        for (var i in UIDContainer) {
+          var assignmentID = UIDContainer[i];
+          if (assignmentID in _archive.all)
+            archiveContainer[assignmentID] = _archive.all[assignmentID];
+        }
+
+        _archive[archiveContainerName] = archiveContainer;
+      }
+      
+      var archivePath = 'team/' + _team.name + '/assignments/archive/',
+        pathSuffix = '';
+
+      // 1
+      switch(address) {
+        case 'to_me' :
+          pathSuffix = 'to/' + _currentUser.uid;
+          break;
+        case 'by_me' :
+          pathSuffix = 'by/' + _currentUser.uid;
+          break;
+        case 'unassigned' :
+          pathSuffix = 'unassigned';
+          break;
+        default:
+          return;
+      }
+
+      console.log('getArchiveFor ' + address);
+
+      // 2
+      // get archive/all
+      FBRef.child(archivePath + 'all').once('value', function(data){
+        _archive.all = data.val() || [];
+
+        // if other call is complete
+        if (archiveIDs[address])
+          syncArchive(address); // 3
+      });
+
+      // get appropriate IDs
+      FBRef.child(archivePath + pathSuffix).once('value', function(data){
+        archiveIDs[address] = objToArray(data.val());
+
+        // if other call is complete
+        if (_archive.all)
+          syncArchive(address); // 3
+      });
+    }
 
     
 

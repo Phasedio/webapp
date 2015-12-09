@@ -59,32 +59,16 @@ angular.module('webappApp')
     $scope.myID = Auth.user.uid;
 
     $scope.today = new Date().getTime();
-    var FBRef = Phased.FBRef;
 
-    $scope.assignments = {
-      all : {}, // all of the team's assignments
-      to_me : {}, // assigned to me (reference to objects in all)
-      by_me : {}, // assigned by me (reference to objects in all)
-      unassigned : {} // unassigned (reference to objects in all)
-    }
-
-    // similar structure for archive
-    $scope.archive = {
-      all : {},
-      to_me : {},
-      by_me : {},
-      unassigned : {}
-    };
-    var archiveIDs = {
-      to_me : [],
-      by_me : [],
-      unassigned : []
-    }
+    $scope.assignments = Phased.assignments;
+    $scope.archive = Phased.archive;
     $scope.showArchive = false;
 
     $scope.sortable = [
       'cat', 'deadline', 'priority', 'name', 'date', 'assigned_by'
     ]
+    
+    var FBRef = Phased.FBRef;
 
     /**
     *
@@ -94,8 +78,6 @@ angular.module('webappApp')
 
     // tell Phased to watch assignments
     Phased.watchAssignments();
-    $scope.assignments = Phased.assignments;
-
 
     /**
     **
@@ -213,80 +195,10 @@ angular.module('webappApp')
       $scope.moveToArchive(assignment, assignmentID, true);
     }
 
-    /**
-    *
-    * gets archived tasks at the requested address
-    *
-    * 1. checks that address is valid
-    * 2. makes firebase calls that fill $scope.archive.all and archiveIDs[address]
-    * 3. calls syncArchive which fills out $scope.archive[address]
-    *
-    * on demand, not watched
-    * can get to_me, by_me, and unassigned
-    */
+    // gets archived tasks at address shows archive
     $scope.getArchiveFor = function(address) {
-      var archivePath = 'team/' + $scope.team.name + '/assignments/archive/',
-        pathSuffix = '';
-
-      // 1
-      switch(address) {
-        case 'to_me' :
-          pathSuffix = 'to/' + $scope.myID;
-          break;
-        case 'by_me' :
-          pathSuffix = 'by/' + $scope.myID;
-          break;
-        case 'unassigned' :
-          pathSuffix = 'unassigned';
-          break;
-        default:
-          return;
-      }
-
-      console.log('getArchiveFor ' + address);
-
-      // 2
-      // get archive/all
-      FBRef.child(archivePath + 'all').once('value', function(data){
-        $scope.archive.all = data.val() || [];
-
-        // if other call is complete
-        if (archiveIDs[address])
-          syncArchive(address); // 3
-        $scope.showArchive = true;
-      });
-
-      // get appropriate IDs
-      FBRef.child(archivePath + pathSuffix).once('value', function(data){
-        archiveIDs[address] = objToArray(data.val());
-
-        // if other call is complete
-        if ($scope.archive.all)
-          syncArchive(address); // 3
-      });
-    }
-
-
-    /**
-    *
-    * links up the archived tasks from the archiveContainerName to the appropriate $scope.archive address
-    * (sim to syncAssignments())
-    */
-    var syncArchive = function(archiveContainerName) {
-      console.log('syncArchive for ' + archiveContainerName, $scope.archive);
-
-      if (!(archiveContainerName in archiveIDs)) return; // ensures valid address
-
-      var archiveContainer = {},
-            UIDContainer = archiveIDs[archiveContainerName];
-
-      for (var i in UIDContainer) {
-        var assignmentID = UIDContainer[i];
-        if (assignmentID in $scope.archive.all)
-          archiveContainer[assignmentID] = $scope.archive.all[assignmentID];
-      }
-
-      $scope.archive[archiveContainerName] = archiveContainer;
+      Phased.getArchiveFor(address);
+      $scope.showArchive = true;
     }
 
     /**
