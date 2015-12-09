@@ -779,7 +779,7 @@ angular.module('webappApp')
       }
 
       // check for optional strings
-      var strings = ['cat', 'weather', 'photo'];
+      var strings = ['cat', 'weather', 'photo', 'assignee'];
       for (var i in strings) {
         if ((typeof newTask[strings[i]]).toLowerCase() === 'string') {
           status[strings[i]] = newTask[strings[i]];
