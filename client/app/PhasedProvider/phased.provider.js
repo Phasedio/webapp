@@ -553,10 +553,10 @@ angular.module('webappApp')
       // 1
       switch(address) {
         case 'to_me' :
-          pathSuffix = 'to/' + PhasedProvider.currentUser.uid;
+          pathSuffix = 'to/' + PhasedProvider.user.uid;
           break;
         case 'by_me' :
-          pathSuffix = 'by/' + PhasedProvider.currentUser.uid;
+          pathSuffix = 'by/' + PhasedProvider.user.uid;
           break;
         case 'unassigned' :
           pathSuffix = 'unassigned';
@@ -656,7 +656,7 @@ angular.module('webappApp')
       // 1.A
       if (idsContainer.to_me.indexOf(assignmentID) > -1) {
         to_me = true;
-        FBRef.child(path + 'to/' + PhasedProvider.currentUser.uid).set(popFromList(assignmentID, idsContainer['to_me']));
+        FBRef.child(path + 'to/' + PhasedProvider.user.uid).set(popFromList(assignmentID, idsContainer['to_me']));
       }
       else if (idsContainer.unassigned.indexOf(assignmentID) > -1) {
         to_me = false;
@@ -667,7 +667,7 @@ angular.module('webappApp')
       }
 
       // 1.B
-      FBRef.child(path + 'by/' + PhasedProvider.currentUser.uid).set(popFromList(assignmentID, idsContainer['by_me']));
+      FBRef.child(path + 'by/' + PhasedProvider.user.uid).set(popFromList(assignmentID, idsContainer['by_me']));
 
       // 1.C
       FBRef.child(path + 'all/' + assignmentID).remove();
@@ -688,11 +688,11 @@ angular.module('webappApp')
       // 2.A
       // for this and 2.B, have to get list from server (in add to archive case)
       if (to_me) {
-        FBRef.child(path + 'to/' + PhasedProvider.currentUser.uid).once('value', function(data){
+        FBRef.child(path + 'to/' + PhasedProvider.user.uid).once('value', function(data){
           data = data.val();
           idsContainer['to_me'] = data || [];
           idsContainer['to_me'].push(assignmentID);
-          FBRef.child(path + 'to/' + PhasedProvider.currentUser.uid).set(idsContainer['to_me']);
+          FBRef.child(path + 'to/' + PhasedProvider.user.uid).set(idsContainer['to_me']);
           if ('all' in PhasedProvider.archive) syncArchive('to_me');
         });
       }
@@ -707,11 +707,11 @@ angular.module('webappApp')
       }
 
       // 2.B
-      FBRef.child(path + 'by/' + PhasedProvider.currentUser.uid).once('value', function(data){
+      FBRef.child(path + 'by/' + PhasedProvider.user.uid).once('value', function(data){
         data = data.val();
         idsContainer['by_me'] = data || [];
         idsContainer['by_me'].push(assignmentID);
-        FBRef.child(path + 'by/' + PhasedProvider.currentUser.uid).set(idsContainer['by_me']);
+        FBRef.child(path + 'by/' + PhasedProvider.user.uid).set(idsContainer['by_me']);
       });
 
       // 2.C
@@ -773,8 +773,8 @@ angular.module('webappApp')
           (typeof newTask.location.lat).toLowerCase() === 'number' &&
           (typeof newTask.location.long).toLowerCase() === 'number') {
         status.location = {
-          lat : newTask.lat,
-          long : newTask.long
+          lat : newTask.location.lat,
+          long : newTask.location.long
         }
       }
 
@@ -804,11 +804,11 @@ angular.module('webappApp')
         assignmentsRef = FBRef.child('team/' + team + '/assignments');
 
       // 2A
-      var newTaskRef = assignments.child('all').push(status);
+      var newTaskRef = assignmentsRef.child('all').push(status);
       var newTaskID = newTaskRef.key();
       // 2B
       assignmentIDs['by_me'].push(newTaskID);
-      assignmentsRef.child('by/' + PhasedProvider.currentUser.uid).set(assignmentIDs['by_me']);
+      assignmentsRef.child('by/' + PhasedProvider.user.uid).set(assignmentIDs['by_me']);
 
       // get array, push (array style), send back to server
       var path = newTask.unassigned ? 'unassigned' : 'to/' + newTask.assignee.uid;
@@ -843,15 +843,15 @@ angular.module('webappApp')
       // task.long = $scope.long ? $scope.long : 0;
 
       // in case of unassigned tasks, which don't have a user property
-      task.user = PhasedProvider.currentUser.uid;
+      task.user = PhasedProvider.user.uid;
 
       // update original assignment status to In Progress
       _setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.IN_PROGRESS);
 
       // publish to stream
       var ref = FBRef.child('team/' + PhasedProvider.team.name);
-      ref.child('task/' + PhasedProvider.currentUser.uid).set(task);
-      ref.child('all/' + PhasedProvider.currentUser.uid).push(task, function() {
+      ref.child('task/' + PhasedProvider.user.uid).set(task);
+      ref.child('all/' + PhasedProvider.user.uid).push(task, function() {
         console.log('status update complete');
       });
     }
@@ -908,10 +908,10 @@ angular.module('webappApp')
 
       // 2. add task to /to/(me)
       assignmentIDs.to_me.push(assignmentID);
-      FBRef.child(assignmentsPath + 'to/' + PhasedProvider.currentUser.uid).set(assignmentIDs.to_me);
+      FBRef.child(assignmentsPath + 'to/' + PhasedProvider.user.uid).set(assignmentIDs.to_me);
 
       // 3. set user attr
-      FBRef.child(assignmentsPath + 'all/' + assignmentID + '/user').set(PhasedProvider.currentUser.uid);
+      FBRef.child(assignmentsPath + 'all/' + assignmentID + '/user').set(PhasedProvider.user.uid);
     }
 
     /**
