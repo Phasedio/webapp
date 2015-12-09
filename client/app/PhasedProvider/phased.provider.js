@@ -39,8 +39,8 @@ angular.module('webappApp')
     var _Auth,
       _viewType = 'notPaid',  // Phased.viewType
       _billingInfo, // Phased.billing
-      _taskPriorities, // Phased.taskPriorities
-      _taskStatuses, // Phased.taskStatuses
+      _taskPriorities, // Phased.TASK_PRIORITIES
+      _taskStatuses, // Phased.TASK_STATUSES
       _team = {}, // Phased.team
       _currentUser = '', // Phased.user
       FBRef = ''; // Phased.FBRef
@@ -71,8 +71,7 @@ angular.module('webappApp')
     /**
     *
     * constructs the provider itself
-    * exposes data about the team, current user, view type,
-    * and a FireBase reference, as well as numerous methods
+    * exposes data, methods, and a FireBase reference
     *
     */
     this.$get = function() {
@@ -81,8 +80,8 @@ angular.module('webappApp')
         team : _team,
         viewType : _viewType,
         billing : _billingInfo,
-        taskPriorities : _taskPriorities,
-        taskStatuses : _taskStatuses,
+        TASK_PRIORITIES : _taskPriorities,
+        TASK_STATUSES : _taskStatuses,
         FBRef : FBRef,
         watchAssignments : _watchAssignments
       }

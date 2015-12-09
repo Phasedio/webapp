@@ -51,16 +51,13 @@ angular.module('webappApp')
   })
   .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster) {
     ga('send', 'pageview', '/tasks');
-    $scope.team = {
-      name : '',
-      members : {},
-      history : [],
-      categorySelect : [],
-      categoryObj : {}
-    };
-    $scope.taskStatuses = {};
-    $scope.viewType = 'notPaid';
+
+    $scope.team = Phased.team;
+    $scope.viewType = Phased.viewType;
+    $scope.taskPriorities = Phased.TASK_PRIORITIES;
+    $scope.taskStatuses = Phased.TASK_STATUSES;
     $scope.myID = Auth.user.uid;
+    
     $scope.today = new Date().getTime();
     var StatusID = {
         IN_PROGRESS : 0,
@@ -72,7 +69,7 @@ angular.module('webappApp')
         MEDIUM : 1,
         LOW : 2
       },
-      FBRef = new Firebase(FURL);
+      FBRef = Phased.FBRef;
 
     $scope.assignments = {
       all : {}, // all of the team's assignments
@@ -113,18 +110,6 @@ angular.module('webappApp')
     */
     FBRef.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
       data = data.val();
-      $scope.team = Phased.team;
-      $scope.viewType = Phased.viewType;
-      $scope.taskPriorities = Phased.taskPriorities;
-      $scope.taskStatuses = Phased.taskStatuses;
-
-      // get metadata -- now in PhasedProvider
-      // getCategories();
-      // getTaskStatuses();
-      // getTaskPriorities();
-
-      // start streaming
-      // startStream(); // now in PhasedProvider
 
       // formerly setWatchAssignments(), now in PhasedProvider
       var callbacks = {
@@ -444,89 +429,6 @@ angular.module('webappApp')
       }
 
       $scope.archive[archiveContainerName] = archiveContainer;
-    }
-
-    /**
-    *
-    * fills out the task status types in $scope.taskStatuses
-    * called in init()
-    */
-
-    var getTaskStatuses = function() {
-      FBRef.child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
-        tS = tS.val();
-        // console.log('taskStatuses', tS);
-        if (typeof tS !== 'undefined' && tS != null){
-          // assign keys to obj, set obj to $scope
-          for (var i in tS) {
-            tS[i]['key'] = i;
-          }
-          $scope.taskStatuses = tS;
-          // console.log('$scope.taskStatuses', $scope.taskStatuses);
-        } else {
-          // no status types exist, add defaults
-          var obj = [
-            { name : 'In Progress' },
-            { name : 'Complete' },
-            { name : 'Assigned' }
-          ];
-
-           // save to db
-          FBRef.child('taskStatuses').set(obj);
-          // get data from db to ensure synchronicity
-          FBRef.child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
-            tS = tS.val();
-            // assign keys to obj and set to $scope
-            for (var i in tS) {
-              tS[i]['key'] = i;
-            }
-            $scope.taskStatuses = tS;
-            // console.log('$scope.taskStatuses', $scope.taskStatuses);
-          });
-        }
-      });
-    }
-
-
-    /**
-    *
-    * fills out the task priority types in $scope.taskPriorities
-    * called in init()
-    */
-    var getTaskPriorities = function() {
-      FBRef.child('taskPriorities').once('value', function(tP /*taskPriorities*/ ) {
-        tP = tP.val();
-        // console.log('taskPriorities', tP);
-        if (typeof tP !== 'undefined' && tP != null){
-          // assign keys to obj, set obj to $scope
-          for (var i in tP) {
-            tP[i]['key'] = i;
-          }
-          $scope.taskPriorities = tP;
-        } else {
-          // no status priorities exist, add defaults
-          var obj = [
-            { name : 'High' },
-            { name : 'Medium' },
-            { name : 'Low' }
-          ];
-
-          // save to db
-          FBRef.child('taskPriorities').set(obj);
-          // get data from db to ensure synchronicity
-          FBRef.child('taskPriorities').once('value', function(tP /*taskPriorities*/ ) {
-            tP = tP.val();
-            // assign keys to obj and set to $scope
-            for (var i in tP) {
-              tP[i]['key'] = i;
-            }
-            $scope.taskPriorities = tP;
-            // console.log('$scope.taskPriorities', $scope.taskPriorities);
-          });
-
-          console.log('priorities set', $scope.taskPriorities);
-        }
-      });
     }
 
     /**
