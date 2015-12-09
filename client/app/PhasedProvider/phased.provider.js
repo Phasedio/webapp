@@ -115,7 +115,10 @@ angular.module('webappApp')
         assignments : _assignments,
         getArchiveFor : _getArchiveFor,
         archive : _archive,
-        moveToFromArchive : _moveToFromArchive
+        moveToFromArchive : _moveToFromArchive,
+        activateTask : _activateTask,
+        takeTask : _takeTask,
+        addTask : _addTask
       }
     };
 
@@ -722,14 +725,216 @@ angular.module('webappApp')
         _archive.all[assignmentID] = assignment; // local, since archive isn't watched
     }
 
+    /**
+    *
+    * adds a task
+    * 1. check & format input
+    * 2. push to db
+    *
+    */
+    var _addTask = function(newTask) {
+      registerAsync(doAddTask, newTask);
+    }
+
+    var doAddTask = function(newTask) {
+      ga('send', 'event', 'Task', 'task added');
+
+      // 1. format object to send to db
+      // these two to be implemented
+      var taskPrefix = '';
+
+      var status = {
+        time: new Date().getTime()
+      };
+
+      // check for required strings
+      var strings = ['name', 'taskPrefix', 'assigned_by'];
+      for (var i in strings) {
+        if ((typeof newTask[strings[i]]).toLowerCase() === 'string') {
+          status[strings[i]] = newTask[strings[i]];
+        } else {
+          console.log('required property "' + strings[i] + '" not found in newTask; aborting');
+          return;
+        }
+      }
+
+      // check for required numbers
+      var numbers = ['priority'];
+      for (var i in numbers) {
+        if ((typeof newTask[numbers[i]]).toLowerCase() === 'number') {
+          status[numbers[i]] = newTask[numbers[i]];
+        } else {
+          console.log('required property "' + numbers[i] + '" not found in newTask; aborting');
+          return;
+        }
+      }
+
+      // check for location
+      if ((typeof newTask.location).toLowerCase() === 'object' &&
+          (typeof newTask.location.lat).toLowerCase() === 'number' &&
+          (typeof newTask.location.long).toLowerCase() === 'number') {
+        status.location = {
+          lat : newTask.lat,
+          long : newTask.long
+        }
+      }
+
+      // check for optional strings
+      var strings = ['cat', 'weather', 'photo'];
+      for (var i in strings) {
+        if ((typeof newTask[strings[i]]).toLowerCase() === 'string') {
+          status[strings[i]] = newTask[strings[i]];
+        }
+      }
+
+      // check for optional numbers
+      var numbers = ['deadline'];
+      for (var i in numbers) {
+        if ((typeof newTask[numbers[i]]).toLowerCase() === 'number') {
+          status[numbers[i]] = newTask[numbers[i]];
+        }
+      }
 
 
+      // 2. push to db
+
+      // 2A add task to team/(teamname)/assignments/all
+      // 2B add references to /to/assignee or /unassigned and /by/me
+
+      var team = $scope.team.name,
+        assignmentsRef = FBRef.child('team/' + team + '/assignments');
+
+      // 2A
+      var newTaskRef = assignments.child('all').push(status);
+      var newTaskID = newTaskRef.key();
+      // 2B
+      assignmentIDs['by_me'].push(newTaskID);
+      assignmentsRef.child('by/' + _currentUser.uid).set(assignmentIDs['by_me']);
+
+      // get array, push (array style), send back to server
+      var path = newTask.unassigned ? 'unassigned' : 'to/' + newTask.assignee.uid;
+      assignmentsRef.child(path).once('value', function(data) {
+        data = data.val();
+        data = data || [];
+        data.push(newTaskID);
+        assignmentsRef.child(path).set(data);
+      });
+    }
+
+    /**
+    *
+    * sets an assigned task to the user's active task
+    * and sets status of that task to "In Progress" (0)
+    *
+    */
+    var _activateTask = function (assignmentID) {
+      registerAsync(doActivateTask, assignmentID);
+    }
+
+    var doActivateTask = function(assignmentID) {
+      ga('send', 'event', 'Update', 'submitted');
+      ga('send', 'event', 'Task', 'activated');
+
+      // copy task so we don't damage the original assignment
+      var task = angular.copy(_assignments.all[assignmentID]);
+
+      // update time to now and place to here (feature pending)
+      task.time = new Date().getTime();
+      // task.lat = $scope.lat ? $scope.lat : 0;
+      // task.long = $scope.long ? $scope.long : 0;
+
+      // in case of unassigned tasks, which don't have a user property
+      task.user = _currentUser.uid;
+
+      // update original assignment status to In Progress
+      _setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.IN_PROGRESS);
+
+      // publish to stream
+      var ref = FBRef.child('team/' + _team.name);
+      ref.child('task/' + _currentUser.uid).set(task);
+      ref.child('all/' + _currentUser.uid).push(task, function() {
+        console.log('status update complete');
+      });
+    }
+
+    /**
+    *
+    * sets an assignment's status
+    * fails if newStatus isn't valid
+    */
+    var _setAssignmentStatus = function(assignmentID, newStatus) {
+      var args = {
+        assignmentID : assignmentID,
+        newStatus : newStatus
+      }
+      registerAsync(doSetAssignmentStatus, args);
+    }
+
+    var doSetAssignmentStatus = function(args) {
+      var assignmentID = args.assignmentID,
+        newStatus = args.newStatus;
+      if (!(newStatus in _taskStatuses)) { // not a valid ID
+        var i = _taskStatuses.indexOf(newStatus);
+        if (i !== -1) {
+          console.log(newStatus + ' is a valid status name');
+          newStatus = i; // set newStatus to be status ID, not name
+        } else {
+          console.log('err: ' + newStatus + ' is not a valid status name or ID');
+          return;
+        }
+      }
+      ga('send', 'event', 'Task', 'status update: ' + _taskStatuses[newStatus]);
+
+      // push to database
+      FBRef.child('team/' + _team.name + '/assignments/all/' + assignmentID + '/status').set(newStatus);
+    }
+
+    /**
+    *
+    * moves a task from /unassigned into /to/(me)
+    * without touching status
+    *
+    */
+    var _takeTask = function(assignmentID) {
+      registerAsync(doTakeTask, assignmentID);
+    }
+
+    var doTakeTask = function(assignmentID) {
+      ga('send', 'event', 'Task', 'task taken');
+      var assignmentsPath = 'team/' + _team.name + '/assignments/';
+
+      // 1. remove task from /unassigned
+      delete assignmentIDs.unassigned[assignmentIDs.unassigned.indexOf(assignmentID)];
+      FBRef.child(assignmentsPath + 'unassigned').set(assignmentIDs.unassigned);
+
+      // 2. add task to /to/(me)
+      assignmentIDs.to_me.push(assignmentID);
+      FBRef.child(assignmentsPath + 'to/' + _currentUser.uid).set(assignmentIDs.to_me);
+
+      // 3. set user attr
+      FBRef.child(assignmentsPath + 'all/' + assignmentID + '/user').set(_currentUser.uid);
+    }
 
     /**
     **
     **  Utilities
     **
     **/
+
+    /**
+    *
+    * remove an item from an array
+    * returns the new array
+    *
+    */
+    var popFromList = function(item, list) {
+      var i = list.indexOf(item);
+      while (i > -1) {
+        delete list[i];
+        i = list.indexOf(item);
+      }
+      return list;
+    }
 
     // convert object into array
     // useful for arrays with missing keys
