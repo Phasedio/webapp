@@ -10,7 +10,21 @@ angular.module('webappApp')
       categorySelect : [],
       categoryObj : {}
     };
+    var monImage =  "weekdayPhotos/mon.jpg";
+  var tuesImage =  "weekdayPhotos/tues.jpg";
+  var wedImage =  "weekdayPhotos/wed.jpg";
+  var thursImage =  "weekdayPhotos/thurs.jpg";
+  var friImage = "weekdayPhotos/fri.jpg";
+  var satImage = "weekdayPhotos/sat.jpg";
+  var sunImage = "weekdayPhotos/sun.jpg";
 
+  var d=new Date();
+  console.log(d.getDay());
+
+
+
+  var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
+  $scope.dayImage = backgroundImage[d.getDay()];
 
 
     // Update Account

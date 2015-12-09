@@ -1,22 +1,84 @@
 <style>
-	body {
-	  /*background:  linear-gradient(
+	.hero-img {
+	  background:  linear-gradient(
       rgba(0, 0, 0, 0.25),
       rgba(0, 0, 0, 0.25)
-    ), url(assets/images/{{dayImage}}) no-repeat center center fixed;*/
-		background: #F2F2F2;
+    ), url(assets/images/{{dayImage}}) no-repeat center center ;
 	  -webkit-background-size: cover;
 	  -moz-background-size: cover;
 	  -o-background-size: cover;
 	  background-size: cover;
 	}
+  body{
+    background-color: #1E1E24;
+  }
 </style>
 
 <div ng-include="'components/navbar/navbar.html'"></div>
 
-
+<section class="hero-img">
+</section>
 <section class="container-fluid">
   <div class="row">
+    <div class="col-xs-10 col-xs-offset-1">
+      <div class="profile-holder transparent">
+        <div class="col-xs-6 profile-user">
+          <img src="{{currentUser.gravatar}}" alt="" height="40px" width="40px" />
+          <h2>{{currentUser.name}}</h2>
+        </div>
+        <div class="col-xs-6 profile-user">
+          <ul>
+            <li><span>updates</span><span>9999</span></li>
+            <li><span>email</span><span>brian.brianb64@gmail.com</span></li>
+            <li><span>tel</span><span>905 699 3939</span></li>
+            <li><span>slack</span><span>@brian</span></li>
+
+          </ul>
+        </div>
+      </div>
+      <div class="profile-holder">
+        <div class="profile-nav">
+          <ul>
+            <li class="active">History</li>
+            <li>Stats</li>
+            <li>edit</li>
+          </ul>
+        </div>
+        <div class="profile-history">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>
+                  Task
+                </th>
+                <th>
+                  Category
+                </th>
+                <th>
+                  Time
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="item in team.history | orderBy : 'time':true">
+                <td>
+                  {{item.name}}
+                </td>
+                <td>
+                  {{$parent.team.categoryObj[item.cat].name}}
+                </td>
+                <td>
+                  <span am-time-ago="item.time"></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- <div class="row">
     <div class="col-xs-3">
       <div class="ph-profile-dp">
         <img src="assets/images/phased-logo.svg" alt="" />
@@ -111,7 +173,7 @@
 
 
     </div>
-  </div>
+  </div> -->
 </section>
 
 

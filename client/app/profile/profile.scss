@@ -1,3 +1,100 @@
+.hero-img{
+  position: absolute;
+  width: 100%;
+  height:500px;
+  top:0;
+}
+.profile-holder{
+  &:nth-child(1){
+    margin-top: 110px;
+  }
+  padding:40px;
+  max-width: 700px;
+  width: 90%;
+  margin:0 auto;
+  overflow: auto;
+  background: #fff;
+}
+.transparent{
+  background: transparent;
+}
+.profile-user{
+  overflow: auto;
+
+  img{
+    display: inline-block;
+    float: left;
+    border-radius: 100px;
+    margin-right: 40px;
+  }
+  h2{
+    margin: 0;
+    display: inline-block;
+    float: left;
+    font-family: "open_sanslight",sans-serif;
+    text-transform: capitalize;
+    color: #fff;
+  }
+  ul{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+  }
+  li{
+    overflow: auto;
+    font-size: 12px;
+    color: #FFFFFF;
+    margin-bottom: 15px;
+    font-family: 'open_sanssemibold';
+    span:nth-child(1){
+      opacity: 0.65;
+      text-transform: uppercase;
+      float: left;
+    }
+    span:nth-child(2){
+      opacity: 1;
+      float: right;
+    }
+  }
+
+}
+.profile-nav{
+  margin-bottom: 20px;
+  ul{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  li{
+    display: inline-block;
+    font-family: 'open_sansregular';
+    text-transform: uppercase;
+    color: #B2B2B3;
+    margin-right: 50px;
+    font-size: 12px;
+  }
+  .active{
+    color: #585454;
+  }
+}
+.profile-history{
+  tr{
+    border: none;
+  }
+  th{
+    font-size: 12px;
+    border: none!important;
+    color: #444A59;
+  }
+  td{
+    font-size: 12px;
+    border: none!important;
+    color:#BDBDBD;
+  }
+}
+
+// Delete below this line
 .ph-profile-dp{
   height: 170px;
   background-color: #fff;
@@ -9,21 +106,7 @@
   }
 }
 
-.profile-user{
-  padding-bottom: 35px;
-  overflow: auto;
-  h5,a{
-    display: inline-block;
-    float: left;
-  }
-  a{
-    float: right;
-    margin-top:0.5rem;
-    font-family: 'open_sansregular';
-    color:#595959;
-    text-decoration: underline;
-  }
-}
+
 
 .profile-contact-info{
   border-top: 1px solid #F2F2F2;
@@ -43,25 +126,7 @@
 
 }
 
-.profile-history{
-  h6{
-    margin-bottom: 26px;
-    color: #BDBDBD;
-  }
-  tr{
-    border: none;
-  }
-  th{
-    font-size: 12px;
-    border: none!important;
-    color: #444A59;
-  }
-  td{
-    font-size: 12px;
-    border: none!important;
-    color:#BDBDBD;
-  }
-}
+
 .profile-stats{
   h6{
     color:#BDBDBD;
