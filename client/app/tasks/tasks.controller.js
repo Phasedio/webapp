@@ -109,6 +109,17 @@ angular.module('webappApp')
       if (newTask.deadline)
         status.deadline = newTask.deadline.getTime();
 
+      // set assignee or unassigned
+      if (newTask.unassigned)
+        status.unassigned = true;
+      else if (newTask.assignee) 
+        status.assignee = newTask.assignee;
+      else {
+        console.log('no assignee but not unassigned; breaking...');
+        return;
+      }
+
+
       // push to db
       Phased.addTask(status);
 
