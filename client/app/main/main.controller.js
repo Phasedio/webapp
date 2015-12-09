@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('MainCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,toaster) {
+  .controller('MainCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,toaster, $location) {
     ga('send', 'pageview', '/team');
     $scope.showMember = false;
     $scope.team = {
@@ -19,9 +19,31 @@ angular.module('webappApp')
         uid : '',
         history: []
       };
+
+      var monImage =  "weekdayPhotos/mon.jpg";
+    var tuesImage =  "weekdayPhotos/tues.jpg";
+    var wedImage =  "weekdayPhotos/wed.jpg";
+    var thursImage =  "weekdayPhotos/thurs.jpg";
+    var friImage = "weekdayPhotos/fri.jpg";
+    var satImage = "weekdayPhotos/sat.jpg";
+    var sunImage = "weekdayPhotos/sun.jpg";
+
+    var d=new Date();
+    console.log(d.getDay());
+
+
+
+    var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
+    $scope.dayImage = backgroundImage[d.getDay()];
     /**
     *
+    * goToMemeber(uid)
+    * sends user to profile of user
     */
+    $scope.goToUser = function(uid){
+      $location.path('/profile/'+uid);
+    }
+
     $scope.checkStatus = function(){
      var team = $scope.team.name;
      new Firebase(FURL).child('team').child(team).child('task').on('value', function(users) {
@@ -206,6 +228,7 @@ angular.module('webappApp')
     //_gaq.push(['_trackEvent', 'Team', 'Add member']);
   	var ref = new Firebase(FURL);
     // grab all users and see if they match an email in the system
+
     ref.child('profile').once('value', function(data){
       data = data.val();
 

@@ -1,5 +1,52 @@
+<style media="screen">
+  body{
+    background-color: #1E1E24;
+  }
+  .hero-img {
+	  background:  linear-gradient(
+      rgba(0, 0, 0, 0.25),
+      rgba(0, 0, 0, 0.25)
+    ), url(assets/images/{{dayImage}}) no-repeat center center ;
+	  -webkit-background-size: cover;
+	  -moz-background-size: cover;
+	  -o-background-size: cover;
+	  background-size: cover;
+	}
+</style>
 <div ng-include="'components/navbar/navbar.html'"></div>
+<section class="hero-img">
+</section>
+<section>
+  <div class="container">
+    <div class="row">
+      <div class="col-xs-8">
 
+        <div class="member-holder">
+          <div class="member-title">
+            <h2>Members</h2>
+            <a href="" ng-click=" addMemberModel();">Add new</a>
+          </div>
+
+          <div class="member-background">
+            <div class="member-item" ng-repeat="member in team.members | orderBy: 'name'" ng-click="goToUser(member.uid)">
+              <img src="{{member.pic}}">
+              <div class="member-names">
+                <h4>{{member.name}}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xs-4">
+        <div class="member-holder">
+          <h2 align="right">Categories</h2>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!--
 <section class="container">
   <div class="row">
     <div class="col-xs-3 team-aside">
@@ -59,7 +106,7 @@
       </div>
     </div>
   </div>
-</section>
+</section> -->
 
 <!-- add member -->
 <div class="modal fade" id="myModal">
@@ -72,7 +119,7 @@
       </div>
       <div class="modal-body">
       	<label style="color:#000;" for="addEmail">Add by email</label>
-       	<input type="email" id="addEmail" ng-model="user.email" placeholder="email">
+       	<input type="email" id="addEmail" ng-model="user.email" placeholder="email" required>
 
       </div>
       <div class="modal-footer">

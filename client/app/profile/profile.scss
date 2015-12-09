@@ -16,6 +16,8 @@
   background: #fff;
 }
 .transparent{
+  padding-left: 25px;
+  padding-right: 25px;
   background: transparent;
 }
 .profile-user{
@@ -92,66 +94,4 @@
     border: none!important;
     color:#BDBDBD;
   }
-}
-
-// Delete below this line
-.ph-profile-dp{
-  height: 170px;
-  background-color: #fff;
-  img{
-    height: 100%;
-    width: 50%;
-    display: inline-block;
-    float:left;
-  }
-}
-
-
-
-.profile-contact-info{
-  border-top: 1px solid #F2F2F2;
-  padding-top: 35px;
-}
-
-.profile-contact-holder{
-  overflow: auto;
-}
-.contact-title{
-  color:#444A59;
-}
-.profile-contact{
-  width: 50%;
-  display: inline-block;
-  float: left;
-
-}
-
-
-.profile-stats{
-  h6{
-    color:#BDBDBD;
-  }
-}
-.stat-card{
-  h6{
-    margin-bottom: 26px;
-  }
-  h2,h5{
-    font-family: "open_sanslight",sans-serif;
-    text-transform: capitalize;
-    color: #595959;
-  }
-}
-.profile-spacing{
-  margin-top:20px;
-
-}
-
-.fake-pie{
-  width: 200px;
-  height: 200px;
-  border-radius: 1000px;
-  background-color: #D8D8D8;
-  display: block;
-  margin: 0 auto;
 }

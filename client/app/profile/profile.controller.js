@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('ProfileCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment) {
+  .controller('ProfileCtrl', function ($scope,$routeParams, $http, stripe, Auth, FURL,amMoment) {
     ga('send', 'pageview', '/profile');
     $scope.team = {
       name : '',
@@ -26,8 +26,16 @@ angular.module('webappApp')
   var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
   $scope.dayImage = backgroundImage[d.getDay()];
 
+  // Check to see if there are route perams for this page if so load up that user
+  var profileUser;
+  if($routeParams.userid){
+    profileUser = $routeParams.userid;
+  }else{
+    profileUser = Auth.user.uid;
+  }
+  console.log($routeParams);
 
-    // Update Account
+  // Update Account
   $scope.updateUser = function(update){
     if(update.email === undefined || update.email === ''){
       update.email = $scope.currentUser.email;
@@ -145,7 +153,7 @@ angular.module('webappApp')
       console.log(startTime);
 
 
-      ref.child('team').child($scope.team.name).child('all').child(Auth.user.uid).orderByChild('time').startAt(endTime).once('value',function(data){
+      ref.child('team').child($scope.team.name).child('all').child(profileUser).orderByChild('time').startAt(endTime).once('value',function(data){
         data = data.val();
         console.log(data);
         var keys = Object.keys(data);
@@ -162,12 +170,14 @@ angular.module('webappApp')
     $scope.init = function(){
       var ref = new Firebase(FURL);
       console.log(Auth.user);
-      ref.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
+
+
+      ref.child('profile').child(profileUser).child('curTeam').once('value',function(data){
         data = data.val();
         $scope.team.name = data;
         console.log('sup');
         //Get history for this user... This is baaaaaaaaaad
-        new Firebase(FURL).child('profile').child(Auth.user.uid).once('value', function(user) {
+        new Firebase(FURL).child('profile').child(profileUser).once('value', function(user) {
           user = user.val();
           $scope.currentUser = user;
           $scope.viewUser();
