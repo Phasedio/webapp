@@ -175,10 +175,8 @@ angular.module('webappApp')
           // assign keys to obj, set to _taskPriorities
           for (var i in tP) {
             tP[i]['key'] = i;
+            PhasedProvider.TASK_PRIORITIES[i] = tP[i];
           }
-          PhasedProvider.TASK_PRIORITIES = tP;
-
-          console.log('priorities:', PhasedProvider.TASK_PRIORITIES);
 
         } else {
           // no status priorities exist, add defaults
@@ -196,8 +194,8 @@ angular.module('webappApp')
             // assign keys to obj and set to PhasedProvider.TASK_PRIORITIES
             for (var i in tP) {
               tP[i]['key'] = i;
+              PhasedProvider.TASK_PRIORITIES[i] = tP[i];
             }
-            PhasedProvider.TASK_PRIORITIES = tP;
           });
         }
       });

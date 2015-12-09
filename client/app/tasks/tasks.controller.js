@@ -66,9 +66,7 @@ angular.module('webappApp')
 
     $scope.sortable = [
       'cat', 'deadline', 'priority', 'name', 'date', 'assigned_by'
-    ]
-
-    // var FBRef = Phased.FBRef;
+    ];
 
     /**
     *
