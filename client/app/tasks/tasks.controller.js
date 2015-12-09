@@ -67,7 +67,7 @@ angular.module('webappApp')
     $scope.sortable = [
       'cat', 'deadline', 'priority', 'name', 'date', 'assigned_by'
     ]
-    
+
     var FBRef = Phased.FBRef;
 
     /**
@@ -85,114 +85,12 @@ angular.module('webappApp')
     **
     */
 
-
-    /**
-    *
-    * moves a task to the archive
-    *
-    * 1.A remove from /to/(me) or /unassigned (& note which)
-    * 1.B remove from /by
-    * 1.C remove from /all
-    *
-    * 2.A add to archive/to/(me) or archive/unassigned
-    *   depending on which it was removed from
-    * 2.B add to archive/by
-    * 2.C add to archive/all
-    * 2.D add to $scope.archive.all and run sync, since archive isn't watched
-    */
-    $scope.moveToArchive = function(assignment, assignmentID, unarchive) {
-      var path = "team/" + $scope.team.name + "/assignments/",
-        to_me = false,
-        idsContainer = assignmentIDs,
-        assignmentContainer = $scope.assignments;
-
-      // -1.A
-      // reverse everything if unarchive is true:
-      // remove from archiveIDs and $scope.archive here...
-      if (unarchive) {
-        path += 'archive/';
-        idsContainer = archiveIDs;
-        assignmentContainer = $scope.archive;
-        ga('send', 'event', 'Task', 'task unarchived');
-      } else {
-        ga('send', 'event', 'Task', 'task archived');
-      }
-
-      // 1.
-
-      // 1.A
-      if (idsContainer.to_me.indexOf(assignmentID) > -1) {
-        to_me = true;
-        FBRef.child(path + 'to/' + $scope.myID).set(popFromList(assignmentID, idsContainer['to_me']));
-      }
-      else if (idsContainer.unassigned.indexOf(assignmentID) > -1) {
-        to_me = false;
-        FBRef.child(path + 'unassigned').set(popFromList(assignmentID, idsContainer['unassigned']));
-      }
-      else {
-        return;
-      }
-
-      // 1.B
-      FBRef.child(path + 'by/' + $scope.myID).set(popFromList(assignmentID, idsContainer['by_me']));
-
-      // 1.C
-      FBRef.child(path + 'all/' + assignmentID).remove();
-
-      // -1.B
-      if (unarchive) {
-        path = "team/" + $scope.team.name + "/assignments/";
-        idsContainer = assignmentIDs;
-        assignmentContainer = $scope.assignments;
-      } else {
-        path += 'archive/';
-        idsContainer = archiveIDs;
-        assignmentContainer = $scope.archive;
-      }
-
-      // 2.
-
-      // 2.A
-      // for this and 2.B, have to get list from server (in add to archive case)
-      if (to_me) {
-        FBRef.child(path + 'to/' + $scope.myID).once('value', function(data){
-          data = data.val();
-          idsContainer['to_me'] = data || [];
-          idsContainer['to_me'].push(assignmentID);
-          FBRef.child(path + 'to/' + $scope.myID).set(idsContainer['to_me']);
-          if ($scope.showArchive) syncArchive('to_me');
-        });
-      }
-      else {
-        FBRef.child(path + 'unassigned').once('value', function(data){
-          data = data.val();
-          idsContainer['unassigned'] = data || [];
-          idsContainer['unassigned'].push(assignmentID);
-          FBRef.child(path + 'unassigned').set();
-          if ($scope.showArchive) syncArchive('unassigned');
-        });
-      }
-
-      // 2.B
-      FBRef.child(path + 'by/' + $scope.myID).once('value', function(data){
-        data = data.val();
-        idsContainer['by_me'] = data || [];
-        idsContainer['by_me'].push(assignmentID);
-        FBRef.child(path + 'by/' + $scope.myID).set(idsContainer['by_me']);
-      });
-
-      // 2.C
-      FBRef.child(path + 'all/' + assignmentID).set(assignment); // remote
-
-      // 2.D
-      if (unarchive)
-        delete $scope.archive.all[assignmentID];
-      else
-        $scope.archive.all[assignmentID] = assignment; // local, since archive isn't watched
+    $scope.moveToArchive = function(assignmentID) {
+      Phased.moveToFromArchive(assignmentID);
     }
 
-    $scope.moveFromArchive = function(assignment, assignmentID) {
-      $scope.moveToArchive(assignment, assignmentID, true);
+    $scope.moveFromArchive = function(assignmentID) {
+      Phased.moveToFromArchive(assignmentID, true);
     }
 
     // gets archived tasks at address shows archive

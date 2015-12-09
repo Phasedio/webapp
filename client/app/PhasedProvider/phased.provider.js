@@ -61,12 +61,7 @@ angular.module('webappApp')
         by_me : {}, // assigned by me (reference to objects in all)
         unassigned : {} // unassigned (reference to objects in all)
       },
-      _archive = { // Phased.archive
-        all : {},
-        to_me : {},
-        by_me : {},
-        unassigned : {}
-      };
+      _archive = {}; // Phased.archive
 
     /**
     *
@@ -119,7 +114,8 @@ angular.module('webappApp')
         watchAssignments : _watchAssignments,
         assignments : _assignments,
         getArchiveFor : _getArchiveFor,
-        archive : _archive
+        archive : _archive,
+        moveToFromArchive : _moveToFromArchive
       }
     };
 
@@ -548,7 +544,7 @@ angular.module('webappApp')
 
         _archive[archiveContainerName] = archiveContainer;
       }
-      
+
       var archivePath = 'team/' + _team.name + '/assignments/archive/',
         pathSuffix = '';
 
@@ -584,12 +580,156 @@ angular.module('webappApp')
         archiveIDs[address] = objToArray(data.val());
 
         // if other call is complete
-        if (_archive.all)
+        if ('all' in _archive)
           syncArchive(address); // 3
       });
     }
 
-    
+    /**
+    *
+    * moves a task to or from the archive
+    *
+    * 1.A remove from /to/(me) or /unassigned (& note which)
+    * 1.B remove from /by
+    * 1.C remove from /all
+    *
+    * 2.A add to archive/to/(me) or archive/unassigned
+    *   depending on which it was removed from
+    * 2.B add to archive/by
+    * 2.C add to archive/all
+    * 2.D add to $scope.archive.all and run sync, since archive isn't watched
+    */
+    var _moveToFromArchive = function(assignmentID, unarchive) {
+      var args = {
+        assignmentID : assignmentID,
+        unarchive : unarchive
+      }
+      registerAsync(doMoveToFromArchive, args);
+    }
+
+    var doMoveToFromArchive = function(args) {
+      var path = "team/" + _team.name + "/assignments/",
+        to_me = false,
+        idsContainer = assignmentIDs,
+        assignmentContainer = _assignments,
+        assignmentID = args.assignmentID,
+        unarchive = args.unarchive || false,
+        assignment;
+
+      // ensure assignment is where it should be and get a reference
+      if (unarchive) {
+        // assignment should be in _archive.all
+        if (assignmentID in _archive.all)
+          assignment = _archive.all[assignmentID];
+        else {
+          // not where it should be, break
+          console.log('assignment ' + assignmentID + ' missing from memory');
+          return false;
+        }
+      } else {
+        // assignment should be in _assignments.all
+        if (assignmentID in _assignments.all)
+          assignment = _assignments.all[assignmentID];
+        else {
+          // not where it should be, break
+          console.log('assignment ' + assignmentID + ' missing from memory');
+          return false;
+        }
+      }
+
+      // -1.A
+      // reverse everything if unarchive is true:
+      // remove from archiveIDs and _archive here...
+      if (unarchive) {
+        path += 'archive/';
+        idsContainer = archiveIDs;
+        assignmentContainer = _archive;
+        ga('send', 'event', 'Task', 'task unarchived');
+      } else {
+        ga('send', 'event', 'Task', 'task archived');
+      }
+
+      // 1.
+
+      // 1.A
+      if (idsContainer.to_me.indexOf(assignmentID) > -1) {
+        to_me = true;
+        FBRef.child(path + 'to/' + _currentUser.uid).set(popFromList(assignmentID, idsContainer['to_me']));
+      }
+      else if (idsContainer.unassigned.indexOf(assignmentID) > -1) {
+        to_me = false;
+        FBRef.child(path + 'unassigned').set(popFromList(assignmentID, idsContainer['unassigned']));
+      }
+      else {
+        return;
+      }
+
+      // 1.B
+      FBRef.child(path + 'by/' + _currentUser.uid).set(popFromList(assignmentID, idsContainer['by_me']));
+
+      // 1.C
+      FBRef.child(path + 'all/' + assignmentID).remove();
+
+      // -1.B
+      if (unarchive) {
+        path = "team/" + _team.name + "/assignments/";
+        idsContainer = assignmentIDs;
+        assignmentContainer = _assignments;
+      } else {
+        path += 'archive/';
+        idsContainer = archiveIDs;
+        assignmentContainer = _archive;
+      }
+
+      // 2.
+
+      // 2.A
+      // for this and 2.B, have to get list from server (in add to archive case)
+      if (to_me) {
+        FBRef.child(path + 'to/' + _currentUser.uid).once('value', function(data){
+          data = data.val();
+          idsContainer['to_me'] = data || [];
+          idsContainer['to_me'].push(assignmentID);
+          FBRef.child(path + 'to/' + _currentUser.uid).set(idsContainer['to_me']);
+          if ('all' in _archive) syncArchive('to_me');
+        });
+      }
+      else { // unassigned
+        FBRef.child(path + 'unassigned').once('value', function(data){
+          data = data.val();
+          idsContainer['unassigned'] = data || [];
+          idsContainer['unassigned'].push(assignmentID);
+          FBRef.child(path + 'unassigned').set();
+          if ('all' in _archive) syncArchive('unassigned');
+        });
+      }
+
+      // 2.B
+      FBRef.child(path + 'by/' + _currentUser.uid).once('value', function(data){
+        data = data.val();
+        idsContainer['by_me'] = data || [];
+        idsContainer['by_me'].push(assignmentID);
+        FBRef.child(path + 'by/' + _currentUser.uid).set(idsContainer['by_me']);
+      });
+
+      // 2.C
+      FBRef.child(path + 'all/' + assignmentID).set(assignment); // remote
+
+      // 2.D
+      if (unarchive)
+        delete _archive.all[assignmentID];
+      else
+        _archive.all[assignmentID] = assignment; // local, since archive isn't watched
+    }
+
+
+
+
+    /**
+    **
+    **  Utilities
+    **
+    **/
 
     // convert object into array
     // useful for arrays with missing keys
