@@ -29,8 +29,14 @@ angular.module('webappApp')
     /**
     * Internal vars
     */
-    var PHASED_SET_UP = false; // set to true after team is set up and other fb calls can be made
-    var req_callbacks = []; // filled with operations to complete when PHASED_SET_UP
+    var PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
+      req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
+      assignmentIDs = {
+        to_me : [],
+        by_me : [],
+        unassigned : []
+      };
+
 
     /**
     * External vars
@@ -43,7 +49,13 @@ angular.module('webappApp')
       _taskStatuses, // Phased.TASK_STATUSES
       _team = {}, // Phased.team
       _currentUser = '', // Phased.user
-      FBRef = ''; // Phased.FBRef
+      FBRef = '', // Phased.FBRef
+      _assignments = { // Phased.assignments
+        all : {}, // all of the team's assignments
+        to_me : {}, // assigned to me (reference to objects in all)
+        by_me : {}, // assigned by me (reference to objects in all)
+        unassigned : {} // unassigned (reference to objects in all)
+      };
 
     /**
     *
@@ -81,9 +93,20 @@ angular.module('webappApp')
         viewType : _viewType,
         billing : _billingInfo,
         TASK_PRIORITIES : _taskPriorities,
+        TASK_PRIORITY_ID : {
+          HIGH : 0,
+          MEDIUM : 1,
+          LOW : 2
+        },
         TASK_STATUSES : _taskStatuses,
+        TASK_STATUS_ID : {
+          IN_PROGRESS : 0,
+          COMPLETE : 1,
+          ASSIGNED : 2
+        },
         FBRef : FBRef,
-        watchAssignments : _watchAssignments
+        watchAssignments : _watchAssignments,
+        assignments : _assignments
       }
     };
 
@@ -137,11 +160,12 @@ angular.module('webappApp')
         tP = tP.val();
         // console.log('taskPriorities', tP);
         if (typeof tP !== 'undefined' && tP != null){
-          // assign keys to obj, set obj to $scope
+          // assign keys to obj, set to _taskPriorities
           for (var i in tP) {
             tP[i]['key'] = i;
           }
           _taskPriorities = tP;
+
         } else {
           // no status priorities exist, add defaults
           var obj = [
@@ -343,33 +367,151 @@ angular.module('webappApp')
 
     /**
     *
-    * sets up watchers for current users task assignments - to and by
-    * and also unassigned tasks
+    * sets up watchers for current users task assignments (to and by
+    * and also unassigned tasks), filling Phased.assignments (as _assignments)
+    * for use in a controller
     *
     *   - own assignments (to self or to others) assignments/to/(me)
     *   - assignments to me by others assignments/by/(me)
     *   - unassigned tasks assignments/un
     */
-    var _watchAssignments = function(callbacks) {
-      registerAsync(asyncWatchAssignments, callbacks);
+    var _watchAssignments = function() {
+      registerAsync(doWatchAssignments);
     }
 
-    var asyncWatchAssignments = function(callbacks) {
+    var doWatchAssignments = function() {
+      // callbacks
+
+      /**
+      *
+      * updates _assignments.all
+      *
+      * instead of replacing the whole object, compares assignments and props, then updates
+      * allowing for persistent references throughout the app
+      *
+      */
+      var updateAllAssignments = function(data) {
+        data = data.val();
+        console.log('all: ', data);
+        if (!data) {
+          _assignments.all = {};
+          return;
+        }
+        var all = _assignments.all;
+
+        // 1. if assignment doesn't exist in all, add it, end of story
+        // 2. else, check its properties and update those that are out of sync
+        // (i is the assignment uid)
+        for (var i in data) {
+          if (!(i in all)) {
+            // 1.
+            all[i] = data[i];
+
+          } else {
+            // 2.
+            // a. sync extant properties in all, delete those no longer in data
+            // b. add new properties from data
+            // (j is property name)
+
+            for (var j in all[i]) {
+              // a.
+              if (j in data[i]) {
+                all[i][j] = data[i][j];
+              } else {
+                delete all[i][j];
+              }
+            }
+
+            for (var j in data[i]) {
+              // b.
+              if (!(j in all[i])) {
+                all[i][j] = data[i][j];
+              }
+            }
+
+          }
+        } // for var i in data
+
+        // if assignment isn't in data, delete it
+        for (var i in all) {
+          if (!(i in data)) {
+            delete all[i];
+          }
+        }
+
+        // sync all containers
+        for (var i in assignmentIDs) {
+          syncAssignments(i);
+        }
+      } // updateAllAssignments()
+
+
+      /**
+      *
+      * de-indexes and stores the data (list of task IDs),
+      * then calls syncAssignments
+      *
+      */
+
+      var updateAssignmentGroup = function(data, groupName) {
+        assignmentIDs[groupName] = objToArray(data);
+        syncAssignments(groupName);
+      }
+
+      /**
+      *
+      * syncs assignments (in _assignments.all) listed in the UIDContainer to the assignmentContainer
+      * used to maintain a running list of references in the container, eg, _assignments.by_me, that point to 
+      * the right assignment objects in _assignments.all
+      *
+      */
+      var syncAssignments = function(assignmentContainerName) {
+        var assignmentContainer = {},
+          UIDContainer = assignmentIDs[assignmentContainerName];
+
+        for (var i in UIDContainer) {
+          var assignmentID = UIDContainer[i];
+          if (assignmentID in _assignments.all)
+            assignmentContainer[assignmentID] = _assignments.all[assignmentID];
+        }
+
+        _assignments[assignmentContainerName] = assignmentContainer;
+      }
+
+      // set up watchers
       var refString = 'team/' + _team.name + '/assignments';
 
-      if ('all' in callbacks)
-        FBRef.child(refString + '/all').on('value', callbacks.all);
-      
-      if ('to_me' in callbacks)
-        FBRef.child(refString + '/to/' + _currentUser.uid).on('value', callbacks.to_me);
-      
-      if ('by_me' in callbacks)
-        FBRef.child(refString + '/by/' + _currentUser.uid).on('value', callbacks.by_me);
-      
-      if ('unassigned' in callbacks)
-        FBRef.child(refString + '/unassigned').on('value', callbacks.unassigned);
-    };
+      FBRef.child(refString + '/all').on('value', updateAllAssignments);
+    
+      FBRef.child(refString + '/to/' + _currentUser.uid).on('value', function(data) {
+        data = data.val();
+        updateAssignmentGroup(data, 'to_me');
+      });
+    
+      FBRef.child(refString + '/by/' + _currentUser.uid).on('value', function(data) {
+        data = data.val();
+        updateAssignmentGroup(data, 'by_me');
+      });
+    
+      FBRef.child(refString + '/unassigned').on('value', function(data) {
+        data = data.val();
+        updateAssignmentGroup(data, 'unassigned');
+      });
+    }; // end doWatchAssignments()
 
+
+    
+
+    // convert object into array
+    // useful for arrays with missing keys
+    // eg, [0 = '', 1 = '', 3 = ''];
+    var objToArray = function(obj) {
+      var newArray = [];
+      for (var i in obj) {
+        newArray.push(obj[i]);
+      }
+      return newArray;
+    }
 
 
   })

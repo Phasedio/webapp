@@ -57,32 +57,15 @@ angular.module('webappApp')
     $scope.taskPriorities = Phased.TASK_PRIORITIES;
     $scope.taskStatuses = Phased.TASK_STATUSES;
     $scope.myID = Auth.user.uid;
-    
+
     $scope.today = new Date().getTime();
-    var StatusID = {
-        IN_PROGRESS : 0,
-        COMPLETE : 1,
-        ASSIGNED : 2
-      },
-      PriorityID = {
-        HIGH : 0,
-        MEDIUM : 1,
-        LOW : 2
-      },
-      FBRef = Phased.FBRef;
+    var FBRef = Phased.FBRef;
 
     $scope.assignments = {
       all : {}, // all of the team's assignments
       to_me : {}, // assigned to me (reference to objects in all)
       by_me : {}, // assigned by me (reference to objects in all)
       unassigned : {} // unassigned (reference to objects in all)
-    }
-    // lists of assignment IDs used internally
-    // set by updateAssignedTo(), etc
-    var assignmentIDs = {
-      to_me : [],
-      by_me : [],
-      unassigned : []
     }
 
     // similar structure for archive
@@ -108,18 +91,10 @@ angular.module('webappApp')
     *   ~*~ init ~*~
     *
     */
-    FBRef.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
-      data = data.val();
 
-      // formerly setWatchAssignments(), now in PhasedProvider
-      var callbacks = {
-        all : updateAllAssignments,
-        to_me : updateAssignedTo,
-        by_me : updateAssignedBy,
-        unassigned : updateUnassigned
-      }
-      Phased.watchAssignments(callbacks);
-    });
+    // tell Phased to watch assignments
+    Phased.watchAssignments();
+    $scope.assignments = Phased.assignments;
 
 
     /**
@@ -128,123 +103,6 @@ angular.module('webappApp')
     **
     */
 
-    /**
-    *
-    * updates $scope.assignments.all
-    *
-    * instead of replacing the whole object, compares assignments and props, then updates
-    * allowing for persistent references throughout the app
-    *
-    */
-    var updateAllAssignments = function(data) {
-      data = data.val();
-      console.log('all: ', data);
-      if (!data) {
-        $scope.assignments.all = {};
-        return;
-      }
-      var all = $scope.assignments.all;
-
-      // 1. if assignment doesn't exist in all, add it, end of story
-      // 2. else, check its properties and update those that are out of sync
-      // (i is the assignment uid)
-      for (var i in data) {
-        if (!(i in all)) {
-          // 1.
-          all[i] = data[i];
-
-        } else {
-          // 2.
-          // a. sync extant properties in all, delete those no longer in data
-          // b. add new properties from data
-          // (j is property name)
-
-          for (var j in all[i]) {
-            // a.
-            if (j in data[i]) {
-              all[i][j] = data[i][j];
-            } else {
-              delete all[i][j];
-            }
-          }
-
-          for (var j in data[i]) {
-            // b.
-            if (!(j in all[i])) {
-              all[i][j] = data[i][j];
-            }
-          }
-
-        }
-      } // for var i in data
-
-      // if assignment isn't in data, delete it
-      for (var i in all) {
-        if (!(i in data)) {
-          delete all[i];
-        }
-      }
-
-      // sync all containers
-      for (var i in assignmentIDs) {
-        syncAssignments(i);
-      }
-      console.log('$scope', $scope);
-    } // updateAllAssignments()
-
-    /**
-    *
-    * updates $scope.assignedTo
-    *
-    */
-    var updateAssignedTo = function(data) {
-      data = data.val();
-      assignmentIDs['to_me'] = data || [];
-      assignmentIDs['to_me'] = objToArray(assignmentIDs['to_me']);
-      syncAssignments('to_me');
-    }
-
-    /**
-    *
-    * updates $scope.assignedBy
-    *
-    */
-    var updateAssignedBy = function(data) {
-      data = data.val();
-      assignmentIDs['by_me'] = data || [];
-      assignmentIDs['by_me'] = objToArray(assignmentIDs['by_me']);
-      syncAssignments('by_me');
-    }
-
-    /**
-    *
-    * updates $scope.unassigned
-    *
-    */
-    var updateUnassigned = function(data) {
-      data = data.val();
-      assignmentIDs['unassigned'] = data || [];
-      assignmentIDs['unassigned'] = objToArray(assignmentIDs['unassigned']);
-      syncAssignments('unassigned');
-    }
-
-    /**
-    *
-    * syncs assignments (in assignments.all) listed in the UIDContainer to the assignmentContainer
-    *
-    */
-    var syncAssignments = function(assignmentContainerName) {
-      var assignmentContainer = {},
-        UIDContainer = assignmentIDs[assignmentContainerName];
-
-      for (var i in UIDContainer) {
-        var assignmentID = UIDContainer[i];
-        if (assignmentID in $scope.assignments.all)
-          assignmentContainer[assignmentID] = $scope.assignments.all[assignmentID];
-      }
-
-      $scope.assignments[assignmentContainerName] = assignmentContainer;
-    }
 
     /**
     *
@@ -476,7 +334,7 @@ angular.module('webappApp')
           long : $scope.long ? $scope.long : 0
         },
         assigned_by : $scope.myID,
-        status: StatusID.ASSIGNED,
+        status: Phased.TASK_STATUS_ID.ASSIGNED,
         priority : parseInt($scope.newTask.priority)
       };
 
@@ -550,7 +408,7 @@ angular.module('webappApp')
       // return;
 
       // update original assignment status to In Progress
-      setAssignmentStatus(assignmentID, StatusID.IN_PROGRESS);
+      setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.IN_PROGRESS);
 
       // publish to stream
       var ref = FBRef.child('team/' + $scope.team.name);
@@ -589,7 +447,7 @@ angular.module('webappApp')
     */
     $scope.setTaskCompleted = function(assignmentID) {
       ga('send', 'event', 'Task', 'completed');
-      setAssignmentStatus(assignmentID, StatusID.COMPLETE);
+      setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
     }
 
 
