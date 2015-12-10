@@ -51,6 +51,10 @@ angular.module('webappApp')
     if(update.email === undefined || update.email === ''){
       update.email = $scope.currentUser.email;
     }
+    if (update.tel !== $scope.currentUser.tel) {
+      console.log('hit the tel!');
+      Auth.changeTel(update, Auth.user.uid);
+    }
 
     if(update.name === $scope.currentUser.name || update.name === undefined || update.name === ''){
       //console.log("we are changing the password");
@@ -93,6 +97,7 @@ angular.module('webappApp')
 
         toaster.pop('success', "Your name has been updated!");
       }
+
       if (update.email !== $scope.currentUser.email) {
         Auth.changeEmail(update, Auth.user.uid);
         toaster.pop('success', "Your email has been updated!");

@@ -1,20 +1,21 @@
 <style>
-	body {
-	  /*background:  linear-gradient(
-      rgba(0, 0, 0, 0.25),
-      rgba(0, 0, 0, 0.25)
-    ), url(assets/images/{{dayImage}}) no-repeat center center fixed;*/
-		background: #F2F2F2;
-	  -webkit-background-size: cover;
-	  -moz-background-size: cover;
-	  -o-background-size: cover;
-	  background-size: cover;
-	}
+.hero-img {
+	background:  linear-gradient(
+		rgba(0, 0, 0, 0.25),
+		rgba(0, 0, 0, 0.25)
+	), url(assets/images/{{dayImage}}) no-repeat center center ;
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+}
 </style>
 
 
 
 <div ng-include="'components/navbar/navbar.html'"></div>
+<section class="hero-img">
+</section>
 
 <section class="container">
   <div class="row">

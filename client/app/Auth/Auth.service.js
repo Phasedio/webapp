@@ -26,7 +26,7 @@ angular.module('webappApp')
 
         login: function(user) {
             //team = user.team;
-            // Send Errors        
+            // Send Errors
             //console.log(team);
             return auth.$authWithPassword(
                 {email: user.email, password: user.password}
@@ -34,13 +34,13 @@ angular.module('webappApp')
         },
         register : function(user) {
             //team = user.team;
-           
+
             return auth.$createUser({email: user.email, password: user.password}).then(function() {
-                
+
                 return Auth.login(user);
             })
                 .then(function(data) {
-                    
+
                     return Auth.createProfile(data.uid, user);
                 });
         },
@@ -48,8 +48,35 @@ angular.module('webappApp')
             auth.$unauth();
         },
         changePassword : function(user) {
-            return auth.$changePassword({email: user.email, oldPassword: user.oldPass, newPassword: user.newPass});
-        },
+              console.log('in change Password');
+
+              return auth.$changePassword({email: user.email, oldPassword: user.oldPass, newPassword: user.newPass});
+          },
+
+          changeEmail : function(user, uid) {
+            console.log('will change email', user, uid);
+            var profile = ref.child("profile").child(uid).child('email').set(user.email);
+
+          },
+
+          changeName: function(user, uid){
+            console.log('will change name', user.name);
+            //console.log(a)
+            var profile = ref.child("profile").child(uid).child('name').set(user.name);
+            //return (profile,uid);
+            //profile.set(update.name);
+
+
+          },
+          changeTel: function(user, uid){
+            console.log('will change name', user.tel);
+            //console.log(a)
+            var profile = ref.child("profile").child(uid).child('tel').set(user.tel);
+            //return (profile,uid);
+            //profile.set(update.name);
+
+
+          },
 
         signedIn: function() {
             return !!Auth.user.provider;
@@ -63,16 +90,16 @@ angular.module('webappApp')
           // }else{
           //   return false;
           // }
-          
+
         },
 
         team : 'd',
         currentTeam : ''
-            
-        
+
+
     };
 
-    
+
     var getUserAuthStat = auth.$getAuth();
     if (getUserAuthStat) {
       angular.copy(getUserAuthStat, Auth.user);
@@ -92,15 +119,15 @@ angular.module('webappApp')
             teamRef.child(name).child('members').child(id).set(true);
             ref.child('profile').child(id).child('teams').push(name);
             ref.child('profile').child(id).child('curTeam').set(name);
-            
+
             $location.path('/');
           }else{
             return false;
           }
-          
+
         });
-        
-        
+
+
       }
   };
 
@@ -115,7 +142,7 @@ angular.module('webappApp')
     auth.$onAuth(function(authData) {
         if (authData) {
             angular.copy(authData, Auth.user);
-            
+
           }
         //     Auth.user.profile = $firebase(ref.child('profile').child(authData.uid)).$asObject();
         //     console.log(Auth.user.profile);
@@ -142,7 +169,7 @@ angular.module('webappApp')
         //                 return profileRef.$set('curTeam', team);
 
         //             } else {
-        //                 // Check the allowed email list to see if this is the users first time 
+        //                 // Check the allowed email list to see if this is the users first time
         //                 var teamEmails = Object.keys(teamRef[team].allowedUsers);
         //                 for (var i = 0; i < teamEmails.length; i++) {
         //                     console.log('is '+ Auth.user.profile.email + ' this ' + teamRef[team].allowedUsers[teamEmails[i]]);
@@ -152,7 +179,7 @@ angular.module('webappApp')
         //                         memberRef.child(Auth.user.profile.$id).set(true);
         //                         var memberRef = new Firebase(FURL + 'profile/' + Auth.user.profile.$id);
         //                         return memberRef.child('curTeam').set(team);
-                                
+
         //                     }
         //                 }
         //                 // No match was found unAuth user.
