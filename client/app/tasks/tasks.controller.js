@@ -35,6 +35,14 @@ angular.module('webappApp')
       return result;
     }
   })
+  /**
+  *
+  * allows ordering an object as if it were an array,
+  * at the cost of being able to access its original index
+  * Adds a property 'key' with the original index to 
+  * address this
+  *
+  */
   .filter('orderObjectBy', function() {
     return function(items, field, reverse) {
       var filtered = [];
