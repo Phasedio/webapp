@@ -541,8 +541,6 @@ angular.module('webappApp')
     }
 
     var doGetArchiveFor = function(address) {
-      
-
       var archivePath = 'team/' + PhasedProvider.team.name + '/assignments/archive/',
         pathSuffix = '';
 
@@ -553,10 +551,11 @@ angular.module('webappApp')
         case 'all' :
           FBRef.child(archivePath).once('value', function(data){
             data = data.val() || [];
+
             updateContainerAll('archive', data.all);
-            archiveIDs.to_me = objToArray(data.to)[0];
-            archiveIDs.by_me = objToArray(data.by)[0];
-            archiveIDs.unassigned = objToArray(data.unassigned)[0];
+            archiveIDs.to_me = data.to ? objToArray(data.to[_Auth.user.uid]) : [];
+            archiveIDs.by_me = data.by ? objToArray(data.by[_Auth.user.uid]) : [];
+            archiveIDs.unassigned = objToArray(data.unassigned);
 
             syncArchive('to_me');
             syncArchive('by_me');
@@ -984,8 +983,8 @@ angular.module('webappApp')
       assignmentIDs.to_me.push(assignmentID);
       FBRef.child(assignmentsPath + 'to/' + PhasedProvider.user.uid).set(assignmentIDs.to_me);
 
-      // 3. set user attr
-      FBRef.child(assignmentsPath + 'all/' + assignmentID + '/user').set(PhasedProvider.user.uid);
+      // 3. set assignee attr
+      FBRef.child(assignmentsPath + 'all/' + assignmentID + '/assignee').set(PhasedProvider.user.uid);
     }
 
     /**
