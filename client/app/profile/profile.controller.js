@@ -11,7 +11,8 @@ angular.module('webappApp')
       categoryObj : {},
       backlog : []
     };
-    var monImage =  "weekdayPhotos/mon.jpg";
+    // Background image
+  var monImage =  "weekdayPhotos/mon.jpg";
   var tuesImage =  "weekdayPhotos/tues.jpg";
   var wedImage =  "weekdayPhotos/wed.jpg";
   var thursImage =  "weekdayPhotos/thurs.jpg";
@@ -34,6 +35,15 @@ angular.module('webappApp')
   }else{
     profileUser = Auth.user.uid;
   }
+
+  // bootstrap enable tabs
+
+  $('#myTabs a').click(function (e) {
+    e.preventDefault()
+    $(this).tab('show')
+  });
+
+
   console.log($routeParams);
 
   // Update Account

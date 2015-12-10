@@ -38,88 +38,104 @@
       </div>
       <div class="profile-holder">
         <div class="profile-nav">
-          <ul>
-            <li class="active">History</li>
-            <li>backlog</li>
-            <li>Stats</li>
-            <li>edit</li>
+          <ul class="nav nav-tabs" role="tablist" id="myTabs">
+            <li role="presentation" class="active"><a href="#history" aria-controls="home" role="tab" data-toggle="tab">History</a></li>
+            <li><a href="#backlog" aria-controls="home" role="tab" data-toggle="tab">backlog</a></li>
+            <li><a href="#history" aria-controls="home" role="tab" data-toggle="tab">Stats</a></li>
+            <li><a href="#history" aria-controls="home" role="tab" data-toggle="tab">edit</a></li>
           </ul>
         </div>
-        <div class="profile-history">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>
-                  Task
-                </th>
-                <th>
-                  Category
-                </th>
-                <th>
-                  Time
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="item in team.history | orderBy : 'time':true">
-                <td>
-                  {{item.name}}
-                </td>
-                <td>
-                  {{$parent.team.categoryObj[item.cat].name}}
-                </td>
-                <td>
-                  <span am-time-ago="item.time"></span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <h6 ng-show="team.history.length == 0" align="center"> No updates for time period</h6>
+
+
+        <!-- Tab panes -->
+        <div class="tab-content">
+          <div role="tabpanel" class="tab-pane active" id="history">
+
+            <div class="profile-history">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>
+                      Task
+                    </th>
+                    <th>
+                      Category
+                    </th>
+                    <th>
+                      Time
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="item in team.history | orderBy : 'time':true">
+                    <td>
+                      {{item.name}}
+                    </td>
+                    <td>
+                      {{$parent.team.categoryObj[item.cat].name}}
+                    </td>
+                    <td>
+                      <span am-time-ago="item.time"></span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <h6 ng-show="team.history.length == 0" align="center"> No updates for time period</h6>
+            </div>
+
+          </div>
+          <div role="tabpanel" class="tab-pane" id="backlog">
+            <div class="profile-backlog">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>
+                      Task
+                    </th>
+                    <th>
+                      Category
+                    </th>
+                    <th>
+                      priority
+                    </th>
+                    <th>
+                      due date
+                    </th>
+                    <th>
+                      status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="item in team.backlog ">
+                    <td>
+                      {{item.name}}
+                    </td>
+                    <td>
+                      <span ng-if="item.cat">{{$parent.team.categoryObj[item.cat].name}}</span>
+                      <span ng-if="!item.cat">Not Set</span>
+                    </td>
+                    <td>
+                      {{item.priority}}
+                    </td>
+                    <td>
+                       <span ng-if="item.deadline">{{item.deadline | amDateFormat:'MM.DD.YYYY '}}</span>
+                       <span ng-if="!item.deadline">Not Set</span>
+                    </td>
+                    <td>
+                      {{item.status}}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div role="tabpanel" class="tab-pane" id="messages">...</div>
+          <div role="tabpanel" class="tab-pane" id="settings">...</div>
         </div>
-        <div class="profile-backlog">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>
-                  Task
-                </th>
-                <th>
-                  Category
-                </th>
-                <th>
-                  priority
-                </th>
-                <th>
-                  due date
-                </th>
-                <th>
-                  status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="item in team.backlog ">
-                <td>
-                  {{item.name}}
-                </td>
-                <td>
-                  <span ng-if="item.cat">{{$parent.team.categoryObj[item.cat].name}}</span>
-                  <span ng-if="!item.cat">Not Set</span>
-                </td>
-                <td>
-                  {{item.priority}}
-                </td>
-                <td>
-                   <span ng-if="item.deadline">{{item.deadline | amDateFormat:'MM.DD.YYYY '}}</span>
-                   <span ng-if="!item.deadline">Not Set</span>
-                </td>
-                <td>
-                  {{item.status}}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+
+
+
       </div>
     </div>
 
