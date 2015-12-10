@@ -35,10 +35,24 @@
         <!-- filter area -->
         <div class="task-action-filter">
           <ul>
-            <li><div class="filter-selection">all <div></div></div></li>
-            <li><div class="filter-selection active">asigned to me <div></div></div></li>
-            <li><div class="filter-selection">my created tasks <div></div></div></li>
-            <li><div class="filter-selection">closed tasks <div></div></div></li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.all')" ng-class="{active : activeStream == assignments.all && !activeFilter}">all <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.to_me', '!' + taskStatusID.COMPLETE)" ng-class="{active : activeStream == assignments.to_me}">asigned to me <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.by_me')" ng-class="{active : activeStream == assignments.by_me}">my created tasks <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.unassigned')" ng-class="{active : activeStream == assignments.unassigned}">unassigned tasks <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.all', taskStatusID.COMPLETE)" ng-class="{active : (activeStream == assignments.all && activeFilter == '1')}">closed tasks <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('archive.all')" ng-class="{active : activeStream == archive.all}">archived tasks <div></div></div>
+            </li>
           </ul>
           <ul class="filter-category">
             <li><div class="filter-selection">Communication <div></div></div></li>
@@ -58,7 +72,7 @@
 
     <!-- TASK STREAM -->
     <div class="col-xs-8 task-stream">
-      <div class="task ph-card" ng-repeat="(id, assignment) in assignments.to_me | filterTaskByStatus : '!1' | orderObjectBy : 'time'">
+      <div class="task ph-card" ng-repeat="assignment in activeStream | filterTaskByStatus : activeFilter | orderObjectBy : 'time'">
         <div class="task-header">
           <div class="task-main">
             <h1>{{assignment.name}}</h1>
