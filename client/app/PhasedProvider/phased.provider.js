@@ -210,9 +210,8 @@ angular.module('webappApp')
           // assign keys to obj, set obj to $scope
           for (var i in tS) {
             tS[i]['key'] = i;
+            PhasedProvider.TASK_STATUSES[i] = tS[i];
           }
-          PhasedProvider.TASK_STATUSES = tS;
-          // console.log('PhasedProvider.TASK_STATUSES', PhasedProvider.TASK_STATUSES);
         } else {
           // no status types exist, add defaults
           var obj = [
@@ -229,9 +228,8 @@ angular.module('webappApp')
             // assign keys to obj and set to PhasedProvider.TASK_STATUSES
             for (var i in tS) {
               tS[i]['key'] = i;
+              PhasedProvider.TASK_STATUSES[i] = tS[i];
             }
-            PhasedProvider.TASK_STATUSES = tS;
-            // console.log('PhasedProvider.TASK_STATUSES', PhasedProvider.TASK_STATUSES);
           });
         }
       });
@@ -846,7 +844,7 @@ angular.module('webappApp')
       task.user = PhasedProvider.user.uid;
 
       // update original assignment status to In Progress
-      _setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.IN_PROGRESS);
+      _setAssignmentStatus(assignmentID, PhasedProvider.TASK_STATUS_ID.IN_PROGRESS);
 
       // publish to stream
       var ref = FBRef.child('team/' + PhasedProvider.team.name);
