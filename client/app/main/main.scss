@@ -20,6 +20,10 @@
   a{
     display: inline-block;
     float: right;
+    color: #fff;
+    font-size: 14px;
+    text-transform: uppercase;
+    margin-top: 4.5rem;
   }
 }
 .member-background{
@@ -51,6 +55,19 @@
 
     color: #585454;
     text-align: center;
+  }
+}
+
+.addmember{
+  input[type="email"]{
+    display: block;
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #585454;
+    outline: none;
+  }
+  .addMember-btnHolder{
+    margin-top: 40px;
   }
 }
 // aside{

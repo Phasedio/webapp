@@ -178,10 +178,33 @@ body{
 
   }
 }
-
+// Modal
+.modal-backdrop{
+  background: #fff;
+}
+.modal-dialog{
+  max-width: 700px;
+  width: 90%;
+}
+.modal-content{
+  padding:25px;
+  border-radius: 0;
+}
 
 // Component styles are injected through grunt
 // injector
+@import 'addcategory/addcategory.scss';
+@import 'billing/billing.scss';
+@import 'editcategory/editcategory.scss';
+@import 'feed/feed.scss';
+@import 'getapp/getapp.scss';
+@import 'login/login.scss';
+@import 'main/main.scss';
+@import 'profile/profile.scss';
+@import 'switchteam/switchteam.scss';
+@import 'tasks/tasks.scss';
+@import 'modal/modal.scss';
+// endinjector
 @import 'addcategory/addcategory.scss';
 @import 'billing/billing.scss';
 @import 'editcategory/editcategory.scss';
