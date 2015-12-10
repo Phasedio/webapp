@@ -436,16 +436,13 @@ angular.module('webappApp')
       *
       */
       var syncAssignments = function(assignmentContainerName) {
-        var assignmentContainer = {},
-          UIDContainer = assignmentIDs[assignmentContainerName];
+        var UIDContainer = assignmentIDs[assignmentContainerName];
 
         for (var i in UIDContainer) {
           var assignmentID = UIDContainer[i];
           if (assignmentID in PhasedProvider.assignments.all)
-            assignmentContainer[assignmentID] = PhasedProvider.assignments.all[assignmentID];
+            PhasedProvider.assignments[assignmentContainerName][assignmentID] = PhasedProvider.assignments.all[assignmentID];
         }
-
-        PhasedProvider.assignments[assignmentContainerName] = assignmentContainer;
       }
 
       // set up watchers

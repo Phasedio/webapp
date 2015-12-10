@@ -94,7 +94,6 @@ angular.module('webappApp')
   .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster) {
     ga('send', 'pageview', '/tasks');
 
-    $scope.team = Phased.team;
     $scope.viewType = Phased.viewType;
     $scope.taskPriorities = Phased.TASK_PRIORITIES; // in new task modal
     $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
@@ -104,17 +103,15 @@ angular.module('webappApp')
 
     $scope.today = new Date().getTime(); // min date for deadline datepicker
 
+    $scope.phased = Phased;
+    $scope.team = Phased.team;
     $scope.assignments = Phased.assignments;
     $scope.archive = Phased.archive;
-    $scope.showArchive = false;
 
-    $scope.activeStream = $scope.assignments.to_me;
+    $scope.activeStream = Phased.assignments.to_me;
+    $scope.activeStreamName = 'assignments.to_me';
     $scope.activeStatusFilter = '!1'; // not completed tasks
     $scope.activeCategoryFilter;
-
-    $scope.sortable = [
-      'cat', 'deadline', 'priority', 'name', 'date', 'assigned_by'
-    ];
 
     /**
     *
@@ -137,30 +134,33 @@ angular.module('webappApp')
       // check and set status
       switch (streamName) {
         case 'assignments.all':
-          $scope.activeStream = $scope.assignments.all;
+          $scope.activeStream = Phased.assignments.all;
           break;
         case 'assignments.to_me':
-          $scope.activeStream = $scope.assignments.to_me;
+          $scope.activeStream = Phased.assignments.to_me;
           break;
         case 'assignments.by_me':
-          $scope.activeStream = $scope.assignments.by_me;
+          $scope.activeStream = Phased.assignments.by_me;
           break;
         case 'assignments.unassigned':
-          $scope.activeStream = $scope.assignments.unassigned;
+          $scope.activeStream = Phased.assignments.unassigned;
           break;
         case 'archive.to_me':
-          if (!('to_me' in $scope.archive)) Phased.getArchiveFor('to_me');
-          $scope.activeStream = $scope.archive.to_me;
+          if (!('to_me' in Phased.archive)) Phased.getArchiveFor('to_me');
+          $scope.activeStream = Phased.archive.to_me;
           break;
         case 'archive.all':
           Phased.getArchiveFor('all');
-          $scope.activeStream = $scope.archive.all;
+          $scope.activeStream = Phased.archive.all;
           break;
         default:
-          $scope.activeStream = $scope.assignments.to_me;
+          $scope.activeStream = Phased.assignments.to_me;
           filter = '!' + Phased.TASK_STATUS_ID.COMPLETE;
+          streamName = 'assignments.to_me';
           break;
       }
+
+      $scope.activeStreamName = streamName;
     }
 
     // checks and sets active status filter
@@ -202,9 +202,6 @@ angular.module('webappApp')
     }
 
     $scope.addTask = function(newTask){
-      // incoming object
-      // console.log('newTask', newTask);
-
       // format object
       var taskPrefix = '',
         weather = '';
@@ -249,16 +246,18 @@ angular.module('webappApp')
     // moves task into my to_me if unassigned,
     // then starts it 
     $scope.startTask = function(task) {
-      console.log('startTask', task);
       if (!task.user || task.unassigned)
         Phased.takeTask(task.key);
       Phased.activateTask(task.key);
 
-      $scope.activeStream = $scope.assignments.to_me;
+      $scope.activeStream = Phased.assignments.to_me;
       $scope.activeStatusFilter = Phased.TASK_STATUS_ID.ASSIGNED;
     }
 
-    $scope.moveToArchive = Phased.moveToFromArchive;
+    $scope.moveToArchive = function(assignmentID) {
+      Phased.moveToFromArchive(assignmentID);
+      console.log('moveToArchive. $scope.phased.activeStream', $scope.phased.activeStream);
+    }
 
     $scope.moveFromArchive = function(assignmentID) {
       Phased.moveToFromArchive(assignmentID, true);
@@ -267,7 +266,6 @@ angular.module('webappApp')
     // gets archived tasks at address shows archive
     $scope.getArchiveFor = function(address) {
       Phased.getArchiveFor(address);
-      $scope.showArchive = true;
     }
 
     $scope.setTaskCompleted = function(assignmentID) {

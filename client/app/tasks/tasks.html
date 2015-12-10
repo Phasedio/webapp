@@ -36,22 +36,22 @@
         <div class="task-action-filter">
           <ul>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter()" ng-class="{active : activeStream == assignments.all && !activeStatusFilter}">all <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.all' && !activeStatusFilter}">all <div></div></div>
             </li>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.to_me'); setStatusFilter('!' + taskStatusID.COMPLETE)" ng-class="{active : activeStream == assignments.to_me}">asigned to me <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.to_me'); setStatusFilter('!' + taskStatusID.COMPLETE)" ng-class="{active : activeStreamName == 'assignments.to_me'}">asigned to me <div></div></div>
             </li>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.by_me'); setStatusFilter()" ng-class="{active : activeStream == assignments.by_me}">my created tasks <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.by_me'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.by_me'}">my created tasks <div></div></div>
             </li>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.unassigned'); setStatusFilter()" ng-class="{active : activeStream == assignments.unassigned}">unassigned tasks <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.unassigned'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.unassigned'}">unassigned tasks <div></div></div>
             </li>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter(taskStatusID.COMPLETE)" ng-class="{active : (activeStream == assignments.all && activeStatusFilter == '1')}">closed tasks <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter(taskStatusID.COMPLETE)" ng-class="{active : activeStreamName == 'assignments.all' && activeStatusFilter == '1'}">closed tasks <div></div></div>
             </li>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('archive.all'); setStatusFilter()" ng-class="{active : activeStream == archive.all}">archived tasks <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('archive.all'); setStatusFilter()" ng-class="{active : activeStreamName == 'archive.all'}">archived tasks <div></div></div>
             </li>
           </ul>
           <ul class="filter-category">
@@ -97,8 +97,8 @@
         <div class="task-archive">
           <button class="btn btn-phased-blue" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)">Start</button>
           <button class="btn btn-phased-blue" ng-if="assignment.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(assignment.key)">complete</button>
-          <button class="btn btn-phased-blue" ng-if="activeStream != archive.all && activeStream != archive.to_me" ng-click="moveToArchive(assignment.key);">archive</button>
-          <button class="btn btn-phased-blue" ng-if="activeStream == archive.all || activeStream == archive.to_me" ng-click="moveFromArchive(assignment.key);">unarchive</button>
+          <button class="btn btn-phased-blue" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(assignment.key);">archive</button>
+          <button class="btn btn-phased-blue" ng-if="activeStreamName == 'archive.all' || activeStreamName == 'archive.to_me'" ng-click="moveFromArchive(assignment.key);">unarchive</button>
         </div>
       </div>
     </div>
