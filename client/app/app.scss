@@ -149,7 +149,7 @@ body{
   padding-right: 20px;
 }
 
-
+// navbar
 .navbar{
   height:60px;
   margin-bottom:30px;
@@ -166,6 +166,10 @@ body{
     letter-spacing: 0.92px;
     line-height: 15px;
   }
+  .active{
+    background: #888;
+    color: #fff;
+  }
 }
 .navbar-brand{
   // padding-top: 5px;
@@ -177,6 +181,9 @@ body{
   &:hover{
 
   }
+}
+.nav > li > a:hover{
+  background-color: #000;
 }
 // Modal
 .modal-backdrop{

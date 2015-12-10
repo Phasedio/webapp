@@ -1,43 +1,23 @@
 <style>
-	body {
-	  /*background:  linear-gradient(
-      rgba(0, 0, 0, 0.25),
-      rgba(0, 0, 0, 0.25)
-    ), url(assets/images/{{dayImage}}) no-repeat center center fixed;*/
-		background: #F2F2F2;
-	  -webkit-background-size: cover;
-	  -moz-background-size: cover;
-	  -o-background-size: cover;
-	  background-size: cover;
+	body{
+		background-color: #1E1E24;
+	}
+	.hero-img {
+		background:  linear-gradient(
+			rgba(0, 0, 0, 0.25),
+			rgba(0, 0, 0, 0.25)
+		), url(assets/images/{{dayImage}}) no-repeat center center ;
+		-webkit-background-size: cover;
+		-moz-background-size: cover;
+		-o-background-size: cover;
+		background-size: cover;
 	}
 </style>
-
+<div ng-include="'components/navbar/navbar.html'"></div>
+<section class="hero-img">
+</section>
+<section>
 <div class="feedarea">
-	<nav class="navbar navbar-default">
-	  <div class="container-fluid">
-	    <!-- Brand and toggle get grouped for better mobile display -->
-	    <div class="navbar-header">
-	      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-	        <span class="sr-only">Toggle navigation</span>
-	        <span class="icon-bar"></span>
-	        <span class="icon-bar"></span>
-	        <span class="icon-bar"></span>
-	      </button>
-	      <a class="navbar-brand" href="#"><img src="assets/images/phased-logo.svg" width="22px" height=27px></a>
-	    </div>
-
-	    <!-- Collect the nav links, forms, and other content for toggling -->
-	    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-	      <ul class="nav navbar-nav navbar-right">
-	        <li><a href="#">feed <span class="sr-only">(current)</span></a></li>
-	        <li><a href="#">reports</a></li>
-					<li><a href="#">team</a></li>
-					<li><a href="#">profile</a></li>
-	      </ul>
-
-	    </div><!-- /.navbar-collapse -->
-	  </div><!-- /.container-fluid -->
-	</nav>
 	<div class="container-fluid">
 		<div class="row">
 			<div class="col-xs-12 col-md-3">
@@ -112,7 +92,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="visible-lg col-lg-3">
+			<div class="hidden">
 					<div class="ph-card">
 						<div class="ph-member-total">
 								<p class="semi">members <span>{{teamLength}}</span>
