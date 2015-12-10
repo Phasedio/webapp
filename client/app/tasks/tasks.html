@@ -36,29 +36,32 @@
         <div class="task-action-filter">
           <ul>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.all')" ng-class="{active : activeStream == assignments.all && !activeFilter}">all <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter()" ng-class="{active : activeStream == assignments.all && !activeStatusFilter}">all <div></div></div>
             </li>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.to_me', '!' + taskStatusID.COMPLETE)" ng-class="{active : activeStream == assignments.to_me}">asigned to me <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.to_me'); setStatusFilter('!' + taskStatusID.COMPLETE)" ng-class="{active : activeStream == assignments.to_me}">asigned to me <div></div></div>
             </li>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.by_me')" ng-class="{active : activeStream == assignments.by_me}">my created tasks <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.by_me'); setStatusFilter()" ng-class="{active : activeStream == assignments.by_me}">my created tasks <div></div></div>
             </li>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.unassigned')" ng-class="{active : activeStream == assignments.unassigned}">unassigned tasks <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.unassigned'); setStatusFilter()" ng-class="{active : activeStream == assignments.unassigned}">unassigned tasks <div></div></div>
             </li>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.all', taskStatusID.COMPLETE)" ng-class="{active : (activeStream == assignments.all && activeFilter == '1')}">closed tasks <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter(taskStatusID.COMPLETE)" ng-class="{active : (activeStream == assignments.all && activeStatusFilter == '1')}">closed tasks <div></div></div>
             </li>
             <li>
-              <div class="filter-selection" ng-click="setActiveStream('archive.all')" ng-class="{active : activeStream == archive.all}">archived tasks <div></div></div>
+              <div class="filter-selection" ng-click="setActiveStream('archive.all'); setStatusFilter()" ng-class="{active : activeStream == archive.all}">archived tasks <div></div></div>
             </li>
           </ul>
           <ul class="filter-category">
-            <li><div class="filter-selection">Communication <div></div></div></li>
+            <li ng-repeat="(id, category) in team.categoryObj">
+              <div class="filter-selection" ng-class="{active: activeCategoryFilter == id}" ng-click="toggleCategoryFilter(id)">{{category.name}} <div></div></div>
+            </li>
+            <!-- <li><div class="filter-selection">Communication <div></div></div></li>
             <li><div class="filter-selection">planning <div></div></div></li>
             <li><div class="filter-selection">design <div></div></div></li>
-            <li><div class="filter-selection">closed tasks <div></div></div></li>
+            <li><div class="filter-selection">closed tasks <div></div></div></li> -->
           </ul>
         </div>
         <!-- member area -->
@@ -72,7 +75,7 @@
 
     <!-- TASK STREAM -->
     <div class="col-xs-8 task-stream">
-      <div class="task ph-card" ng-repeat="assignment in activeStream | filterTaskByStatus : activeFilter | orderObjectBy : 'time'">
+      <div class="task ph-card" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" style="border-right: 1em solid {{team.categoryObj[assignment.cat].color}};">
         <div class="task-header">
           <div class="task-main">
             <h1>{{assignment.name}}</h1>

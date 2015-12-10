@@ -36,6 +36,40 @@ angular.module('webappApp')
     }
   })
   /**
+  * filters tasks by category
+  *
+  * (preface statusID with ! to filter out statuses)
+  */
+  .filter('filterTaskByCategory', function() {
+    return function(input, catID) {
+      if (!input) return input;
+      if (!catID) return input;
+      var expected = ('' + catID).toLowerCase(); // compare lowercase strings
+      var result = {}; // output obj
+
+      if (expected[0] === '!') {
+        expected = expected.slice(1); // remove leading !
+        // negative filter -- filter out tasks with cat
+        angular.forEach(input, function(value, key) {
+          var actual = ('' + value.cat).toLowerCase(); // current task's cat
+          if (actual !== expected) {
+            result[key] = value; // preserves index
+          }
+        });
+      } else {
+        // only include tasks with cat
+        angular.forEach(input, function(value, key) {
+          var actual = ('' + value.cat).toLowerCase(); // current task's cat
+          if (actual === expected) {
+            result[key] = value; // preserves index
+          }
+        });
+      }
+
+      return result;
+    }
+  })
+  /**
   *
   * allows ordering an object as if it were an array,
   * at the cost of being able to access its original index
@@ -75,7 +109,8 @@ angular.module('webappApp')
     $scope.showArchive = false;
 
     $scope.activeStream = $scope.assignments.to_me;
-    $scope.activeFilter = '!1'; // not completed tasks
+    $scope.activeStatusFilter = '!1'; // not completed tasks
+    $scope.activeCategoryFilter;
 
     $scope.sortable = [
       'cat', 'deadline', 'priority', 'name', 'date', 'assigned_by'
@@ -96,10 +131,9 @@ angular.module('webappApp')
     **
     */
 
-    // validates stream and filter, then sets active task stream
+    // validates streamName then sets active task stream
     // optionally gets archive if not present
-    $scope.setActiveStream = function(streamName, filter) {
-      console.log('setting active stream', streamName, filter);
+    $scope.setActiveStream = function(streamName) {
       // check and set status
       switch (streamName) {
         case 'assignments.all':
@@ -117,44 +151,54 @@ angular.module('webappApp')
         case 'archive.to_me':
           if (!('to_me' in $scope.archive)) Phased.getArchiveFor('to_me');
           $scope.activeStream = $scope.archive.to_me;
-          console.log('arch', $scope.archive);
           break;
         case 'archive.all':
           Phased.getArchiveFor('all');
           $scope.activeStream = $scope.archive.all;
-          console.log('arch', $scope.archive);
           break;
         default:
-          console.log('switch default');
           $scope.activeStream = $scope.assignments.to_me;
           filter = '!' + Phased.TASK_STATUS_ID.COMPLETE;
           break;
       }
+    }
 
+    // checks and sets active status filter
+    $scope.setStatusFilter = function(statusID) {
       // check and set filter
-      if (!filter || typeof filter == 'undefined') {
-        $scope.activeFilter = undefined;
+      if (!statusID || typeof statusID == 'undefined') {
+        $scope.activeStatusFilter = undefined;
       } else {
-        filter = filter.toString();
+        statusID = statusID.toString();
 
         // check for negating character
         var filterNot = false;
-        if (filter[0] === '!') {
+        if (statusID[0] === '!') {
           filterNot = true;
-          filter.slice(1);
+          statusID.slice(1);
         }
 
         // default to 'not COMPLETE' on false
-        if (!(filter in Phased.TASK_STATUSES)) {
-          filter = '1';
+        if (!(statusID in Phased.TASK_STATUSES)) {
+          statusID = '1';
           filterNot = true;
         }
 
-        // set activeFilter
-        $scope.activeFilter = filterNot ? '!' + filter : filter;
+        // set activeStatusFilter
+        $scope.activeStatusFilter = filterNot ? '!' + statusID : statusID;
       }
+    }
 
-      console.log('active stream set:', $scope.activeStream, $scope.activeFilter);
+    // toggles category filter
+    $scope.toggleCategoryFilter = function(catID) {
+      $scope.activeCategoryFilter == catID ? 
+        $scope.activeCategoryFilter = undefined :
+        $scope.setCategoryFilter(catID);
+    }
+
+    // sets the active category filter
+    $scope.setCategoryFilter = function(catID) {
+      $scope.activeCategoryFilter = catID;
     }
 
     $scope.addTask = function(newTask){
