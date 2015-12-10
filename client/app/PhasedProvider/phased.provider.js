@@ -72,7 +72,12 @@ angular.module('webappApp')
           by_me : {}, // assigned by me (reference to objects in all)
           unassigned : {} // unassigned (reference to objects in all)
         },
-        archive : {},
+        archive : {
+          all : {},
+          to_me : {},
+          by_me : {},
+          unassigned : {}
+        },
         FBRef : FBRef // set in setFBRef
       };
 
@@ -109,9 +114,7 @@ angular.module('webappApp')
     this.$get = function() {
       // register functions listed after this in the script...
       PhasedProvider.watchAssignments = _watchAssignments;
-      PhasedProvider.assignments = PhasedProvider.assignments;
       PhasedProvider.getArchiveFor = _getArchiveFor;
-      PhasedProvider.archive = PhasedProvider.archive;
       PhasedProvider.moveToFromArchive = _moveToFromArchive;
       PhasedProvider.activateTask = _activateTask;
       PhasedProvider.takeTask = _takeTask;
@@ -402,51 +405,8 @@ angular.module('webappApp')
       var updateAllAssignments = function(data) {
         data = data.val();
         console.log('all: ', data);
-        if (!data) {
-          PhasedProvider.assignments.all = {};
-          return;
-        }
-        var all = PhasedProvider.assignments.all;
 
-        // 1. if assignment doesn't exist in all, add it, end of story
-        // 2. else, check its properties and update those that are out of sync
-        // (i is the assignment uid)
-        for (var i in data) {
-          if (!(i in all)) {
-            // 1.
-            all[i] = data[i];
-
-          } else {
-            // 2.
-            // a. sync extant properties in all, delete those no longer in data
-            // b. add new properties from data
-            // (j is property name)
-
-            for (var j in all[i]) {
-              // a.
-              if (j in data[i]) {
-                all[i][j] = data[i][j];
-              } else {
-                delete all[i][j];
-              }
-            }
-
-            for (var j in data[i]) {
-              // b.
-              if (!(j in all[i])) {
-                all[i][j] = data[i][j];
-              }
-            }
-
-          }
-        } // for var i in data
-
-        // if assignment isn't in data, delete it
-        for (var i in all) {
-          if (!(i in data)) {
-            delete all[i];
-          }
-        }
+        updateContainerAll('assignments', data);        
 
         // sync all containers
         for (var i in assignmentIDs) {
@@ -508,6 +468,64 @@ angular.module('webappApp')
       });
     }; // end doWatchAssignments()
 
+    // updates 'all' property of an assignment container (eg, assignments.all or archive.all)
+    // matches all to incoming data
+    // internal only
+    var updateContainerAll = function(container, data) {
+      var all;
+      if (container == 'assignments')
+        all = PhasedProvider.assignments.all;
+      else if (container == 'archive')
+        all = PhasedProvider.archive.all;
+      else
+        return;
+
+      if (!data) {
+        all = {};
+        return;
+      }
+
+      // 1. if assignment doesn't exist in all, add it, end of story
+      // 2. else, check its properties and update those that are out of sync
+      // (i is the assignment uid)
+      for (var i in data) {
+        if (!(i in all)) {
+          // 1.
+          all[i] = data[i];
+
+        } else {
+          // 2.
+          // a. sync extant properties in all, delete those no longer in data
+          // b. add new properties from data
+          // (j is property name)
+
+          for (var j in all[i]) {
+            // a.
+            if (j in data[i]) {
+              all[i][j] = data[i][j];
+            } else {
+              delete all[i][j];
+            }
+          }
+
+          for (var j in data[i]) {
+            // b.
+            if (!(j in all[i])) {
+              all[i][j] = data[i][j];
+            }
+          }
+
+        }
+      } // end for var i in data
+
+      // if assignment isn't in data, delete it in all
+      for (var i in all) {
+        if (!(i in data)) {
+          delete all[i];
+        }
+      }
+    }
+
 
     /**
     *
@@ -549,7 +567,22 @@ angular.module('webappApp')
         pathSuffix = '';
 
       // 1
+      // in 'all' case, get entire archive and indexes and be done with it
+      // for every other valid address, only get that index key and all
       switch(address) {
+        case 'all' :
+          FBRef.child(archivePath).once('value', function(data){
+            data = data.val() || [];
+            updateContainerAll('archive', data.all);
+            archiveIDs.to_me = objToArray(data.to)[0];
+            archiveIDs.by_me = objToArray(data.by)[0];
+            archiveIDs.unassigned = objToArray(data.unassigned)[0];
+
+            syncArchive('to_me');
+            syncArchive('by_me');
+            syncArchive('unassigned');
+          });
+          return;
         case 'to_me' :
           pathSuffix = 'to/' + PhasedProvider.user.uid;
           break;
