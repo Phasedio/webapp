@@ -119,6 +119,7 @@ angular.module('webappApp')
       PhasedProvider.activateTask = _activateTask;
       PhasedProvider.takeTask = _takeTask;
       PhasedProvider.addTask = _addTask;
+      PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
 
       console.log('$get');
       return PhasedProvider;
@@ -543,25 +544,7 @@ angular.module('webappApp')
     }
 
     var doGetArchiveFor = function(address) {
-      /**
-      *
-      * links up the archived tasks from the archiveContainerName to the appropriate $scope.archive address
-      * (sim to syncAssignments())
-      */
-      var syncArchive = function(archiveContainerName) {
-        if (!(archiveContainerName in archiveIDs)) return; // ensures valid address
-
-        var archiveContainer = {},
-          UIDContainer = archiveIDs[archiveContainerName];
-
-        for (var i in UIDContainer) {
-          var assignmentID = UIDContainer[i];
-          if (assignmentID in PhasedProvider.archive.all)
-            archiveContainer[assignmentID] = PhasedProvider.archive.all[assignmentID];
-        }
-
-        PhasedProvider.archive[archiveContainerName] = archiveContainer;
-      }
+      
 
       var archivePath = 'team/' + PhasedProvider.team.name + '/assignments/archive/',
         pathSuffix = '';
@@ -620,6 +603,26 @@ angular.module('webappApp')
 
     /**
     *
+    * links up the archived tasks from the archiveContainerName to the appropriate $scope.archive address
+    * (sim to syncAssignments())
+    */
+    var syncArchive = function(archiveContainerName) {
+      if (!(archiveContainerName in archiveIDs)) return; // ensures valid address
+
+      var archiveContainer = {},
+        UIDContainer = archiveIDs[archiveContainerName];
+
+      for (var i in UIDContainer) {
+        var assignmentID = UIDContainer[i];
+        if (assignmentID in PhasedProvider.archive.all)
+          archiveContainer[assignmentID] = PhasedProvider.archive.all[assignmentID];
+      }
+
+      PhasedProvider.archive[archiveContainerName] = archiveContainer;
+    }
+
+    /**
+    *
     * moves a task to or from the archive
     *
     * 1.A remove from /to/(me) or /unassigned (& note which)
@@ -670,6 +673,9 @@ angular.module('webappApp')
         }
       }
 
+      assignment = makeTaskForDB(assignment);
+      if (!assignment) return; // makeTaskForDB failed
+
       // -1.A
       // reverse everything if unarchive is true:
       // remove from archiveIDs and PhasedProvider.archive here...
@@ -685,15 +691,16 @@ angular.module('webappApp')
       // 1.
 
       // 1.A
-      if (idsContainer.to_me.indexOf(assignmentID) > -1) {
+      if (idsContainer.to_me && idsContainer.to_me.indexOf(assignmentID) > -1) {
         to_me = true;
         FBRef.child(path + 'to/' + PhasedProvider.user.uid).set(popFromList(assignmentID, idsContainer['to_me']));
       }
-      else if (idsContainer.unassigned.indexOf(assignmentID) > -1) {
+      else if (idsContainer.unassigned && idsContainer.unassigned.indexOf(assignmentID) > -1) {
         to_me = false;
         FBRef.child(path + 'unassigned').set(popFromList(assignmentID, idsContainer['unassigned']));
       }
       else {
+        console.log('not found in to_me or unassigned (' + assignmentID + ')', idsContainer.to_me, idsContainer.unassigned);
         return;
       }
 
@@ -732,7 +739,7 @@ angular.module('webappApp')
           data = data.val();
           idsContainer['unassigned'] = data || [];
           idsContainer['unassigned'].push(assignmentID);
-          FBRef.child(path + 'unassigned').set();
+          FBRef.child(path + 'unassigned').set(idsContainer['unassigned']);
           if ('all' in PhasedProvider.archive) syncArchive('unassigned');
         });
       }
@@ -769,35 +776,59 @@ angular.module('webappApp')
     var doAddTask = function(newTask) {
       ga('send', 'event', 'Task', 'task added');
 
-      // 1. format object to send to db
-      // these two to be implemented
-      var taskPrefix = '';
+      // 1. clean newTask
+      newTask.user = _Auth.user.uid;
+      newTask = makeTaskForDB(newTask);
+      if (!newTask) return; // makeTask failed
 
+      // 2. push to db
+
+      // 2A add task to team/(teamname)/assignments/all
+      // 2B add references to /to/assignee or /unassigned and /by/me
+
+      var team = PhasedProvider.team.name,
+        assignmentsRef = FBRef.child('team/' + team + '/assignments');
+
+      // 2A
+      var newTaskRef = assignmentsRef.child('all').push(newTask);
+      var newTaskID = newTaskRef.key();
+      // 2B
+      assignmentIDs['by_me'].push(newTaskID);
+      assignmentsRef.child('by/' + PhasedProvider.user.uid).set(assignmentIDs['by_me']);
+
+      // get array, push (array style), send back to server
+      var path = newTask.unassigned ? 'unassigned' : 'to/' + newTask.assignee;
+      assignmentsRef.child(path).once('value', function(data) {
+        data = data.val();
+        data = data || [];
+        data.push(newTaskID);
+        assignmentsRef.child(path).set(data);
+      });
+    }
+
+    // makes a clean copy of the newTask for the db with the expected properties,
+    // as well as verifying that they're type we expect
+    // returns the clean copy
+    // expandable: just add property names to the appropriate objects and the loops do the rest
+    var makeTaskForDB = function(newTask) {
+      // properties to check
+      var required = {
+        strings : ['name', 'assigned_by', 'user'],
+        numbers : [],
+        booleans: []
+      };
+      var optional = {
+        strings : ['cat', 'weather', 'taskPrefix', 'photo', 'assignee'],
+        numbers : ['deadline', 'priority', 'status'],
+        booleans : ['unassigned']
+      };
+
+      // clean output object
       var status = {
         time: new Date().getTime()
       };
 
-      // check for required strings
-      var strings = ['name', 'taskPrefix', 'assigned_by'];
-      for (var i in strings) {
-        if ((typeof newTask[strings[i]]).toLowerCase() === 'string') {
-          status[strings[i]] = newTask[strings[i]];
-        } else {
-          console.log('required property "' + strings[i] + '" not found in newTask; aborting');
-          return;
-        }
-      }
-
-      // check for required numbers
-      var numbers = ['priority'];
-      for (var i in numbers) {
-        if ((typeof newTask[numbers[i]]).toLowerCase() === 'number') {
-          status[numbers[i]] = newTask[numbers[i]];
-        } else {
-          console.log('required property "' + numbers[i] + '" not found in newTask; aborting');
-          return;
-        }
-      }
+      console.log('makeTaskForDB', newTask);
 
       // check for location
       if ((typeof newTask.location).toLowerCase() === 'object' &&
@@ -809,46 +840,61 @@ angular.module('webappApp')
         }
       }
 
-      // check for optional strings
-      var strings = ['cat', 'weather', 'photo', 'assignee'];
-      for (var i in strings) {
-        if ((typeof newTask[strings[i]]).toLowerCase() === 'string') {
-          status[strings[i]] = newTask[strings[i]];
+      // BATCH CHECKS:
+      // required strings
+      for (var i in required.strings) {
+        if ((typeof newTask[required.strings[i]]).toLowerCase() === 'string') {
+          status[required.strings[i]] = newTask[required.strings[i]];
+        } else {
+          console.log('required property "' + required.strings[i] + '" not found in newTask; aborting');
+          return;
         }
       }
 
-      // check for optional numbers
-      var numbers = ['deadline'];
-      for (var i in numbers) {
-        if ((typeof newTask[numbers[i]]).toLowerCase() === 'number') {
-          status[numbers[i]] = newTask[numbers[i]];
+      // required numbers
+      for (var i in required.numbers) {
+        if ((typeof newTask[required.numbers[i]]).toLowerCase() === 'number'
+          && !isNaN(newTask[required.numbers[i]])) {
+          status[required.numbers[i]] = newTask[required.numbers[i]];
+        } else {
+          console.log('required property "' + required.numbers[i] + '" not found in newTask or is NaN; aborting');
+          return;
         }
       }
 
+      // booleans
+      for (var i in required.booleans) {
+        if ((typeof newTask[required.booleans[i]]).toLowerCase() === 'boolean') {
+          status[required.booleans[i]] = newTask[required.booleans[i]];
+        } else {
+          console.log('required property "' + required.booleans[i] + '" not found in newTask; aborting');
+          return;
+        }
+      }
 
-      // 2. push to db
+      // optional strings
+      for (var i in optional.strings) {
+        if ((typeof newTask[optional.strings[i]]).toLowerCase() === 'string') {
+          status[optional.strings[i]] = newTask[optional.strings[i]];
+        }
+      }
 
-      // 2A add task to team/(teamname)/assignments/all
-      // 2B add references to /to/assignee or /unassigned and /by/me
+      // optional numbers
+      for (var i in optional.numbers) {
+        if ((typeof newTask[optional.numbers[i]]).toLowerCase() === 'number'
+          && !isNaN(newTask[optional.numbers[i]])) {
+          status[optional.numbers[i]] = newTask[optional.numbers[i]];
+        }
+      }
 
-      var team = PhasedProvider.team.name,
-        assignmentsRef = FBRef.child('team/' + team + '/assignments');
+      // booleans
+      for (var i in optional.booleans) {
+        if ((typeof newTask[optional.booleans[i]]).toLowerCase() === 'boolean') {
+          status[optional.booleans[i]] = newTask[optional.booleans[i]];
+        }
+      }
 
-      // 2A
-      var newTaskRef = assignmentsRef.child('all').push(status);
-      var newTaskID = newTaskRef.key();
-      // 2B
-      assignmentIDs['by_me'].push(newTaskID);
-      assignmentsRef.child('by/' + PhasedProvider.user.uid).set(assignmentIDs['by_me']);
-
-      // get array, push (array style), send back to server
-      var path = newTask.unassigned ? 'unassigned' : 'to/' + newTask.assignee.uid;
-      assignmentsRef.child(path).once('value', function(data) {
-        data = data.val();
-        data = data || [];
-        data.push(newTaskID);
-        assignmentsRef.child(path).set(data);
-      });
+      return status;
     }
 
     /**

@@ -246,9 +246,17 @@ angular.module('webappApp')
       $scope.newTask = {};
     }
 
-    $scope.activateTask = Phased.activateTask;
+    // moves task into my to_me if unassigned,
+    // then starts it 
+    $scope.startTask = function(task) {
+      console.log('startTask', task);
+      if (!task.user || task.unassigned)
+        Phased.takeTask(task.key);
+      Phased.activateTask(task.key);
 
-    $scope.takeTask = Phased.takeTask;
+      $scope.activeStream = $scope.assignments.to_me;
+      $scope.activeStatusFilter = Phased.TASK_STATUS_ID.ASSIGNED;
+    }
 
     $scope.moveToArchive = Phased.moveToFromArchive;
 

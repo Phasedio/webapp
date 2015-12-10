@@ -58,10 +58,6 @@
             <li ng-repeat="(id, category) in team.categoryObj">
               <div class="filter-selection" ng-class="{active: activeCategoryFilter == id}" ng-click="toggleCategoryFilter(id)">{{category.name}} <div></div></div>
             </li>
-            <!-- <li><div class="filter-selection">Communication <div></div></div></li>
-            <li><div class="filter-selection">planning <div></div></div></li>
-            <li><div class="filter-selection">design <div></div></div></li>
-            <li><div class="filter-selection">closed tasks <div></div></div></li> -->
           </ul>
         </div>
         <!-- member area -->
@@ -82,10 +78,10 @@
             <h1>{{taskStatuses[assignment.status].name}}</h1>
           </div>
 
-          <div class="task-second">
+          <div class="task-second" ng-if="assignment.user">
             <div class="task-title">
 
-              <img src="{{team.members['simplelogin:1'].pic}}" width="40px" height="40px">
+              <img src="{{team.members[assignment.user].pic}}" width="40px" height="40px">
             </div>
           </div>
         </div>
@@ -95,12 +91,14 @@
           <p class="semi-bold">Category: {{team.categoryObj[assignment.cat].name}}</p>
           <p class="semi-bold">Assigned by: {{team.members[assignment.assigned_by].name}}</p>
 
-          <p class="semi-bold">Due date: May, 17</p>
+          <p class="semi-bold" ng-if="assignment.deadline">Due date: {{assignment.deadline | date : 'short'}}</p>
         </div>
 
         <div class="task-archive">
-          <button class="btn btn-phased-blue" ng-click="activateTask(assignment.key)">Start</button>
-          <button class="btn btn-phased-blue" ng-click="setTaskCompleted(assignment.key)">complete</button>
+          <button class="btn btn-phased-blue" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)">Start</button>
+          <button class="btn btn-phased-blue" ng-if="assignment.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(assignment.key)">complete</button>
+          <button class="btn btn-phased-blue" ng-if="activeStream != archive.all && activeStream != archive.to_me" ng-click="moveToArchive(assignment.key);">archive</button>
+          <button class="btn btn-phased-blue" ng-if="activeStream == archive.all || activeStream == archive.to_me" ng-click="moveFromArchive(assignment.key);">unarchive</button>
         </div>
       </div>
     </div>
@@ -206,7 +204,7 @@
           <label for="assignee">Assign to</label>
 
           <!-- this should default to unassigned -->
-          <select ng-options="member as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee" ng-disabled="newTask.unassigned"></select>
+          <select ng-options="key as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee" ng-disabled="newTask.unassigned"></select>
 
           <label for="unassigned">Unassigned</label>
           <input type="checkbox" ng-model="newTask.unassigned" />
