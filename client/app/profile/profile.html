@@ -29,8 +29,8 @@
         <div class="col-xs-6 profile-user">
           <ul>
             <li><span>updates</span><span>9999</span></li>
-            <li><span>email</span><span>brian.brianb64@gmail.com</span></li>
-            <li><span>tel</span><span>905 699 3939</span></li>
+            <li><span>email</span><span>{{currentUser.email}}</span></li>
+            <li><span>tel</span><span>{{currentUser.tel}}</span></li>
             <li><span>slack</span><span>@brian</span></li>
 
           </ul>
@@ -70,6 +70,51 @@
                 </td>
                 <td>
                   <span am-time-ago="item.time"></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <h6 ng-show="team.history.length == 0" align="center"> No updates for time period</h6>
+        </div>
+        <div class="profile-backlog">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>
+                  Task
+                </th>
+                <th>
+                  Category
+                </th>
+                <th>
+                  priority
+                </th>
+                <th>
+                  due date
+                </th>
+                <th>
+                  status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="item in team.backlog ">
+                <td>
+                  {{item.name}}
+                </td>
+                <td>
+                  <span ng-if="item.cat">{{$parent.team.categoryObj[item.cat].name}}</span>
+                  <span ng-if="!item.cat">Not Set</span>
+                </td>
+                <td>
+                  {{item.priority}}
+                </td>
+                <td>
+                   <span ng-if="item.deadline">{{item.deadline | amDateFormat:'MM.DD.YYYY '}}</span>
+                   <span ng-if="!item.deadline">Not Set</span>
+                </td>
+                <td>
+                  {{item.status}}
                 </td>
               </tr>
             </tbody>

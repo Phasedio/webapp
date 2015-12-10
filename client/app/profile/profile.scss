@@ -14,6 +14,20 @@
   margin:0 auto;
   overflow: auto;
   background: #fff;
+
+  tr{
+    border: none;
+  }
+  th{
+    font-size: 12px;
+    border: none!important;
+    color: #444A59;
+  }
+  td{
+    font-size: 12px;
+    border: none!important;
+    color:#BDBDBD;
+  }
 }
 .transparent{
   padding-left: 25px;
@@ -81,17 +95,5 @@
   }
 }
 .profile-history{
-  tr{
-    border: none;
-  }
-  th{
-    font-size: 12px;
-    border: none!important;
-    color: #444A59;
-  }
-  td{
-    font-size: 12px;
-    border: none!important;
-    color:#BDBDBD;
-  }
+
 }

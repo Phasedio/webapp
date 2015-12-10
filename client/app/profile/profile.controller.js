@@ -8,7 +8,8 @@ angular.module('webappApp')
       members : {},
       history : [],
       categorySelect : [],
-      categoryObj : {}
+      categoryObj : {},
+      backlog : []
     };
     var monImage =  "weekdayPhotos/mon.jpg";
   var tuesImage =  "weekdayPhotos/tues.jpg";
@@ -138,21 +139,10 @@ angular.module('webappApp')
       });
     };
     $scope.viewUser = function(){
-      //$scope.showMember = true;
-      //console.log(user);
-      // $scope.selectedUser = {
-      //   name : user.name,
-      //   gravatar : user.pic,
-      //   uid : user.uid,
-      //   history: []
-      // };
-
       var ref = new Firebase(FURL);
       var startTime = new Date().getTime();
       var endTime = startTime - 86400000;
       console.log(startTime);
-
-
       ref.child('team').child($scope.team.name).child('all').child(profileUser).orderByChild('time').startAt(endTime).once('value',function(data){
         data = data.val();
         console.log(data);
@@ -165,6 +155,38 @@ angular.module('webappApp')
       });
     }
 
+
+    /**
+    *
+    * Get tasks assigned to this user and show it as their backlog
+    *
+    */
+
+    $scope.getBacklog = function(){
+      // go to FB and check if user has any tasks assigned to them.
+      var ref = new Firebase(FURL);
+      ref.child('team').child($scope.team.name).child('assignments').child('to').child(profileUser).once('value',function(data){
+        data = data.val();
+        // if data then there are tasks
+        if(data){
+          // This could probably be done from a service better.
+          var assignedTasks = data;
+          var assignedKeys = Object.keys(data);
+          var backlog = [];
+          ref.child('team').child($scope.team.name).child('assignments').child('all').once('value',function(data){
+            data = data.val();
+            for (var i = 0; i < assignedKeys.length; i++) {
+              backlog.push(data[assignedTasks[assignedKeys[i]]]);
+            }
+            console.log(backlog);
+            $scope.team.backlog = backlog;
+          });
+        }
+        // Else this person is lazy and should be assigned all the tasks forever.
+      });
+
+
+    }
 
 
     $scope.init = function(){
@@ -184,6 +206,7 @@ angular.module('webappApp')
         });
         //$scope.checkPlanStatus($scope.team.name);
         $scope.getCategories();
+        $scope.getBacklog();
 
         //$scope.checkStatus();
 
