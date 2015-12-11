@@ -261,8 +261,8 @@ angular.module('webappApp')
         users = users.val();
 
         if (WATCH_TASK_STREAM) {
-          PhasedProvider.team.history = new Array();
-          PhasedProvider.team.lastUpdated = [];
+          PhasedProvider.team.history = PhasedProvider.team.history || new Array();
+          PhasedProvider.team.lastUpdated = PhasedProvider.team.lastUpdated || [];
         }
 
         if (users) {
@@ -807,7 +807,8 @@ angular.module('webappApp')
 
     /**
     *
-    * sets WATCH_TASK_STREAM to true
+    * sets WATCH_TASK_STREAM to true, get history for members if not already
+    * in memory (eg, if coming from another route in the app);
     *
     */
     var _watchTaskStream = function() {
@@ -815,7 +816,6 @@ angular.module('webappApp')
     }
 
     var doWatchTaskStream = function() {
-      console.log('doWatchTaskStream', PhasedProvider);
       WATCH_TASK_STREAM = true;
       PhasedProvider.team.lastUpdated = PhasedProvider.team.lastUpdated || [];
       PhasedProvider.team.history = PhasedProvider.team.history || [];
