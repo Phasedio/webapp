@@ -123,6 +123,7 @@ angular.module('webappApp')
       PhasedProvider.activateTask = _activateTask;
       PhasedProvider.takeTask = _takeTask;
       PhasedProvider.addAssignment = _addAssignment;
+      PhasedProvider.addTask = _addTask;
       PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
 
       return PhasedProvider;
@@ -855,12 +856,12 @@ angular.module('webappApp')
     var makeTaskForDB = function(newTask) {
       // properties to check
       var required = {
-        strings : ['name', 'assigned_by', 'user'],
+        strings : ['name', 'user'],
         numbers : [],
         booleans: []
       };
       var optional = {
-        strings : ['cat', 'weather', 'taskPrefix', 'photo', 'assignee'],
+        strings : ['cat', 'weather', 'taskPrefix', 'photo', 'assignee', 'assigned_by', 'city'],
         numbers : ['deadline', 'priority', 'status'],
         booleans : ['unassigned']
       };
@@ -969,6 +970,32 @@ angular.module('webappApp')
       var ref = FBRef.child('team/' + PhasedProvider.team.name);
       ref.child('task/' + PhasedProvider.user.uid).set(task);
       ref.child('all/' + PhasedProvider.user.uid).push(task);
+    }
+
+    /**
+    *
+    * sends a status update to the server, pushes to team
+    * these are the normal status updates used in /feed
+    *
+    * cleans newTask first. fails if bad data
+    *
+    */
+
+    var _addTask = function(newTask) {
+      registerAsync(doAddTask, newTask);
+    }
+
+    var doAddTask = function(newTask) {
+      ga('send', 'event', 'Update', 'submited');
+
+      // clean task
+      newTask = makeTaskForDB(newTask);
+      if (!newTask) return;
+
+      // publish to stream
+      var ref = FBRef.child('team/' + PhasedProvider.team.name);
+      ref.child('task/' + PhasedProvider.user.uid).set(newTask);
+      ref.child('all/' + PhasedProvider.user.uid).push(newTask);
     }
 
     /**
