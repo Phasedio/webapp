@@ -29,23 +29,36 @@
 
         <!-- Team name -->
         <div class="task-action-dis">
-          <h1>Phased</h1>
+          <h1>{{team.name}}</h1>
           <p>this is a task area that you can see tasks assigned to you and create new tasks</p>
-          <button class="btn btn-phased-blue" ng-click="addTaskModal();">New task</button>
+          <button class="btn btn-phased-blue" ng-click="addAssignmentModal();">New task</button>
         </div>
         <!-- filter area -->
         <div class="task-action-filter">
           <ul>
-            <li><div class="filter-selection">all <div></div></div></li>
-            <li><div class="filter-selection active">asigned to me <div></div></div></li>
-            <li><div class="filter-selection">my created tasks <div></div></div></li>
-            <li><div class="filter-selection">closed tasks <div></div></div></li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.all' && !activeStatusFilter}">all <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.to_me'); setStatusFilter('!' + taskStatusID.COMPLETE)" ng-class="{active : activeStreamName == 'assignments.to_me'}">assigned to me <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.by_me'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.by_me'}">my created tasks <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.unassigned'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.unassigned'}">unassigned tasks <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter(taskStatusID.COMPLETE)" ng-class="{active : activeStreamName == 'assignments.all' && activeStatusFilter == '1'}">closed tasks <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('archive.all'); setStatusFilter()" ng-class="{active : activeStreamName == 'archive.all'}">archived tasks <div></div></div>
+            </li>
           </ul>
           <ul class="filter-category">
-            <li><div class="filter-selection">Communication <div></div></div></li>
-            <li><div class="filter-selection">planning <div></div></div></li>
-            <li><div class="filter-selection">design <div></div></div></li>
-            <li><div class="filter-selection">closed tasks <div></div></div></li>
+            <li ng-repeat="(id, category) in team.categoryObj">
+              <div class="filter-selection" ng-class="{active: activeCategoryFilter == id}" ng-click="toggleCategoryFilter(id)">{{category.name}} <div></div></div>
+            </li>
           </ul>
         </div>
         <!-- member area -->
@@ -59,17 +72,17 @@
 
     <!-- TASK STREAM -->
     <div class="col-xs-8 task-stream">
-      <div class="task ph-card" ng-repeat="(id, assignment) in team.members[myID].assigned_to_me | filterTaskByStatus : '!1' | orderBy : 'time'">
+      <div class="task ph-card" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" style="border-right: 1em solid {{team.categoryObj[assignment.cat].color}};">
         <div class="task-header">
           <div class="task-main">
             <h1>{{assignment.name}}</h1>
             <h1>{{taskStatuses[assignment.status].name}}</h1>
           </div>
 
-          <div class="task-second">
+          <div class="task-second" ng-if="assignment.user">
             <div class="task-title">
 
-              <img src="{{team.members['simplelogin:1'].pic}}" width="40px" height="40px">
+              <img src="{{team.members[assignment.user].pic}}" width="40px" height="40px">
             </div>
           </div>
         </div>
@@ -79,88 +92,17 @@
           <p class="semi-bold">Category: {{team.categoryObj[assignment.cat].name}}</p>
           <p class="semi-bold">Assigned by: {{team.members[assignment.assigned_by].name}}</p>
 
-          <p class="semi-bold">Due date: May, 17</p>
+          <p class="semi-bold" ng-if="assignment.deadline">Due date: {{assignment.deadline | date : 'short'}}</p>
         </div>
 
-        <div class="task-archive">
-          <button class="btn btn-phased-blue" ng-click="activateTask(assignment, id)">Start</button>
-          <button class="btn btn-phased-blue" ng-click="setTaskCompleted(assignment, id)">complete</button>
+        <div class="task-archive" ng-if="assignment.user == myID || assignment.assignee == myID || assignment.assigned_to == myID">
+          <button class="btn btn-phased-blue" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)">Start</button>
+          <button class="btn btn-phased-blue" ng-if="assignment.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(assignment.key)">complete</button>
+          <button class="btn btn-phased-blue" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(assignment.key);">archive</button>
+          <button class="btn btn-phased-blue" ng-if="activeStreamName == 'archive.all' || activeStreamName == 'archive.to_me'" ng-click="moveFromArchive(assignment.key);">unarchive</button>
         </div>
       </div>
     </div>
-
-
-
-
-    <!-- ASSIGNED TO ME -->
-    <!-- <div class="col-xs-5 team-aside">
-      <h2>Tasks assigned to me</h2>
-      <div>
-        <p>sort by
-          <select ng-options="sortable for sortable in sortable" ng-model="sortBy"></select>
-          reverse? <input type="checkbox" ng-model="sortReverse" />
-        </p>
-      </div>
-      <div>
-        <div ng-repeat="assignment in assignments.to_me | filterTaskByStatus : '!1' | orderObjectBy : sortBy : sortReverse" class="task" >
-          <h4>{{assignment.name}}</h4>
-          <h5>
-            <a href="#" ng-click="activateTask(assignment, assignment.key)" ng-if="assignment.status != 0">work on this</a>
-            <span ng-if="assignment.status == 0">current task</span>
-            &middot;
-            <a href="#" ng-click="setTaskCompleted(assignment.key)">finished</a></h5>
-          <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
-          <p>in {{team.categoryObj[assignment.cat].name}}</p>
-          <p>status: {{taskStatuses[assignment.status].name}}</p>
-          <p ng-if="assignment.priority >= 0">priority: {{taskPriorities[assignment.priority].name}}</p>
-          <p ng-if="assignment.deadline >= 0">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
-        </div>
-      </div> -->
-
-
-      <!-- COMPLETED -->
-      <!-- <h2>Completed tasks</h2>
-
-      <div>
-        <div ng-repeat="(id, assignment) in assignments.to_me | filterTaskByStatus : '1' | orderBy : 'time'" class="task">
-          <h4>{{assignment.name}}</h4>
-          <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
-          <p>in {{team.categoryObj[assignment.cat].name}}</p>
-          <p>status: {{taskStatuses[assignment.status].name}}</p>
-          <p><a href="#" ng-click="moveToArchive(assignment, id)">archive task</a></p>
-        </div>
-      </div>
-    </div> --> -->
-
-
-    <!-- MY FEED -->
-    <!-- <div class="col-xs-2">
-      <h3>My current activity <em>(maybe?)</em></h3>
-    </div> -->
-
-    <!-- UNASSIGNED -->
-    <!-- <div class="col-xs-2">
-      <h3>Unassigned tasks</h3>
-      <div ng-repeat="(id, assignment) in assignments.unassigned | orderBy : 'priority'" class="task">
-        <h4>{{assignment.name}}</h4>
-        <a href="#" ng-click="takeTask(id)">take this task</a>
-        <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
-        <p>in {{team.categoryObj[assignment.cat].name}}</p>
-        <p>status: {{taskStatuses[assignment.status].name}}</p>
-        <p ng-if="assignment.priority >= 0">priority: {{taskPriorities[assignment.priority].name}}</p>
-        <p ng-if="assignment.deadline >= 0">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
-      </div> -->
-
-      <!-- ARCHIVE -->
-      <!-- <h3>Archive</h3>
-      <a href="#" ng-click="getArchiveFor('to_me')" ng-if="!showArchive">Get archived tasks</a>
-      <div ng-if="showArchive" ng-repeat="(id, assignment) in archive.to_me | orderBy : 'priority'" class="task">
-        <h4>{{assignment.name}}</h4>
-        <p><a href="#" ng-click="moveFromArchive(assignment, id)">unarchive</a></p>
-        <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
-        <p>in {{team.categoryObj[assignment.cat].name}}</p>
-      </div>
-    </div> -->
   </div>
 </section>
 
@@ -168,7 +110,7 @@
 <div class="modal fade" id="myModal">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form name="addmember" ng-submit="addTask(newTask)" novalidation>
+      <form name="addmember" ng-submit="addAssignment(newTask)" novalidation>
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
           <h4 style="color:#000;" class="modal-title no-shadow">Add task</h4>
@@ -190,7 +132,7 @@
           <label for="assignee">Assign to</label>
 
           <!-- this should default to unassigned -->
-          <select ng-options="member as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee" ng-disabled="newTask.unassigned"></select>
+          <select ng-options="key as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee" ng-disabled="newTask.unassigned"></select>
 
           <label for="unassigned">Unassigned</label>
           <input type="checkbox" ng-model="newTask.unassigned" />
