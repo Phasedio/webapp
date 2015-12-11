@@ -201,7 +201,7 @@ angular.module('webappApp')
       $scope.activeCategoryFilter = catID;
     }
 
-    $scope.addTask = function(newTask){
+    $scope.addAssignment = function(newTask){
       // format object
       var taskPrefix = '',
         weather = '';
@@ -236,7 +236,7 @@ angular.module('webappApp')
 
 
       // push to db
-      Phased.addTask(status);
+      Phased.addAssignment(status);
 
       //reset current task in feed
       $('#myModal').modal('toggle');
@@ -274,7 +274,7 @@ angular.module('webappApp')
     /**
     * pop open add task modal
     */
-    $scope.addTaskModal = function(){
+    $scope.addAssignmentModal = function(){
       ga('send', 'event', 'Modal', 'Task add');
       $('#myModal').modal('toggle');
     }

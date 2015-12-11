@@ -30,7 +30,7 @@
         <div class="task-action-dis">
           <h1>{{team.name}}</h1>
           <p>this is a task area that you can see tasks assigned to you and create new tasks</p>
-          <button class="btn btn-phased-blue" ng-click="addTaskModal();">New task</button>
+          <button class="btn btn-phased-blue" ng-click="addAssignmentModal();">New task</button>
         </div>
         <!-- filter area -->
         <div class="task-action-filter">
@@ -109,7 +109,7 @@
 <div class="modal fade" id="myModal">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form name="addmember" ng-submit="addTask(newTask)" novalidation>
+      <form name="addmember" ng-submit="addAssignment(newTask)" novalidation>
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
           <h4 style="color:#000;" class="modal-title no-shadow">Add task</h4>

@@ -122,7 +122,7 @@ angular.module('webappApp')
       PhasedProvider.moveToFromArchive = _moveToFromArchive;
       PhasedProvider.activateTask = _activateTask;
       PhasedProvider.takeTask = _takeTask;
-      PhasedProvider.addTask = _addTask;
+      PhasedProvider.addAssignment = _addAssignment;
       PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
 
       return PhasedProvider;
@@ -811,11 +811,11 @@ angular.module('webappApp')
     * 2. push to db
     *
     */
-    var _addTask = function(newTask) {
-      registerAsync(doAddTask, newTask);
+    var _addAssignment = function(newTask) {
+      registerAsync(doAddAssignment, newTask);
     }
 
-    var doAddTask = function(newTask) {
+    var doAddAssignment = function(newTask) {
       ga('send', 'event', 'Task', 'task added');
 
       // 1. clean newTask
