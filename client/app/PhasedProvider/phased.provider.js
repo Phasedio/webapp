@@ -90,7 +90,6 @@ angular.module('webappApp')
     */
 
     this.init = function(Auth) {
-      console.log('init');
       _Auth = Auth;
       PhasedProvider.user = Auth.user;
       PhasedProvider.team.name = Auth.currentTeam;
@@ -121,7 +120,6 @@ angular.module('webappApp')
       PhasedProvider.addTask = _addTask;
       PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
 
-      console.log('$get');
       return PhasedProvider;
     };
 
@@ -174,7 +172,6 @@ angular.module('webappApp')
     var getTaskPriorities = function() {
       FBRef.child('taskPriorities').once('value', function(tP /*taskPriorities*/ ) {
         tP = tP.val();
-        // console.log('taskPriorities', tP);
         if (typeof tP !== 'undefined' && tP != null){
           // assign keys to obj, set to _taskPriorities
           for (var i in tP) {
@@ -209,7 +206,6 @@ angular.module('webappApp')
     var getTaskStatuses = function() {
       FBRef.child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
         tS = tS.val();
-        // console.log('taskStatuses', tS);
         if (typeof tS !== 'undefined' && tS != null){
           // assign keys to obj, set obj to $scope
           for (var i in tS) {
@@ -405,7 +401,6 @@ angular.module('webappApp')
       */
       var updateAllAssignments = function(data) {
         data = data.val();
-        console.log('all: ', data);
 
         updateContainerAll('assignments', data);        
 
@@ -691,7 +686,7 @@ angular.module('webappApp')
         ga('send', 'event', 'Task', 'task archived');
       }
 
-      // 1.
+      // 1. REMOVAL
 
       // 1.A
       if (idsContainer.to_me && idsContainer.to_me.indexOf(assignmentID) > -1) {
@@ -724,7 +719,7 @@ angular.module('webappApp')
         assignmentContainer = PhasedProvider.archive;
       }
 
-      // 2.
+      // 2. ADDAL
 
       // 2.A
       // for this and 2.B, have to get list from server (in add to archive case)
@@ -831,8 +826,6 @@ angular.module('webappApp')
         time: new Date().getTime()
       };
 
-      console.log('makeTaskForDB', newTask);
-
       // check for location
       if ((typeof newTask.location).toLowerCase() === 'object' &&
           (typeof newTask.location.lat).toLowerCase() === 'number' &&
@@ -931,9 +924,7 @@ angular.module('webappApp')
       // publish to stream
       var ref = FBRef.child('team/' + PhasedProvider.team.name);
       ref.child('task/' + PhasedProvider.user.uid).set(task);
-      ref.child('all/' + PhasedProvider.user.uid).push(task, function() {
-        console.log('status update complete');
-      });
+      ref.child('all/' + PhasedProvider.user.uid).push(task);
     }
 
     /**

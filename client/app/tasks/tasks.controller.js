@@ -256,7 +256,6 @@ angular.module('webappApp')
 
     $scope.moveToArchive = function(assignmentID) {
       Phased.moveToFromArchive(assignmentID);
-      console.log('moveToArchive. $scope.phased.activeStream', $scope.phased.activeStream);
     }
 
     $scope.moveFromArchive = function(assignmentID) {
