@@ -94,7 +94,7 @@
           <p class="semi-bold" ng-if="assignment.deadline">Due date: {{assignment.deadline | date : 'short'}}</p>
         </div>
 
-        <div class="task-archive">
+        <div class="task-archive" ng-if="assignment.user == myID || assignment.assignee == myID || assignment.assigned_to == myID">
           <button class="btn btn-phased-blue" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)">Start</button>
           <button class="btn btn-phased-blue" ng-if="assignment.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(assignment.key)">complete</button>
           <button class="btn btn-phased-blue" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(assignment.key);">archive</button>
@@ -102,79 +102,6 @@
         </div>
       </div>
     </div>
-
-
-
-
-    <!-- ASSIGNED TO ME -->
-    <!-- <div class="col-xs-5 team-aside">
-      <h2>Tasks assigned to me</h2>
-      <div>
-        <p>sort by
-          <select ng-options="sortable for sortable in sortable" ng-model="sortBy"></select>
-          reverse? <input type="checkbox" ng-model="sortReverse" />
-        </p>
-      </div>
-      <div>
-        <div ng-repeat="assignment in assignments.to_me | filterTaskByStatus : '!1' | orderObjectBy : sortBy : sortReverse" class="task" >
-          <h4>{{assignment.name}}</h4>
-          <h5>
-            <a href="#" ng-click="activateTask(assignment, assignment.key)" ng-if="assignment.status != 0">work on this</a>
-            <span ng-if="assignment.status == 0">current task</span>
-            &middot;
-            <a href="#" ng-click="setTaskCompleted(assignment.key)">finished</a></h5>
-          <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
-          <p>in {{team.categoryObj[assignment.cat].name}}</p>
-          <p>status: {{taskStatuses[assignment.status].name}}</p>
-          <p ng-if="assignment.priority >= 0">priority: {{taskPriorities[assignment.priority].name}}</p>
-          <p ng-if="assignment.deadline >= 0">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
-        </div>
-      </div> -->
-
-
-      <!-- COMPLETED -->
-      <!-- <h2>Completed tasks</h2>
-
-      <div>
-        <div ng-repeat="(id, assignment) in assignments.to_me | filterTaskByStatus : '1' | orderBy : 'time'" class="task">
-          <h4>{{assignment.name}}</h4>
-          <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
-          <p>in {{team.categoryObj[assignment.cat].name}}</p>
-          <p>status: {{taskStatuses[assignment.status].name}}</p>
-          <p><a href="#" ng-click="moveToArchive(assignment, id)">archive task</a></p>
-        </div>
-      </div>
-    </div> --> -->
-
-
-    <!-- MY FEED -->
-    <!-- <div class="col-xs-2">
-      <h3>My current activity <em>(maybe?)</em></h3>
-    </div> -->
-
-    <!-- UNASSIGNED -->
-    <!-- <div class="col-xs-2">
-      <h3>Unassigned tasks</h3>
-      <div ng-repeat="(id, assignment) in assignments.unassigned | orderBy : 'priority'" class="task">
-        <h4>{{assignment.name}}</h4>
-        <a href="#" ng-click="takeTask(id)">take this task</a>
-        <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
-        <p>in {{team.categoryObj[assignment.cat].name}}</p>
-        <p>status: {{taskStatuses[assignment.status].name}}</p>
-        <p ng-if="assignment.priority >= 0">priority: {{taskPriorities[assignment.priority].name}}</p>
-        <p ng-if="assignment.deadline >= 0">deadline: {{assignment.deadline | date : 'dd MMM yy'}}</p>
-      </div> -->
-
-      <!-- ARCHIVE -->
-      <!-- <h3>Archive</h3>
-      <a href="#" ng-click="getArchiveFor('to_me')" ng-if="!showArchive">Get archived tasks</a>
-      <div ng-if="showArchive" ng-repeat="(id, assignment) in archive.to_me | orderBy : 'priority'" class="task">
-        <h4>{{assignment.name}}</h4>
-        <p><a href="#" ng-click="moveFromArchive(assignment, id)">unarchive</a></p>
-        <p>on {{assignment.time | date:'short'}} by {{team.members[assignment.assigned_by].name}}</p>
-        <p>in {{team.categoryObj[assignment.cat].name}}</p>
-      </div>
-    </div> -->
   </div>
 </section>
 
