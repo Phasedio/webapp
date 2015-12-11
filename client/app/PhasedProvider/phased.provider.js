@@ -442,6 +442,14 @@ angular.module('webappApp')
           var assignmentID = UIDContainer[i];
           if (assignmentID in PhasedProvider.assignments.all)
             PhasedProvider.assignments[assignmentContainerName][assignmentID] = PhasedProvider.assignments.all[assignmentID];
+          else 
+            delete PhasedProvider.assignments[assignmentContainerName][assignmentID];
+        }
+
+        for (var assignmentID in PhasedProvider.assignments[assignmentContainerName]) {
+          if (!(assignmentID in PhasedProvider.assignments.all)) {
+            delete PhasedProvider.assignments[assignmentContainerName][assignmentID];
+          }
         }
       }
 
@@ -605,16 +613,15 @@ angular.module('webappApp')
     var syncArchive = function(archiveContainerName) {
       if (!(archiveContainerName in archiveIDs)) return; // ensures valid address
 
-      var archiveContainer = {},
-        UIDContainer = archiveIDs[archiveContainerName];
+      var UIDContainer = archiveIDs[archiveContainerName];
 
       for (var i in UIDContainer) {
         var assignmentID = UIDContainer[i];
         if (assignmentID in PhasedProvider.archive.all)
-          archiveContainer[assignmentID] = PhasedProvider.archive.all[assignmentID];
+          PhasedProvider.archive[archiveContainerName][assignmentID] = PhasedProvider.archive.all[assignmentID];
+        else
+          delete PhasedProvider.archive[archiveContainerName][assignmentID];
       }
-
-      PhasedProvider.archive[archiveContainerName] = archiveContainer;
     }
 
     /**
