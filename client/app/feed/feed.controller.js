@@ -3,18 +3,16 @@
 angular.module('webappApp')
   .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment) {
     ga('send', 'pageview', '/feed');
-    var ref = new Firebase(FURL);
+
     $scope.selectedCategory = '';
 
-    $scope.phased = Phased;
     $scope.viewType = Phased.viewType;
     $scope.myID = Auth.user.uid;
     $scope.team = Phased.team;
 
-    // crutch
-    window.setInterval(function(){
+    $scope.$on('Phased:history', function() {
       $scope.$apply();
-    }, 500);
+    });
 
     // init
     Phased.watchTaskStream();
@@ -23,7 +21,7 @@ angular.module('webappApp')
       ga('send', 'event', 'Update', 'submited');
 
       // prepare task object
-    	var team = $scope.team.name;
+    	var team = Phased.team.name;
     	if ($scope.taskForm.$error.maxlength) {
     		alert('Your update is too long!');
         return;

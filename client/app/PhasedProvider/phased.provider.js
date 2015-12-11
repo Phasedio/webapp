@@ -45,6 +45,8 @@ angular.module('webappApp')
 
     var _Auth, FBRef; // tacked on to PhasedProvider
 
+    var $rootScope; // set in $get. not available in .config();
+
     /**
     *
     * The provider itself (all hail)
@@ -114,7 +116,8 @@ angular.module('webappApp')
     * exposes data, methods, and a FireBase reference
     *
     */
-    this.$get = function() {
+    this.$get = ['$rootScope', function(_rootScope) {
+      $rootScope = _rootScope;
       // register functions listed after this in the script...
       PhasedProvider.watchAssignments = _watchAssignments;
       PhasedProvider.watchTaskStream = _watchTaskStream;
@@ -127,7 +130,7 @@ angular.module('webappApp')
       PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
 
       return PhasedProvider;
-    };
+    }];
 
     // must be called in config or everything breaks
     this.setFBRef = function(FURL) {
@@ -258,15 +261,15 @@ angular.module('webappApp')
         users = users.val();
 
         if (WATCH_TASK_STREAM) {
-          PhasedProvider.team.history = [];
+          PhasedProvider.team.history = new Array();
           PhasedProvider.team.lastUpdated = [];
         }
 
         if (users) {
           for (var id in users) {
-            // needs to be in function otherwise for loop screws up id
+            // needs to be in function otherwise for loop screws up id in callback
             (function(id, users) {
-              FBRef.child('profile/' + id).once('value', function(data){
+              FBRef.child('profile/' + id).once('value', function(data) {
                 data = data.val();
                 if (!data) return;
 
@@ -286,29 +289,41 @@ angular.module('webappApp')
                 };
 
                 PhasedProvider.team.members[id] = user;
-                PhasedProvider.team.teamLength++; // congrats, you exist. welcome to the team.
+                // update teamLength
+                PhasedProvider.team.teamLength = Object.keys(PhasedProvider.team.members).length;
 
                 // 2.
                 if (WATCH_TASK_STREAM) {
-                  PhasedProvider.team.lastUpdated.push(PhasedProvider.team.members[id]);
-                  var endTime = new Date().getTime() - 86400000;
-                  // get /team/[teamname]/all/[memberID], ordered by time, once
-                  // push to local team.history
-                  FBRef.child('team/' + PhasedProvider.team.name + '/all/' + id).orderByChild('time').startAt(endTime).once('value',function(data) {
-                    data = data.val();
-                    if (data) {
-                      var keys = Object.keys(data);
-                      for (var i = 0; i < keys.length; i++){
-                        PhasedProvider.team.history.push(data[keys[i]]);
-                      }
-                    }
-                  });
+                  getMemberHistory(id);
                 }
-
+                // tell scope new data is in
+                $rootScope.$broadcast('Phased:member');
               });
             })(id, users);
           }
         }
+
+        // tell scope new data is in
+        $rootScope.$broadcast('Phased:team');
+      });
+    }
+
+    // gets history for single team member, adds to team history and lastUpdated
+    var getMemberHistory = function(id) {
+      PhasedProvider.team.lastUpdated.push(PhasedProvider.team.members[id]);
+      var endTime = new Date().getTime() - 86400000;
+      // get /team/[teamname]/all/[memberID], ordered by time, once
+      // push to local team.history
+      FBRef.child('team/' + PhasedProvider.team.name + '/all/' + id).orderByChild('time').startAt(endTime).once('value',function(data) {
+        data = data.val();
+        if (data) {
+          var keys = Object.keys(data);
+          for (var i = 0; i < keys.length; i++){
+            PhasedProvider.team.history.push(data[keys[i]]);
+          }
+        }
+        // tell scope new data is in
+        $rootScope.$broadcast('Phased:history');
       });
     }
 
@@ -800,7 +815,13 @@ angular.module('webappApp')
     }
 
     var doWatchTaskStream = function() {
+      console.log('doWatchTaskStream', PhasedProvider);
       WATCH_TASK_STREAM = true;
+      PhasedProvider.team.lastUpdated = PhasedProvider.team.lastUpdated || [];
+      PhasedProvider.team.history = PhasedProvider.team.history || [];
+      for (var i in PhasedProvider.team.members) {
+        getMemberHistory(PhasedProvider.team.members[i].uid);
+      }
     }
 
     /**
