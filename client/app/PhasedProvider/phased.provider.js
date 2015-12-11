@@ -31,6 +31,7 @@ angular.module('webappApp')
     */
     var PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
+      WATCH_TASK_STREAM = false, // set to true if team history should be watched (eg, feed page)
       assignmentIDs = {
         to_me : [],
         by_me : [],
@@ -51,7 +52,10 @@ angular.module('webappApp')
     */
     var PhasedProvider = {
         user : {},
-        team : {},
+        team : {
+          members : {},
+          teamLength : 0 // members counted in setUpTeamMembers
+        },
         viewType : 'notPaid',
         billing : {},
         TASK_PRIORITIES : {},
@@ -113,6 +117,7 @@ angular.module('webappApp')
     this.$get = function() {
       // register functions listed after this in the script...
       PhasedProvider.watchAssignments = _watchAssignments;
+      PhasedProvider.watchTaskStream = _watchTaskStream;
       PhasedProvider.getArchiveFor = _getArchiveFor;
       PhasedProvider.moveToFromArchive = _moveToFromArchive;
       PhasedProvider.activateTask = _activateTask;
@@ -243,13 +248,20 @@ angular.module('webappApp')
     * gather team data
     * 1. watches the team's tasks
     * 1.b  when a new task is posted, it refreshes the team membership
-    *
+    * 2. if WATCH_TASK_STREAM is enabled, also gets today's tasks for each member,
+    *    and adds them to the team's history
     */
     var setUpTeamMembers = function() {
       // get members
       FBRef.child('team').child(PhasedProvider.team.name).child('task').on('value', function(users) {
         users = users.val();
-        PhasedProvider.team.members = {};
+
+        if (WATCH_TASK_STREAM) {
+          PhasedProvider.team.history = [];
+          PhasedProvider.team.lastUpdated = [];
+        }
+
+        console.log('new task!');
 
         if (users) {
           for (var id in users) {
@@ -275,6 +287,25 @@ angular.module('webappApp')
                 };
 
                 PhasedProvider.team.members[id] = user;
+                PhasedProvider.team.teamLength++; // congrats, you exist. welcome to the team.
+
+                // 2.
+                if (WATCH_TASK_STREAM) {
+                  PhasedProvider.team.lastUpdated.push(PhasedProvider.team.members[id]);
+                  var endTime = new Date().getTime() - 86400000;
+                  // get /team/[teamname]/all/[memberID], ordered by time, once
+                  // push to local team.history
+                  FBRef.child('team/' + PhasedProvider.team.name + '/all/' + id).orderByChild('time').startAt(endTime).once('value',function(data) {
+                    data = data.val();
+                    if (data) {
+                      var keys = Object.keys(data);
+                      for (var i = 0; i < keys.length; i++){
+                        PhasedProvider.team.history.push(data[keys[i]]);
+                      }
+                    }
+                  });
+                }
+
               });
             })(id, users);
           }
@@ -758,6 +789,19 @@ angular.module('webappApp')
         delete PhasedProvider.archive.all[assignmentID];
       else
         PhasedProvider.archive.all[assignmentID] = assignment; // local, since archive isn't watched
+    }
+
+    /**
+    *
+    * sets WATCH_TASK_STREAM to true
+    *
+    */
+    var _watchTaskStream = function() {
+      registerAsync(doWatchTaskStream);
+    }
+
+    var doWatchTaskStream = function() {
+      WATCH_TASK_STREAM = true;
     }
 
     /**
