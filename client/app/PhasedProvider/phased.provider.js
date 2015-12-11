@@ -589,6 +589,7 @@ angular.module('webappApp')
     }
 
     var doGetArchiveFor = function(address) {
+      ga('send', 'event', 'Archive', 'archive viewed');
       var archivePath = 'team/' + PhasedProvider.team.name + '/assignments/archive/',
         pathSuffix = '';
 
@@ -622,8 +623,6 @@ angular.module('webappApp')
         default:
           return;
       }
-
-      console.log('getArchiveFor ' + address);
 
       // 2
       // get archive/all
@@ -687,6 +686,7 @@ angular.module('webappApp')
     }
 
     var doMoveToFromArchive = function(args) {
+      ga('send', 'event', 'Task', 'task archived');
       var path = "team/" + PhasedProvider.team.name + "/assignments/",
         to_me = false,
         idsContainer = assignmentIDs,
@@ -1005,7 +1005,8 @@ angular.module('webappApp')
     }
 
     var doAddTask = function(newTask) {
-      ga('send', 'event', 'Update', 'submited');
+      ga('send', 'event', 'Update', 'submitted');
+      ga('send', 'event', 'Task', 'task added');
 
       // clean task
       newTask = makeTaskForDB(newTask);
@@ -1043,7 +1044,7 @@ angular.module('webappApp')
           return;
         }
       }
-      ga('send', 'event', 'Task', 'status update: ' + PhasedProvider.TASK_STATUSES[newStatus]);
+      ga('send', 'event', 'Task', 'task status update: ' + PhasedProvider.TASK_STATUSES[newStatus]);
 
       // push to database
       FBRef.child('team/' + PhasedProvider.team.name + '/assignments/all/' + assignmentID + '/status').set(newStatus);
