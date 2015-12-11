@@ -262,8 +262,6 @@ angular.module('webappApp')
           PhasedProvider.team.lastUpdated = [];
         }
 
-        console.log('new task!');
-
         if (users) {
           for (var id in users) {
             // needs to be in function otherwise for loop screws up id
