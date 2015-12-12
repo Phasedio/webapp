@@ -45,7 +45,7 @@ angular.module('webappApp')
 
     var _Auth, FBRef; // tacked on to PhasedProvider
 
-    var $rootScope; // set in $get. not available in .config();
+    var $rootScope = { $broadcast : function(a){} }; // set in $get, default for if PhasedProvider isn't injected into any scope. not available in .config();
 
     /**
     *
