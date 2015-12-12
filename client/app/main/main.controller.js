@@ -29,54 +29,16 @@ angular.module('webappApp')
       $location.path('/profile/'+uid);
     }
 
+    $scope.addMembers = function(newMember) {
+      PhasedProvider.addMember(newMember, $scope.team.members[Auth.user.uid]);
+      //close modal
+      $('#myModal').modal('toggle');
+    };
 
-    $scope.addMembers = function(names){
-    ga('send', 'event', 'Team', 'Member added');
-    //_gaq.push(['_trackEvent', 'Team', 'Add member']);
-  	var ref = new Firebase(FURL);
-    var invited = names;
-    var inviter = $scope.team.members[Auth.user.uid];
-
-
-    //Brian's better add member function
-    // find if memeber is already in db
-    console.log(names.email);
-    new Firebase(FURL+"/profile").orderByChild("email").startAt(invited.email).endAt(invited.email).limitToFirst(1).once('value',function(user){
-      user = user.val();
-      console.log(user);
-      if(user){
-        //console.log('invite sent to current user');
-        var k = Object.keys(user);
-        ref.child('team-invite-existing-member').push({teams : { 0 : Auth.team},email : invited.email, inviteEmail: $scope.currentUser.email, inviteName: $scope.currentUser.name });
-        ref.child('profile').child(k[0]).child('teams').push(Auth.team);
-      }else{
-        //console.log('invited is not a current user, looking to see if they are in profile-in-waiting');
-
-        new Firebase(FURL+"/profile-in-waiting").orderByChild("email").startAt(invited.email).endAt(invited.email).limitToFirst(1).once('value',function(user){
-          user = user.val();
-    
-          if(user){
-            //console.log('invite sent to user in profile-in-waiting');
-
-            var y = Object.keys(user);
-            ref.child('profile-in-waiting').child(y[0]).child('teams').push(Auth.team);
-          }else{
-            //console.log('invited is new to the system setting up profile-in-waiting');
-
-            ref.child('profile-in-waiting').push({'teams' : { 0 : $scope.team.name}, 'email' : invited.email, 'inviteEmail': inviter.email, 'inviteName': inviter.name });
-            ref.child('profile-in-waiting2').push({'teams' : { 0 : $scope.team.name}, 'email' : invited.email, 'inviteEmail': inviter.email, 'inviteName': inviter.name });
-          }
-        });
-      }
-    });
-    //close modal
-    $('#myModal').modal('toggle');
-  };
-
-  $scope.addMemberModel = function(){
-    ga('send', 'event', 'Modal', 'Member add');
-    $('#myModal').modal('toggle');
-  }
+    $scope.addMemberModel = function(){
+      ga('send', 'event', 'Modal', 'Member add');
+      $('#myModal').modal('toggle');
+    }
 
 
 });

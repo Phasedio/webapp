@@ -128,6 +128,7 @@ angular.module('webappApp')
       PhasedProvider.addAssignment = _addAssignment;
       PhasedProvider.addTask = _addTask;
       PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
+      PhasedProvider.addMember = _addMember;
 
       return PhasedProvider;
     }];
@@ -1074,6 +1075,75 @@ angular.module('webappApp')
 
       // 3. set assignee attr
       FBRef.child(assignmentsPath + 'all/' + assignmentID + '/assignee').set(PhasedProvider.user.uid);
+    }
+
+    /**
+    *
+    * adds a member
+    * Brian's better add member function
+    * 1. checks if member is in /profile
+    * 2A. if so, adds to /team-invite-existing-member and registers current team on member's profile
+    * 2B. if not, checks whether they are a profile in waiting
+    * 2B1. if they are, add team to newMember's profile
+    * 2B2. if not, add to /profile-in-waiting and /profile-in-waiting2
+    */
+
+    var _addMember = function(newMember, inviter) {
+      var args = {
+        newMember : newMember,
+        inviter : inviter
+      }
+      registerAsync(doAddMember);
+    }
+
+    var doAddMember = function(args) {
+      ga('send', 'event', 'Team', 'Member added');
+
+      var invited = args.newMember,
+        inviter = args.inviter;
+
+      //Brian's better add member function
+      // find if memeber is already in db
+      // console.log(names.email);
+      FBRef.child("profile").orderByChild("email").startAt(invited.email).endAt(invited.email).limitToFirst(1).once('value',function(user){
+        user = user.val();
+        // console.log(user);
+        if (user) {
+          //console.log('invite sent to current user');
+          var k = Object.keys(user);
+          var memberData = {
+            teams : { 0 : PhasedProvider.team.name },
+            email : invited.email, 
+            inviteEmail: _Auth.user.email, 
+            inviteName: _Auth.user.name 
+          }
+          FBRef.child('team-invite-existing-member').push(memberData);
+          FBRef.child('profile/' + k[0] + '/teams').push(PhasedProvider.team.name);
+        } else {
+          //console.log('invited is not a current user, looking to see if they are in profile-in-waiting');
+
+          FBRef.child("profile-in-waiting").orderByChild("email").startAt(invited.email).endAt(invited.email).limitToFirst(1).once('value',function(user){
+            user = user.val();
+      
+            if (user) {
+              //console.log('invite sent to user in profile-in-waiting');
+
+              var y = Object.keys(user);
+              FBRef.child('profile-in-waiting').child(y[0]).child('teams').push(PhasedProvider.team.name);
+            } else {
+              //console.log('invited is new to the system, setting up profile-in-waiting');
+              var PIWData = {
+                'teams' : { 0 : PhasedProvider.team.name}, 
+                'email' : invited.email,
+                'inviteEmail': inviter.email,
+                'inviteName': inviter.name
+              };
+              FBRef.child('profile-in-waiting').push(PIWData);
+              FBRef.child('profile-in-waiting2').push(PIWData);
+            }
+          });
+        }
+      });
     }
 
     /**
