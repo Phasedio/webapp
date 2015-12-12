@@ -1,17 +1,11 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('MainCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,toaster, $location) {
+  .controller('MainCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster, $location) {
     ga('send', 'pageview', '/team');
     $scope.showMember = false;
-    $scope.team = {
-      name : '',
-      members : {},
-      history : [],
-      categorySelect : [],
-      categoryObj : {}
-    };
-    $scope.viewType = 'notPaid';
+    $scope.team = Phased.team;
+    $scope.viewType = Phased.viewType;
 
     $scope.selectedUser = {
         name : '',
@@ -20,7 +14,7 @@ angular.module('webappApp')
         history: []
       };
 
-      var monImage =  "weekdayPhotos/mon.jpg";
+    var monImage =  "weekdayPhotos/mon.jpg";
     var tuesImage =  "weekdayPhotos/tues.jpg";
     var wedImage =  "weekdayPhotos/wed.jpg";
     var thursImage =  "weekdayPhotos/thurs.jpg";
@@ -29,12 +23,10 @@ angular.module('webappApp')
     var sunImage = "weekdayPhotos/sun.jpg";
 
     var d=new Date();
-    console.log(d.getDay());
-
-
-
     var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
     $scope.dayImage = backgroundImage[d.getDay()];
+
+    
     /**
     *
     * goToMemeber(uid)
@@ -44,106 +36,6 @@ angular.module('webappApp')
       $location.path('/profile/'+uid);
     }
 
-    $scope.checkStatus = function(){
-     var team = $scope.team.name;
-     new Firebase(FURL).child('team').child(team).child('task').on('value', function(users) {
-     $scope.team.members = {};
-       users = users.val();
-
-       if(users){
-         var teamUID = Object.keys(users);
-
-            for (var i = 0; i < teamUID.length; i++) {
-                $scope.getTeamTasks(teamUID[i], users);
-            }
-
-            //console.log($scope.teamMembers);
-            //$scope.$apply();
-       }
-
-     });
-   };
-
-   $scope.checkPlanStatus = function(teamName){
-    var ref = new Firebase(FURL);
-    console.log('sup');
-    ref.child('team').child(teamName).once('value',function(data){
-      data = data.val();
-      var team = data;
-      console.log(team);
-      if(team.billing){
-        $scope.billinInfo = team.billing;
-        console.log('wohohohohoo');
-        $http.post('./api/pays/find',{customer:team.billing.stripeid}).success(function(data){
-          console.log(data);
-          if(data.err){
-            console.log(data.err);
-          }
-          if(data.status == "active"){
-            //Show thing for active
-            $scope.viewType = 'active';
-
-          }else if(data.status == 'past_due' || data.status == 'unpaid'){
-            //Show thing for problem with account
-            $scope.viewType = 'problem';
-          }else if(data.status == 'canceled'){
-            //Show thing for problem with canceled
-            $scope.viewType = 'notPaid';
-          }
-          console.log($scope.viewType);
-          $scope.$apply();
-        }).error(function(data){
-          console.log(data);
-        });
-      }else{
-        $scope.viewType = 'notPaid';
-        $scope.$apply();
-      }
-    });
-
-
-  }
-
-    $scope.getTeamTasks = function(memberID,users){
-      var userrefs = new Firebase(FURL + 'profile/' + memberID);
-      userrefs.once("value", function(data) {
-               //console.log(memberID);
-        var p = data.val();
-               //console.log(p);
-        var pic,style;
-        if(users[memberID].photo){
-          style = "background:url("+users[memberID].photo+") no-repeat center center fixed; -webkit-background-size: cover;-moz-background-size: cover; -o-background-size: cover; background-size: cover";
-        }else{
-          style = false;
-        }
-        var teamMember = {
-          name : p.name,
-          pic : p.gravatar,
-          email : p.email,
-          task : users[memberID].name,
-          time : users[memberID].time,
-          weather:users[memberID].weather,
-          city:users[memberID].city,
-          uid : memberID,
-          photo:style
-        };
-
-        $scope.team.members[memberID] = teamMember;
-        $scope.$apply();
-
-        });
-    }
-
-    $scope.getHistory = function(uid){
-      var ref = new Firebase(FURL);
-      ref.child('team').child($scope.team.name).child('all').child(uid).once('value',function(data){
-        data = data.val();
-        $http.post('../api/downloads', {hose:data}).success(function(data){
-          console.log(data);
-          window.open('../api/downloads/'+data);
-        });
-      });
-    }
 
     $scope.viewUser = function(user){
       ga('send', 'event', 'Team', 'View user');
@@ -173,55 +65,6 @@ angular.module('webappApp')
         $scope.$apply();
       });
     }
-
-    $scope.getCategories = function(){
-      var team = $scope.team.name;
-      new Firebase(FURL).child('team').child(team).child('category').once('value', function(cat) {
-        cat = cat.val();
-        console.log(cat);
-        if(typeof cat !== 'undefined' && cat != null){
-
-          var keys = Object.keys(cat);
-          $scope.team.categoryObj = cat;
-            for(var i = 0; i < keys.length; i++){
-              var obj = {
-                name : cat[keys[i]].name,
-                color : cat[keys[i]].color,
-                key : keys[i]
-              }
-                $scope.team.categorySelect.push(obj);
-            }
-            console.log($scope.team);
-        }else{
-          //they have no categories so add them
-          var obj = [
-            {
-              name : 'Communication',
-              color : '#ffcc00'
-            },
-            {
-              name : 'Planning',
-              color : '#5ac8fb'
-            }
-          ];
-          new Firebase(FURL).child('team').child(team).child('category').set(obj);
-          new Firebase(FURL).child('team').child(team).child('category').once('value', function(cat) {
-            cat = cat.val();
-            var keys = Object.keys(cat);
-            $scope.team.categoryObj = cat;
-              for(var i = 0; i < keys.length; i++){
-                var obj = {
-                  name : cat[keys[i]].name,
-                  color : cat[keys[i]].color,
-                  key : keys[i]
-                }
-                  $scope.team.categorySelect.push(obj);
-              }
-              console.log($scope.team);
-          });
-        }
-      });
-    };
 
 
     $scope.addMembers = function(names){
@@ -266,27 +109,11 @@ angular.module('webappApp')
     //close modal
     $('#myModal').modal('toggle');
   };
+
   $scope.addMemberModel = function(){
     ga('send', 'event', 'Modal', 'Member add');
     $('#myModal').modal('toggle');
   }
 
 
-    $scope.init = function(){
-      var ref = new Firebase(FURL);
-      console.log(Auth.user);
-      ref.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
-        data = data.val();
-        $scope.team.name = data;
-        console.log('sup');
-        //$scope.checkPlanStatus($scope.team.name);
-        $scope.getCategories();
-        $scope.checkStatus();
-
-      })
-    }
-
-
-  $scope.init();
-
-  });
+});
