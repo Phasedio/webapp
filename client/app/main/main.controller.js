@@ -7,13 +7,6 @@ angular.module('webappApp')
     $scope.team = Phased.team;
     $scope.viewType = Phased.viewType;
 
-    $scope.selectedUser = {
-        name : '',
-        gravatar : '',
-        uid : '',
-        history: []
-      };
-
     var monImage =  "weekdayPhotos/mon.jpg";
     var tuesImage =  "weekdayPhotos/tues.jpg";
     var wedImage =  "weekdayPhotos/wed.jpg";
@@ -26,7 +19,7 @@ angular.module('webappApp')
     var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
     $scope.dayImage = backgroundImage[d.getDay()];
 
-    
+
     /**
     *
     * goToMemeber(uid)
@@ -34,36 +27,6 @@ angular.module('webappApp')
     */
     $scope.goToUser = function(uid){
       $location.path('/profile/'+uid);
-    }
-
-
-    $scope.viewUser = function(user){
-      ga('send', 'event', 'Team', 'View user');
-      $scope.showMember = true;
-      console.log(user);
-      $scope.selectedUser = {
-        name : user.name,
-        gravatar : user.pic,
-        uid : user.uid,
-        history: []
-      };
-
-      var ref = new Firebase(FURL);
-      var startTime = new Date().getTime();
-      var endTime = startTime - 86400000;
-      console.log(startTime);
-
-
-      ref.child('team').child($scope.team.name).child('all').child(user.uid).orderByChild('time').startAt(endTime).once('value',function(data){
-        data = data.val();
-        console.log(data);
-        var keys = Object.keys(data);
-        for(var i = 0; i < keys.length; i++){
-          $scope.selectedUser.history.push(data[keys[i]]);
-        }
-
-        $scope.$apply();
-      });
     }
 
 
