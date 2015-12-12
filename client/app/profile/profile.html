@@ -49,6 +49,7 @@
         <div class="tab-content">
           <div role="tabpanel" class="tab-pane active" id="history">
 
+            <!-- HISTORY -->
             <div class="profile-history">
               <table class="table">
                 <thead>
@@ -65,7 +66,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr ng-repeat="item in team.history | orderBy : 'time':true">
+                  <tr ng-repeat="item in currentUser.history | orderBy : 'time':true">
                     <td>
                       {{item.name}}
                     </td>
@@ -80,8 +81,9 @@
               </table>
               <h6 ng-show="team.history.length == 0" align="center"> No updates for time period</h6>
             </div>
-
           </div>
+
+          <!-- BACKLOG -->
           <div role="tabpanel" class="tab-pane" id="backlog">
             <div class="profile-backlog">
               <table class="table">
@@ -105,23 +107,23 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr ng-repeat="item in team.backlog ">
+                  <tr ng-repeat="item in currentUser.assignments.to_me ">
                     <td>
                       {{item.name}}
                     </td>
                     <td>
-                      <span ng-if="item.cat">{{$parent.team.categoryObj[item.cat].name}}</span>
+                      <span ng-if="item.cat">{{team.categoryObj[item.cat].name}}</span>
                       <span ng-if="!item.cat">Not Set</span>
                     </td>
                     <td>
-                      {{item.priority}}
+                      {{taskPriorities[item.priority].name}}
                     </td>
                     <td>
                        <span ng-if="item.deadline">{{item.deadline | amDateFormat:'MM.DD.YYYY '}}</span>
                        <span ng-if="!item.deadline">Not Set</span>
                     </td>
                     <td>
-                      {{item.status}}
+                      {{taskStatuses[item.status].name}}
                     </td>
                   </tr>
                 </tbody>
@@ -129,6 +131,7 @@
             </div>
           </div>
           <div role="tabpanel" class="tab-pane" id="messages">...</div>
+          <!-- EDIT -->
           <div role="tabpanel" class="tab-pane" id="settings">
 						<div class = "row">
 			        <div class="col-xs-4">

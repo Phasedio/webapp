@@ -32,6 +32,7 @@ angular.module('webappApp')
     var PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
       WATCH_TASK_STREAM = false, // set to true if team history should be watched (eg, feed page)
+      getHistoryFor = '', // set to a member id if a member's history should be attached to their team.member reference (eg, profile page)
       assignmentIDs = {
         to_me : [],
         by_me : [],
@@ -107,7 +108,8 @@ angular.module('webappApp')
       getTaskStatuses();
 
       // things that can only be done after async operations are finished
-      doAsync();
+      // moved to setUpTeamMembers
+      // doAsync();
     }
 
     /**
@@ -129,6 +131,8 @@ angular.module('webappApp')
       PhasedProvider.addTask = _addTask;
       PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
       PhasedProvider.addMember = _addMember;
+      PhasedProvider.watchMemberStream = _watchMemberStream;
+      PhasedProvider.watchMemberAssignments = _watchMemberAssignments;
 
       return PhasedProvider;
     }];
@@ -270,6 +274,9 @@ angular.module('webappApp')
           for (var id in users) {
             // needs to be in function otherwise for loop screws up id in callback
             (function(id, users) {
+              // add empty object to team.members so other fns can populate before these callbacks
+              PhasedProvider.team.members[id] = {uid : id};
+
               FBRef.child('profile/' + id).once('value', function(data) {
                 data = data.val();
                 if (!data) return;
@@ -278,25 +285,29 @@ angular.module('webappApp')
                 if (users[id].photo){
                   style = "background:url("+users[id].photo+") no-repeat center center fixed; -webkit-background-size: cover;-moz-background-size: cover; -o-background-size: cover; background-size: cover";
                 }
-                var user = {
-                  name : data.name,
-                  pic : data.gravatar,
-                  task : users[id].name,
-                  time : users[id].time,
-                  weather: users[id].weather,
-                  city: users[id].city,
-                  uid : id,
-                  photo: style
-                };
 
-                PhasedProvider.team.members[id] = user;
+                PhasedProvider.team.members[id].name = data.name;
+                PhasedProvider.team.members[id].pic = data.gravatar;
+                PhasedProvider.team.members[id].gravatar = data.gravatar;
+                PhasedProvider.team.members[id].task = users[id].name;
+                PhasedProvider.team.members[id].time = users[id].time;
+                PhasedProvider.team.members[id].weather = users[id].weather;
+                PhasedProvider.team.members[id].city = users[id].city;
+                PhasedProvider.team.members[id].email = data.email;
+                PhasedProvider.team.members[id].tel = data.tel;
+                PhasedProvider.team.members[id].uid = id;
+                PhasedProvider.team.members[id].photo = style;
+
+                // PhasedProvider.team.members[id] = user;
                 // update teamLength
                 PhasedProvider.team.teamLength = Object.keys(PhasedProvider.team.members).length;
 
                 // 2.
-                if (WATCH_TASK_STREAM) {
+                if (WATCH_TASK_STREAM)
+                  PhasedProvider.team.lastUpdated.push(PhasedProvider.team.members[id]);
+                if (WATCH_TASK_STREAM || getHistoryFor == id)
                   getMemberHistory(id);
-                }
+
                 // tell scope new data is in
                 $rootScope.$broadcast('Phased:member');
               });
@@ -304,23 +315,39 @@ angular.module('webappApp')
           }
         }
 
-        // tell scope new data is in
+        // tell scope new data is in 
         $rootScope.$broadcast('Phased:team');
+
+        // first time only: emit Phased:setup and do registered async calls
+        if (!PHASED_SET_UP) {
+          $rootScope.$broadcast('Phased:setup');
+          doAsync();
+        }
       });
     }
 
-    // gets history for single team member, adds to team history and lastUpdated
+    /**
+    *
+    * gets history for single team member
+    * adds to team history and lastUpdated if WATCH_TASK_STREAM
+    * adds to team.members[id] if getHistoryFor == id
+    *
+    */
     var getMemberHistory = function(id) {
-      PhasedProvider.team.lastUpdated.push(PhasedProvider.team.members[id]);
       var endTime = new Date().getTime() - 86400000;
       // get /team/[teamname]/all/[memberID], ordered by time, once
       // push to local team.history
       FBRef.child('team/' + PhasedProvider.team.name + '/all/' + id).orderByChild('time').startAt(endTime).once('value',function(data) {
         data = data.val();
+        if (getHistoryFor == id)
+          PhasedProvider.team.members[id].history = []; // clear history before populating
         if (data) {
           var keys = Object.keys(data);
           for (var i = 0; i < keys.length; i++){
-            PhasedProvider.team.history.push(data[keys[i]]);
+            if (WATCH_TASK_STREAM)
+              PhasedProvider.team.history.push(data[keys[i]]);
+            if (getHistoryFor == id) 
+              PhasedProvider.team.members[id].history.push(data[keys[i]]);
           }
         }
         // tell scope new data is in
@@ -823,6 +850,69 @@ angular.module('webappApp')
       for (var i in PhasedProvider.team.members) {
         getMemberHistory(PhasedProvider.team.members[i].uid);
       }
+    }
+
+    /**
+    *
+    * watches history for one member
+    * used on profile page
+    *
+    */
+    var _watchMemberStream = function(id) {
+      registerAsync(doWatchMemberStream, id);
+    }
+
+    var doWatchMemberStream = function(id) {
+      getHistoryFor = id;
+      // get personal history if not already present
+      if (!(PhasedProvider.team.members[id].history))
+        getMemberHistory(id);
+    }
+
+    /**
+    *
+    * watchs a member's assignments
+    *
+    */
+    var _watchMemberAssignments = function(id) {
+      registerAsync(doWatchMemberAssignments, id);
+    }
+
+    var doWatchMemberAssignments = function(id) {
+      var user = PhasedProvider.team.members[id];
+      user.assignments = {
+        to_me : [],
+        by_me: []
+      }
+
+      var refString = 'team/' + PhasedProvider.team.name + '/assignments';
+      FBRef.child(refString + '/all').once('value', function(data) {
+        var all = data.val();
+        if (!all) return;
+
+        FBRef.child(refString + '/to/' + id).on('value', function(data) {
+          data = data.val();
+          if (!data) return;
+          data = objToArray(data);
+
+          // for each index in the to_me list, check if it's in all
+          // if it is, push it to the array
+          for (var i in data) {
+            if (data[i] in all)
+              user.assignments.to_me.push(all[data[i]]);
+          }
+        });
+        // same as above
+        FBRef.child(refString + '/by/' + id).on('value', function(data) {
+          data = data.val();
+          if (!data) return;
+          data = objToArray(data);
+          for (var i in data) {
+            if (data[i] in all)
+              user.assignments.by_me.push(all[data[i]]);
+          }
+        });
+      });
     }
 
     /**
