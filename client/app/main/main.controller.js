@@ -35,7 +35,7 @@ angular.module('webappApp')
       $('#myModal').modal('toggle');
     };
 
-    $scope.addMemberModel = function(){
+    $scope.addMemberModal = function() {
       ga('send', 'event', 'Modal', 'Member add');
       $('#myModal').modal('toggle');
     }

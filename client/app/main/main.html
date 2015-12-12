@@ -21,7 +21,7 @@
         <div class="member-holder">
           <div class="member-title">
             <h2>Members</h2>
-            <a href="" ng-click=" addMemberModel();">Add new</a>
+            <a href="" ng-click=" addMemberModal();">Add new</a>
           </div>
 
           <div class="member-background">
@@ -50,8 +50,8 @@
       <div class="modal-body row">
         <div class="col-xs-6">
           <h4>Add member</h4>
-          <p>{{team.name}} is able to add an <b>unlimitied</b> amount of new members.</p>
-          <p><small>This is based on your team's pro plan for more information on what your plan provides check out <a href="http://www.phased.io/pricing" target="_blank">this page</a></small></p>
+          <p>{{team.name}} is able to add an <b>unlimited</b> amount of new members.</p>
+          <p><small>This is based on your team's pro plan. For more information on what your plan provides check out <a href="http://www.phased.io/pricing" target="_blank">this page</a></small></p>
         </div>
         <div class="col-xs-6">
           <form name="addmember" ng-submit="addMembers(user)" novalidation>
