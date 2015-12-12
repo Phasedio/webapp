@@ -7,6 +7,13 @@ angular.module('webappApp')
     $scope.team = Phased.team;
     $scope.viewType = Phased.viewType;
 
+    // ensure view updates when new members are added
+    $scope.$on('Phased:member', function() {
+      $scope.$apply();
+    });
+
+
+    // image of the day
     var monImage =  "weekdayPhotos/mon.jpg";
     var tuesImage =  "weekdayPhotos/tues.jpg";
     var wedImage =  "weekdayPhotos/wed.jpg";
@@ -26,12 +33,11 @@ angular.module('webappApp')
     * sends user to profile of user
     */
     $scope.goToUser = function(uid){
-      $location.path('/profile/'+uid);
+      $location.path('/profile/' + uid);
     }
 
     $scope.addMembers = function(newMember) {
       PhasedProvider.addMember(newMember, $scope.team.members[Auth.user.uid]);
-      //close modal
       $('#myModal').modal('toggle');
     };
 
