@@ -19,13 +19,11 @@ angular.module('webappApp')
     Phased.watchMemberStream(profileUser);
     Phased.watchMemberAssignments(profileUser);
 
-    $scope.$on('Phased:member', function(){
-      console.log('scope apply');
+    $scope.$on('Phased:setup', function(){
       $scope.currentUser = Phased.team.members[profileUser];
       $scope.$apply();
     });
     $scope.$on('Phased:history', function(){
-      console.log('scope apply');
       $scope.$apply();
     });
 
@@ -43,9 +41,6 @@ angular.module('webappApp')
   var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
   $scope.dayImage = backgroundImage[d.getDay()];
 
-  
-  
-
   // bootstrap enable tabs
 
   $('#myTabs a').click(function (e) {
@@ -53,18 +48,20 @@ angular.module('webappApp')
     $(this).tab('show')
   });
 
-
   // Update Account
   $scope.updateUser = function(update){
-    if(update.email === undefined || update.email === ''){
+    var toaster = { pop : function(a) { console.log(a) } }; // patch while the toaster disappeared!
+    if (update.email === undefined || update.email === '') {
       update.email = $scope.currentUser.email;
     }
     if (update.tel !== $scope.currentUser.tel) {
       console.log('hit the tel!');
       Auth.changeTel(update, Auth.user.uid);
+      toaster.pop('success', "Your phone number has been updated");
+      $scope.currentUser.tel = update.tel;
     }
 
-    if(update.name === $scope.currentUser.name || update.name === undefined || update.name === ''){
+    if (update.name === $scope.currentUser.name || update.name === undefined || update.name === ''){
       //console.log("we are changing the password");
       if(update.oldPass && update.newPass){
         console.log('we will change the password');
@@ -79,7 +76,6 @@ angular.module('webappApp')
           } else {
             toaster.pop('error', 'Your email is incorrect! Make sure you are using your current email');
           }
-
         });
       } else {
         console.log('changing email');
@@ -88,9 +84,10 @@ angular.module('webappApp')
           console.log('we are changing the email', Auth.user.uid);
           Auth.changeEmail(update, Auth.user.uid);
           toaster.pop('success', "Your email has been updated!");
+          $scope.currentUser.email = update.email;
         }
       }
-    }else {
+    } else {
       console.log('changing userName or email');
       console.log(update.email);
       if (update.name !== $scope.currentUser.name) {
@@ -112,129 +109,4 @@ angular.module('webappApp')
       }
     }
   };
-
-    // $scope.getCategories = function(){
-    //   var team = $scope.team.name;
-    //   new Firebase(FURL).child('team').child(team).child('category').once('value', function(cat) {
-    //     cat = cat.val();
-    //     console.log(cat);
-    //     if(typeof cat !== 'undefined' && cat != null){
-
-    //       var keys = Object.keys(cat);
-    //       $scope.team.categoryObj = cat;
-    //         for(var i = 0; i < keys.length; i++){
-    //           var obj = {
-    //             name : cat[keys[i]].name,
-    //             color : cat[keys[i]].color,
-    //             key : keys[i]
-    //           }
-    //             $scope.team.categorySelect.push(obj);
-    //         }
-    //         console.log($scope.team);
-    //     }else{
-    //       //they have no categories so add them
-    //       var obj = [
-    //         {
-    //           name : 'Communication',
-    //           color : '#ffcc00'
-    //         },
-    //         {
-    //           name : 'Planning',
-    //           color : '#5ac8fb'
-    //         }
-    //       ];
-    //       new Firebase(FURL).child('team').child(team).child('category').set(obj);
-    //       new Firebase(FURL).child('team').child(team).child('category').once('value', function(cat) {
-    //         cat = cat.val();
-    //         var keys = Object.keys(cat);
-    //         $scope.team.categoryObj = cat;
-    //           for(var i = 0; i < keys.length; i++){
-    //             var obj = {
-    //               name : cat[keys[i]].name,
-    //               color : cat[keys[i]].color,
-    //               key : keys[i]
-    //             }
-    //               $scope.team.categorySelect.push(obj);
-    //           }
-    //           console.log($scope.team);
-    //       });
-    //     }
-    //   });
-    // };
-
-    // $scope.viewUser = function(){
-    //   var ref = new Firebase(FURL);
-    //   var startTime = new Date().getTime();
-    //   var endTime = startTime - 86400000;
-    //   console.log(startTime);
-    //   ref.child('team').child($scope.team.name).child('all').child(profileUser).orderByChild('time').startAt(endTime).once('value',function(data){
-    //     data = data.val();
-    //     console.log(data);
-    //     var keys = Object.keys(data);
-    //     for(var i = 0; i < keys.length; i++){
-    //       $scope.team.history.push(data[keys[i]]);
-    //     }
-    //     console.log($scope.team.history);
-    //     $scope.$apply();
-    //   });
-    // }
-
-
-    /**
-    *
-    * Get tasks assigned to this user and show it as their backlog
-    *
-    */
-
-    // $scope.getBacklog = function(){
-    //   // go to FB and check if user has any tasks assigned to them.
-    //   var ref = new Firebase(FURL);
-    //   ref.child('team').child($scope.team.name).child('assignments').child('to').child(profileUser).once('value',function(data){
-    //     data = data.val();
-    //     // if data then there are tasks
-    //     if(data){
-    //       // This could probably be done from a service better.
-    //       var assignedTasks = data;
-    //       var assignedKeys = Object.keys(data);
-    //       var backlog = [];
-    //       ref.child('team').child($scope.team.name).child('assignments').child('all').once('value',function(data){
-    //         data = data.val();
-    //         for (var i = 0; i < assignedKeys.length; i++) {
-    //           backlog.push(data[assignedTasks[assignedKeys[i]]]);
-    //         }
-    //         console.log(backlog);
-    //         $scope.team.backlog = backlog;
-    //       });
-    //     }
-    //     // Else this person is lazy and should be assigned all the tasks forever.
-    //   });
-
-
-    // }
-
-
-    $scope.init = function(){
-      // var ref = new Firebase(FURL);
-      // console.log(Auth.user);
-
-
-      // ref.child('profile').child(profileUser).child('curTeam').once('value',function(data){
-      //   data = data.val();
-      //   $scope.team.name = data;
-      //   console.log('sup');
-      //   //Get history for this user... This is baaaaaaaaaad
-      //   new Firebase(FURL).child('profile').child(profileUser).once('value', function(user) {
-      //     user = user.val();
-      //     $scope.currentUser = user;
-      //     $scope.viewUser();
-      //   });
-
-      //   $scope.getCategories();
-      //   $scope.getBacklog();
-
-      // })
-    };
-
-
-    // $scope.init();
-  });
+});
