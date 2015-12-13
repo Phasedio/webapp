@@ -11,6 +11,7 @@ angular.module('webappApp')
     $scope.team = Phased.team;
 
     $scope.$on('Phased:history', function() {
+      console.log($scope.team.history);
       $scope.$apply();
     });
 

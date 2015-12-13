@@ -2,7 +2,7 @@ angular.module('webappApp')
   .provider('Phased', function() {
 
     /**
-      
+
       PhasedProvider provides a single access point for interacting with the Phased FireBase server.
 
       It provides
@@ -11,8 +11,8 @@ angular.module('webappApp')
         - 'static' properties reflecting Phased constants (such as task priority names and IDs)
 
       Note on FireBase async:
-        Methods can be called from controllers that request data from Auth before the 
-      FireBase AJAX requests (called in AuthProvider.doAfterAuth()) that gather that data are complete. To 
+        Methods can be called from controllers that request data from Auth before the
+      FireBase AJAX requests (called in AuthProvider.doAfterAuth()) that gather that data are complete. To
       circumvent this, methods that need this data are registered as callbacks (via registerAsync) which
       are either fired immediately if doAfterAuth is complete (ie, PHASED_SET_UP == true) or at the end of
       this.init() if not (via doAsync).
@@ -315,7 +315,7 @@ angular.module('webappApp')
           }
         }
 
-        // tell scope new data is in 
+        // tell scope new data is in
         $rootScope.$broadcast('Phased:team');
 
         // first time only: emit Phased:setup and do registered async calls
@@ -343,10 +343,11 @@ angular.module('webappApp')
           PhasedProvider.team.members[id].history = []; // clear history before populating
         if (data) {
           var keys = Object.keys(data);
+          PhasedProvider.team.history = []; // clear history before populating
           for (var i = 0; i < keys.length; i++){
             if (WATCH_TASK_STREAM)
               PhasedProvider.team.history.push(data[keys[i]]);
-            if (getHistoryFor == id) 
+            if (getHistoryFor == id)
               PhasedProvider.team.members[id].history.push(data[keys[i]]);
           }
         }
@@ -475,7 +476,7 @@ angular.module('webappApp')
       var updateAllAssignments = function(data) {
         data = data.val();
 
-        updateContainerAll('assignments', data);        
+        updateContainerAll('assignments', data);
 
         // sync all containers
         for (var i in assignmentIDs) {
@@ -499,7 +500,7 @@ angular.module('webappApp')
       /**
       *
       * syncs assignments (in PhasedProvider.assignments.all) listed in the UIDContainer to the assignmentContainer
-      * used to maintain a running list of references in the container, eg, PhasedProvider.assignments.by_me, that point to 
+      * used to maintain a running list of references in the container, eg, PhasedProvider.assignments.by_me, that point to
       * the right assignment objects in PhasedProvider.assignments.all
       *
       */
@@ -510,7 +511,7 @@ angular.module('webappApp')
           var assignmentID = UIDContainer[i];
           if (assignmentID in PhasedProvider.assignments.all)
             PhasedProvider.assignments[assignmentContainerName][assignmentID] = PhasedProvider.assignments.all[assignmentID];
-          else 
+          else
             delete PhasedProvider.assignments[assignmentContainerName][assignmentID];
         }
 
@@ -525,17 +526,17 @@ angular.module('webappApp')
       var refString = 'team/' + PhasedProvider.team.name + '/assignments';
 
       FBRef.child(refString + '/all').on('value', updateAllAssignments);
-    
+
       FBRef.child(refString + '/to/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'to_me');
       });
-    
+
       FBRef.child(refString + '/by/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'by_me');
       });
-    
+
       FBRef.child(refString + '/unassigned').on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'unassigned');
@@ -1203,9 +1204,9 @@ angular.module('webappApp')
           var k = Object.keys(user);
           var memberData = {
             teams : { 0 : PhasedProvider.team.name },
-            email : invited.email, 
-            inviteEmail: _Auth.user.email, 
-            inviteName: _Auth.user.name 
+            email : invited.email,
+            inviteEmail: _Auth.user.email,
+            inviteName: _Auth.user.name
           }
           FBRef.child('team-invite-existing-member').push(memberData);
           FBRef.child('profile/' + k[0] + '/teams').push(PhasedProvider.team.name);
@@ -1214,7 +1215,7 @@ angular.module('webappApp')
 
           FBRef.child("profile-in-waiting").orderByChild("email").startAt(invited.email).endAt(invited.email).limitToFirst(1).once('value',function(user){
             user = user.val();
-      
+
             if (user) {
               //console.log('invite sent to user in profile-in-waiting');
 
@@ -1223,7 +1224,7 @@ angular.module('webappApp')
             } else {
               //console.log('invited is new to the system, setting up profile-in-waiting');
               var PIWData = {
-                'teams' : { 0 : PhasedProvider.team.name}, 
+                'teams' : { 0 : PhasedProvider.team.name},
                 'email' : invited.email,
                 'inviteEmail': inviter.email,
                 'inviteName': inviter.name
