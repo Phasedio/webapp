@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('ProfileCtrl', function ($scope,$routeParams, $http, stripe, Auth, Phased, FURL,amMoment) {
+  .controller('ProfileCtrl', function ($scope,$routeParams, $http, stripe, Auth, Phased, FURL,amMoment,$location) {
     ga('send', 'pageview', '/profile');
 
     $scope.phased = Phased;
@@ -51,6 +51,15 @@ angular.module('webappApp')
   $scope.person = false;
   if(profileUser == Auth.user.uid) $scope.person = true;
   else $scope.person = false;
+
+
+  //logout
+
+  $scope.logout = function(){
+      console.log('logging you out');
+      Auth.logout();
+      $location.path('/login');
+    }
 
   // Update Account
   $scope.updateUser = function(update){

@@ -265,12 +265,15 @@ angular.module('webappApp')
       FBRef.child('team').child(PhasedProvider.team.name).child('task').on('value', function(users) {
         users = users.val();
 
+
         if (WATCH_TASK_STREAM) {
           PhasedProvider.team.history = PhasedProvider.team.history || new Array();
           PhasedProvider.team.lastUpdated = PhasedProvider.team.lastUpdated || [];
         }
 
+
         if (users) {
+          PhasedProvider.team.history = []; // clear history before populating
           for (var id in users) {
             // needs to be in function otherwise for loop screws up id in callback
             (function(id, users) {
@@ -308,6 +311,7 @@ angular.module('webappApp')
                 if (WATCH_TASK_STREAM || getHistoryFor == id)
                   getMemberHistory(id);
 
+
                 // tell scope new data is in
                 $rootScope.$broadcast('Phased:member');
               });
@@ -343,7 +347,7 @@ angular.module('webappApp')
           PhasedProvider.team.members[id].history = []; // clear history before populating
         if (data) {
           var keys = Object.keys(data);
-          PhasedProvider.team.history = []; // clear history before populating
+          //
           for (var i = 0; i < keys.length; i++){
             if (WATCH_TASK_STREAM)
               PhasedProvider.team.history.push(data[keys[i]]);
