@@ -1,0 +1,148 @@
+<style>
+.hero-img {
+	background:  linear-gradient(
+		rgba(0, 0, 0, 0.25),
+		rgba(0, 0, 0, 0.25)
+	), url(assets/images/{{dayImage}}) no-repeat center center ;
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+}
+</style>
+
+
+
+<div ng-include="'components/navbar/navbar.html'"></div>
+<section class="hero-img">
+</section>
+
+<section class="container">
+  <div class="row">
+
+    <div class="col-xs-4">
+      <div class="task-action-center ph-card">
+        <!-- Team image -->
+        <div class="task-action-teamImg">
+          <img src="assets/images/phased-logo.svg" width="50px" height=50px>
+        </div>
+
+        <!-- Team name -->
+        <div class="task-action-dis">
+          <h1>{{team.name}}</h1>
+          <p>this is a task area that you can see tasks assigned to you and create new tasks</p>
+          <button class="btn btn-phased-blue" ng-click="addAssignmentModal();">New task</button>
+        </div>
+        <!-- filter area -->
+        <div class="task-action-filter">
+          <ul>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.all' && !activeStatusFilter}">all <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.to_me'); setStatusFilter('!' + taskStatusID.COMPLETE)" ng-class="{active : activeStreamName == 'assignments.to_me'}">assigned to me <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.by_me'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.by_me'}">my created tasks <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.unassigned'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.unassigned'}">unassigned tasks <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter(taskStatusID.COMPLETE)" ng-class="{active : activeStreamName == 'assignments.all' && activeStatusFilter == '1'}">closed tasks <div></div></div>
+            </li>
+            <li>
+              <div class="filter-selection" ng-click="setActiveStream('archive.all'); setStatusFilter()" ng-class="{active : activeStreamName == 'archive.all'}">archived tasks <div></div></div>
+            </li>
+          </ul>
+          <ul class="filter-category">
+            <li ng-repeat="(id, category) in team.categoryObj">
+              <div class="filter-selection" ng-class="{active: activeCategoryFilter == id}" ng-click="toggleCategoryFilter(id)">{{category.name}} <div></div></div>
+            </li>
+          </ul>
+        </div>
+        <!-- member area -->
+        <div class="task-action-members">
+          <div class="member-img" ng-repeat="(key, item) in team.members">
+            <img src="{{item.pic}}" width="40px" height="40px">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASK STREAM -->
+    <div class="col-xs-8 task-stream">
+      <div class="task ph-card" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" style="border-right: 1em solid {{team.categoryObj[assignment.cat].color}};">
+        <div class="task-header">
+          <div class="task-main">
+            <h1>{{assignment.name}}</h1>
+            <h1>{{taskStatuses[assignment.status].name}}</h1>
+          </div>
+
+          <div class="task-second" ng-if="assignment.user">
+            <div class="task-title">
+
+              <img src="{{team.members[assignment.user].pic}}" width="40px" height="40px">
+            </div>
+          </div>
+        </div>
+
+
+        <div class="task-details">
+          <p class="semi-bold">Category: {{team.categoryObj[assignment.cat].name}}</p>
+          <p class="semi-bold">Assigned by: {{team.members[assignment.assigned_by].name}}</p>
+
+          <p class="semi-bold" ng-if="assignment.deadline">Due date: {{assignment.deadline | date : 'short'}}</p>
+        </div>
+
+        <div class="task-archive" ng-if="assignment.user == myID || assignment.assignee == myID || assignment.assigned_to == myID">
+          <button class="btn btn-phased-blue" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)">Start</button>
+          <button class="btn btn-phased-blue" ng-if="assignment.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(assignment.key)">complete</button>
+          <button class="btn btn-phased-blue" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(assignment.key);">archive</button>
+          <button class="btn btn-phased-blue" ng-if="activeStreamName == 'archive.all' || activeStreamName == 'archive.to_me'" ng-click="moveFromArchive(assignment.key);">unarchive</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- add task -->
+<div class="modal fade" id="myModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form name="addmember" ng-submit="addAssignment(newTask)" novalidation>
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 style="color:#000;" class="modal-title no-shadow">Add task</h4>
+        </div>
+        <div class="modal-body">
+        	<label for="taskName">Task name</label>
+         	<input type="text" id="taskName" ng-model="newTask.name" placeholder="Build a rocket">
+
+          <label for="category">Category</label>
+          <select ng-options="key as category.name for (key, category) in team.categoryObj" ng-model="newTask.category" id="category"></select>
+
+          <label for="priority">Priority</label>
+          <select ng-options="key as priority.name for (key, priority) in taskPriorities" ng-model="newTask.priority" id="priority"></select>
+
+          <label for="deadline">Deadline</label>
+          <p><em>use yyyy-MM-dd format if you don't know HTML5</em></p>
+          <input type="date" ng-model="newTask.deadline" min="{{today | date : 'yyyy-MM-dd'}}" />
+
+          <label for="assignee">Assign to</label>
+
+          <!-- this should default to unassigned -->
+          <select ng-options="key as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee" ng-disabled="newTask.unassigned"></select>
+
+          <label for="unassigned">Unassigned</label>
+          <input type="checkbox" ng-model="newTask.unassigned" />
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <input type="submit" class="btn btn-primary" value="Add task">
+        </div>
+      </form>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

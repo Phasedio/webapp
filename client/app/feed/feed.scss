@@ -309,3 +309,256 @@ select{
 		padding-bottom:1rem;
 	}
 }
+
+
+
+.feedarea{
+	margin-top: 150px;
+	font-family: 'open_sansregular';
+	color:#BDBDBD;
+	.no-padding{
+		padding:0!important;
+	}
+	h1,h2,h3,h4,h5,h6,.semi{
+		font-family: 'open_sanssemibold';
+		color:#444A59;
+		text-transform: uppercase;
+	}
+	p,li{
+		font-family: 'open_sansregular';
+		font-size: 1.25rem;
+		letter-spacing: 0.92px;
+		line-height: 15px;
+	}
+	.navbar{
+		height:60px;
+		margin-bottom:30px;
+		background: #1E1E24;
+		padding-top:0;
+		padding-bottom:0;
+		border-radius: 0;
+		li{
+			font-family: 'open_sansregular';
+			text-transform: uppercase;
+			color:#fff;
+			font-size: 1.25rem;
+			letter-spacing: 0.92px;
+			line-height: 15px;
+		}
+	}
+	.navbar-brand{
+		// padding-top: 5px;
+		// padding-bottom:5px;
+	}
+	.navbar-nav > li > a {
+    padding-top: 17px;
+	}
+
+
+	.ph-card{
+		background: #FFFFFF;
+		padding:40px;
+
+	}
+	.ph-team{
+		margin-bottom: 20px;
+	}
+	.ph-team-info{
+		padding-bottom:40px;
+		border-bottom: 1px solid #F2F2F2;
+	}
+	.ph-team-stat{
+		padding-top:50px;
+		ul{
+			margin: 0;
+			padding: 0;
+			list-style: none;
+		}
+		li{
+			overflow: hidden;
+			font-size: 1.25rem;
+			margin-bottom:1rem;
+			span:first-child{
+				font-family: 'open_sansregular';
+
+				color:#BDBDBD;
+				text-transform: uppercase;
+				float: left;
+			}
+			span:last-child{
+				font-family: 'open_sanssemibold';
+				color:#444A59;
+				text-transform: uppercase;
+				float: right;
+			}
+		}
+	}
+
+	.ph-update-area{
+		.ph-card{
+			margin-bottom: 20px;
+		}
+	}
+	.ph-form-feed{
+		input[type="text"]{
+			font-family: 'open_sanssemibold';
+			font-size: 1.45rem;
+			letter-spacing: 0.92px;
+			line-height: 15px;
+			width: 100%;
+			background: #fff;
+			outline: none;
+			border: none;
+			color:#BDBDBD;
+		}
+	}
+	.ph-form-extras{
+		margin-top: 60px;
+		overflow: auto;
+		button[type="button"]{
+			background: none;
+			border: none;
+			color:#292B33;
+			float: left;
+			margin-top:1rem;
+			font-size: 2.3rem;
+			letter-spacing: 0.92px;
+			line-height: 15px;
+		}
+		button[type="submit"]{
+			font-family: 'open_sansregular';
+			font-size: 1.25rem;
+			letter-spacing: 0.92px;
+			line-height: 13px;
+			background: #FAC994;
+			border: #FAC994;
+			border-radius: 2px;
+			padding:12px 18px 12px 18px;
+			text-transform: uppercase;
+			float: right;
+			color:#292B33;
+		}
+	}
+	.ph-cat-list{
+		max-width: 40rem;
+		button{
+			padding-left: 0;
+		}
+	}
+	.ph-feed-filter{
+		padding: 40px;
+		padding-bottom: 0;
+		overflow: auto;
+		.ph-feed-total{
+			float:right;
+			span{
+				color:#BDBDBD;
+			}
+		}
+	}
+
+	.ph-feed-roll{
+		padding-top:40px;
+		padding-bottom:40px;
+		overflow: auto;
+	}
+	.ph-update{
+		overflow: auto;
+		padding-bottom:40px;
+		.update-name{
+			color:#595959;
+		}
+		.ph-feed-head{
+			padding-left:40px;
+			float: left;
+			display: inline-block;
+			width: 15%;
+			img{
+				margin: 0 auto;
+				border-radius: 100px;
+
+			}
+		}
+		.ph-feed-status{
+			padding-right:40px;
+			float: left;
+			display: inline-block;
+			width: 70%;
+			p{
+				font-size: 1.4rem;
+				letter-spacing: 0px;
+				line-height: 24px;
+			}
+		}
+
+		.ph-feed-meta{
+
+			width: 85%;
+			overflow: auto;
+			margin-left:15%;
+			display: block;
+			padding-top: 30px;
+			padding-bottom: 14px;
+			float: left;
+			border-bottom: 1px solid #F2F2F2;
+			span{
+				float: left;
+				font-size: 1.25rem;
+				display: inline-block;
+			}
+			.ph-feed-cat{
+				float: right;
+				margin-right:5%;
+				display: inline-block;
+				.ph-cat-box{
+					width: 1rem;
+					height: 1rem;
+					//background: #f0f;
+					display: inline-block;
+				}
+				span{
+					float: none;
+					text-transform: uppercase;
+					font-family: 'open_sanssemibold';
+					color:#444A59;
+				}
+			}
+
+		}
+	}
+	.ph-member-total{
+		display: block;
+		overflow: auto;
+		padding-bottom: 60px;
+		p{
+			float: right;
+		}
+		span{
+			float: none;
+			text-transform: uppercase;
+			font-family: 'open_sanssemibold';
+			color:#444A59;
+		}
+	}
+	.ph-members{
+		display: block;
+	}
+	.ph-member-head{
+		display: block;
+		margin-left: 30px;
+		margin-bottom: 30px;
+		img{
+			border-radius: 100px;
+			display: inline-block;
+		}
+		p{
+			display: inline-block;
+			margin-left: 0.5rem;
+		}
+		i{
+			padding-top: 1rem;
+			color:#444A59;
+		}
+	}
+
+}

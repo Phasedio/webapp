@@ -10,20 +10,16 @@ angular.module('webappApp')
       'link': '/feed'
     },
     {
+      'title': 'Tasks',
+      'link' : '/tasks'
+    },
+    {
       'title': 'Team',
       'link': '/'
     },
     {
       'title': 'Profile',
       'link' : '/profile'
-    },
-    // {
-    //   'title': 'Billing',
-    //   'link': '/billing'
-    // },
-    {
-      'title': 'Get App',
-      'link': '/getapp'
     }
 
     ];

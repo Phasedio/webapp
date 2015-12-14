@@ -47,6 +47,45 @@ $fa-font-path: "/bower_components/font-awesome/fonts";
   }
 }
 
+// fonts
+
+@font-face {
+    font-family: 'open_sanslight';
+    src: url('../assets/fonts/OpenSans-Light-webfont.eot');
+    src: url('../assets/fonts/OpenSans-Light-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../assets/fonts/OpenSans-Light-webfont.woff') format('woff'),
+         url('../assets/fonts/OpenSans-Light-webfont.ttf') format('truetype'),
+         url('../assets/fonts/OpenSans-Light-webfont.svg#open_sanslight') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'open_sansregular';
+    src: url('../assets/fonts/OpenSans-Regular-webfont.eot');
+    src: url('../assets/fonts/OpenSans-Regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../assets/fonts/OpenSans-Regular-webfont.woff') format('woff'),
+         url('../assets/fonts/OpenSans-Regular-webfont.ttf') format('truetype'),
+         url('../assets/fonts/OpenSans-Regular-webfont.svg#open_sansregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+@font-face {
+    font-family: 'open_sanssemibold';
+    src: url('../assets/fonts/OpenSans-Semibold-webfont.eot');
+    src: url('../assets/fonts/OpenSans-Semibold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../assets/fonts/OpenSans-Semibold-webfont.woff') format('woff'),
+         url('../assets/fonts/OpenSans-Semibold-webfont.ttf') format('truetype'),
+         url('../assets/fonts/OpenSans-Semibold-webfont.svg#open_sanssemibold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+
+
 /**
  * App-wide Styles
  */
@@ -58,8 +97,9 @@ $fa-font-path: "/bower_components/font-awesome/fonts";
     padding: 0.2em 0;
 }
 body{
-	background:#084D54;
+	background:#292B33;
 	color:#fff;
+  -webkit-font-smoothing:antialiased;
 }
 
 .button-phased{
@@ -95,62 +135,67 @@ body{
   }
 }
 
-
-.navbar{
-	height:80px;
-	padding: 1.4rem 1rem 1rem;
-	//background:transparent;
-  background: rgba(34,34,34,0.01);
-	border-color:transparent;
-	color:#fff;
-  margin-bottom:0;
-}
-.sub-navbar{
-  background:#359C8A;
-  border-color: #359C8A;
+.btn-phased-blue{
+  border-color:#292B33;
+  background: #292B33;
+  border-radius: 2px;
+  font-family: 'open_sansregular';
+  text-transform: uppercase;
+  font-size: 0.95rem;
   color:#fff;
-  margin-bottom:0;
+  letter-spacing: 0.92px;
+  line-height: 15px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
-.navbar-default{
-	.navbar-brand{
-		color:#fff;
-	}
-	.navbar-nav > .active > a{
-		background:#36BEA6;
-		color:#fff;
-	}
-	.navbar-nav > li > a{
-		color:#fff;
-		&:hover{
-			color:#36BEA6;
-
-		}
-	}
+// navbar
+.navbar{
+  height:60px;
+  margin-bottom:30px;
+  background: #1E1E24;
+  padding-top:0;
+  padding-bottom:0;
+  border-bottom: none;
+  border-radius: 0;
+  li{
+    font-family: 'open_sansregular';
+    text-transform: uppercase;
+    color:#fff;
+    font-size: 1.25rem;
+    letter-spacing: 0.92px;
+    line-height: 15px;
+  }
+  .active{
+    background: #888;
+    color: #fff;
+  }
 }
-
-.blur-effect {
-  /* Absolutely position it, but stretch it to all four corners, then put it just behind #search's z-index */
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-  left: 0px;
-  z-index: 99;
-
-  /* Pull the background 70px higher to the same place as #bg's */
-  background-position: center -70px;
-  filter: url('http://jordanhollinger.com/media/blur.svg');
-  -webkit-filter: blur(50px);
-  filter: blur(50px);
+.navbar-brand{
+  // padding-top: 5px;
+  // padding-bottom:5px;
 }
-.blur-holder{
-   /* Put this on top of the blurred layer */
-  //position: relative;
-  z-index: 100;
-  //padding: 20px;
-  //background: rgb(34,34,34); /* for IE */
-  //background: rgba(34,34,34,0.75);
+.navbar-nav > li > a {
+  padding-top: 17px;
+  color:#fff;
+  &:hover{
+
+  }
+}
+.nav > li > a:hover{
+  background-color: #000;
+}
+// Modal
+.modal-backdrop{
+  background: #fff;
+}
+.modal-dialog{
+  max-width: 700px;
+  width: 90%;
+}
+.modal-content{
+  padding:25px;
+  border-radius: 0;
 }
 
 // Component styles are injected through grunt
@@ -164,5 +209,18 @@ body{
 @import 'main/main.scss';
 @import 'profile/profile.scss';
 @import 'switchteam/switchteam.scss';
+@import 'tasks/tasks.scss';
+@import 'modal/modal.scss';
+// endinjector
+@import 'addcategory/addcategory.scss';
+@import 'billing/billing.scss';
+@import 'editcategory/editcategory.scss';
+@import 'feed/feed.scss';
+@import 'getapp/getapp.scss';
+@import 'login/login.scss';
+@import 'main/main.scss';
+@import 'profile/profile.scss';
+@import 'switchteam/switchteam.scss';
+@import 'tasks/tasks.scss';
 @import 'modal/modal.scss';
 // endinjector
