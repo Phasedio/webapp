@@ -145,7 +145,7 @@ section{
 }
 
 .task:nth-of-type(2n) {
-    background: rgba(0,0,0,0.2);
+    //background: rgba(0,0,0,0.2);
 }
 
 
@@ -255,6 +255,7 @@ p{
 
 .task{
   overflow: auto;
+  margin-bottom: 20px;
   .task-header{
     overflow: auto;
   }

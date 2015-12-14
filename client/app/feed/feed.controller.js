@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment) {
+  .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location) {
     ga('send', 'pageview', '/feed');
 
     // Background image
@@ -75,6 +75,15 @@ angular.module('webappApp')
       if (close) {
         $('#catModal').modal('toggle');
       }
+    }
+
+    $scope.moreCat = function(){
+      $('#catModal').modal('toggle');
+    }
+
+    $scope.addNewCat = function(){
+      $('#catModal').modal('toggle');
+      $location.path('/team/addcategory');
     }
 
   });
