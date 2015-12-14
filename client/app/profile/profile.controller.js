@@ -3,7 +3,7 @@
 angular.module('webappApp')
   .controller('ProfileCtrl', function ($scope,$routeParams, $http, stripe, Auth, Phased, FURL,amMoment) {
     ga('send', 'pageview', '/profile');
-    
+
     $scope.phased = Phased;
     $scope.team = Phased.team;
     $scope.viewType = Phased.viewType;
@@ -47,6 +47,10 @@ angular.module('webappApp')
     e.preventDefault()
     $(this).tab('show')
   });
+  // prevent Update
+  $scope.person = false;
+  if(profileUser == Auth.user.uid) $scope.person = true;
+  else $scope.person = false;
 
   // Update Account
   $scope.updateUser = function(update){
