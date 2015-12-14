@@ -1,8 +1,3 @@
-$ph-darkGreen : #084D54;
-$ph-midGreen : #359C8A;
-$ph-lightGreen : #36BEA6;
-$ph-offWhite : #D9E6C3;
-$ph-accent : #EE4B3A;
 
 select{
 	color:#333;
@@ -315,13 +310,13 @@ select{
 .feedarea{
 	margin-top: 150px;
 	font-family: 'open_sansregular';
-	color:#BDBDBD;
+	color:$textColor;
 	.no-padding{
 		padding:0!important;
 	}
 	h1,h2,h3,h4,h5,h6,.semi{
 		font-family: 'open_sanssemibold';
-		color:#444A59;
+		color:$boldText;
 		text-transform: uppercase;
 	}
 	p,li{
@@ -333,7 +328,7 @@ select{
 	.navbar{
 		height:60px;
 		margin-bottom:30px;
-		background: #1E1E24;
+		background: $darkBlack;
 		padding-top:0;
 		padding-bottom:0;
 		border-radius: 0;
@@ -381,13 +376,13 @@ select{
 			span:first-child{
 				font-family: 'open_sansregular';
 
-				color:#BDBDBD;
+				color:$textColor;
 				text-transform: uppercase;
 				float: left;
 			}
 			span:last-child{
 				font-family: 'open_sanssemibold';
-				color:#444A59;
+				color:$boldText;
 				text-transform: uppercase;
 				float: right;
 			}
@@ -409,7 +404,7 @@ select{
 			background: #fff;
 			outline: none;
 			border: none;
-			color:#BDBDBD;
+			color:$textColor;
 		}
 	}
 	.ph-form-extras{
@@ -418,7 +413,7 @@ select{
 		button[type="button"]{
 			background: none;
 			border: none;
-			color:#292B33;
+			color:$liteBlack;
 			float: left;
 			margin-top:1rem;
 			font-size: 2.3rem;
@@ -430,13 +425,13 @@ select{
 			font-size: 1.25rem;
 			letter-spacing: 0.92px;
 			line-height: 13px;
-			background: #FAC994;
-			border: #FAC994;
+			background: $accColor;
+			border: $accColor;
 			border-radius: 2px;
 			padding:12px 18px 12px 18px;
 			text-transform: uppercase;
 			float: right;
-			color:#292B33;
+			color:$liteBlack;
 		}
 	}
 	.ph-cat-list{
@@ -452,7 +447,7 @@ select{
 		.ph-feed-total{
 			float:right;
 			span{
-				color:#BDBDBD;
+				color:$textColor;
 			}
 		}
 	}
@@ -520,7 +515,7 @@ select{
 					float: none;
 					text-transform: uppercase;
 					font-family: 'open_sanssemibold';
-					color:#444A59;
+					color:$boldText;
 				}
 			}
 
@@ -537,7 +532,7 @@ select{
 			float: none;
 			text-transform: uppercase;
 			font-family: 'open_sanssemibold';
-			color:#444A59;
+			color:$boldText;
 		}
 	}
 	.ph-members{
@@ -557,7 +552,7 @@ select{
 		}
 		i{
 			padding-top: 1rem;
-			color:#444A59;
+			color:$boldText;
 		}
 	}
 

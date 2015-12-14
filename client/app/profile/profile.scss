@@ -21,12 +21,12 @@
   th{
     font-size: 12px;
     border: none!important;
-    color: #444A59;
+    color: $boldText;
   }
   td{
     font-size: 12px;
     border: none!important;
-    color:#BDBDBD;
+    color:$textColor;
   }
 }
 .transparent{
@@ -86,15 +86,15 @@
     display: inline-block;
     font-family: 'open_sansregular';
     text-transform: uppercase;
-    color: #B2B2B3;
+    color: $textColor;
     margin-right: 50px;
     font-size: 12px;
   }
   a{
-    color: #B2B2B3;
+    color: $textColor;
   }
   .active > a{
-    color: #585454!important;
+    color: $boldText!important;
   }
 }
 .profile-history{

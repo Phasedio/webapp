@@ -152,18 +152,18 @@ section{
 // DESIGNSS
 h1,h2,h3,h4,h5,h6,.semi{
   font-family: 'open_sanssemibold';
-  color:#444A59;
+  color:$boldText;
   text-transform: uppercase;
 }
 
 p{
   font-family: 'open_sansregular';
-  color:#BDBDBD;
+  color:$textColor;
   font-size: 12px;
 }
 .semi-bold{
   font-family: 'open_sanssemibold';
-  color:#B2B2B3;
+  color:$boldText;
   text-transform: uppercase;
 }
 .ph-card{
@@ -211,7 +211,7 @@ p{
 
     float: right;
     font-family: 'open_sanssemibold';
-    color:#B2B2B3;
+    color:$textColor;
     text-transform: uppercase;
     font-size: 12px;
     letter-spacing: 0.92px;
@@ -267,7 +267,7 @@ p{
   .task-main{
     width: 75%;
     h1:nth-child(2){
-      color:#B2B2B3;
+      color:$textColor;
     }
     p{
       margin-top: 1rem;
@@ -282,7 +282,7 @@ p{
     h1,img{
       display: inline-block;
     }
-    h1{ float: left;color:#B2B2B3;}
+    h1{ float: left;color:$textColor;}
     img{  float: right; border-radius: 100px;}
 
   }
