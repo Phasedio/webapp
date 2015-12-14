@@ -1184,12 +1184,13 @@ angular.module('webappApp')
         newMember : newMember,
         inviter : inviter
       }
-      registerAsync(doAddMember);
+      console.log(args);
+      registerAsync(doAddMember(args));
     }
 
     var doAddMember = function(args) {
       ga('send', 'event', 'Team', 'Member added');
-
+      console.log(args);
       var invited = args.newMember,
         inviter = args.inviter;
 

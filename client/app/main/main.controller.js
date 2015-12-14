@@ -37,7 +37,7 @@ angular.module('webappApp')
     }
 
     $scope.addMembers = function(newMember) {
-      PhasedProvider.addMember(newMember, $scope.team.members[Auth.user.uid]);
+      Phased.addMember(newMember, $scope.team.members[Auth.user.uid]);
       $('#myModal').modal('toggle');
     };
 
