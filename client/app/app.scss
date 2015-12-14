@@ -47,6 +47,20 @@ $fa-font-path: "/bower_components/font-awesome/fonts";
   }
 }
 
+
+// Variables
+
+// Colors
+
+$darkBlack :#1e1e24;
+$liteBlack : #292b33;
+$accColor : #fac994;
+$textColor : #8a8a8a;
+$boldText : #444A59;
+
+
+
+
 // fonts
 
 @font-face {
@@ -97,7 +111,7 @@ $fa-font-path: "/bower_components/font-awesome/fonts";
     padding: 0.2em 0;
 }
 body{
-	background:#292B33;
+	background:$liteBlack;
 	color:#fff;
   -webkit-font-smoothing:antialiased;
 }
@@ -136,8 +150,8 @@ body{
 }
 
 .btn-phased-blue{
-  border-color:#292B33;
-  background: #292B33;
+  border-color:$liteBlack;
+  background: $liteBlack;
   border-radius: 2px;
   font-family: 'open_sansregular';
   text-transform: uppercase;
@@ -153,7 +167,7 @@ body{
 .navbar{
   height:60px;
   margin-bottom:30px;
-  background: #1E1E24;
+  background: $darkBlack;
   padding-top:0;
   padding-bottom:0;
   border-bottom: none;
