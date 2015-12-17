@@ -349,8 +349,19 @@ angular.module('webappApp')
           var keys = Object.keys(data);
           //
           for (var i = 0; i < keys.length; i++){
-            if (WATCH_TASK_STREAM)
-              PhasedProvider.team.history.push(data[keys[i]]);
+            if (WATCH_TASK_STREAM) {
+              // if we're watching the team's task stream, 
+              // add this item only if it's not already in the stream
+              var addToHistory = true;
+              for (var j in PhasedProvider.team.history) {
+                // check time and user (can't use obj equiv bc angular adds properties)
+                if (PhasedProvider.team.history[j].time == data[keys[i]].time &&
+                  PhasedProvider.team.history[j].user == data[keys[i]].user) {
+                  addToHistory = false;
+                }
+              }
+              if (addToHistory) PhasedProvider.team.history.push(data[keys[i]]);
+            }
             if (getHistoryFor == id)
               PhasedProvider.team.members[id].history.push(data[keys[i]]);
           }
