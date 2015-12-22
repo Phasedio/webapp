@@ -5,24 +5,29 @@ angular.module('webappApp')
     ga('send', 'pageview', '/feed');
 
     // Background image
-  var monImage =  "weekdayPhotos/mon.jpg";
-  var tuesImage =  "weekdayPhotos/tues.jpg";
-  var wedImage =  "weekdayPhotos/wed.jpg";
-  var thursImage =  "weekdayPhotos/thurs.jpg";
-  var friImage = "weekdayPhotos/fri.jpg";
-  var satImage = "weekdayPhotos/sat.jpg";
-  var sunImage = "weekdayPhotos/sun.jpg";
+    var monImage =  "weekdayPhotos/mon.jpg";
+    var tuesImage =  "weekdayPhotos/tues.jpg";
+    var wedImage =  "weekdayPhotos/wed.jpg";
+    var thursImage =  "weekdayPhotos/thurs.jpg";
+    var friImage = "weekdayPhotos/fri.jpg";
+    var satImage = "weekdayPhotos/sat.jpg";
+    var sunImage = "weekdayPhotos/sun.jpg";
 
-  var d=new Date();
+    var d=new Date();
 
-  var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
-  $scope.dayImage = backgroundImage[d.getDay()];
+    var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
+    $scope.dayImage = backgroundImage[d.getDay()];
 
     $scope.selectedCategory = '';
 
     $scope.viewType = Phased.viewType;
     $scope.myID = Auth.user.uid;
     $scope.team = Phased.team;
+    $scope.activeStream = Phased.assignments.to_me;
+    $scope.taskPriorities = Phased.TASK_PRIORITIES; // in new task modal
+    $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
+    $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
+    $scope.taskStatusID = Phased.TASK_STATUS_ID;
 
     $scope.$on('Phased:history', function() {
       $scope.$apply();
@@ -30,6 +35,8 @@ angular.module('webappApp')
 
     // init
     Phased.watchTaskStream();
+    // tell Phased to watch assignments
+    Phased.watchAssignments();
 
     $scope.addTask = function(update) {
       ga('send', 'event', 'Update', 'submited');
@@ -83,6 +90,19 @@ angular.module('webappApp')
     $scope.addNewCat = function(){
       $('#catModal').modal('toggle');
       $location.path('/team/addcategory');
+    }
+
+    $scope.startTask = function(task) {
+      if (!task.user || task.unassigned)
+        Phased.takeTask(task.key);
+      Phased.activateTask(task.key);
+
+      $scope.activeStream = Phased.assignments.to_me;
+      $scope.activeStatusFilter = Phased.TASK_STATUS_ID.ASSIGNED;
+    }
+    
+    $scope.setTaskCompleted = function(assignmentID) {
+      Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
     }
 
   });
