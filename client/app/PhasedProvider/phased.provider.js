@@ -350,7 +350,7 @@ angular.module('webappApp')
           //
           for (var i = 0; i < keys.length; i++){
             if (WATCH_TASK_STREAM) {
-              // if we're watching the team's task stream, 
+              // if we're watching the team's task stream,
               // add this item only if it's not already in the stream
               var addToHistory = true;
               for (var j in PhasedProvider.team.history) {
@@ -1209,6 +1209,8 @@ angular.module('webappApp')
       var invited = args.newMember,
         inviter = args.inviter;
 
+        invited.email = invited.email.toLowerCase(); // Change text to lowercase regardless of user input.
+        
       //Brian's better add member function
       // find if memeber is already in db
       // console.log(names.email);
