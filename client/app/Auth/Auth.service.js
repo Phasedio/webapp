@@ -53,7 +53,7 @@ angular.module('webappApp')
             },
             register : function(user) {
                 //team = user.team;
-
+                user.email = user.email.toLowerCase();
                 return auth.$createUser({email: user.email, password: user.password}).then(function() {
 
                     return Auth.login(user);
@@ -155,7 +155,7 @@ angular.module('webappApp')
             // executes all registered callbacks after auth is complete
             // this is very important for making other providers that rely on Auth (currently, only Phased) to run
             for (var i in doAfterAuth) {
-                doAfterAuth[i](Auth); 
+                doAfterAuth[i](Auth);
             }
         });
       }
