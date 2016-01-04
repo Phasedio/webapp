@@ -1,5 +1,5 @@
 <style>
-	.hero-img {
+	/*.hero-img {
 		background:  linear-gradient(
 			rgba(0, 0, 0, 0.25),
 			rgba(0, 0, 0, 0.25)
@@ -8,7 +8,7 @@
 		-moz-background-size: cover;
 		-o-background-size: cover;
 		background-size: cover;
-	}
+	}*/
 </style>
 <div ng-include="'components/navbar/navbar.html'"></div>
 <section class="hero-img">
@@ -18,30 +18,25 @@
 
 	<div class="container-fluid">
 		<div class="row">
-			<div class="col-xs-12 col-md-4 col-lg-3">
+			<div class="col-xs-12 col-md-4 col-lg-6">
 				<div class="ph-card ph-team">
-					<div class="ph-team-info">
-						<p class="semi">team : {{team.name}}</p>
-					</div>
-					<!-- <div class="ph-team-stat">
-						<ul>
-							<li><span>status updates</span> <span>{{team.history.length}}</span></li>
-							<li><span>members</span> <span>{{team.teamLength}}</span></li>
-							<li><span>categories</span> <span>{{team.categorySelect.length}}</span></li>
-						</ul>
-					</div> -->
+
 					<div class="ph-tasks">
 						<p class="semi">
 							tasks
 						</p>
-						<div class="ph-task" ng-repeat="assignment in activeStream | orderObjectBy : 'time'">
-							<h6>{{assignment.name}} - <small>{{taskStatuses[assignment.status].name}}</small></h6>
-							<div class="ph-task-btns">
+						<div class="ph-task" ng-repeat="assignment in activeStream  | filterTaskByStatus : activeStatusFilter | orderObjectBy : 'time'">
+							<p>{{assignment.name}} - <small>{{taskStatuses[assignment.status].name}}</small></p>
+							<!-- <div class="ph-task-btns">
 								<button class="btn btn-phased-blue" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)">Start</button>
 			          <button class="btn btn-phased-blue" ng-if="assignment.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(assignment.key)">complete</button>
-							</div>
+							</div> -->
 
 						</div>
+						<div class="ph-task blank" ng-repeat="item in taskTable">
+							<textarea></textarea>
+						</div>
+						<a class="btn btn-phased-blue btn-block" href="/tasks">Add New</a>
 					</div>
 				</div>
 			</div>

@@ -1,6 +1,96 @@
 'use strict';
 
 angular.module('webappApp')
+  /**
+  * filters tasks by status
+  *
+  * (preface statusID with ! to filter out statuses)
+  */
+  .filter('filterTaskByStatus', function() {
+    return function(input, statusID) {
+      if (!input) return input;
+      if (!statusID) return input;
+      var expected = ('' + statusID).toLowerCase(); // compare lowercase strings
+      var result = {}; // output obj
+
+      if (expected[0] === '!') {
+        expected = expected.slice(1); // remove leading !
+        // negative filter -- filter out tasks with status
+        angular.forEach(input, function(value, key) {
+          var actual = ('' + value.status).toLowerCase(); // current task's status
+          if (actual !== expected) {
+            result[key] = value; // preserves index
+          }
+        });
+      } else {
+        // only include tasks with status
+        angular.forEach(input, function(value, key) {
+          var actual = ('' + value.status).toLowerCase(); // current task's status
+          if (actual === expected) {
+            result[key] = value; // preserves index
+          }
+        });
+      }
+
+      return result;
+    }
+  })
+  /**
+  * filters tasks by category
+  *
+  * (preface statusID with ! to filter out statuses)
+  */
+  .filter('filterTaskByCategory', function() {
+    return function(input, catID) {
+      if (!input) return input;
+      if (!catID) return input;
+      var expected = ('' + catID).toLowerCase(); // compare lowercase strings
+      var result = {}; // output obj
+
+      if (expected[0] === '!') {
+        expected = expected.slice(1); // remove leading !
+        // negative filter -- filter out tasks with cat
+        angular.forEach(input, function(value, key) {
+          var actual = ('' + value.cat).toLowerCase(); // current task's cat
+          if (actual !== expected) {
+            result[key] = value; // preserves index
+          }
+        });
+      } else {
+        // only include tasks with cat
+        angular.forEach(input, function(value, key) {
+          var actual = ('' + value.cat).toLowerCase(); // current task's cat
+          if (actual === expected) {
+            result[key] = value; // preserves index
+          }
+        });
+      }
+
+      return result;
+    }
+  })
+  /**
+  *
+  * allows ordering an object as if it were an array,
+  * at the cost of being able to access its original index
+  * Adds a property 'key' with the original index to
+  * address this
+  *
+  */
+  .filter('orderObjectBy', function() {
+    return function(items, field, reverse) {
+      var filtered = [];
+      for (var i in items) {
+        items[i].key = i;
+        filtered.push(items[i]);
+      }
+      filtered.sort(function (a, b) {
+        return (a[field] > b[field] ? 1 : -1);
+      });
+      if(reverse) filtered.reverse();
+      return filtered;
+    };
+  })
   .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location) {
     ga('send', 'pageview', '/feed');
 
@@ -24,10 +114,15 @@ angular.module('webappApp')
     $scope.myID = Auth.user.uid;
     $scope.team = Phased.team;
     $scope.activeStream = Phased.assignments.to_me;
+    $scope.activeStatusFilter = '!1'; // not completed tasks
     $scope.taskPriorities = Phased.TASK_PRIORITIES; // in new task modal
     $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
     $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
+
+
+    //Print blank lines in for task area
+    $scope.taskTable = [1,2,3,4,5];
 
     $scope.$on('Phased:history', function() {
       $scope.$apply();
@@ -100,7 +195,7 @@ angular.module('webappApp')
       $scope.activeStream = Phased.assignments.to_me;
       $scope.activeStatusFilter = Phased.TASK_STATUS_ID.ASSIGNED;
     }
-    
+
     $scope.setTaskCompleted = function(assignmentID) {
       Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
     }
