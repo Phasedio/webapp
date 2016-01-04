@@ -71,7 +71,7 @@
     </div>
 
     <!-- TASK STREAM -->
-    <div class="col-xs-12 task-stream">
+    <div class="col-xs-8 task-stream">
       <!-- <div class="task ph-card" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" style="border-right: 1em solid {{team.categoryObj[assignment.cat].color}};">
         <div class="task-header">
           <div class="task-main">
@@ -117,7 +117,7 @@
 								<img src="{{team.members[assignment.user].pic}}" width="20px" height="20px">
 							</td>
 							<td>
-								<button type="button" class="btn btn-phased-blue" name="button" ng-click="broadcastTask(assignment)"> post as status  <i class="fa fa-lg fa-retweet"></i></button>
+								<button type="button" class="btn btn-phased-blue" name="button" ng-click="broadcastTask(assignment)">    <i class="fa fa-lg fa-retweet"></i></button>
 							</td>
 						</tr>
 
@@ -125,6 +125,20 @@
 				</table>
 			</div>
     </div>
+		<div class="col-xs-4">
+			<div class="task ph-card">
+				<h1>Task name here</h1>
+				<p>Due: 01.15.2016</p>
+				<p>Assigned: Brian</p>
+				<p>
+					Category: Building Features
+				</p>
+				<button type="button" class="btn btn-phased-blue btn-block" name="button" >  post as status  <i class="fa fa-lg fa-retweet"></i></button>
+				<button type="button" class="btn btn-phased-blue btn-block" name="button" >  complete  <i class="fa fa-lg fa-check-circle-o"></i></button>
+				<button type="button" class="btn btn-phased-blue btn-block" name="button" >  archive  <i class="fa fa-lg fa-trash-o"></i></button>
+
+			</div>
+		</div>
 
   </div>
 </section>
@@ -169,3 +183,4 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+<toaster-container toaster-options="{'time-out': 2000, 'close-button':true, 'animation-class': 'toast-top-right'}"></toaster-container>

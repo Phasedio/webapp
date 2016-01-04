@@ -306,6 +306,7 @@ angular.module('webappApp')
     //Broadcasts that user is working on Task
     $scope.broadcastTask = function(task){
       Phased.activateTask(task.key);
+       toaster.pop('success', "Success!", "Your task was posted");
     }
 
     /**
