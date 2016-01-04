@@ -74,7 +74,7 @@
                       {{$parent.team.categoryObj[item.cat].name}}
                     </td>
                     <td>
-                      <span am-time-ago="item.time"></span>
+                      <span>{{item.time | amDateFormat:'MM.DD.YYYY HH:mm:ss'}}</span>
                     </td>
                   </tr>
                 </tbody>
