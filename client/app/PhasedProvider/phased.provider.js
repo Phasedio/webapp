@@ -338,7 +338,7 @@ angular.module('webappApp')
     *
     */
     var getMemberHistory = function(id) {
-      var endTime = new Date().getTime() - 86400000;
+      var endTime = new Date().getTime() - 31556926000;
       // get /team/[teamname]/all/[memberID], ordered by time, once
       // push to local team.history
       FBRef.child('team/' + PhasedProvider.team.name + '/all/' + id).orderByChild('time').startAt(endTime).once('value',function(data) {
@@ -1210,7 +1210,7 @@ angular.module('webappApp')
         inviter = args.inviter;
 
         invited.email = invited.email.toLowerCase(); // Change text to lowercase regardless of user input.
-        
+
       //Brian's better add member function
       // find if memeber is already in db
       // console.log(names.email);
