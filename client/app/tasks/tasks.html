@@ -71,7 +71,7 @@
     </div>
 
     <!-- TASK STREAM -->
-    <div class="col-xs-8 task-stream">
+    <div class="task-stream" ng-class="tasklistSize">
       <!-- <div class="task ph-card" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" style="border-right: 1em solid {{team.categoryObj[assignment.cat].color}};">
         <div class="task-header">
           <div class="task-main">
@@ -106,14 +106,14 @@
 				<button class="btn btn-phased-blue" ng-click="addAssignmentModal();">New task</button>
 				<table class="table table-hover">
 					<tbody>
-						<tr ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'">
-							<td >
+						<tr ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" >
+							<td ng-click="selectTask(assignment)">
 								{{assignment.name}} <small>{{taskStatuses[assignment.status].name}}</small>
 							</td>
-							<td>
+							<td ng-click="selectTask(assignment)">
 								Due: {{assignment.deadline | date : 'short'}}
 							</td>
-							<td>
+							<td ng-click="selectTask(assignment)">
 								<img src="{{team.members[assignment.user].pic}}" width="20px" height="20px">
 							</td>
 							<td>
@@ -125,7 +125,7 @@
 				</table>
 			</div>
     </div>
-		<div class="col-xs-4">
+		<div class="" ng-class="taskDiscript">
 			<div class="task ph-card">
 				<h1>Task name here</h1>
 				<p>Due: 01.15.2016</p>

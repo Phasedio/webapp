@@ -133,6 +133,26 @@ angular.module('webappApp')
 
 
 
+    //Move me!!
+    //=====================
+    //When user clicks on task they can see more information about said task
+    $scope.tasklistSize = 'col-xs-12';//set the init size of task list
+    $scope.taskDiscript = 'hidden'; //hide the task discription till the user does something
+    $scope.taskInfo = {}; // Task information for the discription area
+
+
+    $scope.selectTask = function(task){
+      $scope.taskInfo = task; // assign the task information to the scope;
+      // if the task list is still 12 cols open up the discriptor for the user
+      if($scope.tasklistSize == 'col-xs-12'){
+        $scope.tasklistSize = 'col-xs-8';
+        $scope.taskDiscript = 'col-xs-4';
+      }
+
+    }
+
+    //=====================
+
     $scope.today = new Date().getTime(); // min date for deadline datepicker
 
     $scope.phased = Phased;
