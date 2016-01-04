@@ -1,5 +1,5 @@
 <style>
-.hero-img {
+/*.hero-img {
 	background:  linear-gradient(
 		rgba(0, 0, 0, 0.25),
 		rgba(0, 0, 0, 0.25)
@@ -8,7 +8,7 @@
 	-moz-background-size: cover;
 	-o-background-size: cover;
 	background-size: cover;
-}
+}*/
 </style>
 
 
@@ -20,7 +20,7 @@
 <section class="container">
   <div class="row">
 
-    <div class="col-xs-4">
+    <div class="col-xs-3 visible-xs">
       <div class="task-action-center ph-card">
         <!-- Team image -->
         <div class="task-action-teamImg">
@@ -71,12 +71,12 @@
     </div>
 
     <!-- TASK STREAM -->
-    <div class="col-xs-8 task-stream">
-      <div class="task ph-card" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" style="border-right: 1em solid {{team.categoryObj[assignment.cat].color}};">
+    <div class="col-xs-12 task-stream">
+      <!-- <div class="task ph-card" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" style="border-right: 1em solid {{team.categoryObj[assignment.cat].color}};">
         <div class="task-header">
           <div class="task-main">
-            <h1>{{assignment.name}}</h1>
-            <h1>{{taskStatuses[assignment.status].name}}</h1>
+            <h1>{{assignment.name}} <small>{{taskStatuses[assignment.status].name}}</small></h1>
+
           </div>
 
           <div class="task-second" ng-if="assignment.user">
@@ -101,8 +101,31 @@
           <button class="btn btn-phased-blue" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(assignment.key);">archive</button>
           <button class="btn btn-phased-blue" ng-if="activeStreamName == 'archive.all' || activeStreamName == 'archive.to_me'" ng-click="moveFromArchive(assignment.key);">unarchive</button>
         </div>
-      </div>
+      </div> -->
+			<div class="task ph-card">
+				<button class="btn btn-phased-blue" ng-click="addAssignmentModal();">New task</button>
+				<table class="table table-hover">
+					<tbody>
+						<tr ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'">
+							<td >
+								{{assignment.name}} <small>{{taskStatuses[assignment.status].name}}</small>
+							</td>
+							<td>
+								Due: {{assignment.deadline | date : 'short'}}
+							</td>
+							<td>
+								<img src="{{team.members[assignment.user].pic}}" width="20px" height="20px">
+							</td>
+							<td>
+								<button type="button" class="btn btn-phased-blue" name="button" ng-click="broadcastTask(assignment)"> post as status  <i class="fa fa-lg fa-retweet"></i></button>
+							</td>
+						</tr>
+
+					</tbody>
+				</table>
+			</div>
     </div>
+
   </div>
 </section>
 

@@ -303,6 +303,11 @@ angular.module('webappApp')
       Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
     }
 
+    //Broadcasts that user is working on Task
+    $scope.broadcastTask = function(task){
+      Phased.activateTask(task.key);
+    }
+
     /**
     * pop open add task modal
     */
