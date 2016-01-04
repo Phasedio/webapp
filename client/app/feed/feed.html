@@ -70,7 +70,7 @@
 						</div>
 					</div>
 					<div class="ph-feed-roll">
-						<div class="ph-update" ng-repeat="item in team.history | orderBy : 'time':true ">
+						<div class="ph-update" ng-repeat="item in team.history | orderBy : 'time':true | limitTo :100">
 							<div class="ph-feed-head">
 								<img src="{{$parent.team.members[item.user].pic}}" width="40px" height="40px">
 							</div>
