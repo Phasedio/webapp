@@ -116,6 +116,7 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 
+
 .button-phased{
   border-color:#084D54;
   background:transparent;
@@ -169,6 +170,14 @@ body{
   }
 }
 
+
+.btn-circle{
+
+  border-radius: 1000px;
+  padding-left: 6px; // for phased-blue buttons
+  padding-right: 6px; // for phased-blue buttons
+
+}
 // navbar
 .navbar{
   height:60px;

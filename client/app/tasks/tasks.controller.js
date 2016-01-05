@@ -145,8 +145,8 @@ angular.module('webappApp')
       $scope.taskInfo = task; // assign the task information to the scope;
       // if the task list is still 12 cols open up the discriptor for the user
       if($scope.tasklistSize == 'col-xs-12'){
-        $scope.tasklistSize = 'col-xs-8';
-        $scope.taskDiscript = 'col-xs-4';
+        $scope.tasklistSize = 'col-xs-6';
+        $scope.taskDiscript = 'col-xs-6';
       }
 
     }
@@ -327,6 +327,13 @@ angular.module('webappApp')
     $scope.broadcastTask = function(task){
       Phased.activateTask(task.key);
        toaster.pop('success', "Success!", "Your task was posted");
+    }
+
+    //These should be moved in to the provider.
+    // Edit name
+    $scope.taskEditName = function(taskID,newName){
+      console.log(newName);
+      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).child("name").set(newName);
     }
 
     /**

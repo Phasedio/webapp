@@ -254,47 +254,55 @@ p{
 }
 
 .task{
-  overflow: auto;
-  margin-bottom: 20px;
-  .task-header{
+  td{
     overflow: auto;
   }
-  .task-main,.task-second{
+  img{
+    border-radius: 1000px;
+  }
+  .task-meta{
+    float: right;
+    div{
+      display: inline-block;
+      margin-left: 5px;
+    }
 
-    display: inline-block;
-    float: left;
   }
-  .task-main{
-    width: 75%;
-    h1:nth-child(2){
-      color:$textColor;
+
+
+  .task-quick-action{
+    .fa-play{
+      width: 13px;
     }
-    p{
-      margin-top: 1rem;
-    }
-  }
-  .task-second{
-    width: 25%;
   }
   .task-title{
-    overflow: auto;
-    margin-bottom: 1.5rem;
-    h1,img{
-      display: inline-block;
-    }
-    h1{ float: left;color:$textColor;}
-    img{  float: right; border-radius: 100px;}
-
-  }
-  h1{
+    width: 100%;
     font-family: "open_sanslight",sans-serif;
     text-transform: none;
-    line-height: 46px;
+    line-height: 30px;
     color: #595959;
     margin: 0;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    outline: none;
+    resize: none;
+    transition: all 0.3s;
+    &:hover{
+      border: 1px solid $textColor;
+    }
   }
 
-
+  .task-header{
+    ul{
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    li{
+      display: inline-block;
+      margin-right: 5px;
+    }
+  }
   .task-details{
     margin-top: 1rem;
     margin-bottom:1rem;

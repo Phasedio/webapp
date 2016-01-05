@@ -102,12 +102,12 @@
           <button class="btn btn-phased-blue" ng-if="activeStreamName == 'archive.all' || activeStreamName == 'archive.to_me'" ng-click="moveFromArchive(assignment.key);">unarchive</button>
         </div>
       </div> -->
-			<div class="task ph-card task-list">
+			<div class=" ph-card task-list">
         <div class="task-filter">
           <button class="btn btn-phased-blue add-new-task" ng-click="addAssignmentModal();">New task</button>
           <div class="styled-select">
             <select ng-model="filterView" ng-change="setActiveStream(filterView)">
-              <option value="assignments.to_me">assigned to me</option>
+              <option value="assignments.to_me" selected>assigned to me</option>
               <option value="assignments.by_me">my created tasks</option>
               <option value="assignments.unassigned">unassigned tasks</option>
               <option value="assignments.all">closed tasks</option>
@@ -122,18 +122,25 @@
         </select> -->
 				<table class="table table-hover">
 					<tbody>
-						<tr ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" >
+						<tr class="task" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" >
 							<td ng-click="selectTask(assignment)">
 								{{assignment.name}} <small>{{taskStatuses[assignment.status].name}}</small>
 							</td>
-							<td ng-click="selectTask(assignment)">
-								Due: {{assignment.deadline | date : 'short'}}
-							</td>
-							<td ng-click="selectTask(assignment)">
-								<img src="{{team.members[assignment.user].pic}}" width="20px" height="20px">
-							</td>
+
 							<td>
-								<button type="button" class="btn btn-phased-blue" name="button" ng-click="broadcastTask(assignment)">    <i class="fa fa-lg fa-retweet"></i></button>
+                <div class="task-meta">
+                  <div class="task-due" ng-click="selectTask(assignment)">
+                    {{assignment.deadline | date : 'd MMM yy'}}
+                  </div>
+                  <div class="task-assigned" ng-click="selectTask(assignment)">
+                    <img src="{{team.members[assignment.user].pic}}" width="25px" height="25px">
+                  </div>
+                  <div class="task-quick-action">
+                    <button type="button" class="btn btn-phased-blue btn-circle" name="button" ng-if="assignment.status != taskStatusID.ASSIGNED" ng-click="broadcastTask(assignment)"><i class="fa fa-lg fa-share"></i></button>
+                    <button class="btn btn-phased-blue btn-circle" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)"><i class="fa fa-play" ></i></button>
+                  </div>
+                </div>
+
 							</td>
 						</tr>
 
@@ -143,9 +150,17 @@
     </div>
 		<div class="" ng-class="taskDiscript">
 			<div class="task ph-card">
-				<h1>{{taskInfo.name}}</h1>
-				<p class="semi-bold" ng-if="taskInfo.deadline">Due: {{taskInfo.deadline | date : 'short'}}</p>
-				<p>Assigned to: {{team.members[taskInfo.user].name}}</p>
+        <div class="task-header">
+          <ul>
+            <li><p>Assigned <img src="{{team.members[taskInfo.user].pic}}" width="35px" height="35px"></p></li>
+            <li><p ng-if="taskInfo.deadline">Due: {{taskInfo.deadline | date : 'short'}}</p></li>
+
+          </ul>
+
+        </div>
+				<textarea class="task-title h3" ng-model="taskInfo.name" ng-blur="taskEditName(taskInfo,taskInfo.name)"></textarea>
+
+
         <p>Assigned by: {{team.members[taskInfo.assigned_by].name}}</p>
 				<p>
 					Category: {{team.categoryObj[taskInfo.cat].name}}
@@ -154,7 +169,7 @@
           Status: {{taskStatuses[taskInfo.status].name}}
         </p>
         <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
-          <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != taskStatusID.ASSIGNED">  post as status  <i class="fa fa-lg fa-retweet"></i></button>
+          <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != taskStatusID.ASSIGNED">  post as status  <i class="fa fa-lg fa-share"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status == taskStatusID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(taskInfo.key)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button>
