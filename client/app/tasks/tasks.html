@@ -160,6 +160,7 @@
         </div>
 				<textarea class="task-title h3" ng-model="taskInfo.name" ng-blur="taskEditName(taskInfo,taskInfo.name)"></textarea>
 
+        <textarea class="task-title" ng-model="taskInfo.disc" ng-blur="taskEditDisc(taskInfo,taskInfo.disc)" placeholder="Enter discription..."></textarea>
 
         <p>Assigned by: {{team.members[taskInfo.assigned_by].name}}</p>
 				<p>

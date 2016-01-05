@@ -335,6 +335,11 @@ angular.module('webappApp')
       console.log(newName);
       FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).child("name").set(newName);
     }
+    //add discription
+    $scope.taskEditDisc = function(taskID,disc){
+      
+      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).update({"disc" : disc});
+    }
 
     /**
     * pop open add task modal
