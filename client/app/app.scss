@@ -151,16 +151,22 @@ body{
 
 .btn-phased-blue{
   border-color:$liteBlack;
-  background: $liteBlack;
+  color:$liteBlack;
+  background: transparent;
   border-radius: 2px;
   font-family: 'open_sansregular';
   text-transform: uppercase;
   font-size: 0.95rem;
-  color:#fff;
+
   letter-spacing: 0.92px;
   line-height: 15px;
   padding-left: 20px;
   padding-right: 20px;
+  transition: all 0.3s;
+  &:hover{
+    color:#fff;
+    background: $liteBlack;
+  }
 }
 
 // navbar

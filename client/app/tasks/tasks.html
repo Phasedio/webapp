@@ -102,8 +102,24 @@
           <button class="btn btn-phased-blue" ng-if="activeStreamName == 'archive.all' || activeStreamName == 'archive.to_me'" ng-click="moveFromArchive(assignment.key);">unarchive</button>
         </div>
       </div> -->
-			<div class="task ph-card">
-				<button class="btn btn-phased-blue" ng-click="addAssignmentModal();">New task</button>
+			<div class="task ph-card task-list">
+        <div class="task-filter">
+          <button class="btn btn-phased-blue add-new-task" ng-click="addAssignmentModal();">New task</button>
+          <div class="styled-select">
+            <select ng-model="filterView" ng-change="setActiveStream(filterView)">
+              <option value="assignments.to_me">assigned to me</option>
+              <option value="assignments.by_me">my created tasks</option>
+              <option value="assignments.unassigned">unassigned tasks</option>
+              <option value="assignments.all">closed tasks</option>
+              <option value="assignments.all">all</option>
+              <option value="archive.all">archived tasks</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- <select>
+          <
+        </select> -->
 				<table class="table table-hover">
 					<tbody>
 						<tr ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" >
@@ -127,15 +143,26 @@
     </div>
 		<div class="" ng-class="taskDiscript">
 			<div class="task ph-card">
-				<h1>Task name here</h1>
-				<p>Due: 01.15.2016</p>
-				<p>Assigned: Brian</p>
+				<h1>{{taskInfo.name}}</h1>
+				<p class="semi-bold" ng-if="taskInfo.deadline">Due: {{taskInfo.deadline | date : 'short'}}</p>
+				<p>Assigned to: {{team.members[taskInfo.user].name}}</p>
+        <p>Assigned by: {{team.members[taskInfo.assigned_by].name}}</p>
 				<p>
-					Category: Building Features
+					Category: {{team.categoryObj[taskInfo.cat].name}}
 				</p>
-				<button type="button" class="btn btn-phased-blue btn-block" name="button" >  post as status  <i class="fa fa-lg fa-retweet"></i></button>
-				<button type="button" class="btn btn-phased-blue btn-block" name="button" >  complete  <i class="fa fa-lg fa-check-circle-o"></i></button>
-				<button type="button" class="btn btn-phased-blue btn-block" name="button" >  archive  <i class="fa fa-lg fa-trash-o"></i></button>
+        <p>
+          Status: {{taskStatuses[taskInfo.status].name}}
+        </p>
+        <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
+          <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != taskStatusID.ASSIGNED">  post as status  <i class="fa fa-lg fa-retweet"></i></button>
+          <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status == taskStatusID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
+          <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(taskInfo.key)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
+          <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button>
+          <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName == 'archive.all' || activeStreamName == 'archive.to_me'" ng-click="moveFromArchive(taskInfo.key);">unarchive</button>
+        </div>
+
+
+
 
 			</div>
 		</div>
