@@ -178,6 +178,14 @@ body{
   padding-right: 6px; // for phased-blue buttons
 
 }
+.btn-transparent{
+  background: transparent;
+  border: none;
+  outline: none;
+  &:focus{
+    outline: none;
+  }
+}
 // navbar
 .navbar{
   height:60px;

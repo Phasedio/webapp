@@ -125,6 +125,7 @@ angular.module('webappApp')
 
     var d=new Date();
     console.log(d.getDay());
+    $('.dropdown-toggle').dropdown()
 
 
 
@@ -164,6 +165,7 @@ angular.module('webappApp')
     $scope.activeStreamName = 'assignments.to_me';
     $scope.activeStatusFilter = '!1'; // not completed tasks
     $scope.activeCategoryFilter;
+    $scope.filterView = $scope.activeStreamName;//for the select filter
 
     /**
     *
@@ -337,8 +339,51 @@ angular.module('webappApp')
     }
     //add discription
     $scope.taskEditDisc = function(taskID,disc){
-      
+
       FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).update({"disc" : disc});
+    }
+
+    //Edit assigned user
+    $scope.taskEditAssigned = function(taskObj,userID){
+      var task = JSON.stringify(taskObj);
+      task = JSON.parse(task);
+      console.log(task);
+      console.log(task.assignee);
+      if(task.assignee){
+        console.log('yo');
+        //Task is assigned to a person.
+        //Take user id and change it to new user
+        console.log(task.assignee);
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"assignee" : userID,"user":userID});
+        //remove from past assigened's 'to' lookup
+        console.log(task.assignee);
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('to').child(task.assignee).orderByValue().equalTo(task.key).once('value',function(snap){
+
+          var x = snap.key();
+          console.log(x);
+          FBRef.child("team").child(Auth.currentTeam).child('assignments').child('to').child(task.assignee).child(x).remove();
+        });
+        //Change 'to' look up table
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('to').child(userID).push(task.key);
+
+        //change the assigned_by to current user
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"assigned_by" : Auth.user.uid});
+        //Remove assigned_by user 'by' lookup
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(task.assigned_by).orderByValue().equalTo(task.key).once('value',function(snap){
+          var x = snap.key();
+          FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(task.assigned_by).child(x).remove();
+        });
+        //done
+      }else if(task.unassigned){
+        //Task is unassigned!
+        //Take user id and change it to new user
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"assignee" : userID});
+        //change the assigned_by to current user
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"assigned_by" : Auth.user.uid});
+        //set unassigned to false
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"unassigned" : false});
+        //done
+      }
     }
 
     /**

@@ -107,7 +107,7 @@
           <button class="btn btn-phased-blue add-new-task" ng-click="addAssignmentModal();">New task</button>
           <div class="styled-select">
             <select ng-model="filterView" ng-change="setActiveStream(filterView)">
-              <option value="assignments.to_me" selected>assigned to me</option>
+              <option value="assignments.to_me" >assigned to me</option>
               <option value="assignments.by_me">my created tasks</option>
               <option value="assignments.unassigned">unassigned tasks</option>
               <option value="assignments.all">closed tasks</option>
@@ -133,7 +133,7 @@
                     {{assignment.deadline | date : 'd MMM yy'}}
                   </div>
                   <div class="task-assigned" ng-click="selectTask(assignment)">
-                    <img src="{{team.members[assignment.user].pic}}" width="25px" height="25px">
+                    <img src="{{team.members[assignment.assignee].pic}}" width="25px" height="25px">
                   </div>
                   <div class="task-quick-action">
                     <button type="button" class="btn btn-phased-blue btn-circle" name="button" ng-if="assignment.status != taskStatusID.ASSIGNED" ng-click="broadcastTask(assignment)"><i class="fa fa-lg fa-share"></i></button>
@@ -151,9 +151,24 @@
 		<div class="" ng-class="taskDiscript">
 			<div class="task ph-card">
         <div class="task-header">
-          <ul>
-            <li><p>Assigned <img src="{{team.members[taskInfo.user].pic}}" width="35px" height="35px"></p></li>
-            <li><p ng-if="taskInfo.deadline">Due: {{taskInfo.deadline | date : 'short'}}</p></li>
+          <ul class="task-meta-bar">
+            <li class="task-meta-bar-item"><p>Assigned </p>
+              <div class="dropdown">
+                <button id="dLabel" type="button" class="btn btn-transparent" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <img ng-if="taskInfo.assignee" src="{{team.members[taskInfo.assignee].pic}}" width="35px" height="35px">
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dLabel">
+                  <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo,member.uid)"><img src="{{member.pic}}" width="35px" height="35px"> <p>
+                    {{member.name}}
+                  </p></a></li>
+
+
+                </ul>
+              </div>
+
+            </li>
+            <li class="task-meta-bar-item"><p ng-if="taskInfo.deadline">Due: {{taskInfo.deadline | date : 'short'}}</p></li>
 
           </ul>
 
