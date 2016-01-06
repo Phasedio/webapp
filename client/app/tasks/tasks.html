@@ -136,8 +136,8 @@
                     <img src="{{team.members[assignment.assignee].pic}}" width="25px" height="25px">
                   </div>
                   <div class="task-quick-action">
-                    <button type="button" class="btn btn-phased-blue btn-circle" name="button" ng-if="assignment.status != taskStatusID.ASSIGNED" ng-click="broadcastTask(assignment)"><i class="fa fa-lg fa-share"></i></button>
-                    <button class="btn btn-phased-blue btn-circle" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)"><i class="fa fa-play" ></i></button>
+                    <button type="button" class="btn btn-phased-blue btn-circle" uib-tooltip="Post as status" name="button" ng-if="assignment.status != taskStatusID.ASSIGNED" ng-click="broadcastTask(assignment)"><i class="fa fa-lg fa-share"></i></button>
+                    <button class="btn btn-phased-blue btn-circle" uib-tooltip="Start task" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)"><i class="fa fa-play" ></i></button>
                   </div>
                 </div>
 
@@ -152,11 +152,13 @@
 			<div class="task ph-card">
         <div class="task-header">
           <ul class="task-meta-bar">
-            <li class="task-meta-bar-item"><p>Assigned </p>
+            <li class="task-meta-bar-item ">
+              <p ng-if="taskInfo.assignee">Assigned </p>
+              <p ng-if="!taskInfo.assignee">Assign task to </p>
               <div class="dropdown">
                 <button id="dLabel" type="button" class="btn btn-transparent" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <img ng-if="taskInfo.assignee" src="{{team.members[taskInfo.assignee].pic}}" width="35px" height="35px">
-                  <span class="caret"></span>
+
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dLabel">
                   <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo,member.uid)"><img src="{{member.pic}}" width="35px" height="35px"> <p>
@@ -167,9 +169,19 @@
                 </ul>
               </div>
 
-            </li>
-            <li class="task-meta-bar-item"><p ng-if="taskInfo.deadline">Due: {{taskInfo.deadline | date : 'short'}}</p></li>
 
+
+            </li>
+            <li class="task-meta-bar-item added-padding">
+              <p align="center" ng-if="taskInfo.deadline" ng-click="open($event)">{{taskInfo.deadline | date : 'MMM dd'}}</p>
+              <p align="center" ng-if="!taskInfo.deadline" ng-click="open($event)">Due date:</p>
+              <p class="input-group">
+                <input type="text" class="form-control hidden"  uib-datepicker-popup="{{format}}" ng-model="taskInfo.deadline" ng-change="taskEditDate(taskInfo.key,taskInfo.deadline)" init-date="dt" is-open="status.opened" min-date="minDate" max-date="maxDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" ng-required="true" close-text="Close" />
+              </p>
+            </li>
+            <li class="task-meta-bar-item ">
+              <button type="button" class="close"  aria-label="Close" ng-click="closeDetails()"><span aria-hidden="true">&times;</span></button>
+            </li>
           </ul>
 
         </div>
@@ -199,6 +211,7 @@
 		</div>
 
   </div>
+
 </section>
 
 <!-- add task -->
@@ -221,14 +234,16 @@
           <select ng-options="key as priority.name for (key, priority) in taskPriorities" ng-model="newTask.priority" id="priority"></select>
 
           <label for="deadline">Deadline</label>
-          <p><em>use yyyy-MM-dd format if you don't know HTML5</em></p>
-          <input type="date" ng-model="newTask.deadline" min="{{today | date : 'yyyy-MM-dd'}}" />
+
+          <div style="display:inline-block; min-height:250px;">
+            <uib-datepicker ng-model="newTask.deadline" min-date="minDate" show-weeks="true" init-date="dt" class="well well-sm" custom-class="getDayClass(date, mode)"></uib-datepicker>
+          </div>
 
           <label for="assignee">Assign to</label>
 
           <!-- this should default to unassigned -->
           <select ng-options="key as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee" ng-disabled="newTask.unassigned"></select>
-
+          <a href="#" ng-click="newTask.assignee = myID">Assign me</a>
           <label for="unassigned">Unassigned</label>
           <input type="checkbox" ng-model="newTask.unassigned" />
 

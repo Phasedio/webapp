@@ -6,6 +6,7 @@ angular.module('webappApp', [
   'ngSanitize',
   'ngRoute',
   'ui.bootstrap',
+  'ui.calendar',
   'angular-stripe',
   'credit-cards',
   'firebase',

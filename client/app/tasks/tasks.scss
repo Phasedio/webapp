@@ -260,7 +260,7 @@ p{
       overflow: hidden;
     }
     &:last-child{
-      min-width: 15rem;
+      min-width: 16rem;
     }
   }
   img{
@@ -276,6 +276,11 @@ p{
       margin-left: 5px;
     }
 
+  }
+  .task-calender-holder{
+    width: 300px;
+    height: 400px;
+    padding: 10px;
   }
 
 
@@ -321,8 +326,19 @@ p{
 
   }
   .task-meta-bar-item{
+    border: 1px solid transparent;
+    cursor: pointer;
+    border-radius: 1000px;
+    margin-right: 20px;
+    &:hover{
+      //border-color:$liteBlack;
+      border-color:transparentize($liteBlack, 0.5);
+    }
     p,.dropdown{
       display: inline-block;
+    }
+    &.added-padding{
+      padding: 6px 12px;
     }
   }
   .task-details{
@@ -369,4 +385,13 @@ p{
    &:focus{
      outline: none;
    }
+}
+
+
+//Calendar styles
+
+.task-meta-bar{
+  .input-group-btn{
+    display:inline-block;
+  }
 }

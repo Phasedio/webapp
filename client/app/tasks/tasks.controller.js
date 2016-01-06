@@ -91,7 +91,7 @@ angular.module('webappApp')
       return filtered;
     };
   })
-  .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster) {
+  .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig) {
     ga('send', 'pageview', '/tasks');
 
     $scope.viewType = Phased.viewType;
@@ -152,6 +152,13 @@ angular.module('webappApp')
 
     }
 
+    //closes details sidebar.
+    $scope.closeDetails = function(){
+      $scope.tasklistSize = 'col-xs-12';//set the init size of task list
+      $scope.taskDiscript = 'hidden'; //hide the task discription till the user does something
+      $scope.taskInfo = {};
+    }
+
     //=====================
 
     $scope.today = new Date().getTime(); // min date for deadline datepicker
@@ -166,6 +173,10 @@ angular.module('webappApp')
     $scope.activeStatusFilter = '!1'; // not completed tasks
     $scope.activeCategoryFilter;
     $scope.filterView = $scope.activeStreamName;//for the select filter
+    $scope.eventSources = [];//needed for the calendar
+
+
+
 
     /**
     *
@@ -310,10 +321,12 @@ angular.module('webappApp')
 
     $scope.moveToArchive = function(assignmentID) {
       Phased.moveToFromArchive(assignmentID);
+      $scope.closeDetails();
     }
 
     $scope.moveFromArchive = function(assignmentID) {
       Phased.moveToFromArchive(assignmentID, true);
+
     }
 
     // gets archived tasks at address shows archive
@@ -344,6 +357,7 @@ angular.module('webappApp')
     }
 
     //Edit assigned user
+    //i feel this needs to be set on fire...
     $scope.taskEditAssigned = function(taskObj,userID){
       var task = JSON.stringify(taskObj);
       task = JSON.parse(task);
@@ -373,18 +387,109 @@ angular.module('webappApp')
           var x = snap.key();
           FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(task.assigned_by).child(x).remove();
         });
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(Auth.user.uid).push(task.key);
         //done
       }else if(task.unassigned){
         //Task is unassigned!
         //Take user id and change it to new user
         FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"assignee" : userID});
+        //Change 'to' look up table
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('to').child(userID).push(task.key);
         //change the assigned_by to current user
         FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"assigned_by" : Auth.user.uid});
+
+        //Remove assigned_by user 'by' lookup
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(task.assigned_by).orderByValue().equalTo(task.key).once('value',function(snap){
+          var x = snap.key();
+          FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(task.assigned_by).child(x).remove();
+        });
+        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(Auth.user.uid).push(task.key);
+
         //set unassigned to false
         FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"unassigned" : false});
         //done
       }
     }
+    //Edits date of deadline or clears it
+    $scope.taskEditDate = function(taskID,date){
+      var newDate = '';
+      if(date){
+        newDate = new Date(date).getTime();
+      }
+      console.log(newDate);
+      console.log(taskID);
+      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID).update({"deadline" : newDate});
+    }
+
+
+
+
+
+
+
+
+    //----
+    $scope.today = function() {
+    $scope.dt = new Date();
+  };
+  $scope.today();
+
+  $scope.clear = function () {
+    $scope.dt = null;
+  };
+
+  // Disable weekend selection
+  $scope.disabled = function(date, mode) {
+    return ( mode === 'day' && ( date.getDay() === 0 || date.getDay() === 6 ) );
+  };
+
+  $scope.toggleMin = function() {
+    $scope.minDate = $scope.minDate ? null : new Date();
+  };
+  $scope.toggleMin();
+  $scope.maxDate = new Date(2020, 5, 22);
+
+  $scope.open = function($event) {
+    $scope.status.opened = true;
+  };
+
+  $scope.setDate = function(year, month, day) {
+    console.log('youre picking a new day')
+    $scope.dt = new Date(year, month, day);
+  };
+
+  $scope.dateOptions = {
+    formatYear: 'yy',
+    startingDay: 1
+  };
+
+  $scope.formats = ['dd-MMMM-yyyy', 'yyyy/MM/dd', 'dd.MM.yyyy', 'shortDate'];
+  $scope.format = $scope.formats[0];
+
+  $scope.status = {
+    opened: false
+  };
+
+
+  $scope.events =[];
+
+  $scope.getDayClass = function(date, mode) {
+    if (mode === 'day') {
+      var dayToCheck = new Date(date).setHours(0,0,0,0);
+
+      for (var i=0;i<$scope.events.length;i++){
+        var currentDay = new Date($scope.events[i].date).setHours(0,0,0,0);
+
+        if (dayToCheck === currentDay) {
+          return $scope.events[i].status;
+        }
+      }
+    }
+
+    return '';
+  };
+
+    //---
 
     /**
     * pop open add task modal
