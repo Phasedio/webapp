@@ -312,11 +312,13 @@ angular.module('webappApp')
                   getMemberHistory(id);
 
 
-                // tell scope new data is in
-                $rootScope.$broadcast('Phased:member');
+
               });
             })(id, users);
           }
+          // tell scope new data is in
+          // B: I've moved this out here so the scope is only told about members once all of them are available.
+          $rootScope.$broadcast('Phased:member');
         }
 
         // tell scope new data is in
@@ -1155,6 +1157,14 @@ angular.module('webappApp')
 
       // push to database
       FBRef.child('team/' + PhasedProvider.team.name + '/assignments/all/' + assignmentID + '/status').set(newStatus);
+
+      // if issue was complete, timestamp it
+      if(newStatus == 1){
+        var time = new Date().getTime();
+        FBRef.child('team/' + PhasedProvider.team.name + '/assignments/all/' + assignmentID).update({"completeTime" : time});
+      }
+
+
     }
 
     /**
