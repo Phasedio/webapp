@@ -334,6 +334,9 @@ p{
       //border-color:$liteBlack;
       border-color:transparentize($liteBlack, 0.5);
     }
+    &:last-child{
+      float: right;
+    }
     p,.dropdown{
       display: inline-block;
     }

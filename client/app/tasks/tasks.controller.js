@@ -465,6 +465,15 @@ angular.module('webappApp')
       FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID).update({"deadline" : newDate});
     }
 
+    //change the category in task discription
+    $scope.changeCategory = function(task,catKey){
+      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"cat" : catKey});
+    }
+    //change the category in task discription
+    $scope.changePriority = function(task,priorityKey){
+      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"priority" : priorityKey});
+    }
+
 
 
 

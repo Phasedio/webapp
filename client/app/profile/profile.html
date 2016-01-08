@@ -164,15 +164,17 @@
           <!-- EDIT -->
           <div role="tabpanel" class="tab-pane" id="settings" ng-if="person">
 						<div class = "row">
-			        <div class="col-xs-4">
-			          <img style="height: 120px; width: 120px; border-radius: 50%" src="{{currentUser.gravatar}}">
+			        <div class="col-xs-12">
+			          <img style="height: 120px; width: 120px; border-radius: 50%;margin: 0 auto; display:block;" src="{{currentUser.gravatar}}">
 
 			        </div>
-			        <div class="col-xs-4">
+			        <div class="col-xs-12">
 
+                <div class="" style=" width: 120px; margin: 0 auto; display:block;">
+                  <input class="" type="file" accept="image/*" capture="camera" id="file-upload"><br>
+  			          <button ng-click="changeImage()" class="btn btn-phased-blue btn-block ">Change Image</button>
+                </div>
 
-			          <input class="" type="file" accept="image/*" capture="camera" id="file-upload">
-			          <button ng-click="changeImage()" class="btn btn-phased-blue btn-block ">Change Image</button>
 
 			        </div>
       			</div>

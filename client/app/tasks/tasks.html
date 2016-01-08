@@ -44,6 +44,8 @@
         <form id="todo-form" ng-submit="addTodo()">
           <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
         </form>
+
+
 				<table class="table table-hover">
 					<tbody>
 						<tr class="task" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" >
@@ -97,8 +99,8 @@
 
             </li>
             <li class="task-meta-bar-item added-padding">
-              <p align="center" ng-if="taskInfo.deadline" ng-click="open($event)">{{taskInfo.deadline | date : 'MMM dd'}}</p>
-              <p align="center" ng-if="!taskInfo.deadline" ng-click="open($event)">Due date:</p>
+              <p align="center" ng-if="taskInfo.deadline" ng-click="open($event)">Due date: <i class="fa fa-calendar-o"></i>&nbsp; {{taskInfo.deadline | date : 'MMM dd'}}</p>
+              <p align="center" ng-if="!taskInfo.deadline" ng-click="open($event)">Due date: <i class="fa fa-calendar-o"></i></p>
               <p class="input-group">
                 <input type="text" class="form-control hidden"  uib-datepicker-popup="{{format}}" ng-model="taskInfo.deadline" ng-change="taskEditDate(taskInfo.key,taskInfo.deadline)" init-date="dt" is-open="status.opened" min-date="minDate" max-date="maxDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" ng-required="true" close-text="Close" />
               </p>
@@ -114,12 +116,42 @@
         <textarea class="task-title" ng-model="taskInfo.disc" ng-blur="taskEditDisc(taskInfo,taskInfo.disc)" placeholder="Enter discription..."></textarea>
 
         <p>Assigned by: {{team.members[taskInfo.assigned_by].name}}</p>
-				<p>
-					Category: {{team.categoryObj[taskInfo.cat].name}}
-				</p>
+
+        <div class="dropdown">
+          <p id="dLabel1" class="clickable" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Category: {{team.categoryObj[taskInfo.cat].name}} <span class="caret"></span>
+
+          </p>
+          <ul class="dropdown-menu" aria-labelledby="dLabel1">
+            <li ng-repeat="(key, category) in team.categoryObj">
+              <a href="#" ng-click="changeCategory(taskInfo,key)">
+                <p>
+                 {{category.name }}
+                </p>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="dropdown">
+          <p id="dLabel2" class="clickable"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Priority : {{taskPriorities[taskInfo.priority].name}} <span class="caret"></span>
+
+          </p>
+          <ul class="dropdown-menu" aria-labelledby="dLabel2">
+            <li ng-repeat="(key, priority) in taskPriorities">
+              <a href="#" ng-click="changePriority(taskInfo,key)">
+                <p>
+                 {{priority.name }}
+                </p>
+              </a>
+            </li>
+          </ul>
+        </div>
+
         <p>
           Status: {{taskStatuses[taskInfo.status].name}}
         </p>
+
         <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
           <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != taskStatusID.ASSIGNED">  post as status  <i class="fa fa-lg fa-share"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status == taskStatusID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
