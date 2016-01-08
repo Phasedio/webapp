@@ -343,7 +343,7 @@ angular.module('webappApp')
       var endTime = new Date().getTime() - 31556926000;
       // get /team/[teamname]/all/[memberID], ordered by time, once
       // push to local team.history
-      FBRef.child('team/' + PhasedProvider.team.name + '/all/' + id).orderByChild('time').startAt(endTime).once('value',function(data) {
+      FBRef.child('team/' + PhasedProvider.team.name + '/all/' + id).limitToLast(200).once('value',function(data) {
         data = data.val();
         if (getHistoryFor == id)
           PhasedProvider.team.members[id].history = []; // clear history before populating
@@ -368,9 +368,10 @@ angular.module('webappApp')
               PhasedProvider.team.members[id].history.push(data[keys[i]]);
           }
         }
-        // tell scope new data is in
-        $rootScope.$broadcast('Phased:history');
+        
       });
+      // tell scope new data is in
+      $rootScope.$broadcast('Phased:history');
     }
 
     // gathers team categories data and adds to PhasedProvider.team

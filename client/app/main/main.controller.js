@@ -16,15 +16,26 @@ angular.module('webappApp')
 
     }
 
-
+    var itRan = 0;
     // ensure view updates when new members are added
     $scope.$on('Phased:member', function() {
       $scope.$apply();
+      itRan = 1;
       getTodaysUpdates();
       getTodaysCompleteTasks();
       getTasksCompletedOverTime();
       getTodaysCatBreakdown();
     });
+
+    setTimeout(function(){
+      if(!itRan){
+        getTodaysUpdates();
+        getTodaysCompleteTasks();
+        getTasksCompletedOverTime();
+        getTodaysCatBreakdown();
+      }
+
+    }, 3000);
 
 
 

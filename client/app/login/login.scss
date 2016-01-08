@@ -63,7 +63,7 @@
     label{
       //font-family: $regFont;
       text-transform: uppercase;
-      color:rgba(29,29,38,0.5);
+      color:$liteBlack;
       @include rem(letter-spacing, 1px);
       @include rem(font-size, 10px);
     }
@@ -101,14 +101,14 @@
     label{
       //font-family: $regFont;
       text-transform: uppercase;
-      color:rgba(219,219,218,0.5);
+      color:$liteBlack;
 
     }
   }
   .loginInput{
 
     &:focus{
-      border-bottom:2px solid rgba(255,255,255,0.5);
+      border-bottom:2px solid $boldText;
     }
   }
 }

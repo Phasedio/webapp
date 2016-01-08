@@ -101,6 +101,8 @@ angular.module('webappApp')
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
     $scope.myID = Auth.user.uid;
 
+    console.log(Phased);
+
     $scope.today = new Date().getTime();
     var StatusID = {
         IN_PROGRESS : 0,
@@ -307,6 +309,48 @@ angular.module('webappApp')
       $('#myModal').modal('toggle');
       $scope.newTask = {};
     }
+
+    $scope.addTodo = function () {
+			var newTodo = {
+				name: $scope.newTodo.trim(),
+				completed: false
+			};
+      if (!newTodo.name) {
+				return;
+			}
+      // format object
+      var taskPrefix = '',
+        weather = '';
+      var status = {
+        name: taskPrefix + newTodo.name,
+        cat : '',
+        city: 0,
+        weather: weather,
+        taskPrefix : taskPrefix,
+        photo :  0,
+        location: {
+          lat :  0,
+          long :  0
+        },
+        assigned_by : $scope.myID,
+        status: Phased.TASK_STATUS_ID.ASSIGNED,
+        priority : 1
+      };
+      status.assignee = $scope.myID;
+
+
+
+      Phased.addAssignment(status);
+      $scope.newTodo = '';
+			// $scope.saving = true;
+			// store.insert(newTodo)
+			// 	.then(function success() {
+			// 		$scope.newTodo = '';
+			// 	})
+			// 	.finally(function () {
+			// 		$scope.saving = false;
+			// 	});
+		};
 
     // moves task into my to_me if unassigned,
     // then starts it

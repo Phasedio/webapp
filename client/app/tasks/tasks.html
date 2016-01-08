@@ -20,88 +20,9 @@
 <section class="container">
   <div class="row">
 
-    <div class="col-xs-3 visible-xs">
-      <div class="task-action-center ph-card">
-        <!-- Team image -->
-        <div class="task-action-teamImg">
-          <img src="assets/images/phased-logo.svg" width="50px" height=50px>
-        </div>
-
-        <!-- Team name -->
-        <div class="task-action-dis">
-          <h1>{{team.name}}</h1>
-          <p>this is a task area that you can see tasks assigned to you and create new tasks</p>
-          <button class="btn btn-phased-blue" ng-click="addAssignmentModal();">New task</button>
-        </div>
-        <!-- filter area -->
-        <div class="task-action-filter">
-          <ul>
-            <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.all' && !activeStatusFilter}">all <div></div></div>
-            </li>
-            <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.to_me'); setStatusFilter('!' + taskStatusID.COMPLETE)" ng-class="{active : activeStreamName == 'assignments.to_me'}">assigned to me <div></div></div>
-            </li>
-            <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.by_me'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.by_me'}">my created tasks <div></div></div>
-            </li>
-            <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.unassigned'); setStatusFilter()" ng-class="{active : activeStreamName == 'assignments.unassigned'}">unassigned tasks <div></div></div>
-            </li>
-            <li>
-              <div class="filter-selection" ng-click="setActiveStream('assignments.all'); setStatusFilter(taskStatusID.COMPLETE)" ng-class="{active : activeStreamName == 'assignments.all' && activeStatusFilter == '1'}">closed tasks <div></div></div>
-            </li>
-            <li>
-              <div class="filter-selection" ng-click="setActiveStream('archive.all'); setStatusFilter()" ng-class="{active : activeStreamName == 'archive.all'}">archived tasks <div></div></div>
-            </li>
-          </ul>
-          <ul class="filter-category">
-            <li ng-repeat="(id, category) in team.categoryObj">
-              <div class="filter-selection" ng-class="{active: activeCategoryFilter == id}" ng-click="toggleCategoryFilter(id)">{{category.name}} <div></div></div>
-            </li>
-          </ul>
-        </div>
-        <!-- member area -->
-        <div class="task-action-members">
-          <div class="member-img" ng-repeat="(key, item) in team.members">
-            <img src="{{item.pic}}" width="40px" height="40px">
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- TASK STREAM -->
     <div class="task-stream" ng-class="tasklistSize">
-      <!-- <div class="task ph-card" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" style="border-right: 1em solid {{team.categoryObj[assignment.cat].color}};">
-        <div class="task-header">
-          <div class="task-main">
-            <h1>{{assignment.name}} <small>{{taskStatuses[assignment.status].name}}</small></h1>
 
-          </div>
-
-          <div class="task-second" ng-if="assignment.user">
-            <div class="task-title">
-
-              <img src="{{team.members[assignment.user].pic}}" width="40px" height="40px">
-            </div>
-          </div>
-        </div>
-
-
-        <div class="task-details">
-          <p class="semi-bold">Category: {{team.categoryObj[assignment.cat].name}}</p>
-          <p class="semi-bold">Assigned by: {{team.members[assignment.assigned_by].name}}</p>
-
-          <p class="semi-bold" ng-if="assignment.deadline">Due date: {{assignment.deadline | date : 'short'}}</p>
-        </div>
-
-        <div class="task-archive" ng-if="assignment.user == myID || assignment.assignee == myID || assignment.assigned_to == myID">
-          <button class="btn btn-phased-blue" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)">Start</button>
-          <button class="btn btn-phased-blue" ng-if="assignment.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(assignment.key)">complete</button>
-          <button class="btn btn-phased-blue" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(assignment.key);">archive</button>
-          <button class="btn btn-phased-blue" ng-if="activeStreamName == 'archive.all' || activeStreamName == 'archive.to_me'" ng-click="moveFromArchive(assignment.key);">unarchive</button>
-        </div>
-      </div> -->
 			<div class=" ph-card task-list">
         <div class="task-filter">
           <button class="btn btn-phased-blue add-new-task" ng-click="addAssignmentModal();">New task</button>
@@ -120,6 +41,9 @@
         <!-- <select>
           <
         </select> -->
+        <form id="todo-form" ng-submit="addTodo()">
+          <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
+        </form>
 				<table class="table table-hover">
 					<tbody>
 						<tr class="task" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" >

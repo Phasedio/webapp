@@ -22,24 +22,22 @@ angular.module('webappApp')
     $scope.$on('Phased:setup', function(){
       $scope.currentUser = Phased.team.members[profileUser];
       $scope.$apply();
+      initStats();
     });
     $scope.$on('Phased:history', function(){
       $scope.$apply();
     });
 
-    // Background image
-  var monImage =  "weekdayPhotos/mon.jpg";
-  var tuesImage =  "weekdayPhotos/tues.jpg";
-  var wedImage =  "weekdayPhotos/wed.jpg";
-  var thursImage =  "weekdayPhotos/thurs.jpg";
-  var friImage = "weekdayPhotos/fri.jpg";
-  var satImage = "weekdayPhotos/sat.jpg";
-  var sunImage = "weekdayPhotos/sun.jpg";
+    $scope.stats = {
+      totalUpdates: 0,
+      totalTasks:0,
+      weekUpdates:0,
+      weekTasks:0,
+      todaysUpdates : 0,
+      todaysTasks : 0
 
-  var d=new Date();
-
-  var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
-  $scope.dayImage = backgroundImage[d.getDay()];
+    }
+    var FBRef = new Firebase(FURL);
 
   // bootstrap enable tabs
 
@@ -60,6 +58,103 @@ angular.module('webappApp')
       Auth.logout();
       $location.path('/login');
     }
+
+
+    function getTodaysUpdates(){
+      //return var init
+      $scope.stats.todaysTasks = 0;
+
+      //get todays date at midnight... in Unix
+      var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
+      var midnight = new Date(today[2],today[1],today[0]).getTime();
+      FBRef.child('team').child(Auth.currentTeam).child('all').child(profileUser).orderByChild("time").startAt(midnight).once('value',function(snap){
+        $scope.stats.todaysUpdates = $scope.stats.todaysUpdates + snap.numChildren();
+      });
+
+      // return the total number of updates today
+    }
+
+    //Check number of completed tasks today.
+    function getTodaysCompleteTasks(){
+      $scope.stats.todaysTasks = 0;
+      //get todays date at midnight... in Unix
+      var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
+      var midnight = new Date(today[2],today[1],today[0]).getTime();
+      FBRef.child('team').child(Auth.currentTeam).child('assignments').child('all').orderByChild("completeTime").startAt(midnight).once('value',function(snap){
+        $scope.stats.todaysTasks = $scope.stats.todaysTasks + snap.numChildren();
+
+      });
+
+    }
+
+    function getWeekUpdates(){
+      //return var init
+      $scope.stats.WeekTasks = 0;
+
+      //get todays date at midnight... in Unix
+      var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
+      var midnight = new Date(today[2],today[1],today[0]).getTime();
+      var weekOffSet = midnight - ((new Date(midnight).getDay()) * 86400000);
+      FBRef.child('team').child(Auth.currentTeam).child('all').child(profileUser).orderByChild("time").startAt(weekOffSet).endAt(midnight).once('value',function(snap){
+        $scope.stats.weekUpdates = snap.numChildren();
+      });
+
+      // return the total number of updates today
+    }
+    function getWeekTasks(){
+      //return var init
+      $scope.stats.weekTasks = 0;
+
+      //get todays date at midnight... in Unix
+      var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
+      var midnight = new Date(today[2],today[1],today[0]).getTime();
+      var weekOffSet = midnight - ((new Date(midnight).getDay()) * 86400000);
+      console.log(midnight);
+      console.log(weekOffSet);
+      FBRef.child('team').child(Auth.currentTeam).child('assignments').child('all').orderByChild("completeTime").startAt(weekOffSet).once('value',function(snap){
+        $scope.stats.weekTasks = snap.numChildren();
+      });
+
+      // return the total number of updates today
+    }
+
+    function getAllUpdates(){
+      //return var init
+      $scope.stats.totalUpdates = 0;
+
+      FBRef.child('team').child(Auth.currentTeam).child('all').child(profileUser).once('value',function(snap){
+        $scope.stats.totalUpdates =  snap.numChildren();
+      });
+
+
+      // return the total number of updates today
+    }
+
+    function getAllCompleteTasks(){
+      $scope.stats.totalTasks = 0;
+
+
+      FBRef.child('team').child(Auth.currentTeam).child('assignments').child('all').orderByChild("completeTime").startAt(100).once('value',function(snap){
+        $scope.stats.totalTasks =  snap.numChildren();
+
+      });
+
+    }
+    function initStats(){
+      getTodaysUpdates();
+      getTodaysCompleteTasks();
+      getWeekUpdates();
+      getWeekTasks();
+      //getAllUpdates();
+      getAllCompleteTasks();
+    }
+
+
+
+
+
+
+
 
   // Update Account
   $scope.updateUser = function(update){

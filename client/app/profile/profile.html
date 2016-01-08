@@ -1,14 +1,5 @@
 <style>
-	.hero-img {
-	  background:  linear-gradient(
-      rgba(0, 0, 0, 0.25),
-      rgba(0, 0, 0, 0.25)
-    ), url(assets/images/{{dayImage}}) no-repeat center center ;
-	  -webkit-background-size: cover;
-	  -moz-background-size: cover;
-	  -o-background-size: cover;
-	  background-size: cover;
-	}
+
 
 </style>
 
@@ -39,7 +30,7 @@
           <ul class="" role="tablist" id="myTabs">
             <li role="presentation" class="active"><a href="#history" aria-controls="home" role="tab" data-toggle="tab">History</a></li>
             <li><a href="#backlog" aria-controls="home" role="tab" data-toggle="tab">backlog</a></li>
-            <li><a href="#history" aria-controls="home" role="tab" data-toggle="tab">Stats</a></li>
+            <li><a href="#stats" aria-controls="home" role="tab" data-toggle="tab">Stats</a></li>
             <li><a href="#settings" aria-controls="home" role="tab" data-toggle="tab">edit</a></li>
           </ul>
         </div>
@@ -93,13 +84,10 @@
                       Task
                     </th>
                     <th>
-                      Category
-                    </th>
-                    <th>
                       Priority
                     </th>
                     <th>
-                      Due date
+                      Due
                     </th>
                     <th>
                       Status
@@ -107,19 +95,15 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr ng-repeat="item in currentUser.assignments.to_me ">
+                  <tr ng-repeat="item in currentUser.assignments.to_me " ng-if="item.status != 1">
                     <td>
                       {{item.name}}
-                    </td>
-                    <td>
-                      <span ng-if="item.cat">{{team.categoryObj[item.cat].name}}</span>
-                      <span ng-if="!item.cat">Not Set</span>
                     </td>
                     <td>
                       {{taskPriorities[item.priority].name}}
                     </td>
                     <td>
-                       <span ng-if="item.deadline">{{item.deadline | amDateFormat:'MM.DD.YYYY '}}</span>
+                       <span ng-if="item.deadline">{{item.deadline | amDateFormat:'MMM d '}}</span>
                        <span ng-if="!item.deadline">Not Set</span>
                     </td>
                     <td>
@@ -130,7 +114,53 @@
               </table>
             </div>
           </div>
-          <div role="tabpanel" class="tab-pane" id="messages">...</div>
+					<!-- Stats -->
+          <div role="tabpanel" class="tab-pane" id="stats">
+						<div class="row">
+			        <div class="col-xs-6">
+								<div>
+									<h5>Total Updates</h5>
+									<h1>{{currentUser.history.length}}</h1>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div>
+									<h5>Total Tasks completed</h5>
+									<h1>{{stats.totalTasks}}</h1>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+			        <div class="col-xs-6">
+								<div>
+									<h5>Total Updates this week</h5>
+									<h1>{{stats.weekUpdates}}</h1>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div>
+									<h5>Total Tasks completed this week</h5>
+									<h1>{{stats.weekTasks}}</h1>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+			        <div class="col-xs-6">
+								<div>
+									<h5>Total Updates today</h5>
+									<h1>{{stats.todaysUpdates}}</h1>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div>
+									<h5>Total Tasks completed today</h5>
+									<h1>{{stats.todaysTasks}}</h1>
+								</div>
+							</div>
+						</div>
+
+
+					</div>
           <!-- EDIT -->
           <div role="tabpanel" class="tab-pane" id="settings" ng-if="person">
 						<div class = "row">
@@ -142,7 +172,7 @@
 
 
 			          <input class="" type="file" accept="image/*" capture="camera" id="file-upload">
-			          <button ng-click="changeImage()" class="btn btn-primary btn-lg btn-block ">Change Image</button>
+			          <button ng-click="changeImage()" class="btn btn-phased-blue btn-block ">Change Image</button>
 
 			        </div>
       			</div>
@@ -170,11 +200,11 @@
                 <input class="loginInput" type="password" id='newpassword' ng-model="update.newPass" placeholder="">
               </div>
               <div class="item">
-                <input type="submit" class="btn btn-primary btn-lg btn-block " value="Update Account!">
+                <input type="submit" class="btn btn-phased-blue btn-block " value="Update Account">
               </div>
             </div>
           </form>
-					<button class="btn btn-primary btn-lg btn-block " ng-click="logout()">logout</button>
+					<button class="btn btn-phased-blue btn-block " ng-click="logout()">logout</button>
 
 
 					</div>
