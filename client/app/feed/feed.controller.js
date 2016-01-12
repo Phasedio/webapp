@@ -128,11 +128,6 @@ angular.module('webappApp')
       $scope.$apply();
     });
 
-    // init
-    Phased.watchTaskStream();
-    // tell Phased to watch assignments
-    Phased.watchAssignments();
-
     $scope.addTask = function(update) {
       ga('send', 'event', 'Update', 'submited');
 

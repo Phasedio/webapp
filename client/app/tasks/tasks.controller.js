@@ -178,17 +178,6 @@ angular.module('webappApp')
     $scope.eventSources = [];//needed for the calendar
 
 
-
-
-    /**
-    *
-    *   ~*~ init ~*~
-    *
-    */
-
-    // tell Phased to watch assignments
-    Phased.watchAssignments();
-
     /**
     **
     **  event handlers

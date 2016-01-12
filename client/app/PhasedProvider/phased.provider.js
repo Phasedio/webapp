@@ -27,8 +27,9 @@ angular.module('webappApp')
     * Internal vars
     */
     var PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
+      WATCH_HISTORY = false, // set in setWatchHistory in config; tells init whether to do it
+      WATCH_ASSIGNMENTS = false, // set in setWatchAssignments in config; tells init whether to do it
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
-      WATCH_TASK_STREAM = false, // set to true if team history should be watched (eg, feed page)
       getHistoryFor = '', // set to a member id if a member's history should be attached to their team.member reference (eg, profile page)
       assignmentIDs = {
         to_me : [],
@@ -55,6 +56,8 @@ angular.module('webappApp')
         user : {},
         team : {
           members : {},
+          lastUpdated : [],
+          history : [],
           teamLength : 0 // members counted in setUpTeamMembers
         },
         viewType : 'notPaid',
@@ -92,6 +95,8 @@ angular.module('webappApp')
     * called in AuthProvider's doAfterAuth callback,
     * which must be set in a .config() block
     *
+    * optionally passed a config object, which describes
+    * whether team history or assignments should be monitored
     */
 
     this.init = function(Auth) {
@@ -104,10 +109,8 @@ angular.module('webappApp')
       getCategories();
       getTaskPriorities();
       getTaskStatuses();
-
-      // things that can only be done after async operations are finished
-      // moved to setUpTeamMembers
-      // doAsync();
+      if (WATCH_ASSIGNMENTS)
+        watchAssignments();
     }
 
     /**
@@ -119,8 +122,8 @@ angular.module('webappApp')
     this.$get = ['$rootScope', function(_rootScope) {
       $rootScope = _rootScope;
       // register functions listed after this in the script...
-      PhasedProvider.watchAssignments = _watchAssignments;
-      PhasedProvider.watchTaskStream = _watchTaskStream;
+      // PhasedProvider.watchAssignments = _watchAssignments;
+      // PhasedProvider.watchTaskStream = _watchTaskStream;
       PhasedProvider.getArchiveFor = _getArchiveFor;
       PhasedProvider.moveToFromArchive = _moveToFromArchive;
       PhasedProvider.activateTask = _activateTask;
@@ -129,7 +132,9 @@ angular.module('webappApp')
       PhasedProvider.addTask = _addTask;
       PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
       PhasedProvider.addMember = _addMember;
-      PhasedProvider.watchMemberStream = _watchMemberStream;
+      PhasedProvider.addTeam = _addTeam;
+      PhasedProvider.switchTeam = _switchTeam;
+      // PhasedProvider.watchMemberStream = _watchMemberStream;
       PhasedProvider.watchMemberAssignments = _watchMemberAssignments;
 
       return PhasedProvider;
@@ -139,6 +144,22 @@ angular.module('webappApp')
     this.setFBRef = function(FURL) {
       FBRef = new Firebase(FURL);
       PhasedProvider.FBRef = FBRef;
+    }
+
+    // sets WATCH_HISTORY flag so provider knows to 
+    // set up history observers in init.
+    // must be called in .config block before init.
+    this.setWatchHistory = function(watch) {
+      if (watch)
+        WATCH_HISTORY = true;
+    }
+
+    // sets WATCH_ASSIGNMENTS flag so provider knows to 
+    // set up assignment observers in init.
+    // must be called in .config block before init.
+    this.setWatchAssignments = function(watch) {
+      if (watch)
+        WATCH_ASSIGNMENTS = true;
     }
 
     /**
@@ -255,68 +276,98 @@ angular.module('webappApp')
     * gather team data
     * 1. watches the team's tasks
     * 1.b  when a new task is posted, it refreshes the team membership
-    * 2. if WATCH_TASK_STREAM is enabled, also gets today's tasks for each member,
+    * 2. gets today's tasks for each member,
     *    and adds them to the team's history
     */
     var setUpTeamMembers = function() {
+
+      var taskAddress = 'team/' + PhasedProvider.team.name + '/task';
+      // stash address to remove FB event handlers when switching teams
+      setUpTeamMembers.address = taskAddress;
+
       // get members
-      FBRef.child('team').child(PhasedProvider.team.name).child('task').on('value', function(users) {
+      FBRef.child(taskAddress).on('value', function(users) {
         users = users.val();
 
-
-        if (WATCH_TASK_STREAM) {
-          PhasedProvider.team.history = PhasedProvider.team.history || new Array();
-          PhasedProvider.team.lastUpdated = PhasedProvider.team.lastUpdated || [];
+        // ensure own ID is in user list
+        // in marginal case where own user hasn't submitted a status to teamname/tasks
+        if (!(users) || !(_Auth.user.uid in users)) {
+          users = [];
+          users[_Auth.user.uid] = {};
         }
 
+        PhasedProvider.team.history = []; // clear history before populating
 
-        if (users) {
-          PhasedProvider.team.history = []; // clear history before populating
-          for (var id in users) {
-            // needs to be in function otherwise for loop screws up id in callback
-            (function(id, users) {
-              // add empty object to team.members so other fns can populate before these callbacks
-              PhasedProvider.team.members[id] = {uid : id};
+        // both populated by users below
+        setUpTeamMembers.membersToGetHistFor = []; 
+        var membersToGet = [];
 
-              FBRef.child('profile/' + id).once('value', function(data) {
-                data = data.val();
-                if (!data) return;
+        for (var id in users) {
+          // needs to be in function otherwise for loop screws up id in callback
+          (function(id, users) {
+            // add empty object to team.members so other fns can populate before these callbacks
+            PhasedProvider.team.members[id] = {uid : id};
+            membersToGet.push(id); // add synchronously
+            setUpTeamMembers.membersToGetHistFor.push(id);
 
-                var style = false;
-                if (users[id].photo){
-                  style = "background:url("+users[id].photo+") no-repeat center center fixed; -webkit-background-size: cover;-moz-background-size: cover; -o-background-size: cover; background-size: cover";
-                }
+            FBRef.child('profile/' + id).once('value', function(data) {
+              data = data.val();
+              if (!data) return;
 
-                PhasedProvider.team.members[id].name = data.name;
-                PhasedProvider.team.members[id].pic = data.gravatar;
-                PhasedProvider.team.members[id].gravatar = data.gravatar;
-                PhasedProvider.team.members[id].task = users[id].name;
-                PhasedProvider.team.members[id].time = users[id].time;
-                PhasedProvider.team.members[id].weather = users[id].weather;
-                PhasedProvider.team.members[id].city = users[id].city;
-                PhasedProvider.team.members[id].email = data.email;
-                PhasedProvider.team.members[id].tel = data.tel;
-                PhasedProvider.team.members[id].uid = id;
-                PhasedProvider.team.members[id].photo = style;
+              var style = false;
+              if (users[id].photo){
+                style = "background:url("+users[id].photo+") no-repeat center center fixed; -webkit-background-size: cover;-moz-background-size: cover; -o-background-size: cover; background-size: cover";
+              }
 
-                // PhasedProvider.team.members[id] = user;
-                // update teamLength
-                PhasedProvider.team.teamLength = Object.keys(PhasedProvider.team.members).length;
+              PhasedProvider.team.members[id].name = data.name;
+              PhasedProvider.team.members[id].pic = data.gravatar;
+              PhasedProvider.team.members[id].gravatar = data.gravatar;
+              PhasedProvider.team.members[id].task = users[id].name;
+              PhasedProvider.team.members[id].time = users[id].time;
+              PhasedProvider.team.members[id].weather = users[id].weather;
+              PhasedProvider.team.members[id].city = users[id].city;
+              PhasedProvider.team.members[id].email = data.email;
+              PhasedProvider.team.members[id].tel = data.tel;
+              PhasedProvider.team.members[id].uid = id;
+              PhasedProvider.team.members[id].photo = style;
+              PhasedProvider.team.members[id].newUser = data.newUser;
 
-                // 2.
-                if (WATCH_TASK_STREAM)
-                  PhasedProvider.team.lastUpdated.push(PhasedProvider.team.members[id]);
-                if (WATCH_TASK_STREAM || getHistoryFor == id)
-                  getMemberHistory(id);
+              // set teams to array of { name : 'My Team' }
+              // leaves a bit of room for another async call to gather more team data
+              // (eg, member count as was used in team switcher in chromeapp)
+              PhasedProvider.team.members[id].teams = [];
+              for (var i in data.teams) {
+                PhasedProvider.team.members[id].teams.push({
+                  name : data.teams[i]
+                });
+              }
 
+              // PhasedProvider.team.members[id] = user;
+              // update teamLength
+              PhasedProvider.team.teamLength = Object.keys(PhasedProvider.team.members).length;
 
+              // 2. team and user histories synched
+              if (WATCH_HISTORY) {
+                PhasedProvider.team.lastUpdated.push(PhasedProvider.team.members[id]);
+                getMemberHistory(id);
+              }
 
-              });
-            })(id, users);
-          }
-          // tell scope new data is in
-          // B: I've moved this out here so the scope is only told about members once all of them are available.
-          $rootScope.$broadcast('Phased:member');
+              // tell scope new data is in
+              $rootScope.$broadcast('Phased:member');
+
+              // rm this user from membersToGet
+              membersToGet.splice(membersToGet.indexOf(id), 1);
+              // if this is the last user in that list, emit Phased:membersComplete
+              if (membersToGet.length == 0)
+                $rootScope.$broadcast('Phased:membersComplete');
+
+              // tell scope current user profile is in
+              if (id == _Auth.user.uid) {
+                PhasedProvider.user.profile = PhasedProvider.team.members[id];
+                $rootScope.$broadcast('Phased:currentUserProfile');
+              }
+            });
+          })(id, users);
         }
 
         // tell scope new data is in
@@ -341,35 +392,38 @@ angular.module('webappApp')
       var endTime = new Date().getTime() - 31556926000;
       // get /team/[teamname]/all/[memberID], ordered by time, once
       // push to local team.history
-      FBRef.child('team/' + PhasedProvider.team.name + '/all/' + id).limitToLast(200).once('value',function(data) {
+      FBRef.child('team/' + PhasedProvider.team.name + '/all/' + id).orderByChild('time').startAt(endTime).once('value',function(data) {
         data = data.val();
-        if (getHistoryFor == id)
-          PhasedProvider.team.members[id].history = []; // clear history before populating
+
+        PhasedProvider.team.members[id].history = []; // clear history before populating
         if (data) {
           var keys = Object.keys(data);
-          //
+
           for (var i = 0; i < keys.length; i++){
-            if (WATCH_TASK_STREAM) {
-              // if we're watching the team's task stream,
-              // add this item only if it's not already in the stream
-              var addToHistory = true;
-              for (var j in PhasedProvider.team.history) {
-                // check time and user (can't use obj equiv bc angular adds properties)
-                if (PhasedProvider.team.history[j].time == data[keys[i]].time &&
-                  PhasedProvider.team.history[j].user == data[keys[i]].user) {
-                  addToHistory = false;
-                }
+            // add this item only if it's not already in the stream
+            var addToHistory = true;
+            for (var j in PhasedProvider.team.history) {
+              // check time and user (can't use obj equiv bc angular adds properties)
+              if (PhasedProvider.team.history[j].time == data[keys[i]].time &&
+                PhasedProvider.team.history[j].user == data[keys[i]].user) {
+                addToHistory = false;
               }
-              if (addToHistory) PhasedProvider.team.history.push(data[keys[i]]);
             }
-            if (getHistoryFor == id)
-              PhasedProvider.team.members[id].history.push(data[keys[i]]);
+            if (addToHistory) 
+              PhasedProvider.team.history.push(data[keys[i]]);
+
+            PhasedProvider.team.members[id].history.push(data[keys[i]]); // always populate user histories
           }
         }
-        
+        // tell scope new data is in
+        $rootScope.$broadcast('Phased:history');
+
+        // rm this user from setUpTeamMembers.membersToGetHistFor
+        setUpTeamMembers.membersToGetHistFor.splice(setUpTeamMembers.membersToGetHistFor.indexOf(id), 1);
+        // if this is the last user in that list, emit Phased:historyComplete
+        if (setUpTeamMembers.membersToGetHistFor.length == 0)
+          $rootScope.$broadcast('Phased:historyComplete');
       });
-      // tell scope new data is in
-      $rootScope.$broadcast('Phased:history');
     }
 
     // gathers team categories data and adds to PhasedProvider.team
@@ -472,17 +526,14 @@ angular.module('webappApp')
     *
     * sets up watchers for current users task assignments (to and by
     * and also unassigned tasks), filling Phased.assignments (as PhasedProvider.assignments)
-    * for use in a controller
+    * called in init() (could be exposed to controller)
     *
     *   - own assignments (to self or to others) assignments/to/(me)
     *   - assignments to me by others assignments/by/(me)
     *   - unassigned tasks assignments/un
     */
-    var _watchAssignments = function() {
-      registerAsync(doWatchAssignments);
-    }
 
-    var doWatchAssignments = function() {
+    var watchAssignments = function() {
       // callbacks
 
       /**
@@ -856,43 +907,12 @@ angular.module('webappApp')
 
     /**
     *
-    * sets WATCH_TASK_STREAM to true, get history for members if not already
-    * in memory (eg, if coming from another route in the app);
-    *
-    */
-    var _watchTaskStream = function() {
-      registerAsync(doWatchTaskStream);
-    }
-
-    var doWatchTaskStream = function() {
-      WATCH_TASK_STREAM = true;
-      PhasedProvider.team.lastUpdated = PhasedProvider.team.lastUpdated || [];
-      PhasedProvider.team.history = PhasedProvider.team.history || [];
-      for (var i in PhasedProvider.team.members) {
-        getMemberHistory(PhasedProvider.team.members[i].uid);
-      }
-    }
-
-    /**
-    *
-    * watches history for one member
-    * used on profile page
-    *
-    */
-    var _watchMemberStream = function(id) {
-      registerAsync(doWatchMemberStream, id);
-    }
-
-    var doWatchMemberStream = function(id) {
-      getHistoryFor = id;
-      // get personal history if not already present
-      if (!(PhasedProvider.team.members[id].history))
-        getMemberHistory(id);
-    }
-
-    /**
-    *
     * watchs a member's assignments
+    *
+    * 1. get all assignments (once)
+    * 2. watch assigned /to/[user] and /by/[user]
+    * 3. push appropriate assignments from all into user.assignments.to_me or .by_me
+    *   (allowing the same object to be in both arrays at once)
     *
     */
     var _watchMemberAssignments = function(id) {
@@ -906,16 +926,19 @@ angular.module('webappApp')
         by_me: []
       }
 
+      // 1.
       var refString = 'team/' + PhasedProvider.team.name + '/assignments';
       FBRef.child(refString + '/all').once('value', function(data) {
         var all = data.val();
         if (!all) return;
 
+        // 2.
         FBRef.child(refString + '/to/' + id).on('value', function(data) {
           data = data.val();
           if (!data) return;
           data = objToArray(data);
 
+          // 3.
           // for each index in the to_me list, check if it's in all
           // if it is, push it to the array
           for (var i in data) {
@@ -923,11 +946,14 @@ angular.module('webappApp')
               user.assignments.to_me.push(all[data[i]]);
           }
         });
-        // same as above
+        
+        // 2. same as above
         FBRef.child(refString + '/by/' + id).on('value', function(data) {
           data = data.val();
           if (!data) return;
           data = objToArray(data);
+
+          // 3. 
           for (var i in data) {
             if (data[i] in all)
               user.assignments.by_me.push(all[data[i]]);
@@ -1383,6 +1409,9 @@ angular.module('webappApp')
   })
   .config(['PhasedProvider', 'FURL', 'AuthProvider', function(PhasedProvider, FURL, AuthProvider) {
     PhasedProvider.setFBRef(FURL);
-    // configure phaseProvider as a callback to AuthProvider
+    PhasedProvider.setWatchHistory(true);
+    PhasedProvider.setWatchAssignments(true);
+
+    // configure phasedProvider as a callback to AuthProvider
     AuthProvider.setDoAfterAuth(PhasedProvider.init);
   }]);
