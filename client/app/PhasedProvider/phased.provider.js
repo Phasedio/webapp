@@ -973,6 +973,7 @@ angular.module('webappApp')
       assignmentsRef.child(path).once('value', function(data) {
         data = data.val();
         data = data || [];
+        data = objToArray(data);
         data.push(newTaskID);
         assignmentsRef.child(path).set(data);
       });
