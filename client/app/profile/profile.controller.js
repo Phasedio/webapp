@@ -4,7 +4,6 @@ angular.module('webappApp')
   .filter('tel', function() {
     return function(tel) {
       var res = formatLocal('CA', tel);
-      console.log(tel, res);
       return res || tel;
     }
   })
