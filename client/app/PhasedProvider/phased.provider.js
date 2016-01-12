@@ -18,11 +18,8 @@ angular.module('webappApp')
       this.init() if not (via doAsync).
         Because of this, all methods exposed by PhasedProvider must be registered with registerAsync.
 
-      Current functionality:
-        - Tasks (in progress)
-
-      Pending functionality:
-        - Feed page
+        Currently team history is watched and synched with firebase but team assignments must explicitly
+      be watched (using PhasedProvider.watchAssignments() in some controller)
 
     **/
 
@@ -43,6 +40,7 @@ angular.module('webappApp')
         by_me : [],
         unassigned : []
       };
+    var ga = ga || function(){}; // in case ga isn't defined (as in chromeapp)
 
     var _Auth, FBRef; // tacked on to PhasedProvider
 
@@ -425,6 +423,10 @@ angular.module('webappApp')
     // checks current plan status
     // retrofitted from main.controller.js to avoid using $http
     // may need changing but polls backend ok.
+    /*
+      NB: broken in chromeapp -- do we need to implement this?
+      TODO // BUG // ATTENTION
+    */
     var checkPlanStatus = function() {
       FBRef.child('team').child(_Auth.currentTeam).once('value', function(data){
         var team = data.val();
@@ -1161,12 +1163,10 @@ angular.module('webappApp')
       FBRef.child('team/' + PhasedProvider.team.name + '/assignments/all/' + assignmentID + '/status').set(newStatus);
 
       // if issue was complete, timestamp it
-      if(newStatus == 1){
+      if (newStatus == 1) {
         var time = new Date().getTime();
         FBRef.child('team/' + PhasedProvider.team.name + '/assignments/all/' + assignmentID).update({"completeTime" : time});
       }
-
-
     }
 
     /**
@@ -1212,7 +1212,7 @@ angular.module('webappApp')
         inviter : inviter
       }
       console.log(args);
-      registerAsync(doAddMember(args));
+      registerAsync(doAddMember, args);
     }
 
     var doAddMember = function(args) {
@@ -1221,7 +1221,7 @@ angular.module('webappApp')
       var invited = args.newMember,
         inviter = args.inviter;
 
-        invited.email = invited.email.toLowerCase(); // Change text to lowercase regardless of user input.
+      invited.email = invited.email.toLowerCase(); // Change text to lowercase regardless of user input.
 
       //Brian's better add member function
       // find if memeber is already in db
@@ -1264,6 +1264,86 @@ angular.module('webappApp')
             }
           });
         }
+      });
+    }
+
+    /**
+    *
+    * adds a team
+    * function mostly copied from chromeapp ctrl-createTeam.js
+    * 1. check if teamname is taken
+    * 2A. if not:
+    *  - create the team in /team
+    *  - add to current user's profile
+    *  - make it their current team
+    *  - run success callback if it exists
+    * 2B. if it does exist, run fail callback if it exists
+    */
+
+    var _addTeam = function(teamName, success, failure) {
+      var args = {
+        teamName : teamName,
+        success : success,
+        failure : failure
+      }
+      registerAsync(doAddTeam, args);
+    }
+
+    var doAddTeam = function(args) {
+      FBRef.child('team/' + args.teamName).once('value', function(snapshot) {
+        //if exists
+        if(snapshot.val() == null) {
+          FBRef.child('team/' + args.teamName + '/members/' + _Auth.user.uid).set(true,function(){
+            FBRef.child('profile/' + _Auth.user.uid + '/teams').push(args.teamName,function(){
+              var switchArgs = {
+                teamName : args.teamName,
+                callback : args.success
+              }
+              doSwitchTeam(switchArgs);
+            });
+          });
+        } else {
+          if (args.failure)
+            args.failure();
+        }
+      });
+    }
+
+
+    /**
+    *
+    * switches current user's active team
+    * optionally calls a callback
+    */
+
+    var _switchTeam = function(teamName, callback) {
+      var args = {
+        teamName : teamName,
+        callback : callback
+      }
+      registerAsync(doSwitchTeam, args);
+    }
+
+    var doSwitchTeam = function(args) {
+      // reset team
+      PhasedProvider.team.name = args.teamName;
+      PhasedProvider.team.members = {};
+      PhasedProvider.team.lastUpdated = [];
+      PhasedProvider.team.history = [];
+      PhasedProvider.team.teamLength = 0;
+
+      // remove old event handlers
+      FBRef.child(setUpTeamMembers.address).off('value'); 
+
+      // reload team data
+      setUpTeamMembers();
+      if (WATCH_ASSIGNMENTS)
+        watchAssignments();
+
+      // update profile curTeam attr
+      FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamName, function() {
+        if (args.callback)
+          args.callback();
       });
     }
 
