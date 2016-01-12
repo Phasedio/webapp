@@ -164,9 +164,12 @@ angular.module('webappApp')
     }
     if (update.tel !== $scope.currentUser.tel) {
       console.log('hit the tel!');
-      Auth.changeTel(update, Auth.user.uid);
-      toaster.pop('success', "Your phone number has been updated");
-      $scope.currentUser.tel = update.tel;
+      if (Auth.changeTel(update, Auth.user.uid)) {
+        toaster.pop('success', "Your phone number has been updated");
+        $scope.currentUser.tel = update.tel;
+      } else {
+        toaster.pop('error', 'Invalid phone number');
+      }
     }
 
     if (update.name === $scope.currentUser.name || update.name === undefined || update.name === ''){
