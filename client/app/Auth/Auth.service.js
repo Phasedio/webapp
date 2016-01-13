@@ -90,7 +90,10 @@ angular.module('webappApp')
               else
                 return false;
 
-              var profile = ref.child("profile").child(uid).child('tel').set(user.tel);
+              var profile = ref.child("profile").child(uid).child('tel').set(user.tel, function(){
+                // after updating, send a welcome SMS
+                ref.child('newTel').push(user.tel);
+              });
 
               return true;
             },
