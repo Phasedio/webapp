@@ -79,7 +79,7 @@ exports.getRole = function(req, res) {
 *	1. validate incoming data (role value, presence of assignee and user)
 * 2. get user's current team
 * 3A. get user's current role
-* 3B. check user's current role
+* 3B. check user's current role -- RULES ARE SET HERE
 * 4. set assignee's role
 *
 */
@@ -133,7 +133,11 @@ exports.setRole = function(req, res) {
 			var override = true; // override permissions
 
 			// 3B. check user's role permissions
-			if ((!role || (role != 'owner' && role != 'admin')) && !override) {
+			// RULES ARE SET HERE
+			if ((!role // must have a role
+					|| (role != 'owner' && role != 'admin') // must be either owner or admin to change a role
+					|| (role != 'owner' && newRole == 'owner')) // must be owner to set someone else to owner
+					&& !override) {
 				res.send({
 					err : 'insufficient permissions'
 				});
