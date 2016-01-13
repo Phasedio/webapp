@@ -163,8 +163,20 @@ angular.module('webappApp')
         auth.$onAuth(function(authData) {
             if (authData) {
                 angular.copy(authData, Auth.user);
-                // tmp
-                Auth.user.role = 'Admin';
+
+                // get user role from server
+                $.post('./api/auth/roles', {user: Auth.user.uid, team: Auth.currentTeam})
+                    .success(function(data) {
+                        if (data.success) {
+                            console.log('success, role: ' + data.role);
+                            Auth.user.role = data.role;
+                        } else {
+                            console.log('Auth error', data);
+                        }
+                    })
+                    .error(function(data){
+                      console.log(data);
+                    });
               }
             //     Auth.user.profile = $firebase(ref.child('profile').child(authData.uid)).$asObject();
             //     console.log(Auth.user.profile);

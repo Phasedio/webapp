@@ -25,7 +25,7 @@ angular.module('webappApp')
 
     // add Admin link if user has permissions
     var addAdminNavOption = function(){
-      if (Auth.user.role == 'Admin' || Auth.user.role == 'Owner') 
+      if (Auth.user.role == 'admin' || Auth.user.role == 'owner') 
         $scope.menu.push({ 'title': 'Admin', 'link' : '/admin' });
       else
         if ($scope.menu[$scope.menu.length - 1].title == 'Admin')
