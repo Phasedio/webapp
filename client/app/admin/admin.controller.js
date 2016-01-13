@@ -7,13 +7,16 @@ angular.module('webappApp')
     $scope.viewType = Phased.viewType;
     $scope.myID = Auth.user.uid;
     $scope.team = Phased.team;
+    $scope.Phased = Phased;
 
     // bounce users without Admin or Owner permissions
     $scope.$on('Phased:currentUserProfile', function(){
-      if (Auth.user.role != 'Admin' || Auth.user.role != 'Owner')
+      if (Auth.user.role != 'admin' || Auth.user.role != 'owner')
         $location.path('/feed');
     });
 
-
+  $scope.changeRole = function(member) {
+    Phased.changeMemberRole(member.uid, member.role);
+  }
 
   });

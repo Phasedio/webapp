@@ -8,13 +8,7 @@ var FirebaseTokenGenerator = require("firebase-token-generator");
 var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
 var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
 var token = tokenGenerator.createToken({uid: "modServer", some: "arbitrary", data: "here"});
-FBRef.authWithCustomToken(token, function(error, authData) {
-  if (error) {
-    console.log("Login Failed!", error);
-  } else {
-    console.log("Login Succeeded!", authData);
-  }
-});
+FBRef.authWithCustomToken(token, function(error, authData) {});
 
 exports.index = function(req, res) {
 	res.json([]);
@@ -23,26 +17,18 @@ exports.index = function(req, res) {
 // gives user's current role on current team
 exports.getRole = function(req, res) {
 	var user = req.body.user;
-
-	// get current team
-	FBRef.child('profile/' + user + '/curTeam').once('value', function(data){
-		var team = data.val();
-		// if no team, respond with error
-		if (!team) {
-			res.send({
-				err : 'no team'
-			});
-			return;
-		}
-
+	var team = req.body.team;
+ 	
+ 	// actually go and get the role
+ 	var getRoleForTeam = function(user, team) {
 		// get current role
-		FBRef.child('teams/' + team + '/roles/' + user).once('value', function(data){
+		FBRef.child('team/' + team + '/roles/' + user).once('value', function(data){
 			var role = data.val();
 			// if no role, default to 'member'
 			if (!role) {
 				res.send({
 					success : true,
-					role : 'admin'
+					role : 'member'
 				});
 			} else {
 				// send role
@@ -51,8 +37,27 @@ exports.getRole = function(req, res) {
 					role : role
 				});
 			}
-		})
-	});
+		});
+ 	}
+
+ 	if (team) {
+ 		getRoleForTeam(user, team);
+ 		return;
+ 	} else {
+		// get current team
+		FBRef.child('profile/' + user + '/curTeam').once('value', function(data){
+			var team = data.val();
+			// if no team, respond with error
+			if (!team) {
+				res.send({
+					err : 'no team'
+				});
+				return;
+			}
+
+			getRoleForTeam(user, team);
+		});
+	}
 }
 
 // set role for a user
@@ -65,7 +70,11 @@ exports.setRole = function(req, res) {
 	var validRoles = ['member', 'admin', 'owner'];
 	if (!newRole || (validRoles.indexOf(newRole) < 0) ) {
 		res.send({
-			err : 'invalid role'
+			err : 'invalid role',
+			body : req.body,
+			role : newRole,
+			index: validRoles.indexOf(newRole),
+			validRoles : validRoles
 		});
 		return;
 	}
@@ -85,7 +94,7 @@ exports.setRole = function(req, res) {
 	}
 
 	// get current team
-	FBRef.child('profile/' + user + '/curTeam').once('value', function(data){
+	FBRef.child('profile/' + user + '/curTeam').once('value', function(data) {
 		var team = data.val();
 		// if no team, respond with error
 		if (!team) {
@@ -96,17 +105,19 @@ exports.setRole = function(req, res) {
 		}
 
 		// get current role
-		FBRef.child('teams/' + team + '/roles/' + user).once('value', function(data){
+		FBRef.child('team/' + team + '/roles/' + user).once('value', function(data) {
 			var role = data.val();
-			// if no role, default to 'member'
-			if (!role) {
+			var override = true; // override permissions
+
+			// check role permissions
+			if ((!role || (role != 'owner' && role != 'admin')) && !override) {
 				res.send({
 					err : 'insufficient permissions'
 				});
 				return;
 			} else {
 				// set role
-				FBRef.child('teams/' + team + '/roles/' + assignee).set(newRole, function() {
+				FBRef.child('team/' + team + '/roles/' + assignee).set(newRole, function() {
 					res.send({
 						success : true
 					});

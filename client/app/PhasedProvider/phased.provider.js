@@ -74,6 +74,7 @@ angular.module('webappApp')
           COMPLETE : 1,
           ASSIGNED : 2
         },
+        ROLES : ['member', 'admin', 'owner'],
         assignments : { // Phased.assignments
           all : {}, // all of the team's assignments
           to_me : {}, // assigned to me (reference to objects in all)
@@ -136,6 +137,7 @@ angular.module('webappApp')
       PhasedProvider.switchTeam = _switchTeam;
       // PhasedProvider.watchMemberStream = _watchMemberStream;
       PhasedProvider.watchMemberAssignments = _watchMemberAssignments;
+      PhasedProvider.changeMemberRole = _changeMemberRole;
 
       return PhasedProvider;
     }];
@@ -341,6 +343,19 @@ angular.module('webappApp')
                   name : data.teams[i]
                 });
               }
+
+              // get member role from server
+                $.post('./api/auth/role/get', {user: id, team : PhasedProvider.team.name})
+                    .success(function(data) {
+                        if (data.success) {
+                            PhasedProvider.team.members[id].role = data.role || 'member';
+                        } else {
+                            console.log('Auth error', data);
+                        }
+                    })
+                    .error(function(data){
+                      console.log(data);
+                    });
 
               // PhasedProvider.team.members[id] = user;
               // update teamLength
@@ -1237,7 +1252,7 @@ angular.module('webappApp')
         newMember : newMember,
         inviter : inviter
       }
-      console.log(args);
+
       registerAsync(doAddMember, args);
     }
 
@@ -1291,6 +1306,40 @@ angular.module('webappApp')
           });
         }
       });
+    }
+
+    /**
+    *
+    * changes a member's role
+    *
+    */
+
+    var _changeMemberRole = function(memberID, newRole) {
+      var args = {
+        member : memberID,
+        newRole : newRole
+      }
+
+      registerAsync(doChangeMemberRole, args);
+    }
+
+    var doChangeMemberRole = function(args) {
+      // get user role from server
+      $.post('./api/auth/role/set', {
+        user: _Auth.user.uid,
+        assignee : args.member,
+        role : args.newRole
+      })
+        .success(function(data) {
+            if (data.success) {
+                // console.log('success', data);
+            } else {
+                console.log('Auth error', data);
+            }
+        })
+        .error(function(data){
+          console.log('err', data.error());
+        });
     }
 
     /**

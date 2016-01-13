@@ -1,7 +1,5 @@
 <div ng-include="'components/navbar/navbar.html'"></div>
-<section class="hero-img">
-</section>
-<section>
+
 
 <section class="container">
   <div class="row">
@@ -12,7 +10,10 @@
 				<tbody>
 					<tr class="task" ng-repeat="member in team.members" >
 						<td>
-							{{member.name}}
+							{{member.name}} -- 
+							<select ng-model="member.role" ng-change="changeRole(member)">
+								<option ng-repeat="role in Phased.ROLES">{{role}}</option>
+							</select>
 						</td>
 					</tr>
 				</tbody>
