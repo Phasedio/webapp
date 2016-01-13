@@ -165,7 +165,7 @@ angular.module('webappApp')
                 angular.copy(authData, Auth.user);
 
                 // get user role from server
-                $.post('./api/auth/roles', {user: Auth.user.uid, team: Auth.currentTeam})
+                $.post('./api/auth/role/get', {user: Auth.user.uid, team: Auth.currentTeam})
                     .success(function(data) {
                         if (data.success) {
                             console.log('success, role: ' + data.role);
