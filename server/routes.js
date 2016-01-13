@@ -19,6 +19,14 @@ module.exports = function(app) {
   app.route('/:url(api|auth|components|app|bower_components|assets)/*')
    .get(errors[404]);
 
+  // special admin routing
+  app.route('/admin')
+    .get(function(req, res){
+      // deny request politely here if user is not logged in
+      // ...how do we get the user?
+      res.sendFile(path.resolve(app.get('appPath') + '/index.html'));
+    });
+
   // All other routes should redirect to the index.html
   app.route('/*')
     .get(function(req, res) {
