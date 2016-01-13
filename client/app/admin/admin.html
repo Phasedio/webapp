@@ -5,6 +5,19 @@
 
 <section class="container">
   <div class="row">
-  	<h1>ADMIN</h1>
+  	<div class="task-stream" ng-class="tasklistSize">
+		<div class="ph-card task-list">
+ 		 	<h1>ADMIN</h1>
+ 		 	<table class="table table-hover">
+				<tbody>
+					<tr class="task" ng-repeat="member in team.members" >
+						<td>
+							{{member.name}}
+						</td>
+					</tr>
+				</tbody>
+			</table>
+ 		</div>
+	</div>
   </div>
 </section>
