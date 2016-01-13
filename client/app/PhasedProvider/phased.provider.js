@@ -346,16 +346,16 @@ angular.module('webappApp')
 
               // get member role from server
                 $.post('./api/auth/role/get', {user: id, team : PhasedProvider.team.name})
-                    .success(function(data) {
-                        if (data.success) {
-                            PhasedProvider.team.members[id].role = data.role || 'member';
-                        } else {
-                            console.log('Auth error', data);
-                        }
-                    })
-                    .error(function(data){
-                      console.log(data);
-                    });
+                  .success(function(data) {
+                      if (data.success) {
+                          PhasedProvider.team.members[id].role = data.role || 'member';
+                      } else {
+                          console.log('Auth error', data);
+                      }
+                  })
+                  .error(function(data){
+                    console.log(data);
+                  });
 
               // PhasedProvider.team.members[id] = user;
               // update teamLength
@@ -1311,13 +1311,19 @@ angular.module('webappApp')
     /**
     *
     * changes a member's role
+    * Server side API takes care of database interaction and sanitization
+    * data passed = { 
+    *    user : current user id, 
+    *    assignee : id of user with new role
+    *    role : new role
+    *  }
     *
     */
 
-    var _changeMemberRole = function(memberID, newRole) {
+    var _changeMemberRole = function(memberID, role) {
       var args = {
         member : memberID,
-        newRole : newRole
+        role : role
       }
 
       registerAsync(doChangeMemberRole, args);
@@ -1328,7 +1334,7 @@ angular.module('webappApp')
       $.post('./api/auth/role/set', {
         user: _Auth.user.uid,
         assignee : args.member,
-        role : args.newRole
+        role : args.role
       })
         .success(function(data) {
             if (data.success) {
