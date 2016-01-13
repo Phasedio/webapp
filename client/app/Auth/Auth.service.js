@@ -163,7 +163,8 @@ angular.module('webappApp')
         auth.$onAuth(function(authData) {
             if (authData) {
                 angular.copy(authData, Auth.user);
-
+                // tmp
+                Auth.user.role = 'Admin';
               }
             //     Auth.user.profile = $firebase(ref.child('profile').child(authData.uid)).$asObject();
             //     console.log(Auth.user.profile);
