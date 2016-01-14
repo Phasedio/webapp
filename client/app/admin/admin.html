@@ -1,0 +1,24 @@
+<div ng-include="'components/navbar/navbar.html'"></div>
+
+
+<section class="container">
+  <div class="row">
+  	<div class="task-stream" ng-class="tasklistSize">
+		<div class="ph-card task-list">
+ 		 	<h1>ADMIN</h1>
+ 		 	<table class="table table-hover">
+				<tbody>
+					<tr class="task" ng-repeat="member in team.members" >
+						<td>
+							{{member.name}} -- 
+							<select ng-model="member.role" ng-change="changeRole(member)">
+								<option ng-repeat="role in Phased.ROLES">{{role}}</option>
+							</select>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+ 		</div>
+	</div>
+  </div>
+</section>
