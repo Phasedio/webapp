@@ -19,7 +19,7 @@
           <ul>
             <li><span>updates</span><span>{{currentUser.history.length}}</span></li>
             <li><span>email</span><span>{{currentUser.email}}</span></li>
-            <li><span>tel</span><span>{{currentUser.tel}}</span></li>
+            <li><span>tel</span><span>{{currentUser.tel | tel}}</span></li>
             <!-- <li><span>slack</span><span>@brian</span></li> -->
 
           </ul>
@@ -187,7 +187,7 @@
               </div>
 							<div class="item item-input item-stacked-label">
                 <label class="input-label" for="tel">tel</label>
-                <input class="loginInput" type="tel" id="tel" ng-model="update.tel" placeholder="{{currentUser.tel}}">
+                <input class="loginInput" type="tel" id="tel" ng-model="update.tel" placeholder="{{currentUser.tel | tel}}">
               </div>
               <div class="item item-input item-stacked-label">
                 <label class="input-label" for="email">email</label>

@@ -1,6 +1,12 @@
 'use strict';
 
 angular.module('webappApp')
+  .filter('tel', function() {
+    return function(tel) {
+      var res = formatLocal('CA', tel);
+      return res || tel;
+    }
+  })
   .controller('ProfileCtrl', function ($scope,$routeParams, $http, stripe, Auth, Phased, FURL,amMoment,$location) {
     ga('send', 'pageview', '/profile');
 
@@ -163,9 +169,12 @@ angular.module('webappApp')
     }
     if (update.tel !== $scope.currentUser.tel) {
       console.log('hit the tel!');
-      Auth.changeTel(update, Auth.user.uid);
-      toaster.pop('success', "Your phone number has been updated");
-      $scope.currentUser.tel = update.tel;
+      if (Auth.changeTel(update, Auth.user.uid)) {
+        toaster.pop('success', "Your phone number has been updated");
+        $scope.currentUser.tel = update.tel;
+      } else {
+        toaster.pop('error', 'Invalid phone number');
+      }
     }
 
     if (update.name === $scope.currentUser.name || update.name === undefined || update.name === ''){

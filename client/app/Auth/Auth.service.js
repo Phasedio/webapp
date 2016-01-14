@@ -84,13 +84,18 @@ angular.module('webappApp')
 
             },
             changeTel: function(user, uid){
-              console.log('will change name', user.tel);
-              //console.log(a)
-              var profile = ref.child("profile").child(uid).child('tel').set(user.tel);
-              //return (profile,uid);
-              //profile.set(update.name);
+              console.log('will change tel', user.tel);
+              if (isValidNumber(user.tel, 'CA'))
+                user.tel = formatE164('CA', user.tel);
+              else
+                return false;
 
+              var profile = ref.child("profile").child(uid).child('tel').set(user.tel, function(){
+                // after updating, send a welcome SMS
+                ref.child('newTel').push(user.tel);
+              });
 
+              return true;
             },
 
             signedIn: function() {
