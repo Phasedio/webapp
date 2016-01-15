@@ -12,4 +12,21 @@ angular.module('webappApp')
     	$location.path('/feed');
     };
 
+    $scope.deleteCat = function(key, event) {
+    	ga('send', 'event', 'Category', 'Deleted');
+    	Phased.deleteCategory(key);
+    }
+
+    // check if category exists
+    $scope.categoryExists = function(newKey) {
+    	var exists = false;
+			for (var existingKey in Phased.team.categoryObj) {
+				if (newKey == existingKey) {
+					exists = true;
+					break;
+				}
+			}
+    	return exists;
+    }
+
   });

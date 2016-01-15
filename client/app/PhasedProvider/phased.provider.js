@@ -139,6 +139,7 @@ angular.module('webappApp')
       PhasedProvider.watchMemberAssignments = _watchMemberAssignments;
       PhasedProvider.changeMemberRole = _changeMemberRole;
       PhasedProvider.addCategory = _addCategory;
+      PhasedProvider.deleteCategory = _deleteCategory;
 
       return PhasedProvider;
     }];
@@ -1240,7 +1241,7 @@ angular.module('webappApp')
 
     /**
     *
-    * add category to a team
+    * add category to current team
     *
     * NB: This will update categories of the same name or key
     *
@@ -1303,6 +1304,31 @@ angular.module('webappApp')
         console.log('cat doesn\'t exist');
         FBRef.child('team/' + PhasedProvider.team.name + '/category').push(category, getCategories);
       }
+    }
+
+    /**
+    *
+    * deletes category from current team
+    *
+    * NB: will attempt to delete a cat even if not there
+    *
+    * 1. ensure key is a string
+    * 2. delete category
+    */
+    var _deleteCategory = function(key) {
+      registerAsync(doDeleteCategory, key);
+    }
+
+    var doDeleteCategory = function(key) {
+      console.log('deleting cat at ' + key);
+      // 1.
+      if ((typeof key).toLowerCase() != 'string') {
+        console.log('bad key');
+        return;
+      }
+
+      // 2. 
+      FBRef.child('team/' + PhasedProvider.team.name + '/category/' + key).set(null, getCategories);
     }
 
     /**
