@@ -138,6 +138,7 @@ angular.module('webappApp')
       // PhasedProvider.watchMemberStream = _watchMemberStream;
       PhasedProvider.watchMemberAssignments = _watchMemberAssignments;
       PhasedProvider.changeMemberRole = _changeMemberRole;
+      PhasedProvider.addCategory = _addCategory;
 
       return PhasedProvider;
     }];
@@ -1234,6 +1235,74 @@ angular.module('webappApp')
 
       // 3. set assignee attr
       FBRef.child(assignmentsPath + 'all/' + assignmentID + '/assignee').set(PhasedProvider.user.uid);
+    }
+
+
+    /**
+    *
+    * add category to a team
+    *
+    * NB: This will silently overwrite categories of the same name
+    *
+    * 1. check all incoming category properties
+    * 2. check if category with that name already exists
+    * 3A. if so, update it, then call getCategories() to update
+    * 3B. if not, create it, then call getCategories() to update
+    *
+    */
+    var _addCategory = function(category) {
+      registerAsync(doAddCategory, category);
+    }
+
+    var doAddCategory = function(args) {
+      var category = {
+        name :  args.name,
+        color : args.color
+      };
+
+      // 1.
+      // check colour
+      var regex = /^\#([a-zA-Z0-9]{3}|[a-zA-Z0-9]{6})$/;
+      if (!(category.color && regex.test(category.color))) {
+        console.log('bad category colour');
+        return;
+      }
+
+      // check name exists, has length, is a word
+      regex = /\w+/;
+      if (!(category.name && regex.test(category.name))) {
+        console.log('bad category name');
+        return;
+      }
+
+      category.created = new Date().getTime();
+      category.user = _Auth.user.uid;
+
+      console.log('creating category', category);
+
+      // 2. Check if category exists
+      var catExists = false;
+      var key = '';
+      for (key in PhasedProvider.team.categoryObj) {
+        if (PhasedProvider.team.categoryObj[key].name.toLowerCase() == category.name.toLowerCase()) {
+          catExists = true;
+          break;
+        }
+      }
+
+      // 3A. category exists; update
+      if (catExists) {
+        console.log('cat exists at ' + key);
+        // ensure same capitalization
+        category.name = PhasedProvider.team.categoryObj[key].name;
+        FBRef.child('team/' + PhasedProvider.team.name + '/category/' + key).set(category, getCategories);
+      }
+
+      // 3B.
+      else {
+        console.log('cat doesn\'t exist');
+        FBRef.child('team/' + PhasedProvider.team.name + '/category').push(category, getCategories);
+      }
     }
 
     /**
