@@ -11,7 +11,7 @@
 					<tr class="task" ng-repeat="member in team.members" >
 						<td>
 							{{member.name}} -- 
-							<select ng-model="member.role" ng-change="changeRole(member)">
+							<select ng-model="member.role" ng-change="changeRole(member, '{{member.role}}')">
 								<option ng-repeat="role in Phased.ROLES">{{role}}</option>
 							</select>
 						</td>

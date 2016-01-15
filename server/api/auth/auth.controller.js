@@ -7,7 +7,7 @@ var FirebaseTokenGenerator = require("firebase-token-generator");
 
 var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
 var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
-var token = tokenGenerator.createToken({uid: "modServer", some: "arbitrary", data: "here"});
+var token = tokenGenerator.createToken({uid: "modServer" , origin : "auth.controller.js" });
 FBRef.authWithCustomToken(token, function(error, authData) {});
 
 exports.index = function(req, res) {
@@ -144,10 +144,16 @@ exports.setRole = function(req, res) {
 				return;
 			} else {
 				// 4. set assignee's role
-				FBRef.child('team/' + team + '/roles/' + assignee).set(newRole, function() {
-					res.send({
-						success : true
-					});
+				FBRef.child('team/' + team + '/roles/' + assignee).set(newRole, function(err) {
+					if (err) {
+						res.send({
+							err : 'insufficient permissions'
+						})
+					} else {
+						res.send({
+							success : true
+						});
+					}
 				});
 			}
 		})

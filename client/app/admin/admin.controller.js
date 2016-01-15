@@ -15,8 +15,8 @@ angular.module('webappApp')
         $location.path('/feed');
     });
 
-  $scope.changeRole = function(member) {
-    Phased.changeMemberRole(member.uid, member.role);
+  $scope.changeRole = function(member, oldRole) {
+    Phased.changeMemberRole(member.uid, member.role, oldRole);
   }
 
   });
