@@ -1242,10 +1242,10 @@ angular.module('webappApp')
     *
     * add category to a team
     *
-    * NB: This will silently overwrite categories of the same name
+    * NB: This will update categories of the same name or key
     *
     * 1. check all incoming category properties
-    * 2. check if category with that name already exists
+    * 2. check if category with that name or key already exists
     * 3A. if so, update it, then call getCategories() to update
     * 3B. if not, create it, then call getCategories() to update
     *
@@ -1284,7 +1284,9 @@ angular.module('webappApp')
       var catExists = false;
       var key = '';
       for (key in PhasedProvider.team.categoryObj) {
-        if (PhasedProvider.team.categoryObj[key].name.toLowerCase() == category.name.toLowerCase()) {
+        var nameExists = PhasedProvider.team.categoryObj[key].name.toLowerCase() == category.name.toLowerCase();
+        var keyExists = key == args.key;
+        if (nameExists || keyExists) {
           catExists = true;
           break;
         }
@@ -1293,8 +1295,6 @@ angular.module('webappApp')
       // 3A. category exists; update
       if (catExists) {
         console.log('cat exists at ' + key);
-        // ensure same capitalization
-        category.name = PhasedProvider.team.categoryObj[key].name;
         FBRef.child('team/' + PhasedProvider.team.name + '/category/' + key).set(category, getCategories);
       }
 
