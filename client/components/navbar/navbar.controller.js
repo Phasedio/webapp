@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('NavbarCtrl', function ($scope, $location, Auth, FURL) {
+  .controller('NavbarCtrl', function ($scope, $location, Auth, FURL, Notif) {
     $scope.team = Auth.currentTeam;
 
     $scope.menu = [

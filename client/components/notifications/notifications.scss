@@ -1,0 +1,19 @@
+.toggleNotifBtn {
+	padding: 16px;
+	display: inline-block;
+}
+
+div.notifPane {
+	display: block;
+  position: absolute;
+  top: 60px;
+  right: 0;
+  width: 30rem;
+
+  z-index: 10;
+  background: #1e1e24;
+  ul {
+  	list-style: none;
+  	padding: 0 1rem;
+  }
+}

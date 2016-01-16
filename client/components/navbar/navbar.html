@@ -20,6 +20,9 @@
           <li ng-repeat="item in menu" ng-class="{active: isActive(item.link)}">
             <a ng-href="{{item.link}}" ng-click="item.function">{{item.title}}</a>
           </li>
+          <li>
+            <div ng-include="'components/notifications/notifications.html'"></div>
+          </li>
         </ul>
 
       </div><!-- /.navbar-collapse -->
