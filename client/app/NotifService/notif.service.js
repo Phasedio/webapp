@@ -5,34 +5,15 @@ angular.module('webappApp')
 
 		// the main notification stream, exposed to controller
 		this.stream = [
-			{
-				title : 'First item',
-				body : 'This is the first item in a stream. This is some text that would be in the body of the stream ...',
+			/*{
+				title : 'Dummy item',
+				body : 'This is just a dummy stream item. This is some text that would be in the body of the stream ...',
 				img : '',
 				time : 1445459283148,
-				unread : true
-			},
-			{
-				title : 'Second item',
-				body : 'This is the first item in a stream. This is some text that would be in the body of the stream ...',
-				img : '',
-				time : 1445459283729,
-				unread : true
-			},
-			{
-				title : 'Third item',
-				body : 'This is the first item in a stream. This is some text that would be in the body of the stream ...',
-				img : '',
-				time : 1445459288473,
-				unread : false
-			},
-			{
-				title : 'Fourth item',
-				body : 'This is the first item in a stream. This is some text that would be in the body of the stream ...',
-				img : '',
-				time : 1445459288234,
-				unread : false
-			}
+				cat : 'some_cat_id',
+				unread : true,
+				type : 'dummy'
+			}*/
 		];
 		var mainStream = this.stream;
 
@@ -86,14 +67,16 @@ angular.module('webappApp')
 			The various streams that will be amalgamated to form the exposed notification stream
 		**/
 		var histStream = new NotifStreamHolder();
+		var assignmentToMeStream = new NotifStreamHolder();
+		var assignmentUnassignedStream = new NotifStreamHolder();
 
 
 		/**
 		*
 		*	populates history stream from Phased.team.history
 		*
-		*	basically just formats the Phased.team.history objects
-		*
+		*	(basically just formats the Phased.team.history objects
+		*	and shoves 'em in)
 		*/
 
 		var populateHistStream = function() {
@@ -101,17 +84,55 @@ angular.module('webappApp')
 
 			for (var i in Phased.team.history) {
 				var curItem = Phased.team.history[i];
-				var histItem = {
+				var streamItem = {
 					title : Phased.team.members[curItem.user].name,
 					img : Phased.team.members[curItem.user].pic,
 					body : curItem.name,
-					time : curItem.time
+					time : curItem.time,
+					cat : curItem.cat,
+					type : 'history'
 				}
-
-				histStream.addItem(histItem);
+				histStream.addItem(streamItem);
 			}
 		}
 		$rootScope.$on('Phased:history', populateHistStream);
 
+
+		/**
+		*
+		*	populates assignment streams from Phased.assignments.to_me
+		*	and Phased.assignments.unassigned
+		*/
+		var populateAssignmentsToMe = function() {
+			assignmentToMeStream.clear();
+			for (var i in Phased.assignments.to_me) {
+				var curItem = Phased.assignments.to_me[i];
+				var streamItem = {
+					title : 'Assignment from ' + Phased.team.members[curItem.assigned_by].name,
+					body : curItem.name,
+					time : curItem.time,
+					cat : curItem.cat,
+					type : 'assignment_to_me'
+				}
+				assignmentToMeStream.addItem(streamItem);
+			}
+		}
+		$rootScope.$on("Phased:assignments:to_me", populateAssignmentsToMe);
+
+		var populateAssignmentsUnassigned = function() {
+			assignmentUnassignedStream.clear();
+			for (var i in Phased.assignments.unassigned) {
+				var curItem = Phased.assignments.unassigned[i];
+				var streamItem = {
+					title : 'Open task from ' + Phased.team.members[curItem.assigned_by].name,
+					body : curItem.name,
+					time : curItem.time,
+					cat : curItem.cat,
+					type : 'assignment_unassigned'
+				}
+				assignmentToMeStream.addItem(streamItem);
+			}
+		}
+		$rootScope.$on("Phased:assignments:unassigned", populateAssignmentsUnassigned);
 
 	}]);
