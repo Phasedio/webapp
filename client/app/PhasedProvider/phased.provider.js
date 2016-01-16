@@ -27,9 +27,11 @@ angular.module('webappApp')
     * Internal vars
     */
     var PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
+      PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       WATCH_HISTORY = false, // set in setWatchHistory in config; tells init whether to do it
       WATCH_ASSIGNMENTS = false, // set in setWatchAssignments in config; tells init whether to do it
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
+      req_after_members = [], // filled with operations to complete after members are in
       getHistoryFor = '', // set to a member id if a member's history should be attached to their team.member reference (eg, profile page)
       assignmentIDs = {
         to_me : [],
@@ -191,6 +193,37 @@ angular.module('webappApp')
         req_callbacks[i].callback(req_callbacks[i].args || undefined);
       }
       PHASED_SET_UP = true;
+    }
+
+
+    /**
+    *
+    * registerAfterMembers
+    *
+    * (same pattern as above)
+    *
+    * if Phased is already set to go, do the thing
+    * otherwise, add it to the list of things to do
+    *
+    */
+    var registerAfterMembers = function(callback, args) {
+      if (PHASED_SET_UP)
+        callback(args);
+      else
+        req_after_members.push({callback : callback, args : args });
+    }
+
+    /**
+    *
+    * doAfterMembers
+    * executes all registered callbacks
+    *
+    */
+    var doAfterMembers = function() {
+      for (var i in req_after_members) {
+        req_after_members[i].callback(req_after_members[i].args || undefined);
+      }
+      PHASED_MEMBERS_SET_UP = true;
     }
 
 
@@ -375,8 +408,10 @@ angular.module('webappApp')
               // rm this user from membersToGet
               membersToGet.splice(membersToGet.indexOf(id), 1);
               // if this is the last user in that list, emit Phased:membersComplete
-              if (membersToGet.length == 0)
+              if (membersToGet.length == 0) {
                 $rootScope.$broadcast('Phased:membersComplete');
+                doAfterMembers();
+              }
 
               // tell scope current user profile is in
               if (id == _Auth.user.uid) {
@@ -618,19 +653,25 @@ angular.module('webappApp')
       FBRef.child(refString + '/to/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'to_me');
-        $rootScope.$broadcast("Phased:assignments:to_me");
+        registerAfterMembers(function(){ // only do after members are in
+          $rootScope.$broadcast("Phased:assignments:to_me");
+        });
       });
 
       FBRef.child(refString + '/by/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'by_me');
-        $rootScope.$broadcast("Phased:assignments:by_me");
+        registerAfterMembers(function(){
+          $rootScope.$broadcast("Phased:assignments:by_me");
+        });
       });
 
       FBRef.child(refString + '/unassigned').on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'unassigned');
-        $rootScope.$broadcast("Phased:assignments:unassigned");
+        registerAfterMembers(function(){
+          $rootScope.$broadcast("Phased:assignments:unassigned");
+        });
       });
     }; // end doWatchAssignments()
 
