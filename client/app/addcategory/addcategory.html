@@ -2,58 +2,62 @@
 <div class="container-fluid">
   <div class="row">
   	<div class="col-xs-12">
-	  	<h2>Create a new category</h2>
-		<form ng-submit="addCat(cat)" novalidate>
-			<div class="form-group">
-				<label for="exampleInputEmail1">Name</label>
-				<input type="text" ng-model="cat.name" class="form-control" id="exampleInputEmail1" placeholder="Name">
-			</div>
-			<h4>Color</h4>
-			<div class="radio">
-			  <label>
-			    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios1" value="#5ac8fb" checked>
-			    <div class="feed-cat-color" style="background:#5ac8fb"></div>
-			  </label>
-			</div>
-			<div class="radio">
-			  <label>
-			    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios2" value="#ffcc00">
-			    <div class="feed-cat-color" style="background:#ffcc00"></div>
-			  </label>
-			</div>
-			<div class="radio">
-			  <label>
-			    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios3" value="#ff9501" >
-			    <div class="feed-cat-color" style="background:#ff9501"></div>
-			  </label>
-			</div>
-			<div class="radio">
-			  <label>
-			    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios3" value="#ff2c55" >
-			    <div class="feed-cat-color" style="background:#ff2c55"></div>
-			  </label>
-			</div>
-			<div class="radio">
-			  <label>
-			    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios3" value="#007aff" >
-			    <div class="feed-cat-color" style="background:#007aff"></div>
-			  </label>
-			</div>
-			<div class="radio">
-			  <label>
-			    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios3" value="#4cda64" >
-			    <div class="feed-cat-color" style="background:#4cda64"></div>
-			  </label>
-			</div>
-			<div class="radio">
-			  <label>
-			    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios3" value="#ff3b2f" >
-			    <div class="feed-cat-color" style="background:#ff3b2f"></div>
-			  </label>
-			</div>
+	  	<h2>Create or modify a category</h2>
+			<form ng-submit="addCat(cat)" novalidate>
+				<div class="form-group">
+					<select ng-options="cat as cat.name for cat in team.categorySelect" ng-model="cat"></select>
+				</div>
+				<div class="form-group">
+					<label for="exampleInputEmail1">Name</label>
+					<input type="text" ng-model="cat.name" class="form-control" id="exampleInputEmail1" placeholder="Name">
+				</div>
+				<h4>Color</h4>
+				<div class="radio">
+				  <label>
+				    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios1" value="#5ac8fb" checked>
+				    <div class="feed-cat-color" style="background:#5ac8fb"></div>
+				  </label>
+				</div>
+				<div class="radio">
+				  <label>
+				    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios2" value="#ffcc00">
+				    <div class="feed-cat-color" style="background:#ffcc00"></div>
+				  </label>
+				</div>
+				<div class="radio">
+				  <label>
+				    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios3" value="#ff9501" >
+				    <div class="feed-cat-color" style="background:#ff9501"></div>
+				  </label>
+				</div>
+				<div class="radio">
+				  <label>
+				    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios3" value="#ff2c55" >
+				    <div class="feed-cat-color" style="background:#ff2c55"></div>
+				  </label>
+				</div>
+				<div class="radio">
+				  <label>
+				    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios3" value="#007aff" >
+				    <div class="feed-cat-color" style="background:#007aff"></div>
+				  </label>
+				</div>
+				<div class="radio">
+				  <label>
+				    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios3" value="#4cda64" >
+				    <div class="feed-cat-color" style="background:#4cda64"></div>
+				  </label>
+				</div>
+				<div class="radio">
+				  <label>
+				    <input type="radio" name="color" ng-model="cat.color" id="optionsRadios3" value="#ff3b2f" >
+				    <div class="feed-cat-color" style="background:#ff3b2f"></div>
+				  </label>
+				</div>
 
-			<button type="submit" class="btn btn-default">Submit</button>
-		</form>
+				<button type="submit" class="btn btn-default">Submit</button>
+				<button type="button" class="btn btn-default" ng-if="categoryExists(cat.key)" ng-click="deleteCat(cat.key, $event)">Delete</button>
+			</form>
 	</div>
   </div>
 </div>

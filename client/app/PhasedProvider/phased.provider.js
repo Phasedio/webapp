@@ -138,6 +138,8 @@ angular.module('webappApp')
       // PhasedProvider.watchMemberStream = _watchMemberStream;
       PhasedProvider.watchMemberAssignments = _watchMemberAssignments;
       PhasedProvider.changeMemberRole = _changeMemberRole;
+      PhasedProvider.addCategory = _addCategory;
+      PhasedProvider.deleteCategory = _deleteCategory;
 
       return PhasedProvider;
     }];
@@ -1234,6 +1236,99 @@ angular.module('webappApp')
 
       // 3. set assignee attr
       FBRef.child(assignmentsPath + 'all/' + assignmentID + '/assignee').set(PhasedProvider.user.uid);
+    }
+
+
+    /**
+    *
+    * add category to current team
+    *
+    * NB: This will update categories of the same name or key
+    *
+    * 1. check all incoming category properties
+    * 2. check if category with that name or key already exists
+    * 3A. if so, update it, then call getCategories() to update
+    * 3B. if not, create it, then call getCategories() to update
+    *
+    */
+    var _addCategory = function(category) {
+      registerAsync(doAddCategory, category);
+    }
+
+    var doAddCategory = function(args) {
+      var category = {
+        name :  args.name,
+        color : args.color
+      };
+
+      // 1.
+      // check colour
+      var regex = /^\#([a-zA-Z0-9]{3}|[a-zA-Z0-9]{6})$/;
+      if (!(category.color && regex.test(category.color))) {
+        console.log('bad category colour');
+        return;
+      }
+
+      // check name exists, has length, is a word
+      regex = /\w+/;
+      if (!(category.name && regex.test(category.name))) {
+        console.log('bad category name');
+        return;
+      }
+
+      category.created = new Date().getTime();
+      category.user = _Auth.user.uid;
+
+      console.log('creating category', category);
+
+      // 2. Check if category exists
+      var catExists = false;
+      var key = '';
+      for (key in PhasedProvider.team.categoryObj) {
+        var nameExists = PhasedProvider.team.categoryObj[key].name.toLowerCase() == category.name.toLowerCase();
+        var keyExists = key == args.key;
+        if (nameExists || keyExists) {
+          catExists = true;
+          break;
+        }
+      }
+
+      // 3A. category exists; update
+      if (catExists) {
+        console.log('cat exists at ' + key);
+        FBRef.child('team/' + PhasedProvider.team.name + '/category/' + key).set(category, getCategories);
+      }
+
+      // 3B.
+      else {
+        console.log('cat doesn\'t exist');
+        FBRef.child('team/' + PhasedProvider.team.name + '/category').push(category, getCategories);
+      }
+    }
+
+    /**
+    *
+    * deletes category from current team
+    *
+    * NB: will attempt to delete a cat even if not there
+    *
+    * 1. ensure key is a string
+    * 2. delete category
+    */
+    var _deleteCategory = function(key) {
+      registerAsync(doDeleteCategory, key);
+    }
+
+    var doDeleteCategory = function(key) {
+      console.log('deleting cat at ' + key);
+      // 1.
+      if ((typeof key).toLowerCase() != 'string') {
+        console.log('bad key');
+        return;
+      }
+
+      // 2. 
+      FBRef.child('team/' + PhasedProvider.team.name + '/category/' + key).set(null, getCategories);
     }
 
     /**
