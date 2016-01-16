@@ -618,16 +618,19 @@ angular.module('webappApp')
       FBRef.child(refString + '/to/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'to_me');
+        $rootScope.$broadcast("Phased:assignments:to_me");
       });
 
       FBRef.child(refString + '/by/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'by_me');
+        $rootScope.$broadcast("Phased:assignments:by_me");
       });
 
       FBRef.child(refString + '/unassigned').on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'unassigned');
+        $rootScope.$broadcast("Phased:assignments:unassigned");
       });
     }; // end doWatchAssignments()
 
