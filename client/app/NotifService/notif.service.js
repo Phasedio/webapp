@@ -56,7 +56,7 @@ angular.module('webappApp')
 					for (var i in mainStream) {
 						if (curItem.time == mainStream[i].time) {
 							mainStream.splice(i, 1);
-							return;
+							break;
 						}
 					}
 				}
@@ -72,12 +72,13 @@ angular.module('webappApp')
 					}
 				}
 
-				// TODO
-				// check if item is already in stream
-
 				// add item
 				items.push(item);
 				mainStream.push(item);
+			}
+
+			this.getLength = function() {
+				return items.length;
 			}
 		}
 
@@ -86,11 +87,6 @@ angular.module('webappApp')
 		**/
 		var histStream = new NotifStreamHolder();
 
-
-		$rootScope.$on('Phased:history', function() {
-			console.log(Phased.team.history.length + ' items:', Phased.team.history);
-			populateHistStream();
-		});
 
 		/**
 		*
@@ -115,6 +111,7 @@ angular.module('webappApp')
 				histStream.addItem(histItem);
 			}
 		}
+		$rootScope.$on('Phased:history', populateHistStream);
 
 
 	}]);
