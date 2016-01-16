@@ -2,8 +2,8 @@
 	<a ng-click="showNotifs = !showNotifs" class="toggleNotifBtn">N</a>
 	<div ng-show="showNotifs" class="notifPane">
 		<ul>
-			<li ng-repeat="notif in notifStream">
-				<h5>{{notif.title}}</h5>
+			<li ng-repeat="notif in notifStream | orderBy : '-time' | limitTo : 10" ng-class="{unread : notif.unread}">
+				<h5>{{notif.title}} <small>{{notif.time | date : 'short'}}</small></h5>
 				<p>{{notif.body}}</p>
 			</li>
 		</ul>
