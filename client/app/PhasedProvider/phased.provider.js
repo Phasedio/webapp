@@ -1320,10 +1320,11 @@ angular.module('webappApp')
     *
     */
 
-    var _changeMemberRole = function(memberID, role) {
+    var _changeMemberRole = function(memberID, newRole, currentRole) {
       var args = {
         member : memberID,
-        role : role
+        role : newRole,
+        currentRole : currentRole
       }
 
       registerAsync(doChangeMemberRole, args);
@@ -1338,9 +1339,11 @@ angular.module('webappApp')
       })
         .success(function(data) {
             if (data.success) {
-                // console.log('success', data);
+              // console.log('success', data);
             } else {
-                console.log('Auth error', data);
+              // set back to old role if update fails
+              PhasedProvider.team.members[args.member].role = args.currentRole;
+              console.log('Auth error', data);
             }
         })
         .error(function(data){
