@@ -123,8 +123,6 @@ angular.module('webappApp')
     this.$get = ['$rootScope', function(_rootScope) {
       $rootScope = _rootScope;
       // register functions listed after this in the script...
-      // PhasedProvider.watchAssignments = _watchAssignments;
-      // PhasedProvider.watchTaskStream = _watchTaskStream;
       PhasedProvider.getArchiveFor = _getArchiveFor;
       PhasedProvider.moveToFromArchive = _moveToFromArchive;
       PhasedProvider.activateTask = _activateTask;
@@ -135,11 +133,13 @@ angular.module('webappApp')
       PhasedProvider.addMember = _addMember;
       PhasedProvider.addTeam = _addTeam;
       PhasedProvider.switchTeam = _switchTeam;
-      // PhasedProvider.watchMemberStream = _watchMemberStream;
       PhasedProvider.watchMemberAssignments = _watchMemberAssignments;
       PhasedProvider.changeMemberRole = _changeMemberRole;
       PhasedProvider.addCategory = _addCategory;
       PhasedProvider.deleteCategory = _deleteCategory;
+      PhasedProvider.editTaskName = _editTaskName;
+      PhasedProvider.editTaskDesc = _editTaskDesc;
+      // PhasedProvider.editTaskAssignee = _editTaskAssignee;
 
       return PhasedProvider;
     }];
@@ -1237,6 +1237,62 @@ angular.module('webappApp')
       // 3. set assignee attr
       FBRef.child(assignmentsPath + 'all/' + assignmentID + '/assignee').set(PhasedProvider.user.uid);
     }
+
+    /**
+    *
+    * edit task name
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskName = function(taskID, newName) {
+      var args = {
+        taskID : taskID,
+        newName : newName
+      }
+      registerAsync(doEditTaskName, args);
+    }
+
+    var doEditTaskName = function(args) {
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID + "/name").set(args.newName);
+    }
+
+    /**
+    *
+    * edit task description
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskDesc = function(taskID, newDesc) {
+      var args = {
+        taskID : taskID,
+        newDesc : newDesc
+      }
+      registerAsync(doEditTaskDesc, args);
+    }
+
+    var doEditTaskDesc = function(args) {
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'desc' : args.newDesc});
+    }
+
+    /**
+    *
+    * edit task assignee
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskAssignee = function(taskID, newAssignee) {
+      var args = {
+        taskID : taskID,
+        newAssignee : newAssignee
+      }
+      registerAsync(doEditTaskAssignee, args);
+    }
+
+    var doEditTaskAssignee = function(args) {
+      // FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID + "/name").set(args.newAssignee);
+    }
+
+    
 
 
     /**

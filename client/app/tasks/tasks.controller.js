@@ -140,16 +140,16 @@ angular.module('webappApp')
     //=====================
     //When user clicks on task they can see more information about said task
     $scope.tasklistSize = 'col-xs-12';//set the init size of task list
-    $scope.taskDiscript = 'hidden'; //hide the task discription till the user does something
-    $scope.taskInfo = {}; // Task information for the discription area
+    $scope.taskDescript = 'hidden'; //hide the task description till the user does something
+    $scope.taskInfo = {}; // Task information for the description area
 
 
     $scope.selectTask = function(task){
       $scope.taskInfo = task; // assign the task information to the scope;
-      // if the task list is still 12 cols open up the discriptor for the user
+      // if the task list is still 12 cols open up the descriptor for the user
       if($scope.tasklistSize == 'col-xs-12'){
         $scope.tasklistSize = 'col-xs-6';
-        $scope.taskDiscript = 'col-xs-6';
+        $scope.taskDescript = 'col-xs-6';
       }
 
     }
@@ -157,7 +157,7 @@ angular.module('webappApp')
     //closes details sidebar.
     $scope.closeDetails = function(){
       $scope.tasklistSize = 'col-xs-12';//set the init size of task list
-      $scope.taskDiscript = 'hidden'; //hide the task discription till the user does something
+      $scope.taskDescript = 'hidden'; //hide the task description till the user does something
       $scope.taskInfo = {};
     }
 
@@ -379,14 +379,15 @@ angular.module('webappApp')
 
     //These should be moved in to the provider.
     // Edit name
-    $scope.taskEditName = function(taskID,newName){
-      console.log(newName);
-      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).child("name").set(newName);
+    $scope.taskEditName = function(taskID,newName) {
+      // console.log(newName);
+      Phased.editTaskName(taskID, newName);
+      // FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).child("name").set(newName);
     }
-    //add discription
-    $scope.taskEditDisc = function(taskID,disc){
-
-      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).update({"disc" : disc});
+    //add description
+    $scope.taskEditDesc = function(taskID, desc) {
+      Phased.editTaskDesc(taskID, desc);
+      // FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).update({"desc" : desc});
     }
 
     //Edit assigned user
@@ -454,11 +455,11 @@ angular.module('webappApp')
       FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID).update({"deadline" : newDate});
     }
 
-    //change the category in task discription
+    //change the category in task description
     $scope.changeCategory = function(task,catKey){
       FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"cat" : catKey});
     }
-    //change the category in task discription
+    //change the category in task description
     $scope.changePriority = function(task,priorityKey){
       FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"priority" : priorityKey});
     }
@@ -472,8 +473,8 @@ angular.module('webappApp')
 
     //----
     $scope.today = function() {
-    $scope.dt = new Date();
-  };
+      $scope.dt = new Date();
+    };
   $scope.today();
 
   $scope.clear = function () {

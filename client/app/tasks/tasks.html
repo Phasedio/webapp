@@ -74,7 +74,7 @@
 				</table>
 			</div>
     </div>
-		<div class="" ng-class="taskDiscript">
+		<div class="" ng-class="taskDescript">
 			<div class="task ph-card">
         <div class="task-header">
           <ul class="task-meta-bar">
@@ -87,7 +87,7 @@
 
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dLabel">
-                  <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo,member.uid)"><img src="{{member.pic}}" width="35px" height="35px"> <p>
+                  <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo.key,member.uid)"><img src="{{member.pic}}" width="35px" height="35px"> <p>
                     {{member.name}}
                   </p></a></li>
 
@@ -111,9 +111,9 @@
           </ul>
 
         </div>
-				<textarea class="task-title h3" ng-model="taskInfo.name" ng-blur="taskEditName(taskInfo,taskInfo.name)"></textarea>
+				<textarea class="task-title h3" ng-model="taskInfo.name" ng-blur="taskEditName(taskInfo.key,taskInfo.name)"></textarea>
 
-        <textarea class="task-title" ng-model="taskInfo.disc" ng-blur="taskEditDisc(taskInfo,taskInfo.disc)" placeholder="Enter discription..."></textarea>
+        <textarea class="task-title" ng-model="taskInfo.desc" ng-blur="taskEditDesc(taskInfo.key,taskInfo.desc)" placeholder="Enter description..."></textarea>
 
         <p>Assigned by: {{team.members[taskInfo.assigned_by].name}}</p>
 
