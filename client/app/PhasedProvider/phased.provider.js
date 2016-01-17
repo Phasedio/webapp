@@ -1308,7 +1308,8 @@ angular.module('webappApp')
         'assignee' : args.newAssignee,
         'user' : args.newAssignee,
         'assigned_by' : _Auth.user.uid,
-        'status' : PhasedProvider.TASK_STATUS_ID.ASSIGNED
+        'status' : PhasedProvider.TASK_STATUS_ID.ASSIGNED,
+        'unassigned' : false
       });
     }
 
