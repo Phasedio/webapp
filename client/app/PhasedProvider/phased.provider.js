@@ -547,12 +547,6 @@ angular.module('webappApp')
       });
     }
 
-    /**
-    **
-    ** EXPOSED FUNCTIONS
-    ** all registered as callbacks with registerAsync(),
-    **
-    **/
 
     /**
     *
@@ -710,6 +704,148 @@ angular.module('webappApp')
       }
     }
 
+    /**
+    *
+    * links up the archived tasks from the archiveContainerName to the appropriate $scope.archive address
+    * (sim to syncAssignments())
+    */
+    var syncArchive = function(archiveContainerName) {
+      if (!(archiveContainerName in archiveIDs)) return; // ensures valid address
+
+      var UIDContainer = archiveIDs[archiveContainerName];
+
+      for (var i in UIDContainer) {
+        var assignmentID = UIDContainer[i];
+        if (assignmentID in PhasedProvider.archive.all)
+          PhasedProvider.archive[archiveContainerName][assignmentID] = PhasedProvider.archive.all[assignmentID];
+        else
+          delete PhasedProvider.archive[archiveContainerName][assignmentID];
+      }
+    }
+
+    /**
+    *
+    * updates the task's history with the following object type:
+    * {
+    *  time : [current timestamp],
+    *  type : [type of operation, reference to code in PhasedProvider.TASK_HISTORY_CHANGES],
+    *  taskSnapshot : [copy of the task at this time, minus the history object]
+    * }
+    *
+    */
+
+    var updateTaskHist = function(taskID, type) {
+      var data = {
+        time : new Date().getTime(),
+        type : type
+      }
+
+      if (type != PhasedProvider.TASK_HISTORY_CHANGES.ARCHIVED)
+        data.taskSnapshot = angular.copy( PhasedProvider.assignments.all[taskID] );
+      else
+        data.taskSnapshot = angular.copy( PhasedProvider.archive.all[taskID] );
+
+      delete data.taskSnapshot.history;
+
+      FBRef.child('team/' + _Auth.currentTeam + '/assignments/all/' + taskID + '/history').push(data);
+    }
+    
+    // makes a clean copy of the newTask for the db with the expected properties,
+    // as well as verifying that they're type we expect
+    // returns the clean copy
+    // expandable: just add property names to the appropriate objects and the loops do the rest
+    var makeTaskForDB = function(newTask) {
+      // properties to check
+      var required = {
+        strings : ['name', 'user'],
+        numbers : [],
+        booleans: []
+      };
+      var optional = {
+        strings : ['cat', 'weather', 'taskPrefix', 'photo', 'assignee', 'assigned_by', 'city'],
+        numbers : ['deadline', 'priority', 'status'],
+        booleans : ['unassigned']
+      };
+
+      // clean output object
+      var status = {
+        time: new Date().getTime()
+      };
+
+      // check for location
+      if ((typeof newTask.location).toLowerCase() === 'object' &&
+          (typeof newTask.location.lat).toLowerCase() === 'number' &&
+          (typeof newTask.location.long).toLowerCase() === 'number') {
+        status.location = {
+          lat : newTask.location.lat,
+          long : newTask.location.long
+        }
+      }
+
+      // BATCH CHECKS:
+      // required strings
+      for (var i in required.strings) {
+        if ((typeof newTask[required.strings[i]]).toLowerCase() === 'string') {
+          status[required.strings[i]] = newTask[required.strings[i]];
+        } else {
+          console.log('required property "' + required.strings[i] + '" not found in newTask; aborting');
+          return;
+        }
+      }
+
+      // required numbers
+      for (var i in required.numbers) {
+        if ((typeof newTask[required.numbers[i]]).toLowerCase() === 'number'
+          && !isNaN(newTask[required.numbers[i]])) {
+          status[required.numbers[i]] = newTask[required.numbers[i]];
+        } else {
+          console.log('required property "' + required.numbers[i] + '" not found in newTask or is NaN; aborting');
+          return;
+        }
+      }
+
+      // booleans
+      for (var i in required.booleans) {
+        if ((typeof newTask[required.booleans[i]]).toLowerCase() === 'boolean') {
+          status[required.booleans[i]] = newTask[required.booleans[i]];
+        } else {
+          console.log('required property "' + required.booleans[i] + '" not found in newTask; aborting');
+          return;
+        }
+      }
+
+      // optional strings
+      for (var i in optional.strings) {
+        if ((typeof newTask[optional.strings[i]]).toLowerCase() === 'string') {
+          status[optional.strings[i]] = newTask[optional.strings[i]];
+        }
+      }
+
+      // optional numbers
+      for (var i in optional.numbers) {
+        if ((typeof newTask[optional.numbers[i]]).toLowerCase() === 'number'
+          && !isNaN(newTask[optional.numbers[i]])) {
+          status[optional.numbers[i]] = newTask[optional.numbers[i]];
+        }
+      }
+
+      // booleans
+      for (var i in optional.booleans) {
+        if ((typeof newTask[optional.booleans[i]]).toLowerCase() === 'boolean') {
+          status[optional.booleans[i]] = newTask[optional.booleans[i]];
+        }
+      }
+
+      return status;
+    }
+
+
+    /**
+    **
+    ** EXPOSED FUNCTIONS
+    ** all registered as callbacks with registerAsync(),
+    **
+    **/
 
     /**
     *
@@ -780,25 +916,6 @@ angular.module('webappApp')
         if ('all' in PhasedProvider.archive)
           syncArchive(address); // 3
       });
-    }
-
-    /**
-    *
-    * links up the archived tasks from the archiveContainerName to the appropriate $scope.archive address
-    * (sim to syncAssignments())
-    */
-    var syncArchive = function(archiveContainerName) {
-      if (!(archiveContainerName in archiveIDs)) return; // ensures valid address
-
-      var UIDContainer = archiveIDs[archiveContainerName];
-
-      for (var i in UIDContainer) {
-        var assignmentID = UIDContainer[i];
-        if (assignmentID in PhasedProvider.archive.all)
-          PhasedProvider.archive[archiveContainerName][assignmentID] = PhasedProvider.archive.all[assignmentID];
-        else
-          delete PhasedProvider.archive[archiveContainerName][assignmentID];
-      }
     }
 
     /**
@@ -1003,33 +1120,6 @@ angular.module('webappApp')
       });
     }
 
-    /**
-    *
-    * INTERNAL ONLY
-    * updates the task's history with the following object type:
-    * {
-      time : [current timestamp],
-      type : [type of operation, reference to code in PhasedProvider.TASK_HISTORY_CHANGES],
-      taskSnapshot : [copy of the task at this time, minus the history object]
-    }
-    *
-    */
-
-    var updateTaskHist = function(taskID, type) {
-      var data = {
-        time : new Date().getTime(),
-        type : type
-      }
-
-      if (type != PhasedProvider.TASK_HISTORY_CHANGES.ARCHIVED)
-        data.taskSnapshot = angular.copy( PhasedProvider.assignments.all[taskID] );
-      else
-        data.taskSnapshot = angular.copy( PhasedProvider.archive.all[taskID] );
-
-      delete data.taskSnapshot.history;
-
-      FBRef.child('team/' + _Auth.currentTeam + '/assignments/all/' + taskID + '/history').push(data);
-    }
 
     /**
     *
@@ -1076,95 +1166,6 @@ angular.module('webappApp')
         data.push(newTaskID);
         assignmentsRef.child(path).set(data);
       });
-    }
-
-    // makes a clean copy of the newTask for the db with the expected properties,
-    // as well as verifying that they're type we expect
-    // returns the clean copy
-    // expandable: just add property names to the appropriate objects and the loops do the rest
-    var makeTaskForDB = function(newTask) {
-      // properties to check
-      var required = {
-        strings : ['name', 'user'],
-        numbers : [],
-        booleans: []
-      };
-      var optional = {
-        strings : ['cat', 'weather', 'taskPrefix', 'photo', 'assignee', 'assigned_by', 'city'],
-        numbers : ['deadline', 'priority', 'status'],
-        booleans : ['unassigned']
-      };
-
-      // clean output object
-      var status = {
-        time: new Date().getTime()
-      };
-
-      // check for location
-      if ((typeof newTask.location).toLowerCase() === 'object' &&
-          (typeof newTask.location.lat).toLowerCase() === 'number' &&
-          (typeof newTask.location.long).toLowerCase() === 'number') {
-        status.location = {
-          lat : newTask.location.lat,
-          long : newTask.location.long
-        }
-      }
-
-      // BATCH CHECKS:
-      // required strings
-      for (var i in required.strings) {
-        if ((typeof newTask[required.strings[i]]).toLowerCase() === 'string') {
-          status[required.strings[i]] = newTask[required.strings[i]];
-        } else {
-          console.log('required property "' + required.strings[i] + '" not found in newTask; aborting');
-          return;
-        }
-      }
-
-      // required numbers
-      for (var i in required.numbers) {
-        if ((typeof newTask[required.numbers[i]]).toLowerCase() === 'number'
-          && !isNaN(newTask[required.numbers[i]])) {
-          status[required.numbers[i]] = newTask[required.numbers[i]];
-        } else {
-          console.log('required property "' + required.numbers[i] + '" not found in newTask or is NaN; aborting');
-          return;
-        }
-      }
-
-      // booleans
-      for (var i in required.booleans) {
-        if ((typeof newTask[required.booleans[i]]).toLowerCase() === 'boolean') {
-          status[required.booleans[i]] = newTask[required.booleans[i]];
-        } else {
-          console.log('required property "' + required.booleans[i] + '" not found in newTask; aborting');
-          return;
-        }
-      }
-
-      // optional strings
-      for (var i in optional.strings) {
-        if ((typeof newTask[optional.strings[i]]).toLowerCase() === 'string') {
-          status[optional.strings[i]] = newTask[optional.strings[i]];
-        }
-      }
-
-      // optional numbers
-      for (var i in optional.numbers) {
-        if ((typeof newTask[optional.numbers[i]]).toLowerCase() === 'number'
-          && !isNaN(newTask[optional.numbers[i]])) {
-          status[optional.numbers[i]] = newTask[optional.numbers[i]];
-        }
-      }
-
-      // booleans
-      for (var i in optional.booleans) {
-        if ((typeof newTask[optional.booleans[i]]).toLowerCase() === 'boolean') {
-          status[optional.booleans[i]] = newTask[optional.booleans[i]];
-        }
-      }
-
-      return status;
     }
 
     /**
