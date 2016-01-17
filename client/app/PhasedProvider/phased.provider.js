@@ -139,7 +139,7 @@ angular.module('webappApp')
       PhasedProvider.deleteCategory = _deleteCategory;
       PhasedProvider.editTaskName = _editTaskName;
       PhasedProvider.editTaskDesc = _editTaskDesc;
-      // PhasedProvider.editTaskAssignee = _editTaskAssignee;
+      PhasedProvider.editTaskAssignee = _editTaskAssignee;
 
       return PhasedProvider;
     }];
@@ -595,6 +595,8 @@ angular.module('webappApp')
       var syncAssignments = function(assignmentContainerName) {
         var UIDContainer = assignmentIDs[assignmentContainerName];
 
+        // loop through list
+        // add to obj ref container if in UID list 
         for (var i in UIDContainer) {
           var assignmentID = UIDContainer[i];
           if (assignmentID in PhasedProvider.assignments.all)
@@ -603,8 +605,12 @@ angular.module('webappApp')
             delete PhasedProvider.assignments[assignmentContainerName][assignmentID];
         }
 
+        // loop through obj ref container
+        // remove from container if not in all or list
         for (var assignmentID in PhasedProvider.assignments[assignmentContainerName]) {
-          if (!(assignmentID in PhasedProvider.assignments.all)) {
+          if (
+            !(assignmentID in PhasedProvider.assignments.all)
+            || UIDContainer.indexOf(assignmentID) < 0) {
             delete PhasedProvider.assignments[assignmentContainerName][assignmentID];
           }
         }
@@ -1277,19 +1283,67 @@ angular.module('webappApp')
     /**
     *
     * edit task assignee
-    * (simple FB interaction)
+    *
+    * 1. change lookup lists
+      * A1. rm from old to lookup or unassigned
+      * A2. add to new to lookup
+      * B1. rm from old by lookup
+      * B2. add to new by lookup
+    * 2. update keys on task itself (assignee, user, assigned_by, status)
     *
     */ 
-    var _editTaskAssignee = function(taskID, newAssignee) {
+    var _editTaskAssignee = function(task, newAssignee) {
       var args = {
-        taskID : taskID,
+        task : task,
         newAssignee : newAssignee
       }
       registerAsync(doEditTaskAssignee, args);
     }
 
     var doEditTaskAssignee = function(args) {
-      // FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID + "/name").set(args.newAssignee);
+      var assignmentsRef = 'team/' + _Auth.currentTeam + '/assignments';
+      var task = args.task;
+      var oldAssignee = task.assignee || false;
+      var newAssignee = args.newAssignee;
+
+      // 1. change lookup lists
+      // A1. remove from assigned to lookup
+      if (oldAssignee) {
+        // get list
+        FBRef.child(assignmentsRef + '/to/' + oldAssignee).once('value', function(data) {
+          var list = data.val();
+          list = popFromList(task.key, list)
+          FBRef.child(assignmentsRef + '/to/' + oldAssignee).set(list);
+        });
+      } else { // remove from unassigned
+        // we already have the list
+        assignmentIDs['unassigned'] = popFromList(task.key, assignmentIDs['unassigned']);
+        FBRef.child(assignmentsRef + '/unassigned').set(assignmentIDs['unassigned']);
+      }
+
+      // A2. add to new assigned to lookup
+      FBRef.child(assignmentsRef + '/to/' + newAssignee).push(task.key);
+
+      // B1. remove from assigned by lookup
+      // get list
+      FBRef.child(assignmentsRef + '/by/' + task.assigned_by).once('value', function(data) {
+        var list = data.val();
+        list = popFromList(task.key, list)
+        FBRef.child(assignmentsRef + '/by/' + task.assigned_by).set(list);
+      });
+
+      // B2. add to new assigned to lookup
+      FBRef.child(assignmentsRef + '/by/' + _Auth.user.uid).push(task.key);
+
+
+      // 2. update assignment itself
+      FBRef.child(assignmentsRef + '/all/' + task.key).update({
+        'assignee' : args.newAssignee,
+        'user' : args.newAssignee,
+        'assigned_by' : _Auth.user.uid,
+        'status' : PhasedProvider.TASK_STATUS_ID.ASSIGNED
+      });
+
     }
 
     
@@ -1595,6 +1649,9 @@ angular.module('webappApp')
     *
     */
     var popFromList = function(item, list) {
+      if (!('indexOf' in list)) {
+        list = objToArray(list); // change list to array if it's an object
+      }
       var i = list.indexOf(item);
       while (i > -1) {
         delete list[i];
