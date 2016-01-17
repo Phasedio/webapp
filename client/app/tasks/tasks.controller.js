@@ -359,7 +359,6 @@ angular.module('webappApp')
 
     $scope.moveFromArchive = function(assignmentID) {
       Phased.moveToFromArchive(assignmentID, true);
-
     }
 
     // gets archived tasks at address shows archive
@@ -371,47 +370,38 @@ angular.module('webappApp')
       Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
     }
 
-    //Broadcasts that user is working on Task
-    $scope.broadcastTask = function(task){
+    // Broadcasts that user is working on Task
+    $scope.broadcastTask = function(task) {
       Phased.activateTask(task.key);
-       toaster.pop('success', "Success!", "Your task was posted");
+      toaster.pop('success', "Success!", "Your task was posted");
     }
 
-    //These should be moved in to the provider.
     // Edit name
-    $scope.taskEditName = function(taskID,newName) {
-      // console.log(newName);
+    $scope.taskEditName = function(taskID, newName) {
       Phased.editTaskName(taskID, newName);
-      // FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).child("name").set(newName);
     }
-    //add description
+
+    // edit description
     $scope.taskEditDesc = function(taskID, desc) {
       Phased.editTaskDesc(taskID, desc);
-      // FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).update({"desc" : desc});
     }
 
-    //Edit assigned user
-    $scope.taskEditAssigned = function(taskObj,userID) {
+    // Edit assigned user
+    $scope.taskEditAssigned = function(taskObj, userID) {
       Phased.editTaskAssignee(taskObj, userID);
     }
-    //Edits date of deadline or clears it
-    $scope.taskEditDate = function(taskID,date){
-      var newDate = '';
-      if(date){
-        newDate = new Date(date).getTime();
-      }
-      console.log(newDate);
-      console.log(taskID);
-      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID).update({"deadline" : newDate});
+    // Edits date of deadline or clears it
+    $scope.taskEditDate = function(taskID, date) {
+      Phased.editTaskDeadline(taskID, date);
     }
 
-    //change the category in task description
-    $scope.changeCategory = function(task,catKey){
-      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"cat" : catKey});
+    // change category
+    $scope.changeCategory = function(taskID, catKey) {
+      Phased.editTaskCategory(taskID, catKey);
     }
-    //change the category in task description
-    $scope.changePriority = function(task,priorityKey){
-      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"priority" : priorityKey});
+    // change priority
+    $scope.changePriority = function(taskID, priorityKey) {
+      Phased.editTaskPriority(taskID, priorityKey);
     }
 
 

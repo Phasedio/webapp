@@ -139,7 +139,10 @@ angular.module('webappApp')
       PhasedProvider.deleteCategory = _deleteCategory;
       PhasedProvider.editTaskName = _editTaskName;
       PhasedProvider.editTaskDesc = _editTaskDesc;
+      PhasedProvider.editTaskDeadline = _editTaskDeadline;
       PhasedProvider.editTaskAssignee = _editTaskAssignee;
+      PhasedProvider.editTaskCategory = _editTaskCategory;
+      PhasedProvider.editTaskPriority = _editTaskPriority;
 
       return PhasedProvider;
     }];
@@ -1246,42 +1249,6 @@ angular.module('webappApp')
 
     /**
     *
-    * edit task name
-    * (simple FB interaction)
-    *
-    */ 
-    var _editTaskName = function(taskID, newName) {
-      var args = {
-        taskID : taskID,
-        newName : newName
-      }
-      registerAsync(doEditTaskName, args);
-    }
-
-    var doEditTaskName = function(args) {
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID + "/name").set(args.newName);
-    }
-
-    /**
-    *
-    * edit task description
-    * (simple FB interaction)
-    *
-    */ 
-    var _editTaskDesc = function(taskID, newDesc) {
-      var args = {
-        taskID : taskID,
-        newDesc : newDesc
-      }
-      registerAsync(doEditTaskDesc, args);
-    }
-
-    var doEditTaskDesc = function(args) {
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'desc' : args.newDesc});
-    }
-
-    /**
-    *
     * edit task assignee
     *
     * 1. change lookup lists
@@ -1343,7 +1310,98 @@ angular.module('webappApp')
         'assigned_by' : _Auth.user.uid,
         'status' : PhasedProvider.TASK_STATUS_ID.ASSIGNED
       });
+    }
 
+    /**
+    *
+    * edit task name
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskName = function(taskID, newName) {
+      var args = {
+        taskID : taskID,
+        newName : newName
+      }
+      registerAsync(doEditTaskName, args);
+    }
+
+    var doEditTaskName = function(args) {
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID + "/name").set(args.newName);
+    }
+
+    /**
+    *
+    * edit task description
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskDesc = function(taskID, newDesc) {
+      var args = {
+        taskID : taskID,
+        newDesc : newDesc
+      }
+      registerAsync(doEditTaskDesc, args);
+    }
+
+    var doEditTaskDesc = function(args) {
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'desc' : args.newDesc});
+    }
+
+    /**
+    *
+    * edit task deadline
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskDeadline = function(taskID, newDeadline) {
+      var args = {
+        taskID : taskID,
+        newDeadline : newDeadline
+      }
+      registerAsync(doEditTaskDeadline, args);
+    }
+
+    var doEditTaskDeadline = function(args) {
+      // if newDate is set, get timestamp; else null
+      var newDeadline = args.newDeadline ? new Date(args.newDeadline).getTime() : '';
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'deadline' : newDeadline });
+    }
+
+    /**
+    *
+    * edit task category
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskCategory = function(taskID, newCategory) {
+      var args = {
+        taskID : taskID,
+        newCategory : newCategory
+      }
+      registerAsync(doEditTaskCategory, args);
+    }
+
+    var doEditTaskCategory = function(args) {
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'cat' : args.newCategory });
+    }
+
+    /**
+    *
+    * edit task priority
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskPriority = function(taskID, newPriority) {
+      var args = {
+        taskID : taskID,
+        newPriority : newPriority
+      }
+      registerAsync(doEditTaskPriority, args);
+    }
+
+    var doEditTaskPriority = function(args) {
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'priority' : args.newPriority });
     }
 
     

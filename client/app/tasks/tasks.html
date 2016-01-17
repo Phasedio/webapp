@@ -124,7 +124,7 @@
           </p>
           <ul class="dropdown-menu" aria-labelledby="dLabel1">
             <li ng-repeat="(key, category) in team.categoryObj">
-              <a href="#" ng-click="changeCategory(taskInfo,key)">
+              <a href="#" ng-click="changeCategory(taskInfo.key, key)">
                 <p>
                  {{category.name }}
                 </p>
@@ -139,7 +139,7 @@
           </p>
           <ul class="dropdown-menu" aria-labelledby="dLabel2">
             <li ng-repeat="(key, priority) in taskPriorities">
-              <a href="#" ng-click="changePriority(taskInfo,key)">
+              <a href="#" ng-click="changePriority(taskInfo.key, key)">
                 <p>
                  {{priority.name }}
                 </p>
