@@ -164,6 +164,33 @@
 
 
 			</div>
+
+      <!-- TASK HISTORY -->
+      <div class="ph-card" ng-if="taskInfo.history">
+        <h4>Task History</h4>
+        <div ng-repeat="moment in taskInfo.history | orderObjectBy : 'time' : true">
+          <h5>{{moment.type | historyType}} <small>{{moment.time | date : 'short'}}</small></h5>
+
+          <!-- assigned -->
+          <p ng-if="moment.type == taskHistType.ASSIGNEE">Assigned by {{team.members[moment.taskSnapshot.assigned_by].name}}</p>
+          <p ng-if="moment.type == taskHistType.ASSIGNEE">Assigned to {{team.members[moment.taskSnapshot.assignee].name}}</p>
+
+          <!-- priority -->
+          <p ng-if="moment.type == taskHistType.PRIORITY">
+            to {{taskPriorities[moment.taskSnapshot.priority].name}}
+          </p>
+
+          <!-- status -->
+          <p ng-if="moment.type == taskHistType.STATUS">
+            to {{taskStatuses[moment.taskSnapshot.status].name}}
+          </p>
+
+          <!-- category -->
+          <p ng-if="moment.type == taskHistType.CATEGORY">
+            to {{team.categoryObj[moment.taskSnapshot.cat].name}}
+          </p>
+        </div>
+      </div>
 		</div>
 
   </div>

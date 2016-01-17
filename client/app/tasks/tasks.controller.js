@@ -91,6 +91,29 @@ angular.module('webappApp')
       return filtered;
     };
   })
+  /**
+  *
+  * change a task history change code to plain text
+  * (lookup allows for easier text changes later)
+  *
+  */
+  .filter('historyType', ['Phased', function(Phased) {
+    return function(input) {
+      var types = {};
+      types[Phased.TASK_HISTORY_CHANGES.CREATED] = "Task created";
+      types[Phased.TASK_HISTORY_CHANGES.ARCHIVED] = "Task archived";
+      types[Phased.TASK_HISTORY_CHANGES.UNARCHIVED] = "Task unarchived";
+      types[Phased.TASK_HISTORY_CHANGES.NAME] = "Task name changed";
+      types[Phased.TASK_HISTORY_CHANGES.DESCRIPTION] = "Task description changed";
+      types[Phased.TASK_HISTORY_CHANGES.ASSIGNEE] = "Task assignee changed";
+      types[Phased.TASK_HISTORY_CHANGES.DEADLINE] = "Task deadline changed";
+      types[Phased.TASK_HISTORY_CHANGES.CATEGORY] = "Task category changed";
+      types[Phased.TASK_HISTORY_CHANGES.PRIORITY] = "Task priority changed";
+      types[Phased.TASK_HISTORY_CHANGES.STATUS] = "Task status changed";
+
+      return types[input] || input; // fail gracefully
+    }
+  }])
   .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig) {
     ga('send', 'pageview', '/tasks');
 
@@ -99,6 +122,7 @@ angular.module('webappApp')
     $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
     $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
+    $scope.taskHistType = Phased.TASK_HISTORY_CHANGES;
     $scope.myID = Auth.user.uid;
 
     console.log(Phased);

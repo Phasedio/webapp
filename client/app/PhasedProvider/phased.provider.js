@@ -75,6 +75,18 @@ angular.module('webappApp')
           ASSIGNED : 2
         },
         ROLES : ['member', 'admin', 'owner'],
+        TASK_HISTORY_CHANGES : {
+          CREATED : 0,
+          ARCHIVED : 1,
+          UNARCHIVED : 2,
+          NAME : 3,
+          DESCRIPTION : 4,
+          ASSIGNEE : 5,
+          DEADLINE : 6,
+          CATEGORY : 7,
+          PRIORITY : 8,
+          STATUS : 9
+        },
         assignments : { // Phased.assignments
           all : {}, // all of the team's assignments
           to_me : {}, // assigned to me (reference to objects in all)
@@ -925,10 +937,13 @@ angular.module('webappApp')
       FBRef.child(path + 'all/' + assignmentID).set(assignment); // remote
 
       // 2.D
-      if (unarchive)
+      if (unarchive) {
         delete PhasedProvider.archive.all[assignmentID];
-      else
+        updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.UNARCHIVED);
+      } else {
         PhasedProvider.archive.all[assignmentID] = assignment; // local, since archive isn't watched
+        updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.ARCHIVED);
+      }
     }
 
     /**
@@ -990,6 +1005,34 @@ angular.module('webappApp')
 
     /**
     *
+    * INTERNAL ONLY
+    * updates the task's history with the following object type:
+    * {
+      time : [current timestamp],
+      type : [type of operation, reference to code in PhasedProvider.TASK_HISTORY_CHANGES],
+      taskSnapshot : [copy of the task at this time, minus the history object]
+    }
+    *
+    */
+
+    var updateTaskHist = function(taskID, type) {
+      var data = {
+        time : new Date().getTime(),
+        type : type
+      }
+
+      if (type != PhasedProvider.TASK_HISTORY_CHANGES.ARCHIVED)
+        data.taskSnapshot = angular.copy( PhasedProvider.assignments.all[taskID] );
+      else
+        data.taskSnapshot = angular.copy( PhasedProvider.archive.all[taskID] );
+
+      delete data.taskSnapshot.history;
+
+      FBRef.child('team/' + _Auth.currentTeam + '/assignments/all/' + taskID + '/history').push(data);
+    }
+
+    /**
+    *
     * adds a task
     * 1. check & format input
     * 2. push to db
@@ -1018,6 +1061,8 @@ angular.module('webappApp')
       // 2A
       var newTaskRef = assignmentsRef.child('all').push(newTask);
       var newTaskID = newTaskRef.key();
+      assignmentsRef.child('all/' + newTaskID + '/key').set(newTaskID); // set key on new task object
+      updateTaskHist(newTaskID, PhasedProvider.TASK_HISTORY_CHANGES.CREATED); // update new task's history
       // 2B
       assignmentIDs['by_me'].push(newTaskID);
       assignmentsRef.child('by/' + PhasedProvider.user.uid).set(assignmentIDs['by_me']);
@@ -1180,7 +1225,8 @@ angular.module('webappApp')
       // publish to stream
       var ref = FBRef.child('team/' + PhasedProvider.team.name);
       ref.child('task/' + PhasedProvider.user.uid).set(newTask);
-      ref.child('all/' + PhasedProvider.user.uid).push(newTask);
+      var newTaskRef = ref.child('all/' + PhasedProvider.user.uid).push(newTask);
+      updateTaskHist(newTaskRef.key(), PhasedProvider.TASK_HISTORY_CHANGES.CREATED);
     }
 
     /**
@@ -1213,6 +1259,7 @@ angular.module('webappApp')
 
       // push to database
       FBRef.child('team/' + PhasedProvider.team.name + '/assignments/all/' + assignmentID + '/status').set(newStatus);
+      updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.STATUS);
 
       // if issue was complete, timestamp it
       if (newStatus == 1) {
@@ -1245,6 +1292,8 @@ angular.module('webappApp')
 
       // 3. set assignee attr
       FBRef.child(assignmentsPath + 'all/' + assignmentID + '/assignee').set(PhasedProvider.user.uid);
+
+      updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.ASSIGNEE);
     }
 
     /**
@@ -1269,7 +1318,8 @@ angular.module('webappApp')
 
     var doEditTaskAssignee = function(args) {
       var assignmentsRef = 'team/' + _Auth.currentTeam + '/assignments';
-      var task = args.task;
+      var task = args.task,
+        taskID = task.key;
       var oldAssignee = task.assignee || false;
       var newAssignee = args.newAssignee;
 
@@ -1303,7 +1353,7 @@ angular.module('webappApp')
       FBRef.child(assignmentsRef + '/by/' + _Auth.user.uid).push(task.key);
 
 
-      // 2. update assignment itself
+      // 2. update assignment itself (this will clear task.key)
       FBRef.child(assignmentsRef + '/all/' + task.key).update({
         'assignee' : args.newAssignee,
         'user' : args.newAssignee,
@@ -1311,6 +1361,7 @@ angular.module('webappApp')
         'status' : PhasedProvider.TASK_STATUS_ID.ASSIGNED,
         'unassigned' : false
       });
+      updateTaskHist(taskID, PhasedProvider.TASK_HISTORY_CHANGES.ASSIGNEE);
     }
 
     /**
@@ -1328,7 +1379,9 @@ angular.module('webappApp')
     }
 
     var doEditTaskName = function(args) {
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID + "/name").set(args.newName);
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID + "/name").set(args.newName, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.NAME);
+      });
     }
 
     /**
@@ -1346,7 +1399,9 @@ angular.module('webappApp')
     }
 
     var doEditTaskDesc = function(args) {
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'desc' : args.newDesc});
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'desc' : args.newDesc}, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.DESCRIPTION);
+      });
     }
 
     /**
@@ -1366,7 +1421,9 @@ angular.module('webappApp')
     var doEditTaskDeadline = function(args) {
       // if newDate is set, get timestamp; else null
       var newDeadline = args.newDeadline ? new Date(args.newDeadline).getTime() : '';
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'deadline' : newDeadline });
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'deadline' : newDeadline }, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.DEADLINE);
+      });
     }
 
     /**
@@ -1384,7 +1441,9 @@ angular.module('webappApp')
     }
 
     var doEditTaskCategory = function(args) {
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'cat' : args.newCategory });
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'cat' : args.newCategory }, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.CATEGORY);
+      });
     }
 
     /**
@@ -1402,7 +1461,9 @@ angular.module('webappApp')
     }
 
     var doEditTaskPriority = function(args) {
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'priority' : args.newPriority });
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'priority' : args.newPriority }, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.PRIORITY);
+      });
     }
 
     
