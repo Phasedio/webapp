@@ -739,22 +739,30 @@ angular.module('webappApp')
         time : new Date().getTime(),
         type : type
       }
+      var location = ''; // set to appropriate of 'all' or 'archive/all'
 
-      if (type != PhasedProvider.TASK_HISTORY_CHANGES.ARCHIVED)
+      if (taskID in PhasedProvider.assignments.all) { // assignment is currently not archived
         data.taskSnapshot = angular.copy( PhasedProvider.assignments.all[taskID] );
-      else
+        location = 'all';
+      } else if (taskID in PhasedProvider.archive.all) {
         data.taskSnapshot = angular.copy( PhasedProvider.archive.all[taskID] );
+        location = 'archive/all';
+      } else {
+        console.warn('Cannot update history (task ' + taskID + ' not currently in memory).');
+        return;
+      }
 
       delete data.taskSnapshot.history;
 
-      FBRef.child('team/' + _Auth.currentTeam + '/assignments/all/' + taskID + '/history').push(data);
+      FBRef.child('team/' + _Auth.currentTeam + '/assignments/' + location + '/' + taskID + '/history').push(data);
     }
-    
+
     // makes a clean copy of the newTask for the db with the expected properties,
     // as well as verifying that they're type we expect
     // returns the clean copy
     // expandable: just add property names to the appropriate objects and the loops do the rest
-    var makeTaskForDB = function(newTask) {
+    // optionally include the task's history object
+    var makeTaskForDB = function(newTask, includeHist) {
       // properties to check
       var required = {
         strings : ['name', 'user'],
@@ -780,6 +788,11 @@ angular.module('webappApp')
           lat : newTask.location.lat,
           long : newTask.location.long
         }
+      }
+
+      // check for history
+      if (includeHist) {
+        status.history = angular.copy(newTask.history); // copies and removes $$hashkeys
       }
 
       // BATCH CHECKS:
@@ -971,7 +984,7 @@ angular.module('webappApp')
         }
       }
 
-      assignment = makeTaskForDB(assignment);
+      assignment = makeTaskForDB(assignment, true);
       if (!assignment) return; // makeTaskForDB failed
 
       // -1.A
