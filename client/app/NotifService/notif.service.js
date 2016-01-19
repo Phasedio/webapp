@@ -73,6 +73,7 @@ angular.module('webappApp')
 		**/
 		var histStream = new NotifStreamHolder();
 		var assignmentStream = new NotifStreamHolder(); // all assignments
+		var assignmentArchiveStream = new NotifStreamHolder(); // archived assignments
 
 
 		/**
@@ -107,12 +108,17 @@ angular.module('webappApp')
 		*	using snapshots in their history objects if available
 		*
 		*/
-		var populateAssignments = function() {
-			assignmentStream.clear();
+		var populateAssignments = function(archive) {
+			var stream = assignmentStream,
+				container = Phased.assignments.all;
+			if (archive) {
+				stream = assignmentArchiveStream;
+				container = Phased.archive.all;
+			}
 
 			// for every assignment
-			for (var i in Phased.assignments.all) {
-				var curAssignment = Phased.assignments.all[i];
+			for (var i in container) {
+				var curAssignment = container[i];
 
 				// if assignment has history (as it should)
 				if ('history' in curAssignment) {
@@ -310,7 +316,7 @@ angular.module('webappApp')
 								break;
 						}
 
-						assignmentStream.addItem(streamItem);
+						stream.addItem(streamItem);
 					}
 				} else { // if no history (to be backwards compatible)
 					var streamItem = {
@@ -320,10 +326,15 @@ angular.module('webappApp')
 						cat : curAssignment.cat,
 						type : TYPE.ASSIGNMENT.UPDATED
 					}
-					assignmentStream.addItem(streamItem);
+					stream.addItem(streamItem);
 				}
 			}
 		}
-		$rootScope.$on("Phased:assignments:data", populateAssignments);
+		$rootScope.$on("Phased:assignments:data", function() { 
+			populateAssignments()
+		});
+		$rootScope.$on("Phased:assignments:archive:data", function() { 
+			populateAssignments(true); // use archive
+		});
 
 	}]);
