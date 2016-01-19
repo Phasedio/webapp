@@ -673,7 +673,7 @@ angular.module('webappApp')
       FBRef.child(refString + '/to/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'to_me');
-        
+
         registerAfterMembers(function (){ // only do after members are in
           $rootScope.$broadcast("Phased:assignments:to_me");
         });
@@ -946,6 +946,10 @@ angular.module('webappApp')
             syncArchive('to_me');
             syncArchive('by_me');
             syncArchive('unassigned');
+            // once member data is in, broadcast that the assignment data is in
+            registerAfterMembers(function(){
+              $rootScope.$broadcast("Phased:assignments:archive:data");
+            });
           });
           return;
         case 'to_me' :
@@ -965,6 +969,11 @@ angular.module('webappApp')
       // get archive/all
       FBRef.child(archivePath + 'all').once('value', function(data){
         PhasedProvider.archive.all = data.val() || [];
+
+        // once member data is in, broadcast that the assignment data is in
+        registerAfterMembers(function(){
+          $rootScope.$broadcast("Phased:assignments:archive:data");
+        });
 
         // if other call is complete
         if (archiveIDs[address])
