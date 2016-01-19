@@ -77,6 +77,18 @@ angular.module('webappApp')
           ASSIGNED : 2
         },
         ROLES : ['member', 'admin', 'owner'],
+        TASK_HISTORY_CHANGES : {
+          CREATED : 0,
+          ARCHIVED : 1,
+          UNARCHIVED : 2,
+          NAME : 3,
+          DESCRIPTION : 4,
+          ASSIGNEE : 5,
+          DEADLINE : 6,
+          CATEGORY : 7,
+          PRIORITY : 8,
+          STATUS : 9
+        },
         assignments : { // Phased.assignments
           all : {}, // all of the team's assignments
           to_me : {}, // assigned to me (reference to objects in all)
@@ -125,8 +137,6 @@ angular.module('webappApp')
     this.$get = ['$rootScope', function(_rootScope) {
       $rootScope = _rootScope;
       // register functions listed after this in the script...
-      // PhasedProvider.watchAssignments = _watchAssignments;
-      // PhasedProvider.watchTaskStream = _watchTaskStream;
       PhasedProvider.getArchiveFor = _getArchiveFor;
       PhasedProvider.moveToFromArchive = _moveToFromArchive;
       PhasedProvider.activateTask = _activateTask;
@@ -137,11 +147,16 @@ angular.module('webappApp')
       PhasedProvider.addMember = _addMember;
       PhasedProvider.addTeam = _addTeam;
       PhasedProvider.switchTeam = _switchTeam;
-      // PhasedProvider.watchMemberStream = _watchMemberStream;
       PhasedProvider.watchMemberAssignments = _watchMemberAssignments;
       PhasedProvider.changeMemberRole = _changeMemberRole;
       PhasedProvider.addCategory = _addCategory;
       PhasedProvider.deleteCategory = _deleteCategory;
+      PhasedProvider.editTaskName = _editTaskName;
+      PhasedProvider.editTaskDesc = _editTaskDesc;
+      PhasedProvider.editTaskDeadline = _editTaskDeadline;
+      PhasedProvider.editTaskAssignee = _editTaskAssignee;
+      PhasedProvider.editTaskCategory = _editTaskCategory;
+      PhasedProvider.editTaskPriority = _editTaskPriority;
 
       return PhasedProvider;
     }];
@@ -567,12 +582,6 @@ angular.module('webappApp')
       });
     }
 
-    /**
-    **
-    ** EXPOSED FUNCTIONS
-    ** all registered as callbacks with registerAsync(),
-    **
-    **/
 
     /**
     *
@@ -630,6 +639,8 @@ angular.module('webappApp')
       var syncAssignments = function(assignmentContainerName) {
         var UIDContainer = assignmentIDs[assignmentContainerName];
 
+        // loop through list
+        // add to obj ref container if in UID list 
         for (var i in UIDContainer) {
           var assignmentID = UIDContainer[i];
           if (assignmentID in PhasedProvider.assignments.all)
@@ -638,8 +649,12 @@ angular.module('webappApp')
             delete PhasedProvider.assignments[assignmentContainerName][assignmentID];
         }
 
+        // loop through obj ref container
+        // remove from container if not in all or list
         for (var assignmentID in PhasedProvider.assignments[assignmentContainerName]) {
-          if (!(assignmentID in PhasedProvider.assignments.all)) {
+          if (
+            !(assignmentID in PhasedProvider.assignments.all)
+            || UIDContainer.indexOf(assignmentID) < 0) {
             delete PhasedProvider.assignments[assignmentContainerName][assignmentID];
           }
         }
@@ -733,6 +748,161 @@ angular.module('webappApp')
       }
     }
 
+    /**
+    *
+    * links up the archived tasks from the archiveContainerName to the appropriate $scope.archive address
+    * (sim to syncAssignments())
+    */
+    var syncArchive = function(archiveContainerName) {
+      if (!(archiveContainerName in archiveIDs)) return; // ensures valid address
+
+      var UIDContainer = archiveIDs[archiveContainerName];
+
+      for (var i in UIDContainer) {
+        var assignmentID = UIDContainer[i];
+        if (assignmentID in PhasedProvider.archive.all)
+          PhasedProvider.archive[archiveContainerName][assignmentID] = PhasedProvider.archive.all[assignmentID];
+        else
+          delete PhasedProvider.archive[archiveContainerName][assignmentID];
+      }
+    }
+
+    /**
+    *
+    * updates the task's history with the following object type:
+    * {
+    *  time : [current timestamp],
+    *  type : [type of operation, reference to code in PhasedProvider.TASK_HISTORY_CHANGES],
+    *  taskSnapshot : [copy of the task at this time, minus the history object]
+    * }
+    *
+    */
+
+    var updateTaskHist = function(taskID, type) {
+      var data = {
+        time : new Date().getTime(),
+        type : type
+      }
+      var location = ''; // set to appropriate of 'all' or 'archive/all'
+
+      if (taskID in PhasedProvider.assignments.all) { // assignment is currently not archived
+        data.taskSnapshot = angular.copy( PhasedProvider.assignments.all[taskID] );
+        location = 'all';
+      } else if (taskID in PhasedProvider.archive.all) {
+        data.taskSnapshot = angular.copy( PhasedProvider.archive.all[taskID] );
+        location = 'archive/all';
+      } else {
+        console.warn('Cannot update history (task ' + taskID + ' not currently in memory).');
+        return;
+      }
+
+      delete data.taskSnapshot.history;
+
+      FBRef.child('team/' + _Auth.currentTeam + '/assignments/' + location + '/' + taskID + '/history').push(data);
+    }
+
+    // makes a clean copy of the newTask for the db with the expected properties,
+    // as well as verifying that they're type we expect
+    // returns the clean copy
+    // expandable: just add property names to the appropriate objects and the loops do the rest
+    // optionally include the task's history object
+    var makeTaskForDB = function(newTask, includeHist) {
+      // properties to check
+      var required = {
+        strings : ['name', 'user'],
+        numbers : [],
+        booleans: []
+      };
+      var optional = {
+        strings : ['cat', 'weather', 'taskPrefix', 'photo', 'assignee', 'assigned_by', 'city'],
+        numbers : ['deadline', 'priority', 'status'],
+        booleans : ['unassigned']
+      };
+
+      // clean output object
+      var status = {
+        time: new Date().getTime()
+      };
+
+      // check for location
+      if ((typeof newTask.location).toLowerCase() === 'object' &&
+          (typeof newTask.location.lat).toLowerCase() === 'number' &&
+          (typeof newTask.location.long).toLowerCase() === 'number') {
+        status.location = {
+          lat : newTask.location.lat,
+          long : newTask.location.long
+        }
+      }
+
+      // check for history
+      if (includeHist) {
+        status.history = angular.copy(newTask.history); // copies and removes $$hashkeys
+      }
+
+      // BATCH CHECKS:
+      // required strings
+      for (var i in required.strings) {
+        if ((typeof newTask[required.strings[i]]).toLowerCase() === 'string') {
+          status[required.strings[i]] = newTask[required.strings[i]];
+        } else {
+          console.log('required property "' + required.strings[i] + '" not found in newTask; aborting');
+          return;
+        }
+      }
+
+      // required numbers
+      for (var i in required.numbers) {
+        if ((typeof newTask[required.numbers[i]]).toLowerCase() === 'number'
+          && !isNaN(newTask[required.numbers[i]])) {
+          status[required.numbers[i]] = newTask[required.numbers[i]];
+        } else {
+          console.log('required property "' + required.numbers[i] + '" not found in newTask or is NaN; aborting');
+          return;
+        }
+      }
+
+      // booleans
+      for (var i in required.booleans) {
+        if ((typeof newTask[required.booleans[i]]).toLowerCase() === 'boolean') {
+          status[required.booleans[i]] = newTask[required.booleans[i]];
+        } else {
+          console.log('required property "' + required.booleans[i] + '" not found in newTask; aborting');
+          return;
+        }
+      }
+
+      // optional strings
+      for (var i in optional.strings) {
+        if ((typeof newTask[optional.strings[i]]).toLowerCase() === 'string') {
+          status[optional.strings[i]] = newTask[optional.strings[i]];
+        }
+      }
+
+      // optional numbers
+      for (var i in optional.numbers) {
+        if ((typeof newTask[optional.numbers[i]]).toLowerCase() === 'number'
+          && !isNaN(newTask[optional.numbers[i]])) {
+          status[optional.numbers[i]] = newTask[optional.numbers[i]];
+        }
+      }
+
+      // booleans
+      for (var i in optional.booleans) {
+        if ((typeof newTask[optional.booleans[i]]).toLowerCase() === 'boolean') {
+          status[optional.booleans[i]] = newTask[optional.booleans[i]];
+        }
+      }
+
+      return status;
+    }
+
+
+    /**
+    **
+    ** EXPOSED FUNCTIONS
+    ** all registered as callbacks with registerAsync(),
+    **
+    **/
 
     /**
     *
@@ -807,25 +977,6 @@ angular.module('webappApp')
 
     /**
     *
-    * links up the archived tasks from the archiveContainerName to the appropriate $scope.archive address
-    * (sim to syncAssignments())
-    */
-    var syncArchive = function(archiveContainerName) {
-      if (!(archiveContainerName in archiveIDs)) return; // ensures valid address
-
-      var UIDContainer = archiveIDs[archiveContainerName];
-
-      for (var i in UIDContainer) {
-        var assignmentID = UIDContainer[i];
-        if (assignmentID in PhasedProvider.archive.all)
-          PhasedProvider.archive[archiveContainerName][assignmentID] = PhasedProvider.archive.all[assignmentID];
-        else
-          delete PhasedProvider.archive[archiveContainerName][assignmentID];
-      }
-    }
-
-    /**
-    *
     * moves a task to or from the archive
     *
     * 1.A remove from /to/(me) or /unassigned (& note which)
@@ -877,7 +1028,7 @@ angular.module('webappApp')
         }
       }
 
-      assignment = makeTaskForDB(assignment);
+      assignment = makeTaskForDB(assignment, true);
       if (!assignment) return; // makeTaskForDB failed
 
       // -1.A
@@ -960,10 +1111,13 @@ angular.module('webappApp')
       FBRef.child(path + 'all/' + assignmentID).set(assignment); // remote
 
       // 2.D
-      if (unarchive)
+      if (unarchive) {
         delete PhasedProvider.archive.all[assignmentID];
-      else
+        updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.UNARCHIVED);
+      } else {
         PhasedProvider.archive.all[assignmentID] = assignment; // local, since archive isn't watched
+        updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.ARCHIVED);
+      }
     }
 
     /**
@@ -1023,6 +1177,7 @@ angular.module('webappApp')
       });
     }
 
+
     /**
     *
     * adds a task
@@ -1053,6 +1208,8 @@ angular.module('webappApp')
       // 2A
       var newTaskRef = assignmentsRef.child('all').push(newTask);
       var newTaskID = newTaskRef.key();
+      assignmentsRef.child('all/' + newTaskID + '/key').set(newTaskID); // set key on new task object
+      updateTaskHist(newTaskID, PhasedProvider.TASK_HISTORY_CHANGES.CREATED); // update new task's history
       // 2B
       assignmentIDs['by_me'].push(newTaskID);
       assignmentsRef.child('by/' + PhasedProvider.user.uid).set(assignmentIDs['by_me']);
@@ -1066,95 +1223,6 @@ angular.module('webappApp')
         data.push(newTaskID);
         assignmentsRef.child(path).set(data);
       });
-    }
-
-    // makes a clean copy of the newTask for the db with the expected properties,
-    // as well as verifying that they're type we expect
-    // returns the clean copy
-    // expandable: just add property names to the appropriate objects and the loops do the rest
-    var makeTaskForDB = function(newTask) {
-      // properties to check
-      var required = {
-        strings : ['name', 'user'],
-        numbers : [],
-        booleans: []
-      };
-      var optional = {
-        strings : ['cat', 'weather', 'taskPrefix', 'photo', 'assignee', 'assigned_by', 'city'],
-        numbers : ['deadline', 'priority', 'status'],
-        booleans : ['unassigned']
-      };
-
-      // clean output object
-      var status = {
-        time: new Date().getTime()
-      };
-
-      // check for location
-      if ((typeof newTask.location).toLowerCase() === 'object' &&
-          (typeof newTask.location.lat).toLowerCase() === 'number' &&
-          (typeof newTask.location.long).toLowerCase() === 'number') {
-        status.location = {
-          lat : newTask.location.lat,
-          long : newTask.location.long
-        }
-      }
-
-      // BATCH CHECKS:
-      // required strings
-      for (var i in required.strings) {
-        if ((typeof newTask[required.strings[i]]).toLowerCase() === 'string') {
-          status[required.strings[i]] = newTask[required.strings[i]];
-        } else {
-          console.log('required property "' + required.strings[i] + '" not found in newTask; aborting');
-          return;
-        }
-      }
-
-      // required numbers
-      for (var i in required.numbers) {
-        if ((typeof newTask[required.numbers[i]]).toLowerCase() === 'number'
-          && !isNaN(newTask[required.numbers[i]])) {
-          status[required.numbers[i]] = newTask[required.numbers[i]];
-        } else {
-          console.log('required property "' + required.numbers[i] + '" not found in newTask or is NaN; aborting');
-          return;
-        }
-      }
-
-      // booleans
-      for (var i in required.booleans) {
-        if ((typeof newTask[required.booleans[i]]).toLowerCase() === 'boolean') {
-          status[required.booleans[i]] = newTask[required.booleans[i]];
-        } else {
-          console.log('required property "' + required.booleans[i] + '" not found in newTask; aborting');
-          return;
-        }
-      }
-
-      // optional strings
-      for (var i in optional.strings) {
-        if ((typeof newTask[optional.strings[i]]).toLowerCase() === 'string') {
-          status[optional.strings[i]] = newTask[optional.strings[i]];
-        }
-      }
-
-      // optional numbers
-      for (var i in optional.numbers) {
-        if ((typeof newTask[optional.numbers[i]]).toLowerCase() === 'number'
-          && !isNaN(newTask[optional.numbers[i]])) {
-          status[optional.numbers[i]] = newTask[optional.numbers[i]];
-        }
-      }
-
-      // booleans
-      for (var i in optional.booleans) {
-        if ((typeof newTask[optional.booleans[i]]).toLowerCase() === 'boolean') {
-          status[optional.booleans[i]] = newTask[optional.booleans[i]];
-        }
-      }
-
-      return status;
     }
 
     /**
@@ -1215,7 +1283,8 @@ angular.module('webappApp')
       // publish to stream
       var ref = FBRef.child('team/' + PhasedProvider.team.name);
       ref.child('task/' + PhasedProvider.user.uid).set(newTask);
-      ref.child('all/' + PhasedProvider.user.uid).push(newTask);
+      var newTaskRef = ref.child('all/' + PhasedProvider.user.uid).push(newTask);
+      updateTaskHist(newTaskRef.key(), PhasedProvider.TASK_HISTORY_CHANGES.CREATED);
     }
 
     /**
@@ -1248,6 +1317,7 @@ angular.module('webappApp')
 
       // push to database
       FBRef.child('team/' + PhasedProvider.team.name + '/assignments/all/' + assignmentID + '/status').set(newStatus);
+      updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.STATUS);
 
       // if issue was complete, timestamp it
       if (newStatus == 1) {
@@ -1280,7 +1350,181 @@ angular.module('webappApp')
 
       // 3. set assignee attr
       FBRef.child(assignmentsPath + 'all/' + assignmentID + '/assignee').set(PhasedProvider.user.uid);
+
+      updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.ASSIGNEE);
     }
+
+    /**
+    *
+    * edit task assignee
+    *
+    * 1. change lookup lists
+      * A1. rm from old to lookup or unassigned
+      * A2. add to new to lookup
+      * B1. rm from old by lookup
+      * B2. add to new by lookup
+    * 2. update keys on task itself (assignee, user, assigned_by, status)
+    *
+    */ 
+    var _editTaskAssignee = function(task, newAssignee) {
+      var args = {
+        task : task,
+        newAssignee : newAssignee
+      }
+      registerAsync(doEditTaskAssignee, args);
+    }
+
+    var doEditTaskAssignee = function(args) {
+      var assignmentsRef = 'team/' + _Auth.currentTeam + '/assignments';
+      var task = args.task,
+        taskID = task.key;
+      var oldAssignee = task.assignee || false;
+      var newAssignee = args.newAssignee;
+
+      // 1. change lookup lists
+      // A1. remove from assigned to lookup
+      if (oldAssignee) {
+        // get list
+        FBRef.child(assignmentsRef + '/to/' + oldAssignee).once('value', function(data) {
+          var list = data.val();
+          list = popFromList(task.key, list)
+          FBRef.child(assignmentsRef + '/to/' + oldAssignee).set(list);
+        });
+      } else { // remove from unassigned
+        // we already have the list
+        assignmentIDs['unassigned'] = popFromList(task.key, assignmentIDs['unassigned']);
+        FBRef.child(assignmentsRef + '/unassigned').set(assignmentIDs['unassigned']);
+      }
+
+      // A2. add to new assigned to lookup
+      FBRef.child(assignmentsRef + '/to/' + newAssignee).push(task.key);
+
+      // B1. remove from assigned by lookup
+      // get list
+      FBRef.child(assignmentsRef + '/by/' + task.assigned_by).once('value', function(data) {
+        var list = data.val();
+        list = popFromList(task.key, list)
+        FBRef.child(assignmentsRef + '/by/' + task.assigned_by).set(list);
+      });
+
+      // B2. add to new assigned to lookup
+      FBRef.child(assignmentsRef + '/by/' + _Auth.user.uid).push(task.key);
+
+
+      // 2. update assignment itself (this will clear task.key)
+      FBRef.child(assignmentsRef + '/all/' + task.key).update({
+        'assignee' : args.newAssignee,
+        'user' : args.newAssignee,
+        'assigned_by' : _Auth.user.uid,
+        'status' : PhasedProvider.TASK_STATUS_ID.ASSIGNED,
+        'unassigned' : false
+      });
+      updateTaskHist(taskID, PhasedProvider.TASK_HISTORY_CHANGES.ASSIGNEE);
+    }
+
+    /**
+    *
+    * edit task name
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskName = function(taskID, newName) {
+      var args = {
+        taskID : taskID,
+        newName : newName
+      }
+      registerAsync(doEditTaskName, args);
+    }
+
+    var doEditTaskName = function(args) {
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID + "/name").set(args.newName, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.NAME);
+      });
+    }
+
+    /**
+    *
+    * edit task description
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskDesc = function(taskID, newDesc) {
+      var args = {
+        taskID : taskID,
+        newDesc : newDesc
+      }
+      registerAsync(doEditTaskDesc, args);
+    }
+
+    var doEditTaskDesc = function(args) {
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'desc' : args.newDesc}, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.DESCRIPTION);
+      });
+    }
+
+    /**
+    *
+    * edit task deadline
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskDeadline = function(taskID, newDeadline) {
+      var args = {
+        taskID : taskID,
+        newDeadline : newDeadline
+      }
+      registerAsync(doEditTaskDeadline, args);
+    }
+
+    var doEditTaskDeadline = function(args) {
+      // if newDate is set, get timestamp; else null
+      var newDeadline = args.newDeadline ? new Date(args.newDeadline).getTime() : '';
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'deadline' : newDeadline }, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.DEADLINE);
+      });
+    }
+
+    /**
+    *
+    * edit task category
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskCategory = function(taskID, newCategory) {
+      var args = {
+        taskID : taskID,
+        newCategory : newCategory
+      }
+      registerAsync(doEditTaskCategory, args);
+    }
+
+    var doEditTaskCategory = function(args) {
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'cat' : args.newCategory }, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.CATEGORY);
+      });
+    }
+
+    /**
+    *
+    * edit task priority
+    * (simple FB interaction)
+    *
+    */ 
+    var _editTaskPriority = function(taskID, newPriority) {
+      var args = {
+        taskID : taskID,
+        newPriority : newPriority
+      }
+      registerAsync(doEditTaskPriority, args);
+    }
+
+    var doEditTaskPriority = function(args) {
+      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'priority' : args.newPriority }, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.PRIORITY);
+      });
+    }
+
+    
 
 
     /**
@@ -1583,6 +1827,9 @@ angular.module('webappApp')
     *
     */
     var popFromList = function(item, list) {
+      if (!('indexOf' in list)) {
+        list = objToArray(list); // change list to array if it's an object
+      }
       var i = list.indexOf(item);
       while (i > -1) {
         delete list[i];

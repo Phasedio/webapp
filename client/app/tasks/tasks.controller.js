@@ -91,6 +91,29 @@ angular.module('webappApp')
       return filtered;
     };
   })
+  /**
+  *
+  * change a task history change code to plain text
+  * (lookup allows for easier text changes later)
+  *
+  */
+  .filter('historyType', ['Phased', function(Phased) {
+    return function(input) {
+      var types = {};
+      types[Phased.TASK_HISTORY_CHANGES.CREATED] = "Task created";
+      types[Phased.TASK_HISTORY_CHANGES.ARCHIVED] = "Task archived";
+      types[Phased.TASK_HISTORY_CHANGES.UNARCHIVED] = "Task unarchived";
+      types[Phased.TASK_HISTORY_CHANGES.NAME] = "Task name changed";
+      types[Phased.TASK_HISTORY_CHANGES.DESCRIPTION] = "Task description changed";
+      types[Phased.TASK_HISTORY_CHANGES.ASSIGNEE] = "Task assignee changed";
+      types[Phased.TASK_HISTORY_CHANGES.DEADLINE] = "Task deadline changed";
+      types[Phased.TASK_HISTORY_CHANGES.CATEGORY] = "Task category changed";
+      types[Phased.TASK_HISTORY_CHANGES.PRIORITY] = "Task priority changed";
+      types[Phased.TASK_HISTORY_CHANGES.STATUS] = "Task status changed";
+
+      return types[input] || input; // fail gracefully
+    }
+  }])
   .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig) {
     ga('send', 'pageview', '/tasks');
 
@@ -99,6 +122,7 @@ angular.module('webappApp')
     $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
     $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
+    $scope.taskHistType = Phased.TASK_HISTORY_CHANGES;
     $scope.myID = Auth.user.uid;
 
     console.log(Phased);
@@ -140,16 +164,16 @@ angular.module('webappApp')
     //=====================
     //When user clicks on task they can see more information about said task
     $scope.tasklistSize = 'col-xs-12';//set the init size of task list
-    $scope.taskDiscript = 'hidden'; //hide the task discription till the user does something
-    $scope.taskInfo = {}; // Task information for the discription area
+    $scope.taskDescript = 'hidden'; //hide the task description till the user does something
+    $scope.taskInfo = {}; // Task information for the description area
 
 
     $scope.selectTask = function(task){
       $scope.taskInfo = task; // assign the task information to the scope;
-      // if the task list is still 12 cols open up the discriptor for the user
+      // if the task list is still 12 cols open up the descriptor for the user
       if($scope.tasklistSize == 'col-xs-12'){
         $scope.tasklistSize = 'col-xs-6';
-        $scope.taskDiscript = 'col-xs-6';
+        $scope.taskDescript = 'col-xs-6';
       }
 
     }
@@ -157,7 +181,7 @@ angular.module('webappApp')
     //closes details sidebar.
     $scope.closeDetails = function(){
       $scope.tasklistSize = 'col-xs-12';//set the init size of task list
-      $scope.taskDiscript = 'hidden'; //hide the task discription till the user does something
+      $scope.taskDescript = 'hidden'; //hide the task description till the user does something
       $scope.taskInfo = {};
     }
 
@@ -170,10 +194,11 @@ angular.module('webappApp')
     $scope.assignments = Phased.assignments;
     $scope.archive = Phased.archive;
 
+    // default active stream is 'to_me'
     $scope.activeStream = Phased.assignments.to_me;
     $scope.activeStreamName = 'assignments.to_me';
-    $scope.activeStatusFilter = '!1'; // not completed tasks
-    $scope.activeCategoryFilter;
+    $scope.activeStatusFilter = '!' + Phased.TASK_STATUS_ID.COMPLETE; // not completed tasks
+    $scope.activeCategoryFilter = undefined;
     $scope.filterView = $scope.activeStreamName;//for the select filter
     $scope.eventSources = [];//needed for the calendar
 
@@ -191,27 +216,50 @@ angular.module('webappApp')
       switch (streamName) {
         case 'assignments.all':
           $scope.activeStream = Phased.assignments.all;
+          $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
           break;
         case 'assignments.to_me':
           $scope.activeStream = Phased.assignments.to_me;
+          $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
           break;
         case 'assignments.by_me':
           $scope.activeStream = Phased.assignments.by_me;
+          $scope.setStatusFilter(undefined);
           break;
         case 'assignments.unassigned':
           $scope.activeStream = Phased.assignments.unassigned;
+          $scope.setStatusFilter(undefined);
           break;
         case 'archive.to_me':
-          if (!('to_me' in Phased.archive)) Phased.getArchiveFor('to_me');
+          if (!('to_me' in Phased.archive)) Phased.getArchiveFor('to_me'); // get archive if needed
           $scope.activeStream = Phased.archive.to_me;
+          $scope.setStatusFilter(undefined);
           break;
         case 'archive.all':
           Phased.getArchiveFor('all');
           $scope.activeStream = Phased.archive.all;
+          $scope.setStatusFilter(undefined);
+          break;
+        // the following aren't an actual address, but at least 
+        // they let us use the status filter properly...
+        case 'completed' : 
+          $scope.activeStream = Phased.assignments.all;
+          streamName = 'assignments.all'; // jimmy this in there...
+          $scope.setStatusFilter(Phased.TASK_STATUS_ID.COMPLETE);
+          break;
+        case 'assigned' : 
+          $scope.activeStream = Phased.assignments.all;
+          streamName = 'assignments.all'; 
+          $scope.setStatusFilter(Phased.TASK_STATUS_ID.ASSIGNED);
+          break;
+        case 'in_progress' : 
+          $scope.activeStream = Phased.assignments.all;
+          streamName = 'assignments.all'; 
+          $scope.setStatusFilter(Phased.TASK_STATUS_ID.IN_PROGRESS);
           break;
         default:
           $scope.activeStream = Phased.assignments.to_me;
-          filter = '!' + Phased.TASK_STATUS_ID.COMPLETE;
+          $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
           streamName = 'assignments.to_me';
           break;
       }
@@ -222,7 +270,7 @@ angular.module('webappApp')
     // checks and sets active status filter
     $scope.setStatusFilter = function(statusID) {
       // check and set filter
-      if (!statusID || typeof statusID == 'undefined') {
+      if (statusID === null || typeof statusID == 'undefined') {
         $scope.activeStatusFilter = undefined;
       } else {
         statusID = statusID.toString();
@@ -349,7 +397,7 @@ angular.module('webappApp')
       Phased.activateTask(task.key);
 
       $scope.activeStream = Phased.assignments.to_me;
-      $scope.activeStatusFilter = Phased.TASK_STATUS_ID.ASSIGNED;
+      $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
     }
 
     $scope.moveToArchive = function(assignmentID) {
@@ -359,7 +407,6 @@ angular.module('webappApp')
 
     $scope.moveFromArchive = function(assignmentID) {
       Phased.moveToFromArchive(assignmentID, true);
-
     }
 
     // gets archived tasks at address shows archive
@@ -371,96 +418,38 @@ angular.module('webappApp')
       Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
     }
 
-    //Broadcasts that user is working on Task
-    $scope.broadcastTask = function(task){
+    // Broadcasts that user is working on Task
+    $scope.broadcastTask = function(task) {
       Phased.activateTask(task.key);
-       toaster.pop('success', "Success!", "Your task was posted");
+      toaster.pop('success', "Success!", "Your task was posted");
     }
 
-    //These should be moved in to the provider.
     // Edit name
-    $scope.taskEditName = function(taskID,newName){
-      console.log(newName);
-      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).child("name").set(newName);
-    }
-    //add discription
-    $scope.taskEditDisc = function(taskID,disc){
-
-      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID.key).update({"disc" : disc});
+    $scope.taskEditName = function(taskID, newName) {
+      Phased.editTaskName(taskID, newName);
     }
 
-    //Edit assigned user
-    //i feel this needs to be set on fire...
-    $scope.taskEditAssigned = function(taskObj,userID){
-      var task = JSON.stringify(taskObj);
-      task = JSON.parse(task);
-      console.log(task);
-      console.log(task.assignee);
-      if(task.assignee){
-        console.log('yo');
-        //Task is assigned to a person.
-        //Take user id and change it to new user
-        console.log(task.assignee);
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"assignee" : userID,"user":userID});
-        //remove from past assigened's 'to' lookup
-        console.log(task.assignee);
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('to').child(task.assignee).orderByValue().equalTo(task.key).once('value',function(snap){
-
-          var x = snap.key();
-          console.log(x);
-          FBRef.child("team").child(Auth.currentTeam).child('assignments').child('to').child(task.assignee).child(x).remove();
-        });
-        //Change 'to' look up table
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('to').child(userID).push(task.key);
-
-        //change the assigned_by to current user
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"assigned_by" : Auth.user.uid});
-        //Remove assigned_by user 'by' lookup
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(task.assigned_by).orderByValue().equalTo(task.key).once('value',function(snap){
-          var x = snap.key();
-          FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(task.assigned_by).child(x).remove();
-        });
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(Auth.user.uid).push(task.key);
-        //done
-      }else if(task.unassigned){
-        //Task is unassigned!
-        //Take user id and change it to new user
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"assignee" : userID});
-        //Change 'to' look up table
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('to').child(userID).push(task.key);
-        //change the assigned_by to current user
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"assigned_by" : Auth.user.uid});
-
-        //Remove assigned_by user 'by' lookup
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(task.assigned_by).orderByValue().equalTo(task.key).once('value',function(snap){
-          var x = snap.key();
-          FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(task.assigned_by).child(x).remove();
-        });
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('by').child(Auth.user.uid).push(task.key);
-
-        //set unassigned to false
-        FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"unassigned" : false});
-        //done
-      }
-    }
-    //Edits date of deadline or clears it
-    $scope.taskEditDate = function(taskID,date){
-      var newDate = '';
-      if(date){
-        newDate = new Date(date).getTime();
-      }
-      console.log(newDate);
-      console.log(taskID);
-      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(taskID).update({"deadline" : newDate});
+    // edit description
+    $scope.taskEditDesc = function(taskID, desc) {
+      Phased.editTaskDesc(taskID, desc);
     }
 
-    //change the category in task discription
-    $scope.changeCategory = function(task,catKey){
-      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"cat" : catKey});
+    // Edit assigned user
+    $scope.taskEditAssigned = function(taskObj, userID) {
+      Phased.editTaskAssignee(taskObj, userID);
     }
-    //change the category in task discription
-    $scope.changePriority = function(task,priorityKey){
-      FBRef.child("team").child(Auth.currentTeam).child('assignments').child('all').child(task.key).update({"priority" : priorityKey});
+    // Edits date of deadline or clears it
+    $scope.taskEditDate = function(taskID, date) {
+      Phased.editTaskDeadline(taskID, date);
+    }
+
+    // change category
+    $scope.changeCategory = function(taskID, catKey) {
+      Phased.editTaskCategory(taskID, catKey);
+    }
+    // change priority
+    $scope.changePriority = function(taskID, priorityKey) {
+      Phased.editTaskPriority(taskID, priorityKey);
     }
 
 
@@ -472,8 +461,8 @@ angular.module('webappApp')
 
     //----
     $scope.today = function() {
-    $scope.dt = new Date();
-  };
+      $scope.dt = new Date();
+    };
   $scope.today();
 
   $scope.clear = function () {
