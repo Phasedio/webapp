@@ -476,6 +476,10 @@ angular.module('webappApp')
                 addToHistory = false;
               }
             }
+
+            // add key property
+            data[keys[i]].key = keys[i];
+
             if (addToHistory) 
               PhasedProvider.team.history.push(data[keys[i]]);
 

@@ -51,9 +51,10 @@ angular.module('webappApp')
 			// adds an iteam to the stream
 			this.addItem = function(item) {
 				// check item properties
-				var props = ['title', 'body', 'time'];
+				var props = ['title', 'body', 'time', 'key'];
 				for (var i in props) {
 					if (!item[props[i]]) {
+						console.log('item missing property "' + props[i] + '"');
 						return false;
 					}
 				}
@@ -95,7 +96,8 @@ angular.module('webappApp')
 					body : curItem.name,
 					time : curItem.time,
 					cat : curItem.cat,
-					type : 'history'
+					type : 'history',
+					key : curItem.key
 				}
 				histStream.addItem(streamItem);
 			}
@@ -316,6 +318,7 @@ angular.module('webappApp')
 								break;
 						}
 
+						streamItem.key = j;
 						stream.addItem(streamItem);
 					}
 				} else { // if no history (to be backwards compatible)
@@ -326,6 +329,7 @@ angular.module('webappApp')
 						cat : curAssignment.cat,
 						type : TYPE.ASSIGNMENT.UPDATED
 					}
+					streamItem.key = i;
 					stream.addItem(streamItem);
 				}
 			}
@@ -336,5 +340,15 @@ angular.module('webappApp')
 		$rootScope.$on("Phased:assignments:archive:data", function() { 
 			populateAssignments(true); // use archive
 		});
+
+		/**
+		*
+		*	Mark all notifications as read
+		*
+		*/
+
+		this.markAllRead = function() {
+
+		}
 
 	}]);
