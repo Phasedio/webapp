@@ -130,7 +130,7 @@ angular.module('webappApp')
 					cat : curItem.cat,
 					type : 'assignment_unassigned'
 				}
-				assignmentToMeStream.addItem(streamItem);
+				assignmentUnassignedStream.addItem(streamItem);
 			}
 		}
 		$rootScope.$on("Phased:assignments:unassigned", populateAssignmentsUnassigned);
