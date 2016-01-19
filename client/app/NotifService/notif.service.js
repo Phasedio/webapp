@@ -3,18 +3,23 @@
 angular.module('webappApp')
 	.service('Notif', ['Phased', '$rootScope', function(Phased, $rootScope) {
 
+		// notification type ids
+		var TYPE = {
+			HISTORY : 'history',
+			ASSIGNMENT : {
+				CREATED : 'assignment_created',
+				ARCHIVED : 'assignment_archived',
+				UNARCHIVED : 'assignment_unarchived',
+				UPDATED : 'assignment_updated', // generic case
+				ASSIGNED : 'assignment_assigned',
+				ASSIGNED_TO_ME : 'assignment_assigned_to_me',
+				STATUS : 'assignment_status'
+			}
+		};
+		this.TYPE = TYPE;
+
 		// the main notification stream, exposed to controller
-		this.stream = [
-			/*{
-				title : 'Dummy item',
-				body : 'This is just a dummy stream item. This is some text that would be in the body of the stream ...',
-				img : '',
-				time : 1445459283148,
-				cat : 'some_cat_id',
-				unread : true,
-				type : 'dummy'
-			}*/
-		];
+		this.stream = [];
 		var mainStream = this.stream;
 
 		/**
@@ -125,7 +130,7 @@ angular.module('webappApp')
 									body : curItem.taskSnapshot.name,
 									time : curItem.time,
 									cat : curItem.taskSnapshot.cat,
-									type : 'assignment_created'
+									type : TYPE.ASSIGNMENT.CREATED
 								}
 
 								// make title :
@@ -171,7 +176,7 @@ angular.module('webappApp')
 									body : curItem.taskSnapshot.name,
 									time : curItem.time,
 									cat : curItem.taskSnapshot.cat,
-									type : 'assignment_archived'
+									type : TYPE.ASSIGNMENT.ARCHIVED
 								}
 								break;
 							/**
@@ -183,7 +188,7 @@ angular.module('webappApp')
 									body : curItem.taskSnapshot.name,
 									time : curItem.time,
 									cat : curItem.taskSnapshot.cat,
-									type : 'assignment_unarchived'
+									type : TYPE.ASSIGNMENT.UNARCHIVED
 								}
 								break;
 							/**
@@ -195,7 +200,7 @@ angular.module('webappApp')
 									body : 'to "' + curItem.taskSnapshot.name + '"',
 									time : curItem.time,
 									cat : curItem.taskSnapshot.cat,
-									type : 'assignment_updated'
+									type : TYPE.ASSIGNMENT.UPDATED
 								}
 								break;
 							/**
@@ -207,7 +212,7 @@ angular.module('webappApp')
 									body : curItem.taskSnapshot.name,
 									time : curItem.time,
 									cat : curItem.taskSnapshot.cat,
-									type : 'assignment_updated'
+									type : TYPE.ASSIGNMENT.UPDATED
 								}
 								break;
 
@@ -220,12 +225,12 @@ angular.module('webappApp')
 									body : curItem.taskSnapshot.name,
 									time : curItem.time,
 									cat : curItem.taskSnapshot.cat,
-									type : 'assignment_assigned'
+									type : TYPE.ASSIGNMENT.ASSIGNED
 								}
 
 								if (curItem.taskSnapshot.assigned_by == Phased.user.uid) { // task assigned to me
 									streamItem.title = 'Task assigned to you';
-									streamItem.type = 'assignment_to_me';
+									streamItem.type = TYPE.ASSIGNMENT.ASSIGNED_TO_ME;
 								}
 								break;
 							/**
@@ -237,7 +242,7 @@ angular.module('webappApp')
 									body : curItem.taskSnapshot.name,
 									time : curItem.time,
 									cat : curItem.taskSnapshot.cat,
-									type : 'assignment_updated'
+									type : TYPE.ASSIGNMENT.UPDATED
 								}
 								break;
 							/**
@@ -249,7 +254,7 @@ angular.module('webappApp')
 									body : curItem.taskSnapshot.name,
 									time : curItem.time,
 									cat : curItem.taskSnapshot.cat,
-									type : 'assignment_updated'
+									type : TYPE.ASSIGNMENT.UPDATED
 								}
 								break;
 
@@ -262,7 +267,7 @@ angular.module('webappApp')
 									body : curItem.taskSnapshot.name,
 									time : curItem.time,
 									cat : curItem.taskSnapshot.cat,
-									type : 'assignment_updated'
+									type : TYPE.ASSIGNMENT.UPDATED
 								}
 								break;
 
@@ -275,7 +280,7 @@ angular.module('webappApp')
 									body : curItem.taskSnapshot.name,
 									time : curItem.time,
 									cat : curItem.taskSnapshot.cat,
-									type : 'assignment_status'
+									type : TYPE.ASSIGNMENT.STATUS
 								}
 								switch (curItem.taskSnapshot.status) {
 									case Phased.TASK_STATUS_ID.IN_PROGRESS :
@@ -300,7 +305,7 @@ angular.module('webappApp')
 									body : curItem.taskSnapshot.name + ' (by ' + Phased.team.members[curItem.taskSnapshot.assigned_by].name + ')', 
 									time : curItem.time,
 									cat : curItem.taskSnapshot.cat,
-									type : 'assignment_updated'
+									type : TYPE.ASSIGNMENT.UPDATED
 								}
 								break;
 						}
@@ -313,7 +318,7 @@ angular.module('webappApp')
 						body : curAssignment.name + ' (by ' + Phased.team.members[curAssignment.assigned_by].name + ')', 
 						time : curAssignment.time,
 						cat : curAssignment.cat,
-						type : 'assignment_updated'
+						type : TYPE.ASSIGNMENT.UPDATED
 					}
 					assignmentStream.addItem(streamItem);
 				}
