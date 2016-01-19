@@ -67,8 +67,9 @@ angular.module('webappApp')
 			The various streams that will be amalgamated to form the exposed notification stream
 		**/
 		var histStream = new NotifStreamHolder();
-		var assignmentToMeStream = new NotifStreamHolder();
-		var assignmentUnassignedStream = new NotifStreamHolder();
+		// var assignmentToMeStream = new NotifStreamHolder();
+		// var assignmentUnassignedStream = new NotifStreamHolder();
+		var assignmentStream = new NotifStreamHolder(); // all assignments
 
 
 		/**
@@ -103,6 +104,7 @@ angular.module('webappApp')
 		*	populates assignment streams from Phased.assignments.to_me
 		*	and Phased.assignments.unassigned
 		*/
+		/*
 		var populateAssignmentsToMe = function() {
 			assignmentToMeStream.clear();
 			for (var i in Phased.assignments.to_me) {
@@ -134,5 +136,47 @@ angular.module('webappApp')
 			}
 		}
 		$rootScope.$on("Phased:assignments:unassigned", populateAssignmentsUnassigned);
+		*/
+
+		/**
+		*
+		*	populates assignment stream with all assignment data
+		*	using snapshots in their history objects if available
+		*
+		*/
+		var populateAssignments = function() {
+			assignmentStream.clear();
+
+			// for every assignment
+			for (var i in Phased.assignments.all) {
+				var curAssignment = Phased.assignments.all[i];
+
+				// if assignment has history (as it should)
+				if ('history' in curAssignment) {
+					// add each of its snapshots to the notification stream
+					for (var j in curAssignment.history) {
+						var curItem = curAssignment.history[j];
+						var streamItem = {
+							title : 'A task by ' + Phased.team.members[curItem.taskSnapshot.assigned_by].name + ' created or updated',
+							body : curItem.taskSnapshot.name,
+							time : curItem.time,
+							cat : curItem.taskSnapshot.cat,
+							type : 'assignment_unassigned'
+						}
+						assignmentStream.addItem(streamItem);
+					}
+				} else { // if no history (to be backwards compatible)
+					var streamItem = {
+						title : 'A task by ' + Phased.team.members[curAssignment.assigned_by].name + ' created or updated',
+						body : curAssignment.name,
+						time : curAssignment.time,
+						cat : curAssignment.cat,
+						type : 'assignment_unassigned'
+					}
+					assignmentStream.addItem(streamItem);
+				}
+			}
+		}
+		$rootScope.$on("Phased:assignments:data", populateAssignments);
 
 	}]);
