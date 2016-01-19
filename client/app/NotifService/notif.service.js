@@ -67,8 +67,6 @@ angular.module('webappApp')
 			The various streams that will be amalgamated to form the exposed notification stream
 		**/
 		var histStream = new NotifStreamHolder();
-		// var assignmentToMeStream = new NotifStreamHolder();
-		// var assignmentUnassignedStream = new NotifStreamHolder();
 		var assignmentStream = new NotifStreamHolder(); // all assignments
 
 
@@ -98,46 +96,6 @@ angular.module('webappApp')
 		}
 		$rootScope.$on('Phased:history', populateHistStream);
 
-
-		/**
-		*
-		*	populates assignment streams from Phased.assignments.to_me
-		*	and Phased.assignments.unassigned
-		*/
-		/*
-		var populateAssignmentsToMe = function() {
-			assignmentToMeStream.clear();
-			for (var i in Phased.assignments.to_me) {
-				var curItem = Phased.assignments.to_me[i];
-				var streamItem = {
-					title : 'Assignment from ' + Phased.team.members[curItem.assigned_by].name,
-					body : curItem.name,
-					time : curItem.time,
-					cat : curItem.cat,
-					type : 'assignment_to_me'
-				}
-				assignmentToMeStream.addItem(streamItem);
-			}
-		}
-		$rootScope.$on("Phased:assignments:to_me", populateAssignmentsToMe);
-
-		var populateAssignmentsUnassigned = function() {
-			assignmentUnassignedStream.clear();
-			for (var i in Phased.assignments.unassigned) {
-				var curItem = Phased.assignments.unassigned[i];
-				var streamItem = {
-					title : 'Open task from ' + Phased.team.members[curItem.assigned_by].name,
-					body : curItem.name,
-					time : curItem.time,
-					cat : curItem.cat,
-					type : 'assignment_unassigned'
-				}
-				assignmentUnassignedStream.addItem(streamItem);
-			}
-		}
-		$rootScope.$on("Phased:assignments:unassigned", populateAssignmentsUnassigned);
-		*/
-
 		/**
 		*
 		*	populates assignment stream with all assignment data
@@ -155,23 +113,207 @@ angular.module('webappApp')
 				if ('history' in curAssignment) {
 					// add each of its snapshots to the notification stream
 					for (var j in curAssignment.history) {
-						var curItem = curAssignment.history[j];
-						var streamItem = {
-							title : 'A task by ' + Phased.team.members[curItem.taskSnapshot.assigned_by].name + ' created or updated',
-							body : curItem.taskSnapshot.name,
-							time : curItem.time,
-							cat : curItem.taskSnapshot.cat,
-							type : 'assignment_unassigned'
+						var curItem = curAssignment.history[j]; // easier reference for the current item
+
+						// format the notification depending on the history type
+						switch (curItem.type) {
+							/**
+							*		TASK CREATED
+							*/
+							case Phased.TASK_HISTORY_CHANGES.CREATED :
+								var streamItem = {
+									body : curItem.taskSnapshot.name,
+									time : curItem.time,
+									cat : curItem.taskSnapshot.cat,
+									type : 'assignment_created'
+								}
+
+								// make title :
+								// 1 assigned by A to ME
+								// 2 assigned by ME (to A or unassigned)
+								// 3 assigned by A to B
+								// 4 self-assigned by ME
+								// 5 self-assigned by A
+								// 6 unassigned by A
+
+								if (curItem.taskSnapshot.assigned_by != curItem.taskSnapshot.assignee) { // 1, 2, 3, or 6
+									if (curItem.taskSnapshot.assignee == Phased.user.uid) { 
+										// 1
+										streamItem.title = 'New task assigned to you by ' + Phased.team.members[curItem.taskSnapshot.assigned_by].name;
+									} else if (curItem.taskSnapshot.assigned_by == Phased.user.uid) { 
+										// 2
+										if (curItem.taskSnapshot.assignee)
+											streamItem.title = 'You assigned a new task to ' + Phased.team.members[curItem.taskSnapshot.assignee].name;
+										else 
+											streamItem.title = 'You created an unassigned task';
+									} else if (curItem.taskSnapshot.assignee) { 
+										// 3
+										streamItem.title = Phased.team.members[curItem.taskSnapshot.assigned_by].name; + ' assigned a new task to ' + Phased.team.members[curItem.taskSnapshot.assignee].name;
+									} else if (typeof curItem.taskSnapshot.assignee == 'undefined' && curItem.taskSnapshot.unassigned) { // 6
+										streamItem.title = Phased.team.members[curItem.taskSnapshot.assigned_by].name; + ' created a new unassigned task';
+									}
+								} else { // 4 or 5 (self-assigned)
+									if (curItem.taskSnapshot.assigned_by == Phased.user.uid) { 
+										// 4
+										streamItem.title = 'You self-assigned a new task';
+									} else {
+										streamItem.title = Phased.team.members[curItem.taskSnapshot.assigned_by].name + ' self-assigned a new task';
+									}
+								}
+								break;
+							/**
+							*		TASK ARCHIVED
+							*		nb: an archived task snapshot could appear in an active task's history
+							*/
+							case Phased.TASK_HISTORY_CHANGES.ARCHIVED :
+								var streamItem = {
+									title : 'Task archived',
+									body : curItem.taskSnapshot.name,
+									time : curItem.time,
+									cat : curItem.taskSnapshot.cat,
+									type : 'assignment_archived'
+								}
+								break;
+							/**
+							*		TASK UNARCHIVED
+							*/
+							case Phased.TASK_HISTORY_CHANGES.UNARCHIVED :
+								var streamItem = {
+									title : 'Task unarchived',
+									body : curItem.taskSnapshot.name,
+									time : curItem.time,
+									cat : curItem.taskSnapshot.cat,
+									type : 'assignment_unarchived'
+								}
+								break;
+							/**
+							*		TASK NAME CHANGED
+							*/
+							case Phased.TASK_HISTORY_CHANGES.NAME :
+								var streamItem = {
+									title : 'Task name changed',
+									body : 'to "' + curItem.taskSnapshot.name + '"',
+									time : curItem.time,
+									cat : curItem.taskSnapshot.cat,
+									type : 'assignment_updated'
+								}
+								break;
+							/**
+							*		TASK DESC CHANGED
+							*/
+							case Phased.TASK_HISTORY_CHANGES.DESCRIPTION :
+								var streamItem = {
+									title : 'Task description changed',
+									body : curItem.taskSnapshot.name,
+									time : curItem.time,
+									cat : curItem.taskSnapshot.cat,
+									type : 'assignment_updated'
+								}
+								break;
+
+							/**
+							*		TASK ASSIGNEE CHANGED
+							*/
+							case Phased.TASK_HISTORY_CHANGES.ASSIGNEE :
+								var streamItem = {
+									title : 'Task assigned to ' + Phased.team.members[curItem.taskSnapshot.assignee].name,
+									body : curItem.taskSnapshot.name,
+									time : curItem.time,
+									cat : curItem.taskSnapshot.cat,
+									type : 'assignment_assigned'
+								}
+
+								if (curItem.taskSnapshot.assigned_by == Phased.user.uid) { // task assigned to me
+									streamItem.title = 'Task assigned to you';
+									streamItem.type = 'assignment_to_me';
+								}
+								break;
+							/**
+							*		TASK DEADLINE CHANGED
+							*/
+							case Phased.TASK_HISTORY_CHANGES.DEADLINE :
+								var streamItem = {
+									title : 'Task deadline changed',
+									body : curItem.taskSnapshot.name,
+									time : curItem.time,
+									cat : curItem.taskSnapshot.cat,
+									type : 'assignment_updated'
+								}
+								break;
+							/**
+							*		TASK PRIORITY CHANGEd
+							*/
+							case Phased.TASK_HISTORY_CHANGES.CATEGORY :
+								var streamItem = {
+									title : 'Task category changed',
+									body : curItem.taskSnapshot.name,
+									time : curItem.time,
+									cat : curItem.taskSnapshot.cat,
+									type : 'assignment_updated'
+								}
+								break;
+
+							/**
+							*		TASK PRIORITY CHANGED
+							*/
+							case Phased.TASK_HISTORY_CHANGES.PRIORITY :
+								var streamItem = {
+									title : 'Task priority changed',
+									body : curItem.taskSnapshot.name,
+									time : curItem.time,
+									cat : curItem.taskSnapshot.cat,
+									type : 'assignment_updated'
+								}
+								break;
+
+							/**
+							*		TASK STATUS CHANGED
+							*/
+							case Phased.TASK_HISTORY_CHANGES.STATUS :
+								var streamItem = {
+									title : 'Task status changed',
+									body : curItem.taskSnapshot.name,
+									time : curItem.time,
+									cat : curItem.taskSnapshot.cat,
+									type : 'assignment_status'
+								}
+								switch (curItem.taskSnapshot.status) {
+									case Phased.TASK_STATUS_ID.IN_PROGRESS :
+										streamItem.title = 'Task in progress';
+										break;
+									case Phased.TASK_STATUS_ID.COMPLETE :
+										streamItem.title = 'Task completed';
+										break;
+									case Phased.TASK_STATUS_ID.ASSIGNED :
+										streamItem.title = 'Task assigned';
+										break;
+									default:
+										break;
+								}
+								break;
+							/**
+							*		TASK UPDATED (generic)
+							*/
+							default :
+								var streamItem = {
+									title : 'Task updated',
+									body : curItem.taskSnapshot.name + ' (by ' + Phased.team.members[curItem.taskSnapshot.assigned_by].name + ')', 
+									time : curItem.time,
+									cat : curItem.taskSnapshot.cat,
+									type : 'assignment_updated'
+								}
+								break;
 						}
+
 						assignmentStream.addItem(streamItem);
 					}
 				} else { // if no history (to be backwards compatible)
 					var streamItem = {
-						title : 'A task by ' + Phased.team.members[curAssignment.assigned_by].name + ' created or updated',
-						body : curAssignment.name,
+						title : 'Task updated',
+						body : curAssignment.name + ' (by ' + Phased.team.members[curAssignment.assigned_by].name + ')', 
 						time : curAssignment.time,
 						cat : curAssignment.cat,
-						type : 'assignment_unassigned'
+						type : 'assignment_updated'
 					}
 					assignmentStream.addItem(streamItem);
 				}
