@@ -48,7 +48,7 @@
 
 				<table class="table table-hover">
 					<tbody>
-						<tr class="task" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" >
+						<tr class="task" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time' : true" >
 							<td ng-click="selectTask(assignment)">
 								{{assignment.name}} <small>{{taskStatuses[assignment.status].name}}</small>
 							</td>
