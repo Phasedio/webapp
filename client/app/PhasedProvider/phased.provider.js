@@ -614,6 +614,11 @@ angular.module('webappApp')
         for (var i in assignmentIDs) {
           syncAssignments(i);
         }
+
+        // once member data is in, broadcast that the assignment data is in
+        registerAfterMembers(function(){
+          $rootScope.$broadcast("Phased:assignments:data");
+        });
       } // updateAllAssignments()
 
 
@@ -668,7 +673,8 @@ angular.module('webappApp')
       FBRef.child(refString + '/to/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'to_me');
-        registerAfterMembers(function(){ // only do after members are in
+        
+        registerAfterMembers(function (){ // only do after members are in
           $rootScope.$broadcast("Phased:assignments:to_me");
         });
       });
