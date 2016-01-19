@@ -194,10 +194,11 @@ angular.module('webappApp')
     $scope.assignments = Phased.assignments;
     $scope.archive = Phased.archive;
 
+    // default active stream is 'to_me'
     $scope.activeStream = Phased.assignments.to_me;
     $scope.activeStreamName = 'assignments.to_me';
-    $scope.activeStatusFilter = '!1'; // not completed tasks
-    $scope.activeCategoryFilter;
+    $scope.activeStatusFilter = '!' + Phased.TASK_STATUS_ID.COMPLETE; // not completed tasks
+    $scope.activeCategoryFilter = undefined;
     $scope.filterView = $scope.activeStreamName;//for the select filter
     $scope.eventSources = [];//needed for the calendar
 
@@ -215,27 +216,40 @@ angular.module('webappApp')
       switch (streamName) {
         case 'assignments.all':
           $scope.activeStream = Phased.assignments.all;
+          $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
+          break;
+        // 'completed' is not an actual address, but at least 
+        // this lets us use the status filter properly...
+        case 'completed' : 
+          $scope.activeStream = Phased.assignments.all;
+          streamName = 'assignments.all'; // jimmy this in there...
+          $scope.setStatusFilter(Phased.TASK_STATUS_ID.COMPLETE);
           break;
         case 'assignments.to_me':
           $scope.activeStream = Phased.assignments.to_me;
+          $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
           break;
         case 'assignments.by_me':
           $scope.activeStream = Phased.assignments.by_me;
+          $scope.setStatusFilter(undefined);
           break;
         case 'assignments.unassigned':
           $scope.activeStream = Phased.assignments.unassigned;
+          $scope.setStatusFilter(undefined);
           break;
         case 'archive.to_me':
-          if (!('to_me' in Phased.archive)) Phased.getArchiveFor('to_me');
+          if (!('to_me' in Phased.archive)) Phased.getArchiveFor('to_me'); // get archive if needed
           $scope.activeStream = Phased.archive.to_me;
+          $scope.setStatusFilter(undefined);
           break;
         case 'archive.all':
           Phased.getArchiveFor('all');
           $scope.activeStream = Phased.archive.all;
+          $scope.setStatusFilter(undefined);
           break;
         default:
           $scope.activeStream = Phased.assignments.to_me;
-          filter = '!' + Phased.TASK_STATUS_ID.COMPLETE;
+          $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
           streamName = 'assignments.to_me';
           break;
       }
