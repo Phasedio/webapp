@@ -218,13 +218,6 @@ angular.module('webappApp')
           $scope.activeStream = Phased.assignments.all;
           $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
           break;
-        // 'completed' is not an actual address, but at least 
-        // this lets us use the status filter properly...
-        case 'completed' : 
-          $scope.activeStream = Phased.assignments.all;
-          streamName = 'assignments.all'; // jimmy this in there...
-          $scope.setStatusFilter(Phased.TASK_STATUS_ID.COMPLETE);
-          break;
         case 'assignments.to_me':
           $scope.activeStream = Phased.assignments.to_me;
           $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
@@ -247,6 +240,23 @@ angular.module('webappApp')
           $scope.activeStream = Phased.archive.all;
           $scope.setStatusFilter(undefined);
           break;
+        // the following aren't an actual address, but at least 
+        // they let us use the status filter properly...
+        case 'completed' : 
+          $scope.activeStream = Phased.assignments.all;
+          streamName = 'assignments.all'; // jimmy this in there...
+          $scope.setStatusFilter(Phased.TASK_STATUS_ID.COMPLETE);
+          break;
+        case 'assigned' : 
+          $scope.activeStream = Phased.assignments.all;
+          streamName = 'assignments.all'; 
+          $scope.setStatusFilter(Phased.TASK_STATUS_ID.ASSIGNED);
+          break;
+        case 'in_progress' : 
+          $scope.activeStream = Phased.assignments.all;
+          streamName = 'assignments.all'; 
+          $scope.setStatusFilter(Phased.TASK_STATUS_ID.IN_PROGRESS);
+          break;
         default:
           $scope.activeStream = Phased.assignments.to_me;
           $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
@@ -260,7 +270,7 @@ angular.module('webappApp')
     // checks and sets active status filter
     $scope.setStatusFilter = function(statusID) {
       // check and set filter
-      if (!statusID || typeof statusID == 'undefined') {
+      if (statusID === null || typeof statusID == 'undefined') {
         $scope.activeStatusFilter = undefined;
       } else {
         statusID = statusID.toString();
@@ -387,7 +397,7 @@ angular.module('webappApp')
       Phased.activateTask(task.key);
 
       $scope.activeStream = Phased.assignments.to_me;
-      $scope.activeStatusFilter = Phased.TASK_STATUS_ID.ASSIGNED;
+      $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
     }
 
     $scope.moveToArchive = function(assignmentID) {
