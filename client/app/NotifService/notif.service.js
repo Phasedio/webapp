@@ -117,6 +117,7 @@ angular.module('webappApp')
 		*	using snapshots in their history objects if available
 		*
 		*/
+
 		var populateAssignments = function(archive) {
 			var stream = assignmentStream,
 				container = Phased.assignments.all;
@@ -124,6 +125,8 @@ angular.module('webappApp')
 				stream = assignmentArchiveStream;
 				container = Phased.archive.all;
 			}
+
+			stream.clear();
 
 			// for every assignment
 			for (var i in container) {
