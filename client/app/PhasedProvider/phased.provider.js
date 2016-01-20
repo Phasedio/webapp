@@ -30,6 +30,7 @@ angular.module('webappApp')
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       WATCH_HISTORY = false, // set in setWatchHistory in config; tells init whether to do it
       WATCH_ASSIGNMENTS = false, // set in setWatchAssignments in config; tells init whether to do it
+      WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
       req_after_members = [], // filled with operations to complete after members are in
       getHistoryFor = '', // set to a member id if a member's history should be attached to their team.member reference (eg, profile page)
@@ -64,6 +65,21 @@ angular.module('webappApp')
         },
         viewType : 'notPaid',
         billing : {},
+        notif : {
+          TYPE : {
+            HISTORY : 'history',
+            ASSIGNMENT : {
+              CREATED : 'assignment_created',
+              ARCHIVED : 'assignment_archived',
+              UNARCHIVED : 'assignment_unarchived',
+              UPDATED : 'assignment_updated', // generic case
+              ASSIGNED : 'assignment_assigned',
+              ASSIGNED_TO_ME : 'assignment_assigned_to_me',
+              STATUS : 'assignment_status'
+            }
+          },
+          stream : {}
+        },
         TASK_PRIORITIES : {},
         TASK_PRIORITY_ID : {
           HIGH : 0,
@@ -126,6 +142,8 @@ angular.module('webappApp')
       getTaskStatuses();
       if (WATCH_ASSIGNMENTS)
         watchAssignments();
+      if (WATCH_NOTIFICATIONS)
+        watchNotifications();
     }
 
     /**
@@ -181,6 +199,14 @@ angular.module('webappApp')
     this.setWatchAssignments = function(watch) {
       if (watch)
         WATCH_ASSIGNMENTS = true;
+    }
+
+    // sets WATCH_NOTIFICATIONS flag so provider knows
+    // to set up observers in init.
+    // must be called in .config block.
+    this.setWatchNotifications = function(watch) {
+      if (watch)
+        WATCH_NOTIFICATIONS = true;
     }
 
     /**
@@ -530,6 +556,50 @@ angular.module('webappApp')
         if (setUpTeamMembers.membersToGetHistFor.length == 0)
           $rootScope.$broadcast('Phased:historyComplete');
       });
+    }
+
+    /**
+    *
+    * gathers notifications for current user
+    * adds to PhasedProvider.notif.stream
+    *
+    */
+    var watchNotifications = function() {
+      registerAfterMembers(function doWatchNotifications(){
+        FBRef.child('notif/' + PhasedProvider.team.name + '/' + PhasedProvider.user.uid)
+        .on('value', function(data) {
+          var notifications = data.val();
+
+          // format titles and bodies
+          for (var id in notifications) {
+            notifications[id].title = watchNotifications.stringify(notifications[id].title);
+            notifications[id].body = watchNotifications.stringify(notifications[id].body);
+          }
+          // update stream
+          PhasedProvider.notif.stream = notifications;
+
+          // issue notification event
+          $rootScope.$broadcast('Phased:notification');
+        })
+      });
+
+      // returns the interpreted string version of the title or body obj
+      watchNotifications.stringify = function(obj) {
+        // if obj is already a string, spit it out
+        if ((typeof obj).toLowerCase() == 'string')
+          return obj;
+
+        var out = '';
+        for (var j in obj) {
+          if (obj[j].string) {
+            out += obj[j].string;
+          } else if (obj[j].userID) {
+            out += PhasedProvider.team.members[obj[j].userID].name;
+          }
+        }
+
+        return out;
+      }
     }
 
     // gathers team categories data and adds to PhasedProvider.team
@@ -1909,6 +1979,7 @@ angular.module('webappApp')
     PhasedProvider.setFBRef(FURL);
     PhasedProvider.setWatchHistory(true);
     PhasedProvider.setWatchAssignments(true);
+    PhasedProvider.setWatchNotifications(true);
 
     // configure phasedProvider as a callback to AuthProvider
     AuthProvider.setDoAfterAuth(PhasedProvider.init);

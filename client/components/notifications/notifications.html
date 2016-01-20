@@ -6,7 +6,7 @@
 		>N</a>
 	<div ng-show="showNotifs" class="notifPane">
 		<ul>
-			<li ng-repeat="notif in notifStream | orderBy : '-time' | limitTo : 10" ng-class="{unread : !isRead(notif.key)}" class="notif {{notif.type}}">
+			<li ng-repeat="notif in notifications.stream | orderObjectBy : 'time' : true | limitTo : 10" ng-class="{unread : !notif.read}" class="notif {{notif.type}}">
 				<h5>{{notif.title}} <small>{{notif.time | date : 'short'}}</small></h5>
 				<p>{{notif.body}}</p>
 			</li>

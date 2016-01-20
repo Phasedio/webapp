@@ -104,7 +104,7 @@ exports.issueNotification = function(req, res) {
 		for (var id in users) {
 			console.log('issuing to user ' + id);
 			// 3. push to user's notification list
-			if (id != user) // except current user
+			// if (id != user) // except current user
 				FBRef.child('notif/' + team + '/' + id).push(cleanNotif);
 		}
 	}, function failure(err){
