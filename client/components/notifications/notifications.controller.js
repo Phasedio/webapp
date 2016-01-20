@@ -30,18 +30,16 @@ angular.module('webappApp')
 			return Notif.read.indexOf(key) >= 0 ? true : false;
 		}
 
-		// on page load, if notification panel is open
+		// new data, if notification panel is open
 		// mark all read after 5 sec
-		var unsetAssignments = $scope.$on('Phased:assignments:data', function(){
+		$scope.$on('Phased:assignments:data', function(){
 			if ($scope.showNotifs) {
 				markAllReadAfter(5000);
 			}
-			unsetAssignments();
 		});
-		var unsetHistory = $scope.$on('Phased:history', function(){
+		$scope.$on('Phased:history', function(){
 			if ($scope.showNotifs) {
 				markAllReadAfter(5000);
 			}
-			unsetHistory();
 		});
   });
