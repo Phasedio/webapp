@@ -19,6 +19,12 @@ div.notifPane {
 }
 
 .notifPane .notif {
+  // unread notifications
+  &.unread {
+    background-color: #aaa;
+  }
+
+  // notification types
   &.history {
   	border-right : 1rem solid yellow;
   }

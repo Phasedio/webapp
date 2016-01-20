@@ -22,6 +22,13 @@ angular.module('webappApp')
 		this.stream = [];
 		var mainStream = this.stream;
 
+		// a list of notification keys that have been read
+		// these correspond to the items' firebase keys
+		// (for assignment histories, these are the keys in
+		// assignments/all/$assignment/history)
+		this.read = [];
+		var read = this.read;
+
 		/**
 		*
 		*	a manager for various streams 
@@ -348,7 +355,12 @@ angular.module('webappApp')
 		*/
 
 		this.markAllRead = function() {
+			// push key to read array
+			for (var i in mainStream) {
+				read.push(mainStream[i].key);
+			}
 
+			// push to server
 		}
 
 	}]);
