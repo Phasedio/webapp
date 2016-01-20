@@ -24,9 +24,20 @@ angular.module('webappApp')
 			}
 		}
 
-		// tells if a notification is read or not
+		// tells whether a notification is read
 		$scope.isRead = function(key) {
 			return Notif.read.indexOf(key) >= 0 ? true : false;
+		}
+
+		// tells whether there are any unread notifications at all
+		$scope.hasUnread = function() {
+			for (var i in Notif.stream) {
+				if (Notif.read.indexOf(Notif.stream[i].key) < 0) {
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		// new data, if notification panel is open

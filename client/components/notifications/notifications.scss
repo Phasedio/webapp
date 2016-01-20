@@ -1,6 +1,9 @@
 .toggleNotifBtn {
 	padding: 16px;
 	display: inline-block;
+  &.hasUnread {
+    background-color : orange;
+  }
 }
 
 div.notifPane {

@@ -1,5 +1,9 @@
 <div ng-controller="NotifCtrl">
-	<a ng-click="togglePane()" class="toggleNotifBtn">N</a>
+	<a 
+		ng-click="togglePane()" 
+		class="toggleNotifBtn"
+		ng-class="{ hasUnread : hasUnread() }"
+		>N</a>
 	<div ng-show="showNotifs" class="notifPane">
 		<ul>
 			<li ng-repeat="notif in notifStream | orderBy : '-time' | limitTo : 10" ng-class="{unread : !isRead(notif.key)}" class="notif {{notif.type}}">
