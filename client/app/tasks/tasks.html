@@ -31,7 +31,9 @@
               <option value="assignments.to_me" >assigned to me</option>
               <option value="assignments.by_me">my created tasks</option>
               <option value="assignments.unassigned">unassigned tasks</option>
-              <option value="assignments.all">closed tasks</option>
+              <option value="assigned">assigned to others</option>
+              <option value="in_progress">in progress</option>
+              <option value="completed">closed tasks</option>
               <option value="assignments.all">all</option>
               <option value="archive.all">archived tasks</option>
             </select>
@@ -48,7 +50,7 @@
 
 				<table class="table table-hover">
 					<tbody>
-						<tr class="task" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time'" >
+						<tr class="task" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time' : true" >
 							<td ng-click="selectTask(assignment)">
 								{{assignment.name}} <small>{{taskStatuses[assignment.status].name}}</small>
 							</td>
@@ -74,7 +76,7 @@
 				</table>
 			</div>
     </div>
-		<div class="" ng-class="taskDiscript">
+		<div class="" ng-class="taskDescript">
 			<div class="task ph-card">
         <div class="task-header">
           <ul class="task-meta-bar">
@@ -111,9 +113,9 @@
           </ul>
 
         </div>
-				<textarea class="task-title h3" ng-model="taskInfo.name" ng-blur="taskEditName(taskInfo,taskInfo.name)"></textarea>
+				<textarea class="task-title h3" ng-model="taskInfo.name" ng-blur="taskEditName(taskInfo.key,taskInfo.name)"></textarea>
 
-        <textarea class="task-title" ng-model="taskInfo.disc" ng-blur="taskEditDisc(taskInfo,taskInfo.disc)" placeholder="Enter discription..."></textarea>
+        <textarea class="task-title" ng-model="taskInfo.desc" ng-blur="taskEditDesc(taskInfo.key,taskInfo.desc)" placeholder="Enter description..."></textarea>
 
         <p>Assigned by: {{team.members[taskInfo.assigned_by].name}}</p>
 
@@ -124,7 +126,7 @@
           </p>
           <ul class="dropdown-menu" aria-labelledby="dLabel1">
             <li ng-repeat="(key, category) in team.categoryObj">
-              <a href="#" ng-click="changeCategory(taskInfo,key)">
+              <a href="#" ng-click="changeCategory(taskInfo.key, key)">
                 <p>
                  {{category.name }}
                 </p>
@@ -139,7 +141,7 @@
           </p>
           <ul class="dropdown-menu" aria-labelledby="dLabel2">
             <li ng-repeat="(key, priority) in taskPriorities">
-              <a href="#" ng-click="changePriority(taskInfo,key)">
+              <a href="#" ng-click="changePriority(taskInfo.key, key)">
                 <p>
                  {{priority.name }}
                 </p>
@@ -164,6 +166,33 @@
 
 
 			</div>
+
+      <!-- TASK HISTORY -->
+      <div class="ph-card" ng-if="taskInfo.history">
+        <h4>Task History</h4>
+        <div ng-repeat="moment in taskInfo.history | orderObjectBy : 'time' : true">
+          <h5>{{moment.type | historyType}} <small>{{moment.time | date : 'short'}}</small></h5>
+
+          <!-- assigned -->
+          <p ng-if="moment.type == taskHistType.ASSIGNEE">Assigned by {{team.members[moment.taskSnapshot.assigned_by].name}}</p>
+          <p ng-if="moment.type == taskHistType.ASSIGNEE">Assigned to {{team.members[moment.taskSnapshot.assignee].name}}</p>
+
+          <!-- priority -->
+          <p ng-if="moment.type == taskHistType.PRIORITY">
+            to {{taskPriorities[moment.taskSnapshot.priority].name}}
+          </p>
+
+          <!-- status -->
+          <p ng-if="moment.type == taskHistType.STATUS">
+            to {{taskStatuses[moment.taskSnapshot.status].name}}
+          </p>
+
+          <!-- category -->
+          <p ng-if="moment.type == taskHistType.CATEGORY">
+            to {{team.categoryObj[moment.taskSnapshot.cat].name}}
+          </p>
+        </div>
+      </div>
 		</div>
 
   </div>
