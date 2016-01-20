@@ -73,6 +73,9 @@ exports.issueNotification = function(req, res) {
 		},
 		'img' : {
 			'type' : 'string'
+		},
+		'cat' : {
+			'type' : 'string'
 		}
 	}
 
