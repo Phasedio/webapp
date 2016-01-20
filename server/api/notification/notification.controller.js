@@ -26,9 +26,11 @@ exports.index = function(req, res) {
 */
 exports.issueNotification = function(req, res) {
 	var user = req.body.user,
-		team = req.body.team;
+		team = req.body.team,
+		notification = JSON.parse(req.body.notification);
 
 	console.log('issuing notification');
+	console.dir(notification);
 
 	// 0. check inputs
 	// check team name
@@ -54,11 +56,11 @@ exports.issueNotification = function(req, res) {
 	var props = {
 		// property : { type, required }
 		'title' : {
-			'type' : 'string',
+			'type' : 'object',
 			'required' : true
 		},
 		'body' : {
-			'type' : 'string',
+			'type' : 'object',
 			'required' : true
 		},
 		'type' : {
@@ -75,16 +77,17 @@ exports.issueNotification = function(req, res) {
 	}
 
 	var cleanNotif = {
-		time : new Date().getTime() // always in UTC (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTime)
+		time : new Date().getTime(), // always in UTC (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTime)
+		read : false
 	}; // sent to server
 
 	// check each property
 	for (var prop in props) {
-		if (typeof req.body[prop] == props[prop].type) { // prop is good
-			cleanNotif[prop] = req.body[prop];
+		if (typeof notification[prop] == props[prop].type) { // prop is good
+			cleanNotif[prop] = notification[prop];
 		} else if (props[prop].required) { // prop is bad and required
 			console.log('error - invalid notification obj (missing ' + prop + ")");
-			console.dir(req.body);
+			console.dir(notification);
 			res.send({
 				err : 'required notification property "' + prop + '" invalid or missing'
 			})

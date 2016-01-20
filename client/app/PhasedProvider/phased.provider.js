@@ -247,15 +247,18 @@ angular.module('webappApp')
     * issues a notification to every member on the team
     * (server does heavy lifting)
     *
+    * title and body are arrays of objects which are either
+    * { string : 'a simple string' }
+    * or { userID : 'aUserID' } 
+    * which will be interpreted when loaded by client (see watchNotifications)
+    *
     */
     var issueNotification = function(notification) {
       // get user role from server
       $.post('./api/notification/issue', {
         user: _Auth.user.uid,
         team : _Auth.currentTeam,
-        title : 'BBs 1st notification',
-        body : 'here is a notification',
-        type : 'purple'
+        notification : JSON.stringify(notification)
       })
         .success(function(data) {
             if (data.success) {
@@ -269,7 +272,11 @@ angular.module('webappApp')
           console.log('err', data.error());
         });
     }
-    registerAsync(issueNotification)
+    // registerAfterMembers(issueNotification, {
+    //   title : [{string: 'dummy notification by '}, {userID : 'simplelogin:1'}],
+    //   body : [{string: 'just using brian\'s ID because it\'s easy'}],
+    //   type : 'purple'
+    // });
 
     /**
     **
