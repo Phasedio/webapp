@@ -242,6 +242,34 @@ angular.module('webappApp')
     }
 
 
+    /**
+    *
+    * issues a notification to every member on the team
+    * (server does heavy lifting)
+    *
+    */
+    var issueNotification = function(notification) {
+      // get user role from server
+      $.post('./api/notification/issue', {
+        user: _Auth.user.uid,
+        team : _Auth.currentTeam,
+        title : 'BBs 1st notification',
+        body : 'here is a notification',
+        type : 'purple'
+      })
+        .success(function(data) {
+            if (data.success) {
+              console.log('IssueNotif success', data);
+            } else {
+              // set back to old role if update fails
+              console.log('IssueNotif error', data);
+            }
+        })
+        .error(function(data){
+          console.log('err', data.error());
+        });
+    }
+    registerAsync(issueNotification)
 
     /**
     **
