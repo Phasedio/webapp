@@ -10,7 +10,6 @@ angular.module('webappApp')
 			window.setTimeout(function() {
 				if ($scope.showNotifs) {
 					Notif.markAllRead();
-					console.log('all read');
 				}
 			}, delay);
 		}

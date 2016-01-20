@@ -27,7 +27,20 @@ angular.module('webappApp')
 		// (for assignment histories, these are the keys in
 		// assignments/all/$assignment/history)
 		this.read = [];
-		var read = this.read;
+		var _read = this.read;
+
+		// use PhasedProvider's FBRef to gather current read list
+		$rootScope.$on('Phased:currentUserProfile', function() {
+			Phased.FBRef.child('team/' + Phased.team.name + '/read/' + Phased.user.uid).once('value', function(data){
+				var list = data.val();
+				// add to list if not there
+				// need to do this way in order to maintain reference
+				for (var i in list) {
+					if (_read.indexOf(i) < 0)
+						_read.push(list[i]);
+				}
+			});
+		});
 
 		/**
 		*
@@ -360,10 +373,14 @@ angular.module('webappApp')
 		this.markAllRead = function() {
 			// push key to read array
 			for (var i in mainStream) {
-				read.push(mainStream[i].key);
+				if (_read.indexOf(mainStream[i].key) < 0)
+					_read.push(mainStream[i].key);
 			}
 
 			// push to server
+			Phased.FBRef.child('team/' + Phased.team.name + '/read/' + Phased.user.uid)
+				.set(_read);
+				// .set(null);
 		}
 
 	}]);
