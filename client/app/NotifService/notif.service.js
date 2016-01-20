@@ -31,8 +31,8 @@ angular.module('webappApp')
 
 		// use PhasedProvider's FBRef to gather current read list
 		$rootScope.$on('Phased:currentUserProfile', function() {
-			Phased.FBRef.child('team/' + Phased.team.name + '/read/' + Phased.user.uid).once('value', function(data){
-				var list = data.val();
+			Phased.FBRef.child('read/' + Phased.team.name + '/' + Phased.user.uid).once('value', function(data){
+				var list = data.val() || [];
 				// add to list if not there
 				// need to do this way in order to maintain reference
 				for (var i in list) {
@@ -378,7 +378,7 @@ angular.module('webappApp')
 			}
 
 			// push to server
-			Phased.FBRef.child('team/' + Phased.team.name + '/read/' + Phased.user.uid)
+			Phased.FBRef.child('read/' + Phased.team.name + '/' + Phased.user.uid)
 				.set(_read);
 				// .set(null);
 		}
