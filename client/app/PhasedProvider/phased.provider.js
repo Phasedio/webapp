@@ -289,7 +289,7 @@ angular.module('webappApp')
       })
         .success(function(data) {
             if (data.success) {
-              console.log('IssueNotif success', data);
+              // console.log('IssueNotif success', data);
             } else {
               console.log('IssueNotif error', data);
             }
@@ -298,13 +298,6 @@ angular.module('webappApp')
           console.log('err', data.error());
         });
     }
-    // registerAfterMembers( function() {
-    //   issueNotification({
-    //     title : [{ userID : _Auth.user.uid}],
-    //     body : [{string: 'Testing my own ID'}],
-    //     type : PhasedProvider.notif.TYPE.HISTORY
-    //   });
-    // });
 
     /**
     *
@@ -361,7 +354,7 @@ angular.module('webappApp')
         case PhasedProvider.TASK_HISTORY_CHANGES.ARCHIVED :
           streamItem = {
             title : [{ string : 'Task archived' }],
-            body : [{ strign : data.taskSnapshot.name }],
+            body : [{ string : data.taskSnapshot.name }],
             cat : data.taskSnapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.ARCHIVED
           }
