@@ -110,6 +110,10 @@ exports.issueNotification = function(req, res) {
 			if (id != user) // except current user
 				FBRef.child('notif/' + team + '/' + id).push(cleanNotif);
 		}
+
+		res.send({
+			success : true
+		});
 	}, function failure(err){
 		res.send({
 			err : 'FB err: ' + err
