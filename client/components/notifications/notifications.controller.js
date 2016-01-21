@@ -2,7 +2,7 @@
 angular.module('webappApp')
   .controller('NotifCtrl', function ($scope, $location, Phased) {
 		$scope.notifications = Phased.notif;
-		$scope.showNotifs = true; // show notif pane while in dev
+		$scope.showNotifs = false;
 
 		// marks all notifications as read after a delay
 		// only if the notification panel is open
