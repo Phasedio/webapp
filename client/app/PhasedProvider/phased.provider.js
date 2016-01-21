@@ -175,6 +175,8 @@ angular.module('webappApp')
       PhasedProvider.editTaskAssignee = _editTaskAssignee;
       PhasedProvider.editTaskCategory = _editTaskCategory;
       PhasedProvider.editTaskPriority = _editTaskPriority;
+      PhasedProvider.markNotifAsRead = _markNotifAsRead;
+      PhasedProvider.markAllNotifsAsRead = _markAllNotifsAsRead;
 
       return PhasedProvider;
     }];
@@ -759,6 +761,7 @@ angular.module('webappApp')
           for (var id in notifications) {
             notifications[id].title = watchNotifications.stringify(notifications[id].title);
             notifications[id].body = watchNotifications.stringify(notifications[id].body);
+            notifications[id].key = id;
           }
           // update stream
           PhasedProvider.notif.stream = notifications;
@@ -2141,6 +2144,60 @@ angular.module('webappApp')
         if (args.callback)
           args.callback();
       });
+    }
+
+    /**
+    *
+    * marks a single notification as read
+    * without deleting it from the server
+    *
+    */
+    var _markNotifAsRead = function(key, index) {
+      var args = {
+        key : key,
+        index : index
+      }
+      registerAsync(doMarkNotifAsRead, args);
+    }
+
+    var doMarkNotifAsRead = function(args) {
+      var key = args.key;
+      var index = args.index;
+
+      // find index if not there
+      if (typeof index == 'undefined') {
+        for (var i in PhasedProvider.notif.stream) {
+          if (PhasedProvider.notif.stream[i].key == key) {
+            index = i;
+            break;
+          }
+        }
+      }
+
+      PhasedProvider.notif.stream[index].read = true;
+      FBRef.child('notif/' + PhasedProvider.team.name + '/' + _Auth.user.uid + '/' + key).update({
+        read : true
+      });
+
+    }
+
+    /**
+    *
+    * marks all notifications as read
+    * without deleting them from the server
+    *
+    */
+    var _markAllNotifsAsRead = function() {
+      registerAsync(doMarkAllNotifsAsRead);
+    }
+
+    var doMarkAllNotifsAsRead = function() {
+      for (var i in PhasedProvider.notif.stream) {
+        doMarkNotifAsRead({ 
+          key : PhasedProvider.notif.stream[i].key,
+          index : i
+        });
+      }
     }
 
     /**

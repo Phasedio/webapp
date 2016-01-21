@@ -1,28 +1,27 @@
 'use strict';
 angular.module('webappApp')
   .controller('NotifCtrl', function ($scope, $location, Phased) {
-		// $scope.notifStream = Notif.stream;
 		$scope.notifications = Phased.notif;
 		$scope.showNotifs = true; // show notif pane while in dev
 
 		// marks all notifications as read after a delay
 		// only if the notification panel is open
 		var markAllReadAfter = function(delay) {
-			// window.setTimeout(function() {
-			// 	if ($scope.showNotifs) {
-			// 		Notif.markAllRead();
-			// 	}
-			// }, delay);
+			window.setTimeout(function() {
+				if ($scope.showNotifs) {
+					Phased.markAllNotifsAsRead();
+				}
+			}, delay);
 		}
 
 		// toggle notification panel
 		// and mark all as read if open for over markReadDelay ms
 		$scope.togglePane = function() {
-			// var markReadDelay = 500; // ms
+			var markReadDelay = 500; // ms
 			$scope.showNotifs = !$scope.showNotifs;
-			// if ($scope.showNotifs) {
-			// 	markAllReadAfter(markReadDelay);
-			// }
+			if ($scope.showNotifs) {
+				markAllReadAfter(markReadDelay);
+			}
 		}
 
 		// tells whether there are any unread notifications at all
