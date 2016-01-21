@@ -282,7 +282,6 @@ angular.module('webappApp')
     *
     */
     var issueNotification = function(notification) {
-      // get user role from server
       $.post('./api/notification/issue', {
         user: _Auth.user.uid,
         team : _Auth.currentTeam,
@@ -292,7 +291,6 @@ angular.module('webappApp')
             if (data.success) {
               console.log('IssueNotif success', data);
             } else {
-              // set back to old role if update fails
               console.log('IssueNotif error', data);
             }
         })
@@ -750,29 +748,13 @@ angular.module('webappApp')
     * gathers notifications for current user
     * adds to PhasedProvider.notif.stream
     *
+    * tells server to clean up old, read notifs for the user
+    *
     */
     var watchNotifications = function() {
-      registerAfterMembers(function doWatchNotifications(){
-        FBRef.child('notif/' + PhasedProvider.team.name + '/' + PhasedProvider.user.uid)
-        .on('value', function(data) {
-          var notifications = data.val();
-
-          // format titles and bodies
-          for (var id in notifications) {
-            notifications[id].title = watchNotifications.stringify(notifications[id].title);
-            notifications[id].body = watchNotifications.stringify(notifications[id].body);
-            notifications[id].key = id;
-          }
-          // update stream
-          PhasedProvider.notif.stream = notifications;
-
-          // issue notification event
-          $rootScope.$broadcast('Phased:notification');
-        })
-      });
 
       // returns the interpreted string version of the title or body obj
-      watchNotifications.stringify = function(obj) {
+      var stringify = function(obj) {
         // if obj is already a string, spit it out
         if ((typeof obj).toLowerCase() == 'string')
           return obj;
@@ -791,6 +773,43 @@ angular.module('webappApp')
 
         return out;
       }
+
+      registerAfterMembers(function doWatchNotifications(){
+        // clean notifications once
+        $.post('./api/notification/clean', {
+          user: PhasedProvider.user.uid,
+          team : PhasedProvider.team.name
+        })
+          .success(function(data) {
+            if (data.success) {
+              // console.log('clean notifications success', data);
+            } else {
+              console.log('clean notifications error', data);
+            }
+          })
+          .error(function(data){
+            console.log('err', data.error());
+          });
+
+        // set up watcher
+        var notifAddress = 'notif/' + PhasedProvider.team.name + '/' + PhasedProvider.user.uid;
+        FBRef.child(notifAddress)
+          .on('value', function(data) {
+            var notifications = data.val();
+
+            // format titles and bodies
+            for (var id in notifications) {
+              notifications[id].title = stringify(notifications[id].title);
+              notifications[id].body = stringify(notifications[id].body);
+              notifications[id].key = id;
+            }
+            // update stream
+            PhasedProvider.notif.stream = notifications;
+
+            // issue notification event
+            $rootScope.$broadcast('Phased:notification');
+          });
+      });
     }
 
     // gathers team categories data and adds to PhasedProvider.team

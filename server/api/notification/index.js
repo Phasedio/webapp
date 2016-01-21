@@ -6,5 +6,6 @@ var controller = require('./notification.controller');
 
 router.get('/', controller.index);
 router.post('/issue', controller.issueNotification);
+router.post('/clean', controller.cleanNotifications);
 
 module.exports = router;

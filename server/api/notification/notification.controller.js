@@ -117,3 +117,66 @@ exports.issueNotification = function(req, res) {
 	})
 
 }
+
+/**
+*
+*	cleans a user's notifications
+*
+*	0. check user and team inputs
+* 1. get timestamp (currently one month ago)
+* 2. get all notifs before timestamp
+* 3. if notif is read, .remove() it
+*
+*/
+exports.cleanNotifications = function(req, res) {
+	var user = req.body.user,
+		team = req.body.team;
+
+	// 0. check inputs
+	// check team name
+	if (typeof team != 'string' || team.length <= 0) {
+		console.log('error - invalid team');
+		res.send({
+			err : 'invalid team name'
+		});
+		return;
+	}
+
+	// check own user ID
+	if (typeof user != 'string' || user.length <= 0) {
+		console.log('error - invalid user');
+		res.send({
+			err : 'invalid user id'
+		});
+		return;
+	}
+
+	// 1. get timestamp (currently one month ago)
+	var aDate = new Date();
+	var timestamp = aDate.setMonth(aDate.getMonth() - 1);
+
+	// 2. get notifications older than one month
+	var notifAddr = 'notif/' + team + '/' + user;
+	FBRef.child(notifAddr)
+		.orderByChild('time')
+		.endAt(timestamp)
+		.once('value', function(data){
+			// 3. remove read notifs
+			var notifs = data.val();
+			var i = 0;
+			for (var key in notifs) {
+				if (notifs[key].read) {
+					FBRef.child(notifAddr + '/' + key).remove();
+					i++;
+				}
+			}
+
+			// send a nice response
+			console.log('cleaned ' + i + ' read notifs since ' + aDate);
+			res.send({
+				success : true,
+				message : 'cleaned ' + i + ' read notifs since ' + aDate
+			});
+			return;
+		});
+}
