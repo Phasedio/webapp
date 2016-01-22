@@ -31,6 +31,7 @@ angular.module('webappApp')
       WATCH_HISTORY = false, // set in setWatchHistory in config; tells init whether to do it
       WATCH_ASSIGNMENTS = false, // set in setWatchAssignments in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
+      WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
       req_after_members = [], // filled with operations to complete after members are in
       getHistoryFor = '', // set to a member id if a member's history should be attached to their team.member reference (eg, profile page)
@@ -79,6 +80,11 @@ angular.module('webappApp')
             }
           },
           stream : {}
+        },
+        PRESENCE : {
+          ONLINE : 'online',
+          OFFLINE : 'offline',
+          AWAY : 'away'
         },
         TASK_PRIORITIES : {},
         TASK_PRIORITY_ID : {
@@ -144,6 +150,8 @@ angular.module('webappApp')
         watchAssignments();
       if (WATCH_NOTIFICATIONS)
         watchNotifications();
+      if (WATCH_PRESENCE)
+        watchPresence();
     }
 
     /**
@@ -209,6 +217,12 @@ angular.module('webappApp')
     this.setWatchNotifications = function(watch) {
       if (watch)
         WATCH_NOTIFICATIONS = true;
+    }
+
+    // sets WATCH_PRESENCE
+    this.setWatchPresence = function(watch) {
+      if (watch)
+        WATCH_PRESENCE = true;
     }
 
     /**
@@ -480,6 +494,30 @@ angular.module('webappApp')
       }
 
       issueNotification(streamItem);
+    }
+
+
+    /**
+    *
+    * Monitors current user's presence
+    *
+    * 1. sets their presence to PhasedProvider.PRESENCE.ONLINE now
+    *
+    * 2. sets their presence attr to PhasedProvider.PRESENCE.OFFLINE 
+    * and updates lastOnline on FB disconnect
+    *
+    */
+    var watchPresence = function() {
+      // 1. immediately
+      FBRef.child('profile/' + _Auth.user.uid).update({
+        presence : PhasedProvider.PRESENCE.ONLINE
+      })
+
+      // 2. on disconnect
+      FBRef.child('profile/' + _Auth.user.uid).onDisconnect().update({
+        lastOnline : Firebase.ServerValue.TIMESTAMP,
+        presence : PhasedProvider.PRESENCE.OFFLINE
+      });
     }
 
     /**
@@ -2254,6 +2292,7 @@ angular.module('webappApp')
     PhasedProvider.setWatchHistory(true);
     PhasedProvider.setWatchAssignments(true);
     PhasedProvider.setWatchNotifications(true);
+    PhasedProvider.setWatchPresence(true);
 
     // configure phasedProvider as a callback to AuthProvider
     AuthProvider.setDoAfterAuth(PhasedProvider.init);
