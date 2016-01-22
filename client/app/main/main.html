@@ -22,7 +22,7 @@
               <img src="{{member.pic}}">
               <div class="member-names">
                 <h4>{{member.name}}</h4>
-                <p ng-if="member.lastOnline"><small>Last seen <span am-time-ago="member.lastOnline"></span></small></p>
+                <p ng-if="member.presence == 'offline' && member.lastOnline"><small>Last seen <span am-time-ago="member.lastOnline"></span></small></p>
               </div>
             </div>
           </div>
