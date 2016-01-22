@@ -711,6 +711,15 @@ angular.module('webappApp')
                 $rootScope.$broadcast('Phased:currentUserProfile');
               }
             });
+
+            // monitor the user's presence and lastOnline
+            if (WATCH_PRESENCE) {
+              FBRef.child('profile/' + id).on('value', function(snap) {
+                var data = snap.val();
+                PhasedProvider.team.members[id].presence = data.presence;
+                PhasedProvider.team.members[id].lastOnline = data.lastOnline;
+              });
+            }
           })(id, users);
         }
 
