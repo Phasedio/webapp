@@ -611,8 +611,8 @@ angular.module('webappApp')
     var setUpTeamMembers = function() {
 
       var taskAddress = 'team/' + PhasedProvider.team.name + '/task';
-      // stash address to remove FB event handlers when switching teams
-      setUpTeamMembers.address = taskAddress;
+      // stash addresses to remove FB event handlers when switching teams
+      setUpTeamMembers.watches = [{address : taskAddress, event : 'value' }];
 
       // get members
       FBRef.child(taskAddress).on('value', function(users) {
@@ -714,9 +714,12 @@ angular.module('webappApp')
 
             // monitor the user's presence and lastOnline
             if (WATCH_PRESENCE) {
-              FBRef.child('profile/' + id + '/presence/' + PhasedProvider.team.name).on('value', function(snap) {
+              var address = 'profile/' + id + '/presence/' + PhasedProvider.team.name;
+              setUpTeamMembers.watches.push({address : address, event : 'value' }); // stash to unwatch later
+
+              FBRef.child(address).on('value', function(snap) {
                 var data = snap.val();
-                if (data) {
+                if (data && PhasedProvider.team.members[id]) {
                   PhasedProvider.team.members[id].presence = data.status;
                   PhasedProvider.team.members[id].lastOnline = data.lastOnline;
                 }
@@ -2186,22 +2189,40 @@ angular.module('webappApp')
 
     var doSwitchTeam = function(args) {
       // reset team
+      var oldTeam = PhasedProvider.team.name + '';
       PhasedProvider.team.name = args.teamName;
+      _Auth.currentTeam = args.teamName;
       PhasedProvider.team.members = {};
       PhasedProvider.team.lastUpdated = [];
       PhasedProvider.team.history = [];
       PhasedProvider.team.teamLength = 0;
 
       // remove old event handlers
-      FBRef.child(setUpTeamMembers.address).off('value'); 
+      for (var i in setUpTeamMembers.watches) {
+        var address = setUpTeamMembers.watches[i].address,
+          event = setUpTeamMembers.watches[i].event;
+        FBRef.child(address).off(event);
+      }
+      setUpTeamMembers.watches = []; // clear
 
       // reload team data
       setUpTeamMembers();
       if (WATCH_ASSIGNMENTS)
         watchAssignments();
 
-      // update profile curTeam attr
-      FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamName, function() {
+      // update profile curTeam and presence
+      var updateData = {
+        curTeam : args.teamName,
+        presence : {}
+      };
+      updateData.presence[oldTeam] = { // offline for the old team
+          lastOnline : Firebase.ServerValue.TIMESTAMP,
+          status : PhasedProvider.PRESENCE.OFFLINE
+        };
+      updateData.presence[args.teamName] = { // online for the new team
+        status : PhasedProvider.PRESENCE.ONLINE
+      }
+      FBRef.child('profile/' + _Auth.user.uid).update(updateData, function() {
         if (args.callback)
           args.callback();
       });
