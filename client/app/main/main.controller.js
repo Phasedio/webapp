@@ -146,7 +146,6 @@ angular.module('webappApp')
           var c = snap.numChildren()
           if(c){
             snap = snap.val();
-            console.log(snap);
             var keys = Object.keys(snap);
             //if there is more then one snap
             for (var i = 0; i < keys.length; i++) {
@@ -165,8 +164,6 @@ angular.module('webappApp')
       });
       $scope.labelsPie = cLabels;
       $scope.dataPie = cValues;
-      console.log(cValues);
-
     }
 
 

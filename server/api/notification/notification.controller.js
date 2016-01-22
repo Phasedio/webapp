@@ -176,7 +176,6 @@ exports.cleanNotifications = function(req, res) {
 			}
 
 			// send a nice response
-			console.log('cleaned ' + i + ' read notifs since ' + aDate);
 			res.send({
 				success : true,
 				message : 'cleaned ' + i + ' read notifs since ' + aDate
