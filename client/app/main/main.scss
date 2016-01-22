@@ -56,6 +56,32 @@
     color: $boldText;
     text-align: center;
   }
+
+  // presence dots
+  &.presence-online {
+    &:after {
+      display: block;
+      position: relative;
+      content: " ";
+      background: lightgreen;
+      width: 1rem;
+      height: 1rem;
+      float: right;
+      border-radius: 0.5rem;
+    }
+  }
+  &.presence-away {
+    &:after {
+      display: block;
+      position: relative;
+      content: " ";
+      background: orange;
+      width: 1rem;
+      height: 1rem;
+      float: right;
+      border-radius: 0.5rem;
+    }
+  }
 }
 
 .addmember{
