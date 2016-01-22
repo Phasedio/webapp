@@ -509,14 +509,14 @@ angular.module('webappApp')
     */
     var watchPresence = function() {
       // 1. immediately
-      FBRef.child('profile/' + _Auth.user.uid).update({
-        presence : PhasedProvider.PRESENCE.ONLINE
-      })
+      FBRef.child('profile/' + _Auth.user.uid + '/presence/' + _Auth.currentTeam).update({
+        status : PhasedProvider.PRESENCE.ONLINE
+      });
 
       // 2. on disconnect
-      FBRef.child('profile/' + _Auth.user.uid).onDisconnect().update({
+      FBRef.child('profile/' + _Auth.user.uid + '/presence/' + _Auth.currentTeam).onDisconnect().update({
         lastOnline : Firebase.ServerValue.TIMESTAMP,
-        presence : PhasedProvider.PRESENCE.OFFLINE
+        status : PhasedProvider.PRESENCE.OFFLINE
       });
     }
 
@@ -714,10 +714,12 @@ angular.module('webappApp')
 
             // monitor the user's presence and lastOnline
             if (WATCH_PRESENCE) {
-              FBRef.child('profile/' + id).on('value', function(snap) {
+              FBRef.child('profile/' + id + '/presence/' + PhasedProvider.team.name).on('value', function(snap) {
                 var data = snap.val();
-                PhasedProvider.team.members[id].presence = data.presence;
-                PhasedProvider.team.members[id].lastOnline = data.lastOnline;
+                if (data) {
+                  PhasedProvider.team.members[id].presence = data.status;
+                  PhasedProvider.team.members[id].lastOnline = data.lastOnline;
+                }
               });
             }
           })(id, users);
