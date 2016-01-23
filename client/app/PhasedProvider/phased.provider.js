@@ -27,9 +27,13 @@ angular.module('webappApp')
     * Internal vars
     */
     var PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
+      PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       WATCH_HISTORY = false, // set in setWatchHistory in config; tells init whether to do it
       WATCH_ASSIGNMENTS = false, // set in setWatchAssignments in config; tells init whether to do it
+      WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
+      WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
+      req_after_members = [], // filled with operations to complete after members are in
       getHistoryFor = '', // set to a member id if a member's history should be attached to their team.member reference (eg, profile page)
       assignmentIDs = {
         to_me : [],
@@ -62,6 +66,26 @@ angular.module('webappApp')
         },
         viewType : 'notPaid',
         billing : {},
+        notif : {
+          TYPE : {
+            HISTORY : 'history',
+            ASSIGNMENT : {
+              CREATED : 'assignment_created',
+              ARCHIVED : 'assignment_archived',
+              UNARCHIVED : 'assignment_unarchived',
+              UPDATED : 'assignment_updated', // generic case
+              ASSIGNED : 'assignment_assigned',
+              ASSIGNED_TO_ME : 'assignment_assigned_to_me',
+              STATUS : 'assignment_status'
+            }
+          },
+          stream : {}
+        },
+        PRESENCE : {
+          ONLINE : 'online',
+          OFFLINE : 'offline',
+          AWAY : 'away'
+        },
         TASK_PRIORITIES : {},
         TASK_PRIORITY_ID : {
           HIGH : 0,
@@ -124,6 +148,10 @@ angular.module('webappApp')
       getTaskStatuses();
       if (WATCH_ASSIGNMENTS)
         watchAssignments();
+      if (WATCH_NOTIFICATIONS)
+        watchNotifications();
+      if (WATCH_PRESENCE)
+        watchPresence();
     }
 
     /**
@@ -155,6 +183,8 @@ angular.module('webappApp')
       PhasedProvider.editTaskAssignee = _editTaskAssignee;
       PhasedProvider.editTaskCategory = _editTaskCategory;
       PhasedProvider.editTaskPriority = _editTaskPriority;
+      PhasedProvider.markNotifAsRead = _markNotifAsRead;
+      PhasedProvider.markAllNotifsAsRead = _markAllNotifsAsRead;
 
       return PhasedProvider;
     }];
@@ -179,6 +209,20 @@ angular.module('webappApp')
     this.setWatchAssignments = function(watch) {
       if (watch)
         WATCH_ASSIGNMENTS = true;
+    }
+
+    // sets WATCH_NOTIFICATIONS flag so provider knows
+    // to set up observers in init.
+    // must be called in .config block.
+    this.setWatchNotifications = function(watch) {
+      if (watch)
+        WATCH_NOTIFICATIONS = true;
+    }
+
+    // sets WATCH_PRESENCE
+    this.setWatchPresence = function(watch) {
+      if (watch)
+        WATCH_PRESENCE = true;
     }
 
     /**
@@ -209,6 +253,272 @@ angular.module('webappApp')
     }
 
 
+    /**
+    *
+    * registerAfterMembers
+    *
+    * (same pattern as above)
+    *
+    * if Phased is already set to go, do the thing
+    * otherwise, add it to the list of things to do
+    *
+    */
+    var registerAfterMembers = function(callback, args) {
+      if (PHASED_SET_UP)
+        callback(args);
+      else
+        req_after_members.push({callback : callback, args : args });
+    }
+
+    /**
+    *
+    * doAfterMembers
+    * executes all registered callbacks
+    *
+    */
+    var doAfterMembers = function() {
+      for (var i in req_after_members) {
+        req_after_members[i].callback(req_after_members[i].args || undefined);
+      }
+      PHASED_MEMBERS_SET_UP = true;
+    }
+
+
+    /**
+    *
+    * issues a notification to every member on the team
+    * (server does heavy lifting)
+    *
+    * title and body are arrays of objects which are either
+    * { string : 'a simple string' }
+    * or { userID : 'aUserID' } 
+    * which will be interpreted when loaded by client (see watchNotifications)
+    *
+    */
+    var issueNotification = function(notification) {
+      $.post('./api/notification/issue', {
+        user: _Auth.user.uid,
+        team : _Auth.currentTeam,
+        notification : JSON.stringify(notification)
+      })
+        .success(function(data) {
+            if (data.success) {
+              // console.log('IssueNotif success', data);
+            } else {
+              console.log('IssueNotif error', data);
+            }
+        })
+        .error(function(data){
+          console.log('err', data.error());
+        });
+    }
+
+    /**
+    *
+    * Formats and issues a notification for a task history update
+    *
+    * @arg data is just the object in the task's history stream
+    *
+    */
+    var issueTaskHistoryNotification = function(data) {
+      var streamItem = {};
+      switch (data.type) {
+        /**
+        *   TASK CREATED
+        */
+        case PhasedProvider.TASK_HISTORY_CHANGES.CREATED :
+          streamItem = {
+            body : [{string : data.taskSnapshot.name}],
+            cat : data.taskSnapshot.cat,
+            type : PhasedProvider.notif.TYPE.ASSIGNMENT.CREATED
+          };
+
+          // make title :
+          // 1 assigned to someone else
+          // 2 self-assigned
+          // 3 unassigned
+
+          if (data.taskSnapshot.assigned_by != data.taskSnapshot.assignee && 
+            (data.taskSnapshot.assignee && !data.taskSnapshot.unassigned)) { // 1
+              streamItem.title = [
+                { string : 'New task assigned to ' },
+                { userID : data.taskSnapshot.assignee },
+                { string : ' by ' },
+                { userID : data.taskSnapshot.assigned_by }
+              ];
+          } else if (data.taskSnapshot.assigned_by == data.taskSnapshot.assignee) { // 2
+            streamItem.title = [
+              { userID : data.taskSnapshot.assigned_by },
+              { string : ' self-assigned a new task' }
+            ];
+          } else if (data.taskSnapshot.unassigned) { // 3.
+            streamItem.title = [
+              { userID : data.taskSnapshot.assigned_by},
+              { string : ' created a new unassigned task'}
+            ]
+          } else {
+            console.warn('Issuing task history notification failed -- bad title');
+            return;
+          }
+          break;
+        /**
+        *   TASK ARCHIVED
+        *   nb: an archived task snapshot could appear in an active task's history
+        */
+        case PhasedProvider.TASK_HISTORY_CHANGES.ARCHIVED :
+          streamItem = {
+            title : [{ string : 'Task archived' }],
+            body : [{ string : data.taskSnapshot.name }],
+            cat : data.taskSnapshot.cat,
+            type : PhasedProvider.notif.TYPE.ASSIGNMENT.ARCHIVED
+          }
+          break;
+        /**
+        *   TASK UNARCHIVED
+        */
+        case PhasedProvider.TASK_HISTORY_CHANGES.UNARCHIVED :
+          streamItem = {
+            title : [{ string : 'Task unarchived' }],
+            body : [{ string : data.taskSnapshot.name }],
+            cat : data.taskSnapshot.cat,
+            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UNARCHIVED
+          }
+          break;
+        /**
+        *   TASK NAME CHANGED
+        */
+        case PhasedProvider.TASK_HISTORY_CHANGES.NAME :
+          streamItem = {
+            title : [{ string : 'Task name changed' }],
+            body : [{ string : 'to "' + data.taskSnapshot.name + '"' }],
+            cat : data.taskSnapshot.cat,
+            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+          }
+          break;
+        /**
+        *   TASK DESC CHANGED
+        */
+        case PhasedProvider.TASK_HISTORY_CHANGES.DESCRIPTION :
+          streamItem = {
+            title : [{ string : 'Task description changed' }],
+            body : [{ string : data.taskSnapshot.name }],
+            cat : data.taskSnapshot.cat,
+            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+          }
+          break;
+
+        /**
+        *   TASK ASSIGNEE CHANGED
+        */
+        case PhasedProvider.TASK_HISTORY_CHANGES.ASSIGNEE :
+          streamItem = {
+            title : [
+              { string : 'Task assigned to '},
+              { userID : data.taskSnapshot.assignee }
+            ],
+            body : [{ string : data.taskSnapshot.name }],
+            cat : data.taskSnapshot.cat,
+            type : PhasedProvider.notif.TYPE.ASSIGNMENT.ASSIGNED
+          }
+          break;
+        /**
+        *   TASK DEADLINE CHANGED
+        */
+        case PhasedProvider.TASK_HISTORY_CHANGES.DEADLINE :
+          streamItem = {
+            title : [{ string : 'Task deadline changed' }],
+            body : [{ string : data.taskSnapshot.name }],
+            cat : data.taskSnapshot.cat,
+            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+          }
+          break;
+        /**
+        *   TASK PRIORITY CHANGEd
+        */
+        case PhasedProvider.TASK_HISTORY_CHANGES.CATEGORY :
+          streamItem = {
+            title : [{ string : 'Task category changed' }],
+            body : [{ string : data.taskSnapshot.name }],
+            cat : data.taskSnapshot.cat,
+            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+          }
+          break;
+
+        /**
+        *   TASK PRIORITY CHANGED
+        */
+        case PhasedProvider.TASK_HISTORY_CHANGES.PRIORITY :
+          streamItem = {
+            title : [{ string : 'Task priority changed' }],
+            body : [{ string : data.taskSnapshot.name }],
+            cat : data.taskSnapshot.cat,
+            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+          }
+          break;
+
+        /**
+        *   TASK STATUS CHANGED
+        */
+        case PhasedProvider.TASK_HISTORY_CHANGES.STATUS :
+          streamItem = {
+            title : [{ string : 'Task status changed' }],
+            body : [{ string : data.taskSnapshot.name }],
+            cat : data.taskSnapshot.cat,
+            type : PhasedProvider.notif.TYPE.ASSIGNMENT.STATUS
+          }
+          switch (data.taskSnapshot.status) {
+            case PhasedProvider.TASK_STATUS_ID.IN_PROGRESS :
+              streamItem.title = [{ string : 'Task in progress' }];
+              break;
+            case PhasedProvider.TASK_STATUS_ID.COMPLETE :
+              streamItem.title = [{ string : 'Task completed' }];
+              break;
+            case PhasedProvider.TASK_STATUS_ID.ASSIGNED :
+              streamItem.title = [{ string : 'Task assigned' }];
+              break;
+            default:
+              break;
+          }
+          break;
+        /**
+        *   TASK UPDATED (generic)
+        */
+        default :
+          streamItem = {
+            title : [{ string : 'Task updated' }],
+            body : [{ string : data.taskSnapshot.name }],
+            cat : data.taskSnapshot.cat,
+            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+          }
+          break;
+      }
+
+      issueNotification(streamItem);
+    }
+
+
+    /**
+    *
+    * Monitors current user's presence
+    *
+    * 1. sets their presence to PhasedProvider.PRESENCE.ONLINE now
+    *
+    * 2. sets their presence attr to PhasedProvider.PRESENCE.OFFLINE 
+    * and updates lastOnline on FB disconnect
+    *
+    */
+    var watchPresence = function() {
+      // 1. immediately
+      FBRef.child('profile/' + _Auth.user.uid + '/presence/' + _Auth.currentTeam).update({
+        status : PhasedProvider.PRESENCE.ONLINE
+      });
+
+      // 2. on disconnect
+      FBRef.child('profile/' + _Auth.user.uid + '/presence/' + _Auth.currentTeam).onDisconnect().update({
+        lastOnline : Firebase.ServerValue.TIMESTAMP,
+        status : PhasedProvider.PRESENCE.OFFLINE
+      });
+    }
 
     /**
     **
@@ -301,8 +611,8 @@ angular.module('webappApp')
     var setUpTeamMembers = function() {
 
       var taskAddress = 'team/' + PhasedProvider.team.name + '/task';
-      // stash address to remove FB event handlers when switching teams
-      setUpTeamMembers.address = taskAddress;
+      // stash addresses to remove FB event handlers when switching teams
+      setUpTeamMembers.watches = [{address : taskAddress, event : 'value' }];
 
       // get members
       FBRef.child(taskAddress).on('value', function(users) {
@@ -390,8 +700,10 @@ angular.module('webappApp')
               // rm this user from membersToGet
               membersToGet.splice(membersToGet.indexOf(id), 1);
               // if this is the last user in that list, emit Phased:membersComplete
-              if (membersToGet.length == 0)
+              if (membersToGet.length == 0) {
                 $rootScope.$broadcast('Phased:membersComplete');
+                doAfterMembers();
+              }
 
               // tell scope current user profile is in
               if (id == _Auth.user.uid) {
@@ -399,6 +711,20 @@ angular.module('webappApp')
                 $rootScope.$broadcast('Phased:currentUserProfile');
               }
             });
+
+            // monitor the user's presence and lastOnline
+            if (WATCH_PRESENCE) {
+              var address = 'profile/' + id + '/presence/' + PhasedProvider.team.name;
+              setUpTeamMembers.watches.push({address : address, event : 'value' }); // stash to unwatch later
+
+              FBRef.child(address).on('value', function(snap) {
+                var data = snap.val();
+                if (data && PhasedProvider.team.members[id]) {
+                  PhasedProvider.team.members[id].presence = data.status;
+                  PhasedProvider.team.members[id].lastOnline = data.lastOnline;
+                }
+              });
+            }
           })(id, users);
         }
 
@@ -441,6 +767,10 @@ angular.module('webappApp')
                 addToHistory = false;
               }
             }
+
+            // add key property
+            data[keys[i]].key = keys[i];
+
             if (addToHistory) 
               PhasedProvider.team.history.push(data[keys[i]]);
 
@@ -455,6 +785,75 @@ angular.module('webappApp')
         // if this is the last user in that list, emit Phased:historyComplete
         if (setUpTeamMembers.membersToGetHistFor.length == 0)
           $rootScope.$broadcast('Phased:historyComplete');
+      });
+    }
+
+    /**
+    *
+    * gathers notifications for current user
+    * adds to PhasedProvider.notif.stream
+    *
+    * tells server to clean up old, read notifs for the user
+    *
+    */
+    var watchNotifications = function() {
+
+      // returns the interpreted string version of the title or body obj
+      var stringify = function(obj) {
+        // if obj is already a string, spit it out
+        if ((typeof obj).toLowerCase() == 'string')
+          return obj;
+
+        var out = '';
+        for (var j in obj) {
+          if (obj[j].string) {
+            out += obj[j].string;
+          } else if (obj[j].userID) {
+            if (obj[j].userID == PhasedProvider.user.uid) // use "you" for current user
+              out += 'you';
+            else
+              out += PhasedProvider.team.members[obj[j].userID].name;
+          }
+        }
+
+        return out;
+      }
+
+      registerAfterMembers(function doWatchNotifications(){
+        // clean notifications once
+        $.post('./api/notification/clean', {
+          user: PhasedProvider.user.uid,
+          team : PhasedProvider.team.name
+        })
+          .success(function(data) {
+            if (data.success) {
+              // console.log('clean notifications success', data);
+            } else {
+              console.log('clean notifications error', data);
+            }
+          })
+          .error(function(data){
+            console.log('err', data.error());
+          });
+
+        // set up watcher
+        var notifAddress = 'notif/' + PhasedProvider.team.name + '/' + PhasedProvider.user.uid;
+        FBRef.child(notifAddress)
+          .on('value', function(data) {
+            var notifications = data.val();
+
+            // format titles and bodies
+            for (var id in notifications) {
+              notifications[id].title = stringify(notifications[id].title);
+              notifications[id].body = stringify(notifications[id].body);
+              notifications[id].key = id;
+            }
+            // update stream
+            PhasedProvider.notif.stream = notifications;
+
+            // issue notification event
+            $rootScope.$broadcast('Phased:notification');
+          });
       });
     }
 
@@ -579,6 +978,11 @@ angular.module('webappApp')
         for (var i in assignmentIDs) {
           syncAssignments(i);
         }
+
+        // once member data is in, broadcast that the assignment data is in
+        registerAfterMembers(function(){
+          $rootScope.$broadcast("Phased:assignments:data");
+        });
       } // updateAllAssignments()
 
 
@@ -633,16 +1037,26 @@ angular.module('webappApp')
       FBRef.child(refString + '/to/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'to_me');
+
+        registerAfterMembers(function (){ // only do after members are in
+          $rootScope.$broadcast("Phased:assignments:to_me");
+        });
       });
 
       FBRef.child(refString + '/by/' + PhasedProvider.user.uid).on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'by_me');
+        registerAfterMembers(function(){
+          $rootScope.$broadcast("Phased:assignments:by_me");
+        });
       });
 
       FBRef.child(refString + '/unassigned').on('value', function(data) {
         data = data.val();
         updateAssignmentGroup(data, 'unassigned');
+        registerAfterMembers(function(){
+          $rootScope.$broadcast("Phased:assignments:unassigned");
+        });
       });
     }; // end doWatchAssignments()
 
@@ -732,6 +1146,8 @@ angular.module('webappApp')
     *  taskSnapshot : [copy of the task at this time, minus the history object]
     * }
     *
+    * also issues a notification to the team
+    *
     */
 
     var updateTaskHist = function(taskID, type) {
@@ -741,6 +1157,7 @@ angular.module('webappApp')
       }
       var location = ''; // set to appropriate of 'all' or 'archive/all'
 
+      // set location and snapshot
       if (taskID in PhasedProvider.assignments.all) { // assignment is currently not archived
         data.taskSnapshot = angular.copy( PhasedProvider.assignments.all[taskID] );
         location = 'all';
@@ -754,7 +1171,11 @@ angular.module('webappApp')
 
       delete data.taskSnapshot.history;
 
+      // update history in DB
       FBRef.child('team/' + _Auth.currentTeam + '/assignments/' + location + '/' + taskID + '/history').push(data);
+
+      // format and issue notification
+      issueTaskHistoryNotification(data);   
     }
 
     // makes a clean copy of the newTask for the db with the expected properties,
@@ -896,6 +1317,10 @@ angular.module('webappApp')
             syncArchive('to_me');
             syncArchive('by_me');
             syncArchive('unassigned');
+            // once member data is in, broadcast that the assignment data is in
+            registerAfterMembers(function(){
+              $rootScope.$broadcast("Phased:assignments:archive:data");
+            });
           });
           return;
         case 'to_me' :
@@ -915,6 +1340,11 @@ angular.module('webappApp')
       // get archive/all
       FBRef.child(archivePath + 'all').once('value', function(data){
         PhasedProvider.archive.all = data.val() || [];
+
+        // once member data is in, broadcast that the assignment data is in
+        registerAfterMembers(function(){
+          $rootScope.$broadcast("Phased:assignments:archive:data");
+        });
 
         // if other call is complete
         if (archiveIDs[address])
@@ -1239,7 +1669,17 @@ angular.module('webappApp')
       // publish to stream
       var ref = FBRef.child('team/' + PhasedProvider.team.name);
       ref.child('task/' + PhasedProvider.user.uid).set(newTask);
-      var newTaskRef = ref.child('all/' + PhasedProvider.user.uid).push(newTask);
+      var newTaskRef = ref.child('all/' + PhasedProvider.user.uid).push(newTask, function(err){
+        // after DB is updated, issue a notification to all users
+        if (!err) {
+          issueNotification({
+            title : [{ userID : _Auth.user.uid }],
+            body : [{ string : newTask.name }],
+            cat : newTask.cat,
+            type : PhasedProvider.notif.TYPE.HISTORY
+          });
+        }
+      });
       updateTaskHist(newTaskRef.key(), PhasedProvider.TASK_HISTORY_CHANGES.CREATED);
     }
 
@@ -1749,25 +2189,97 @@ angular.module('webappApp')
 
     var doSwitchTeam = function(args) {
       // reset team
+      var oldTeam = PhasedProvider.team.name + '';
       PhasedProvider.team.name = args.teamName;
+      _Auth.currentTeam = args.teamName;
       PhasedProvider.team.members = {};
       PhasedProvider.team.lastUpdated = [];
       PhasedProvider.team.history = [];
       PhasedProvider.team.teamLength = 0;
 
       // remove old event handlers
-      FBRef.child(setUpTeamMembers.address).off('value'); 
+      for (var i in setUpTeamMembers.watches) {
+        var address = setUpTeamMembers.watches[i].address,
+          event = setUpTeamMembers.watches[i].event;
+        FBRef.child(address).off(event);
+      }
+      setUpTeamMembers.watches = []; // clear
 
       // reload team data
       setUpTeamMembers();
       if (WATCH_ASSIGNMENTS)
         watchAssignments();
 
-      // update profile curTeam attr
-      FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamName, function() {
+      // update profile curTeam and presence
+      var updateData = {
+        curTeam : args.teamName,
+        presence : {}
+      };
+      updateData.presence[oldTeam] = { // offline for the old team
+          lastOnline : Firebase.ServerValue.TIMESTAMP,
+          status : PhasedProvider.PRESENCE.OFFLINE
+        };
+      updateData.presence[args.teamName] = { // online for the new team
+        status : PhasedProvider.PRESENCE.ONLINE
+      }
+      FBRef.child('profile/' + _Auth.user.uid).update(updateData, function() {
         if (args.callback)
           args.callback();
       });
+    }
+
+    /**
+    *
+    * marks a single notification as read
+    * without deleting it from the server
+    *
+    */
+    var _markNotifAsRead = function(key, index) {
+      var args = {
+        key : key,
+        index : index
+      }
+      registerAsync(doMarkNotifAsRead, args);
+    }
+
+    var doMarkNotifAsRead = function(args) {
+      var key = args.key;
+      var index = args.index;
+
+      // find index if not there
+      if (typeof index == 'undefined') {
+        for (var i in PhasedProvider.notif.stream) {
+          if (PhasedProvider.notif.stream[i].key == key) {
+            index = i;
+            break;
+          }
+        }
+      }
+
+      PhasedProvider.notif.stream[index].read = true;
+      FBRef.child('notif/' + PhasedProvider.team.name + '/' + _Auth.user.uid + '/' + key).update({
+        read : true
+      });
+
+    }
+
+    /**
+    *
+    * marks all notifications as read
+    * without deleting them from the server
+    *
+    */
+    var _markAllNotifsAsRead = function() {
+      registerAsync(doMarkAllNotifsAsRead);
+    }
+
+    var doMarkAllNotifsAsRead = function() {
+      for (var i in PhasedProvider.notif.stream) {
+        doMarkNotifAsRead({ 
+          key : PhasedProvider.notif.stream[i].key,
+          index : i
+        });
+      }
     }
 
     /**
@@ -1811,6 +2323,8 @@ angular.module('webappApp')
     PhasedProvider.setFBRef(FURL);
     PhasedProvider.setWatchHistory(true);
     PhasedProvider.setWatchAssignments(true);
+    PhasedProvider.setWatchNotifications(true);
+    PhasedProvider.setWatchPresence(true);
 
     // configure phasedProvider as a callback to AuthProvider
     AuthProvider.setDoAfterAuth(PhasedProvider.init);

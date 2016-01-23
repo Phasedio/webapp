@@ -6,6 +6,7 @@ angular.module('webappApp')
     $scope.showMember = false;
     $scope.team = Phased.team;
     $scope.viewType = Phased.viewType;
+    $scope.Phased = Phased;
     var FBRef = new Firebase(FURL);
 
     //stats vars
@@ -85,7 +86,6 @@ angular.module('webappApp')
       var midnight = new Date(today[2],today[1],today[0]).getTime();
       FBRef.child('team').child(Auth.currentTeam).child('assignments').child('all').orderByChild("completeTime").startAt(midnight).once('value',function(snap){
         $scope.stats.todaysTasks = $scope.stats.todaysTasks + snap.numChildren();
-
       });
 
     }
@@ -146,7 +146,6 @@ angular.module('webappApp')
           var c = snap.numChildren()
           if(c){
             snap = snap.val();
-            console.log(snap);
             var keys = Object.keys(snap);
             //if there is more then one snap
             for (var i = 0; i < keys.length; i++) {
@@ -165,8 +164,6 @@ angular.module('webappApp')
       });
       $scope.labelsPie = cLabels;
       $scope.dataPie = cValues;
-      console.log(cValues);
-
     }
 
 

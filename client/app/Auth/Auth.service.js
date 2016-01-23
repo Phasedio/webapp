@@ -29,8 +29,7 @@ angular.module('webappApp')
         var team = '';
 
         var Auth = {
-
-            user:{},
+            user: {},
             fb : auth,
             newTeam : false,
             createProfile: function(uid, user) {
@@ -42,11 +41,7 @@ angular.module('webappApp')
 
                 return new Firebase(FURL).child('profile').child(uid).set(profile);
             },
-
             login: function(user) {
-                //team = user.team;
-                // Send Errors
-                //console.log(team);
                 return auth.$authWithPassword(
                     {email: user.email, password: user.password}
                 );
@@ -55,11 +50,9 @@ angular.module('webappApp')
                 //team = user.team;
                 user.email = user.email.toLowerCase();
                 return auth.$createUser({email: user.email, password: user.password}).then(function() {
-
                     return Auth.login(user);
                 })
                     .then(function(data) {
-
                         return Auth.createProfile(data.uid, user);
                     });
             },
@@ -70,18 +63,13 @@ angular.module('webappApp')
                 return auth.$changePassword({email: user.email, oldPassword: user.oldPass, newPassword: user.newPass});
             },
             changeEmail : function(user, uid) {
-              console.log('will change email', user, uid);
+              // console.log('will change email', user, uid);
               var profile = ref.child("profile").child(uid).child('email').set(user.email);
 
             },
             changeName: function(user, uid){
-              console.log('will change name', user.name);
-              //console.log(a)
+              // console.log('will change name', user.name);
               var profile = ref.child("profile").child(uid).child('name').set(user.name);
-              //return (profile,uid);
-              //profile.set(update.name);
-
-
             },
             changeTel: function(user, uid){
               console.log('will change tel', user.tel);
@@ -97,7 +85,6 @@ angular.module('webappApp')
 
               return true;
             },
-
             signedIn: function() {
                 return !!Auth.user.provider;
             },
@@ -112,11 +99,8 @@ angular.module('webappApp')
               // }
 
             },
-
             team : 'd',
             currentTeam : ''
-
-
         };
 
 
@@ -126,44 +110,41 @@ angular.module('webappApp')
         }
 
         function makeTeam(name,id){
-          if(Auth.newTeam){
-            console.log('MAKING A NEW TEAM');
-            console.log(name + id);
-            var teamRef = ref.child('team');
-            var k = {};
-            k[id]=true;
-            teamRef.child(name).once('value', function(snapshot){
-              //if exists
-              if(snapshot.val() == null){
-                console.log('Team valid');
-                teamRef.child(name).child('members').child(id).set(true);
-                ref.child('profile').child(id).child('teams').push(name);
-                ref.child('profile').child(id).child('curTeam').set(name);
+            if (Auth.newTeam) {
+                console.log('MAKING A NEW TEAM');
+                console.log(name + id);
+                var teamRef = ref.child('team');
+                var k = {};
+                k[id]=true;
+                teamRef.child(name).once('value', function(snapshot){
+                  //if exists
+                  if(snapshot.val() == null) {
+                    console.log('Team valid');
+                    teamRef.child(name).child('members').child(id).set(true);
+                    ref.child('profile').child(id).child('teams').push(name);
+                    ref.child('profile').child(id).child('curTeam').set(name);
 
-                $location.path('/');
-              }else{
-                return false;
-              }
-
-            });
-
-
-          }
-      };
-
-      //if user is loged in get team
-      if(Auth.user.uid){
-        ref.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
-            data = data.val();
-            Auth.currentTeam = data;
-
-            // executes all registered callbacks after auth is complete
-            // this is very important for making other providers that rely on Auth (currently, only Phased) to run
-            for (var i in doAfterAuth) {
-                doAfterAuth[i](Auth);
+                    $location.path('/');
+                  } else {
+                    return false;
+                  }
+                });
             }
-        });
-      }
+        };
+
+        //if user is loged in get team
+        if (Auth.user.uid) {
+            ref.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
+                data = data.val();
+                Auth.currentTeam = data;
+
+                // executes all registered callbacks after auth is complete
+                // this is very important for making other providers that rely on Auth (currently, only Phased) to run
+                for (var i in doAfterAuth) {
+                    doAfterAuth[i](Auth);
+                }
+            });
+          }
 
         auth.$onAuth(function(authData) {
             if (authData) {
@@ -173,7 +154,6 @@ angular.module('webappApp')
                 $.post('./api/auth/role/get', {user: Auth.user.uid})
                     .success(function(data) {
                         if (data.success) {
-                            console.log('success, role: ' + data.role);
                             Auth.user.role = data.role;
                         } else {
                             console.log('Auth error', data);
@@ -182,63 +162,7 @@ angular.module('webappApp')
                     .error(function(data){
                       console.log(data);
                     });
-              }
-            //     Auth.user.profile = $firebase(ref.child('profile').child(authData.uid)).$asObject();
-            //     console.log(Auth.user.profile);
-            //     //Check if UID is not on t
-            //     // IF user is just opening a new tab then have the system pull the last team
-            //     if (team == '') {
-            //         console.log('cant find team!!');
-            //         var userref = new Firebase(FURL + 'profile/' + Auth.user.profile.$id);
-            //         userref.once("value", function(data) {
-            //             var z = data.val();
-            //             Auth.team = z.curTeam;
-            //             team = Auth.team;
-            //             console.log(team);
-            //         });
-
-            //     }else if (team != '') {
-            //         new Firebase(FURL + 'team').once('value', function(snap) {
-            //         var teamRef = snap.val();
-            //         if (teamRef[team]) {
-            //             //Team exists does the user?
-            //             if (teamRef[team].members[Auth.user.profile.$id]) {
-            //                 //Team member is allowed continue with sign in
-            //                 var profileRef = $firebase(ref.child('profile/' + Auth.user.profile.$id));
-            //                 return profileRef.$set('curTeam', team);
-
-            //             } else {
-            //                 // Check the allowed email list to see if this is the users first time
-            //                 var teamEmails = Object.keys(teamRef[team].allowedUsers);
-            //                 for (var i = 0; i < teamEmails.length; i++) {
-            //                     console.log('is '+ Auth.user.profile.email + ' this ' + teamRef[team].allowedUsers[teamEmails[i]]);
-            //                     if (Auth.user.profile.email == teamRef[team].allowedUsers[teamEmails[i]]) {
-            //                         //Allow user in
-            //                         var memberRef = new Firebase(FURL + 'team/' + team + '/members');
-            //                         memberRef.child(Auth.user.profile.$id).set(true);
-            //                         var memberRef = new Firebase(FURL + 'profile/' + Auth.user.profile.$id);
-            //                         return memberRef.child('curTeam').set(team);
-
-            //                     }
-            //                 }
-            //                 // No match was found unAuth user.
-            //                 // Member is denied access to group
-            //                 // auth.$unauth();
-            //                 //alert('You are not allowed in this group, logging you out');
-            //             }
-            //         }else {
-            //             // Team name doesn't exist
-            //             //auth.$unauth();
-            //             alert('Team does not exist, why not register? logging you out');
-            //         }
-            //     });
-            //     }else {
-            //         if (Auth.user && Auth.user.profile) {
-            //             Auth.user.profile.$destroy();
-            //         }
-            //         angular.copy({}, Auth.user);
-            //     }
-            // }
+            }
         });
 
         function get_gravatar(email, size) {
