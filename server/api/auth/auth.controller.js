@@ -5,8 +5,8 @@
 var Firebase = require("firebase");
 var FirebaseTokenGenerator = require("firebase-token-generator");
 
-var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
-var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
+var FBRef = new Firebase("https://phased-dev2.firebaseio.com/");
+var tokenGenerator = new FirebaseTokenGenerator("A50wFi5OxaLYNzb4jnEyFMQWmE8mjRyWJCKW723g");
 var token = tokenGenerator.createToken({uid: "modServer" , origin : "auth.controller.js" });
 FBRef.authWithCustomToken(token, function(error, authData) {});
 
