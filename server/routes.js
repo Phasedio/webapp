@@ -8,7 +8,6 @@ var errors = require('./components/errors');
 var path = require('path');
 
 module.exports = function(app) {
-
   // Insert routes below
   app.use('/api/downloads', require('./api/download'));
   app.use('/api/pays', require('./api/pay'));
@@ -20,6 +19,8 @@ module.exports = function(app) {
   app.use('/api/notifications', require('./api/notification'));
   app.use('/api/notif', require('./api/notification'));
   app.use('/api/notifs', require('./api/notification'));
+
+  app.use('/api/setup', require('./api/setup'));
   
   // All undefined asset or api routes should return a 404
   app.route('/:url(api|auth|components|app|bower_components|assets)/*')
