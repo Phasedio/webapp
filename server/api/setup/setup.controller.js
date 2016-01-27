@@ -186,7 +186,7 @@ var setUpFirebase = function() {
 	    }
 		},
 		profile : {
-			'62cf208c-e17e-4301-850f-65c0e05a9ae9' : {
+			'0fcf827c-92d4-4343-afc4-7af8b093150f' : {
 				name : 'Dave Riedstra',
 				email : 'dave.riedstra@gmail.com',
 				curTeam : 'Phased',
@@ -204,16 +204,16 @@ var setUpFirebase = function() {
 						cat : '',
 						name : 'Hello world',
 						time : Firebase.ServerValue.TIMESTAMP,
-						user : '62cf208c-e17e-4301-850f-65c0e05a9ae9'
+						user : '0fcf827c-92d4-4343-afc4-7af8b093150f'
 					}
 				},
 				members : {
-					'62cf208c-e17e-4301-850f-65c0e05a9ae9' : {
+					'0fcf827c-92d4-4343-afc4-7af8b093150f' : {
 						currentStatus : {
 							key : '0',
 							name : 'Hello world',
 							time : Firebase.ServerValue.TIMESTAMP,
-							user : '62cf208c-e17e-4301-850f-65c0e05a9ae9'
+							user : '0fcf827c-92d4-4343-afc4-7af8b093150f'
 						},
 						role : 1 // admin
 					}
@@ -237,7 +237,7 @@ var setUpFirebase = function() {
 		},
 		notif : {
 			Phased : {
-				'62cf208c-e17e-4301-850f-65c0e05a9ae9' : {
+				'0fcf827c-92d4-4343-afc4-7af8b093150f' : {
 					'0' : {
 						title : "User created",
 						body : "Welcome to the world",
