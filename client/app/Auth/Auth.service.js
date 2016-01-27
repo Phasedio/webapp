@@ -21,12 +21,19 @@ angular.module('webappApp')
     this.setDoAfterAuth = function (newDAA) {
         doAfterAuth.push(newDAA);
     }
-    // AngularJS will instantiate a singleton by calling "new" on this function
 
+    // executes all registered callbacks after auth is complete
+    // this is very important for making other providers that rely on Auth (currently, only Phased) to run
+    var doAllAfterAuth = function(Auth) {
+        for (var i in doAfterAuth) {
+            doAfterAuth[i](Auth);
+        }
+    }
+
+    // AngularJS will instantiate a singleton by calling "new" on this function
     var AuthProvider = function(FURL, $firebaseAuth, $firebase,$firebaseObject,$location,$rootScope) {
         var ref = new Firebase(FURL);
         var auth = $firebaseAuth(ref);
-        var team = '';
 
         var Auth = {
             user: {},
@@ -34,29 +41,40 @@ angular.module('webappApp')
             newTeam : false,
             createProfile: function(uid, user) {
                 var profile = {
-                    name:user.name,
-                    email:user.email,
+                    name: user.name,
+                    email: user.email,
                     gravatar: get_gravatar(user.email, 40)
                 };
 
                 return new Firebase(FURL).child('profile').child(uid).set(profile);
             },
-            login: function(user) {
-                return auth.$authWithPassword(
+            login: function(user, success, failure) {
+                auth.$authWithPassword(
                     {email: user.email, password: user.password}
+                ).then(
+                    function(authData) {
+                        if (!('uid' in authData)) {
+                            failure(authData);
+                            return;
+                        } else {
+                            angular.copy(authData, Auth.user);
+                            getProfileDetails(Auth.user.uid)
+                                .then(success, authData);
+                        }
+                    }
                 );
             },
             register : function(user) {
-                //team = user.team;
                 user.email = user.email.toLowerCase();
                 return auth.$createUser({email: user.email, password: user.password}).then(function() {
                     return Auth.login(user);
                 })
-                    .then(function(data) {
-                        return Auth.createProfile(data.uid, user);
-                    });
+                .then(function(data) {
+                    return Auth.createProfile(data.uid, user);
+                });
             },
             logout: function() {
+                console.log('logged out');
                 auth.$unauth();
             },
             changePassword : function(user) {
@@ -92,79 +110,138 @@ angular.module('webappApp')
               Auth.newTeam = true;
               var teamMaker = makeTeam(name,uid);
               return teamMaker;
-              // if(teamMaker){
-              //   $location.path('/');
-              // }else{
-              //   return false;
-              // }
-
             },
-            team : 'd',
             currentTeam : ''
         };
 
 
-        var getUserAuthStat = auth.$getAuth();
-        if (getUserAuthStat) {
-          angular.copy(getUserAuthStat, Auth.user);
+        /**
+        *
+        *   fills in Auth.user with variables from /profile/$uid
+        *   then calls the doAfterAuth callbacks
+        *   then calls its own callbacks (set in a pseudo-Promise)
+        *
+        */
+        var getProfileDetails = function(uid) {
+            // where pseudo-promise is kept
+            getProfileDetails.then = function() {};
+            getProfileDetails.args = {};
+            // below is returned
+            var pseudoPromise = { 
+                then : function(doAfter, args) { 
+                    if (doAfter)
+                        getProfileDetails.then = doAfter;
+                    if (args)
+                        getProfileDetails.args = args;
+                }
+            }
+
+            // get account data
+            ref.child('profile/' + uid).once('value', function (snapshot) {
+                var user = snapshot.val();
+                if (user) {
+                    Auth.user.profile = user;
+                    Auth.currentTeam = user.curTeam;
+
+                    doAllAfterAuth(Auth);
+                    getProfileDetails.then(getProfileDetails.args);
+                } else {
+                    console.warn('Grave error, user ' + uid + ' does not exist');
+                }
+            });
+
+            // return the pseudo-promise
+            return pseudoPromise;
         }
 
-        function makeTeam(name,id){
-            if (Auth.newTeam) {
-                console.log('MAKING A NEW TEAM');
-                console.log(name + id);
-                var teamRef = ref.child('team');
-                var k = {};
-                k[id]=true;
-                teamRef.child(name).once('value', function(snapshot){
-                  //if exists
-                  if(snapshot.val() == null) {
-                    console.log('Team valid');
-                    teamRef.child(name).child('members').child(id).set(true);
-                    ref.child('profile').child(id).child('teams').push(name);
-                    ref.child('profile').child(id).child('curTeam').set(name);
 
-                    $location.path('/');
-                  } else {
-                    return false;
-                  }
+        /**
+        *
+        *   makes a new team, adds current user to it, makes them Owner
+        *   1. if team exists, add user to it as member
+        *   2. if doesn't exists,
+        *       A. make it
+        *       B. add user to it as owner
+        *
+        */
+        var makeTeam = function(teamName, id) {
+            // adds a member to a team
+            var addMemberToTeam = function(teamID, role) {
+                // 1. adds to team/$team/members with role (defaults to member)
+                var role = role || 0; // 0 == member
+                ref.child('team/' + teamID + '/members/' + id).set({role : role});
+
+                // 2. adds to profile/$uid/teams
+                ref.child('profile/' + id + '/teams').push(teamID);
+
+                // 3. sets profile/$uid/curTeam
+                ref.child('profile/' + id + '/curTeam').set(teamID);
+            } // end addMemberToTeam()
+
+            // if Auth knows we're making a new team
+            if (Auth.newTeam) {
+                // 1. check that it exists
+                ref.child('team').orderByChild('name').equalTo(teamName)
+                .once('value', function(snapshot) {
+                    var team = snapshot.val();
+                    var teamID = snapshot.key();
+
+                    // if it doesn't exists
+                    if (!team) {
+                        // make it
+                        var newTeamRef = ref.child('team').push({ name : teamName });
+                        // add member to it
+                        addMemberToTeam(newTeamRef.key(), 2); // 2 == owner
+                    }
+                    // if it does exist
+                    else {
+                        if (!id in team.members)
+                            addMemberToTeam(teamID); // as member
+                    }
                 });
             }
         };
 
-        //if user is loged in get team
-        if (Auth.user.uid) {
-            ref.child('profile').child(Auth.user.uid).child('curTeam').once('value',function(data){
-                data = data.val();
-                Auth.currentTeam = data;
 
-                // executes all registered callbacks after auth is complete
-                // this is very important for making other providers that rely on Auth (currently, only Phased) to run
-                for (var i in doAfterAuth) {
-                    doAfterAuth[i](Auth);
-                }
-            });
-          }
+        /**
+        *   INIT
+        */
 
+        // listen for auth state changes
+        // if logged in and on /login, go to /
+        // if logging out (or session timeout!), go to /login
+        // else do nothing
         auth.$onAuth(function(authData) {
-            if (authData) {
-                angular.copy(authData, Auth.user);
-
-                // get user role from server
-                $.post('./api/auth/role/get', {user: Auth.user.uid})
-                    .success(function(data) {
-                        if (data.success) {
-                            Auth.user.role = data.role;
-                        } else {
-                            console.log('Auth error', data);
-                        }
-                    })
-                    .error(function(data){
-                      console.log(data);
-                    });
+            var path = '';
+            // if not authenticated, go to /login
+            if (!authData) {
+                path = '/login';
             }
+            // if authenticated on the login screen, go to /
+            else if ($location.path() == '/login') {
+                path = '/';
+            }
+            // do nothing if authenticated within the app
+            else {
+                return;
+            }
+
+            // go places
+            $rootScope.$apply(
+                function() { 
+                    $location.path(path); 
+                }
+            );
         });
 
+        // get user account metadata if already logged in
+        var authData = auth.$getAuth();
+        if (authData) {
+            angular.copy(authData, Auth.user);
+            getProfileDetails(Auth.user.uid); // go to app after getting details
+        }
+
+        // get a user's gravatar from their email address
         function get_gravatar(email, size) {
             email = email.toLowerCase();
 
@@ -393,7 +470,6 @@ angular.module('webappApp')
         }
 
         return Auth;
-
     }
 
   });
