@@ -18,28 +18,6 @@
 
 	<div class="container-fluid">
 		<div class="row">
-			<!-- <div class="col-xs-12 col-md-4 col-lg-6">
-				<div class="ph-card ph-team">
-
-					<div class="ph-tasks">
-						<p class="semi">
-							tasks
-						</p>
-						<div class="ph-task" ng-repeat="assignment in activeStream  | filterTaskByStatus : activeStatusFilter | orderObjectBy : 'time'">
-							<p>{{assignment.name}} - <small>{{taskStatuses[assignment.status].name}}</small></p>
-							<div class="ph-task-btns">
-								<button class="btn btn-phased-blue" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)">Start</button>
-			          <button class="btn btn-phased-blue" ng-if="assignment.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(assignment.key)">complete</button>
-							</div>
-
-						</div>
-						<div class="ph-task blank" ng-repeat="item in taskTable">
-							<textarea></textarea>
-						</div>
-						<a class="btn btn-phased-blue btn-block" href="/tasks">Add New</a>
-					</div>
-				</div>
-			</div> -->
 			<div class="col-xs-12 col-md-8 col-lg-6 col-lg-offset-3 ph-update-area">
 				<div class="ph-card">
 					<form class="ph-form-feed" name="taskForm" ng-submit="addTask(task)" novalidation>
@@ -85,20 +63,11 @@
 					</div>
 				</div>
 			</div>
-			<div class="hidden">
+			<div class="col-lg-3  ">
 					<div class="ph-card">
-						<div class="ph-member-total">
-								<p class="semi">members <span>{{team.teamLength}}</span>
-						</div>
-						<div class="ph-members">
-							<div class="ph-member-head" ng-repeat="member in team.lastUpdated | orderBy : 'time':true ">
-								<img src="{{member.pic}}" width="40px" height="40px">
-								<p>Last update <span am-time-ago="member.time"></span> </p>
-							</div>
-
-
-						</div>
-
+						<h6>Number of tasks assigned to you</h6>
+						<h2>{{countActiveTasks}}</h2>
+						<a class="btn btn-phased-blue btn-block" href="/tasks">View Tasks</a>
 					</div>
 			</div>
 
