@@ -63,7 +63,7 @@ var setUpFirebase = function() {
 	        COMPLETE : 1,
 	        ASSIGNED : 2
 				},
-				HISTORY : {
+				HISTORY_ID : {
 					CREATED : 0,
 	        ARCHIVED : 1,
 	        UNARCHIVED : 2,
