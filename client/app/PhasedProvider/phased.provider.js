@@ -57,8 +57,9 @@ angular.module('webappApp')
     * returned by this.$get
     */
     var PhasedProvider = {
-        user : {},
-        team : {
+        FBRef : FBRef, // set in setFBRef()
+        user : {}, // set in this.init() to Auth.user.profile
+        team : { // set in initializeTeam()
           members : {},
           lastUpdated : [],
           history : [],
@@ -66,51 +67,61 @@ angular.module('webappApp')
         },
         viewType : 'notPaid',
         billing : {},
-        notif : {
-          TYPE : {
-            HISTORY : 'history',
-            ASSIGNMENT : {
-              CREATED : 'assignment_created',
-              ARCHIVED : 'assignment_archived',
-              UNARCHIVED : 'assignment_unarchived',
-              UPDATED : 'assignment_updated', // generic case
-              ASSIGNED : 'assignment_assigned',
-              ASSIGNED_TO_ME : 'assignment_assigned_to_me',
-              STATUS : 'assignment_status'
-            }
-          },
-          stream : {}
+
+        // META CONSTANTS
+        // set up in intializeMeta()
+        // TASK
+        task : {
+          PRIORITY : {},
+          PRIORITY_ID : {},
+
+          HISTORY_ID : {},
+
+          STATUS : {},
+          STATUS_ID : {}
         },
-        PRESENCE : {
-          ONLINE : 'online',
-          OFFLINE : 'offline',
-          AWAY : 'away'
+
+        // PROJECT
+        project : {
+          PRIORITY : {},
+          PRIORITY_ID : {},
+
+          HISTORY : {},
+          HISTORY_ID : {}
         },
-        TASK_PRIORITIES : {},
-        TASK_PRIORITY_ID : {
-          HIGH : 0,
-          MEDIUM : 1,
-          LOW : 2
+
+        // COLUMN
+        column : {
+          HISTORY : {},
+          HISTORY_ID : {}
         },
-        TASK_STATUSES : {},
-        TASK_STATUS_ID : {
-          IN_PROGRESS : 0,
-          COMPLETE : 1,
-          ASSIGNED : 2
+
+        // CARD
+        card : {
+          PRIORITY : {},
+          PRIORITY_ID : {},
+
+          HISTORY : {},
+          HISTORY_ID : {}
         },
-        ROLES : ['member', 'admin', 'owner'],
-        TASK_HISTORY_CHANGES : {
-          CREATED : 0,
-          ARCHIVED : 1,
-          UNARCHIVED : 2,
-          NAME : 3,
-          DESCRIPTION : 4,
-          ASSIGNEE : 5,
-          DEADLINE : 6,
-          CATEGORY : 7,
-          PRIORITY : 8,
-          STATUS : 9
-        },
+
+        // ROLE
+        ROLE : {},
+        ROLE_ID : {},
+
+        // PRESENCE
+        PRESENCE : {},
+        PRESENCE_ID : {},
+
+        // NOTIF
+        NOTIF_TYPE : {},
+        NOTIF_TYPE_ID : {},
+
+
+        // data streams
+        // data updated with FBRef.on() watches
+        // 
+        notif : {}, // notifications for current user
         assignments : { // Phased.assignments
           all : {}, // all of the team's assignments
           to_me : {}, // assigned to me (reference to objects in all)
@@ -122,8 +133,7 @@ angular.module('webappApp')
           to_me : {},
           by_me : {},
           unassigned : {}
-        },
-        FBRef : FBRef // set in setFBRef
+        }
       };
 
     /**
@@ -138,10 +148,11 @@ angular.module('webappApp')
 
     this.init = function(Auth) {
       _Auth = Auth;
-      PhasedProvider.user = Auth.user;
-      PhasedProvider.team.name = Auth.currentTeam;
+      PhasedProvider.user = Auth.user.profile;
+      PhasedProvider.team.uid = Auth.currentTeam;
 
       checkPlanStatus();
+      initializeMeta(); // gathers static values set in DB
       setUpTeamMembers();
       getCategories();
       getTaskPriorities();
@@ -520,6 +531,71 @@ angular.module('webappApp')
       });
     }
 
+    /*
+    **
+    **  INTIALIZING FUNCTIONS
+    **
+    */
+
+    /*
+    *
+    * Gathers all static data, applies to PhasedProvider
+    *
+    */
+
+    var initializeMeta = function() {
+      FBRef.child('meta').once('value', function(snap) {
+        var data = snap.val();
+        console.log('initializeMeta', data);
+
+        // task
+        PhasedProvider.task = {
+          PRIORITY : data.task.PRIORITY,
+          PRIORITY_ID : data.task.PRIORITY_ID,
+
+          HISTORY_ID : data.task.HISTORY_ID, // no strings for this one
+
+          STATUS : data.task.STATUS,
+          STATUS_ID : data.task.STATUS_ID
+        };
+
+        // PROJECT
+        PhasedProvider.project = {
+          PRIORITY : data.project.PRIORITY,
+          PRIORITY_ID : data.project.PRIORITY_ID,
+
+          HISTORY : data.project.HISTORY,
+          HISTORY_ID : data.project.HISTORY_ID
+        };
+
+        // COLUMN
+        PhasedProvider.column = {
+          HISTORY : data.column.HISTORY,
+          HISTORY_ID : data.column.HISTORY_ID
+        };
+
+        // CARD
+        PhasedProvider.card = {
+          PRIORITY : data.card.PRIORITY,
+          PRIORITY_ID : data.card.PRIORITY_ID,
+
+          HISTORY : data.card.HISTORY,
+          HISTORY_ID : data.card.HISTORY_ID
+        };
+
+        // ROLE
+        PhasedProvider.ROLE = data.ROLE;
+        PhasedProvider.ROLE_ID = data.ROLE_ID;
+
+        // PRESENCE
+        PhasedProvider.PRESENCE = data.PRESENCE;
+        PhasedProvider.PRESENCE_ID = data.PRESENCE_ID;
+
+        // NOTIF
+        PhasedProvider.NOTIF_TYPE = data.NOTIF_TYPE;
+        PhasedProvider.NOTIF_TYPE_ID = data.NOTIF_TYPE_ID;
+      });
+    }
     /**
     **
     **  METADATA GATHERING FUNCTIONS
