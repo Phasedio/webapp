@@ -1,18 +1,3 @@
-<style>
-/*.hero-img {
-	background:  linear-gradient(
-		rgba(0, 0, 0, 0.25),
-		rgba(0, 0, 0, 0.25)
-	), url(assets/images/{{dayImage}}) no-repeat center center ;
-	-webkit-background-size: cover;
-	-moz-background-size: cover;
-	-o-background-size: cover;
-	background-size: cover;
-}*/
-</style>
-
-
-
 <div ng-include="'components/navbar/navbar.html'"></div>
 <section class="hero-img">
 </section>
@@ -21,62 +6,7 @@
   <div class="row">
 
     <!-- TASK STREAM -->
-    <div class="task-stream" ng-class="tasklistSize">
-
-			<div class=" ph-card task-list">
-        <div class="task-filter">
-          <button class="btn btn-phased-blue add-new-task" ng-click="addAssignmentModal();">New task</button>
-          <div class="styled-select">
-            <select ng-model="filterView" ng-change="setActiveStream(filterView)">
-              <option value="assignments.to_me" >assigned to me</option>
-              <option value="assignments.by_me">my created tasks</option>
-              <option value="assignments.unassigned">unassigned tasks</option>
-              <option value="assigned">assigned to others</option>
-              <option value="in_progress">in progress</option>
-              <option value="completed">closed tasks</option>
-              <option value="assignments.all">all</option>
-              <option value="archive.all">archived tasks</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- <select>
-          <
-        </select> -->
-        <form id="todo-form" ng-submit="addTodo()">
-          <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
-        </form>
-
-
-				<table class="table table-hover">
-					<tbody>
-						<tr class="task" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time' : true" >
-							<td ng-click="selectTask(assignment)" ng-dblClick="opentTask(assignment.key)">
-								{{assignment.name}} <small>{{taskStatuses[assignment.status].name}}</small>
-							</td>
-
-							<td>
-                <div class="task-meta">
-                  <div class="task-due" ng-click="selectTask(assignment)">
-                    {{assignment.deadline | date : 'd MMM yy'}}
-                  </div>
-                  <div class="task-assigned" ng-click="selectTask(assignment)">
-                    <img src="{{team.members[assignment.assignee].pic}}" width="25px" height="25px">
-                  </div>
-                  <div class="task-quick-action">
-                    <button type="button" class="btn btn-phased-blue btn-circle" uib-tooltip="Post as status" name="button" ng-if="assignment.status != taskStatusID.ASSIGNED" ng-click="broadcastTask(assignment)"><i class="fa fa-lg fa-share"></i></button>
-                    <button class="btn btn-phased-blue btn-circle" uib-tooltip="Start task" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)"><i class="fa fa-play" ></i></button>
-                  </div>
-                </div>
-
-							</td>
-						</tr>
-
-					</tbody>
-				</table>
-			</div>
-    </div>
-		<div class="" ng-class="taskDescript">
+    <div class="col-xs-8 col-xs-offset-2" >
 			<div class="task ph-card">
         <div class="task-header">
           <ul class="task-meta-bar">
@@ -108,7 +38,7 @@
               </p>
             </li>
             <li class="task-meta-bar-item ">
-              <button type="button" class="close"  aria-label="Close" ng-click="closeDetails()"><span aria-hidden="true">&times;</span></button>
+
             </li>
           </ul>
 
@@ -155,7 +85,7 @@
         </p>
 
         <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
-          <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != taskStatusID.ASSIGNED">  post as status  <i class="fa fa-lg fa-share"></i></button>
+          <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != taskStatusID.ASSIGNED" ng-click="broadcastTask(taskInfo)">  post as status  <i class="fa fa-lg fa-share"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status == taskStatusID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(taskInfo.key)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button>
@@ -194,51 +124,5 @@
         </div>
       </div>
 		</div>
-
   </div>
-
 </section>
-
-<!-- add task -->
-<div class="modal fade" id="myModal">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form name="addmember" ng-submit="addAssignment(newTask)" novalidation>
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 style="color:#000;" class="modal-title no-shadow">Add task</h4>
-        </div>
-        <div class="modal-body">
-        	<label for="taskName">Task name</label>
-         	<input type="text" id="taskName" ng-model="newTask.name" placeholder="Build a rocket">
-
-          <label for="category">Category</label>
-          <select ng-options="key as category.name for (key, category) in team.categoryObj" ng-model="newTask.category" id="category"></select>
-
-          <label for="priority">Priority</label>
-          <select ng-options="key as priority.name for (key, priority) in taskPriorities" ng-model="newTask.priority" id="priority"></select>
-
-          <label for="deadline">Deadline</label>
-
-          <div style="display:inline-block; min-height:250px;">
-            <uib-datepicker ng-model="newTask.deadline" min-date="minDate" show-weeks="true" init-date="dt" class="well well-sm" custom-class="getDayClass(date, mode)"></uib-datepicker>
-          </div>
-
-          <label for="assignee">Assign to</label>
-
-          <!-- this should default to unassigned -->
-          <select ng-options="key as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee" ng-disabled="newTask.unassigned"></select>
-          <a href="#" ng-click="newTask.assignee = myID">Assign me</a>
-          <label for="unassigned">Unassigned</label>
-          <input type="checkbox" ng-model="newTask.unassigned" />
-
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <input type="submit" class="btn btn-primary" value="Add task">
-        </div>
-      </form>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-<toaster-container toaster-options="{'time-out': 2000, 'close-button':true, 'animation-class': 'toast-top-right'}"></toaster-container>
