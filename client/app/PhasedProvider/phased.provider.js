@@ -44,7 +44,8 @@ angular.module('webappApp')
         to_me : [],
         by_me : [],
         unassigned : []
-      };
+      },
+      membersRetrieved = 0; // incremented with each member's profile gathered
     var ga = ga || function(){}; // in case ga isn't defined (as in chromeapp)
 
     var _Auth, FBRef; // tacked on to PhasedProvider
@@ -61,8 +62,7 @@ angular.module('webappApp')
         user : {}, // set in this.init() to Auth.user.profile
         team : { // set in initializeTeam()
           members : {},
-          lastUpdated : [],
-          history : [],
+          statuses : [], // stream of team's status updates
           teamLength : 0 // members counted in setUpTeamMembers
         },
         viewType : 'notPaid',
@@ -153,6 +153,7 @@ angular.module('webappApp')
 
       checkPlanStatus();
       initializeMeta(); // gathers static values set in DB
+      initializeTeam();
       setUpTeamMembers();
       getCategories();
       getTaskPriorities();
@@ -286,6 +287,7 @@ angular.module('webappApp')
     * doAfterMembers
     * executes all registered callbacks
     *
+    * sets PHASED_MEMBERS_SET_UP to TRUE
     */
     var doAfterMembers = function() {
       for (var i in req_after_members) {
@@ -596,6 +598,106 @@ angular.module('webappApp')
         PhasedProvider.NOTIF_TYPE_ID = data.NOTIF_TYPE_ID;
       });
     }
+
+    /*
+    *
+    * Gathers all of the team data for the first time and sets appropriate
+    * watching functions.
+    *
+    * Requires PhasedProvider.team.uid and PhasedProvider.user
+    *
+    */
+    var initializeTeam = function() {
+      FBRef.child('team/' + PhasedProvider.team.uid).once('value', function(snap) {
+        var data = snap.val();
+        console.log('initializeTeam', data);
+
+        PhasedProvider.team.name = data.name;
+        PhasedProvider.team.members = data.members;
+        PhasedProvider.team.teamLength = Object.keys(data.members).length;
+        PhasedProvider.team.statuses = data.statuses;
+        PhasedProvider.team.projects = data.projects;
+        PhasedProvider.team.project_archive = data.project_archive;
+        PhasedProvider.team.categoryObj = data.cat;
+        PhasedProvider.team.categorySelect = objToArray(data.cat); // adds key prop
+
+        // get profile details for team members
+        for (var id in PhasedProvider.team.members) {
+          initializeMember(id);
+        }
+
+        // get billing info
+
+      });
+    }
+
+    /**
+    *
+    * Gathers then watches a member's profile data
+    *
+    * 1. make one call to get initial data
+    * 2. apply data to appropriate properties
+    * 3. set child_changed listener
+    * 3B. which applies the incoming data to the appropriate key
+    *
+    * Logistical things:
+    * L1. stash handler so we can un-watch when needed
+    * L2. broadcast Phased:member for each member
+    * L3. broadcast Phased:membersComplete when all are in
+    * L4. call doAfterMembers() when all are in.
+    *
+    */
+
+    var initializeMember = function(id) {
+      // 1. gather all data once
+      FBRef.child('profile/' + id).once('value', function(snap){
+        var data = snap.val();
+
+        // 2. apply data
+        PhasedProvider.team.members[id].name = data.name;
+        PhasedProvider.team.members[id].pic = data.gravatar;
+        PhasedProvider.team.members[id].gravatar = data.gravatar;
+        PhasedProvider.team.members[id].email = data.email;
+        PhasedProvider.team.members[id].tel = data.tel;
+        PhasedProvider.team.members[id].uid = id;
+        PhasedProvider.team.members[id].presence = data.presence;
+        PhasedProvider.team.members[id].lastOnline = data.lastOnline;
+        PhasedProvider.team.members[id].newUser = data.newUser;
+
+        // 3. and then watch for changes
+        var handler = FBRef.child('profile/' + id).on('child_changed', function(snap) {
+          var data = snap.val(),
+            key = snap.key(),
+            currentUser = id == PhasedProvider.user.uid;
+
+          // 3B. apply data to appropriate key
+          PhasedProvider.team.members[id][key] = data;
+          if (currentUser) // if this is for the current user
+            PhasedProvider.user[key] = data
+
+          // special duplicate case
+          if (key == 'gravatar') {
+            PhasedProvider.team.members[id].pic = data;
+            if (currentUser)
+              PhasedProvider.user.pic = data;
+          }
+        });
+
+        // L1. stash handler to stop watching event if needed
+        PhasedProvider.team.members[id]._handler = handler;
+
+        // L2. broadcast events to tell the rest of the app the team is set up
+        $rootScope.$broadcast('Phased:member');
+
+        // L3. and L4. (once all members are in)
+        membersRetrieved++;
+        if (membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
+          $rootScope.$broadcast('Phased:membersComplete');
+          doAfterMembers();
+        }
+      });
+    }
+
     /**
     **
     **  METADATA GATHERING FUNCTIONS
@@ -2388,6 +2490,7 @@ angular.module('webappApp')
     var objToArray = function(obj) {
       var newArray = [];
       for (var i in obj) {
+        obj.key = i;
         newArray.push(obj[i]);
       }
       return newArray;
