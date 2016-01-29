@@ -120,6 +120,8 @@ angular.module('webappApp')
     $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
 
+    $scope.countActiveTasks = countActiveTasks();
+
 
     //Print blank lines in for task area
     $scope.taskTable = [1,2,3,4,5];
@@ -193,6 +195,19 @@ angular.module('webappApp')
 
     $scope.setTaskCompleted = function(assignmentID) {
       Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
+    }
+
+
+    // get number of active tasks assigned to userID
+    function countActiveTasks(){
+      var count = 0;
+      _.forEach(Phased.assignments.to_me, function(value, key){
+        if(value.status == 0 || value.status == 2){
+          count++;
+        }
+      });
+      console.log('this did things');
+      return count
     }
 
   });
