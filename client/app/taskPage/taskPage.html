@@ -38,7 +38,7 @@
               </p>
             </li>
             <li class="task-meta-bar-item ">
-              
+
             </li>
           </ul>
 
@@ -85,7 +85,7 @@
         </p>
 
         <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
-          <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != taskStatusID.ASSIGNED">  post as status  <i class="fa fa-lg fa-share"></i></button>
+          <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != taskStatusID.ASSIGNED" ng-click="broadcastTask(taskInfo)">  post as status  <i class="fa fa-lg fa-share"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status == taskStatusID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(taskInfo.key)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button>

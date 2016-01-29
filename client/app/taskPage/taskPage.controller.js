@@ -10,6 +10,28 @@ angular.module('webappApp')
     $scope.assignments = Phased.assignments;
     $scope.archive = Phased.archive;
     $scope.taskInfo = {}; // Task information for the description area
+    $scope.today = new Date().getTime(); // min date for deadline datepicker
+    $scope.eventSources = [];//needed for the calendar
+    $scope.taskPriorities = Phased.TASK_PRIORITIES; // in new task modal
+    $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
+    $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
+    $scope.taskStatusID = Phased.TASK_STATUS_ID;
+    $scope.taskHistType = Phased.TASK_HISTORY_CHANGES;
+    $scope.myID = Auth.user.uid;
+
+
+
+    var StatusID = {
+        IN_PROGRESS : 0,
+        COMPLETE : 1,
+        ASSIGNED : 2
+      },
+      PriorityID = {
+        HIGH : 0,
+        MEDIUM : 1,
+        LOW : 2
+      },
+      FBRef = new Firebase(FURL);
 
 
     function init(){
@@ -30,7 +52,7 @@ angular.module('webappApp')
 
     }
 
-
+    // If this was deep linked to then wait for the provider to get set up
     $scope.$on('Phased:setup', function() {
 
       if($routeParams.taskID && Phased.assignments.all[$routeParams.taskID]){
@@ -46,7 +68,144 @@ angular.module('webappApp')
       $scope.$apply();
     });
 
+
     init();
+
+
+
+    // moves task into my to_me if unassigned,
+    // then starts it
+    $scope.startTask = function(task) {
+      if (!task.user || task.unassigned)
+        Phased.takeTask(task.key);
+      Phased.activateTask(task.key);
+
+      $scope.activeStream = Phased.assignments.to_me;
+      $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
+    }
+
+    $scope.moveToArchive = function(assignmentID) {
+      Phased.moveToFromArchive(assignmentID);
+      $scope.closeDetails();
+    }
+
+    $scope.moveFromArchive = function(assignmentID) {
+      Phased.moveToFromArchive(assignmentID, true);
+    }
+
+    // gets archived tasks at address shows archive
+    $scope.getArchiveFor = function(address) {
+      Phased.getArchiveFor(address);
+    }
+
+    $scope.setTaskCompleted = function(assignmentID) {
+      Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
+    }
+
+    // Broadcasts that user is working on Task
+    $scope.broadcastTask = function(task) {
+      Phased.activateTask(task.key);
+      toaster.pop('success', "Success!", "Your task was posted");
+    }
+
+    // Edit name
+    $scope.taskEditName = function(taskID, newName) {
+      Phased.editTaskName(taskID, newName);
+    }
+
+    // edit description
+    $scope.taskEditDesc = function(taskID, desc) {
+      Phased.editTaskDesc(taskID, desc);
+    }
+
+    // Edit assigned user
+    $scope.taskEditAssigned = function(taskObj, userID) {
+      Phased.editTaskAssignee(taskObj, userID);
+    }
+    // Edits date of deadline or clears it
+    $scope.taskEditDate = function(taskID, date) {
+      Phased.editTaskDeadline(taskID, date);
+    }
+
+    // change category
+    $scope.changeCategory = function(taskID, catKey) {
+      Phased.editTaskCategory(taskID, catKey);
+    }
+    // change priority
+    $scope.changePriority = function(taskID, priorityKey) {
+      Phased.editTaskPriority(taskID, priorityKey);
+    }
+
+
+
+
+
+
+
+
+    //----
+  $scope.today = function() {
+    $scope.dt = new Date();
+  };
+  $scope.today();
+
+  $scope.clear = function () {
+    $scope.dt = null;
+  };
+
+  // Disable weekend selection
+  $scope.disabled = function(date, mode) {
+    return ( mode === 'day' && ( date.getDay() === 0 || date.getDay() === 6 ) );
+  };
+
+  $scope.toggleMin = function() {
+    $scope.minDate = $scope.minDate ? null : new Date();
+  };
+  $scope.toggleMin();
+  $scope.maxDate = new Date(2020, 5, 22);
+
+  $scope.open = function($event) {
+    $scope.status.opened = true;
+  };
+
+  $scope.setDate = function(year, month, day) {
+    console.log('youre picking a new day')
+    $scope.dt = new Date(year, month, day);
+  };
+
+  $scope.dateOptions = {
+    formatYear: 'yy',
+    startingDay: 1
+  };
+
+  $scope.formats = ['dd-MMMM-yyyy', 'yyyy/MM/dd', 'dd.MM.yyyy', 'shortDate'];
+  $scope.format = $scope.formats[0];
+
+  $scope.status = {
+    opened: false
+  };
+
+
+  $scope.events =[];
+
+  $scope.getDayClass = function(date, mode) {
+    if (mode === 'day') {
+      var dayToCheck = new Date(date).setHours(0,0,0,0);
+
+      for (var i=0;i<$scope.events.length;i++){
+        var currentDay = new Date($scope.events[i].date).setHours(0,0,0,0);
+
+        if (dayToCheck === currentDay) {
+          return $scope.events[i].status;
+        }
+      }
+    }
+
+    return '';
+  };
+
+
+
 
 
   });
