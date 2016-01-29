@@ -114,7 +114,7 @@ angular.module('webappApp')
       return types[input] || input; // fail gracefully
     }
   }])
-  .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig) {
+  .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig,$location) {
     ga('send', 'pageview', '/tasks');
 
     $scope.viewType = Phased.viewType;
@@ -176,6 +176,10 @@ angular.module('webappApp')
         $scope.taskDescript = 'col-xs-6';
       }
 
+    }
+    $scope.opentTask = function(taskID){
+      console.log(taskID);
+      $location.path('/tasks/'+taskID)
     }
 
     //closes details sidebar.
@@ -240,21 +244,21 @@ angular.module('webappApp')
           $scope.activeStream = Phased.archive.all;
           $scope.setStatusFilter(undefined);
           break;
-        // the following aren't an actual address, but at least 
+        // the following aren't an actual address, but at least
         // they let us use the status filter properly...
-        case 'completed' : 
+        case 'completed' :
           $scope.activeStream = Phased.assignments.all;
           streamName = 'assignments.all'; // jimmy this in there...
           $scope.setStatusFilter(Phased.TASK_STATUS_ID.COMPLETE);
           break;
-        case 'assigned' : 
+        case 'assigned' :
           $scope.activeStream = Phased.assignments.all;
-          streamName = 'assignments.all'; 
+          streamName = 'assignments.all';
           $scope.setStatusFilter(Phased.TASK_STATUS_ID.ASSIGNED);
           break;
-        case 'in_progress' : 
+        case 'in_progress' :
           $scope.activeStream = Phased.assignments.all;
-          streamName = 'assignments.all'; 
+          streamName = 'assignments.all';
           $scope.setStatusFilter(Phased.TASK_STATUS_ID.IN_PROGRESS);
           break;
         default:
@@ -460,9 +464,9 @@ angular.module('webappApp')
 
 
     //----
-    $scope.today = function() {
-      $scope.dt = new Date();
-    };
+  $scope.today = function() {
+    $scope.dt = new Date();
+  };
   $scope.today();
 
   $scope.clear = function () {
