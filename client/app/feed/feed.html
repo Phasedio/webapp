@@ -61,11 +61,11 @@
 
 					<div class="ph-feed-filter">
 						<div class="ph-feed-total">
-							<p class="semi">updates <span>{{team.history.length}}</span>
+							<p class="semi">updates <span>{{team.statuses.length}}</span>
 						</div>
 					</div>
 					<div class="ph-feed-roll">
-						<div class="ph-update" ng-repeat="item in team.history | orderBy : 'time':true | limitTo :100">
+						<div class="ph-update" ng-repeat="item in team.statuses | orderBy : 'time':true | limitTo :100">
 							<div class="ph-feed-head">
 								<img src="{{$parent.team.members[item.user].pic}}" width="40px" height="40px">
 							</div>
@@ -91,7 +91,7 @@
 								<p class="semi">members <span>{{team.teamLength}}</span>
 						</div>
 						<div class="ph-members">
-							<div class="ph-member-head" ng-repeat="member in team.lastUpdated | orderBy : 'time':true ">
+							<div class="ph-member-head" ng-repeat="member in team.members | orderBy : 'time':true ">
 								<img src="{{member.pic}}" width="40px" height="40px">
 								<p>Last update <span am-time-ago="member.time"></span> </p>
 							</div>
