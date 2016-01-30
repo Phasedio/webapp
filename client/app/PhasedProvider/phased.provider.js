@@ -655,6 +655,9 @@ angular.module('webappApp')
           initializeMember(id);
         }
 
+        // monitor team for changes
+        watchTeam();
+
         // get billing info
         checkPlanStatus(data.billing);
       });
@@ -681,6 +684,7 @@ angular.module('webappApp')
       // 1. gather all data once
       FBRef.child('profile/' + id).once('value', function(snap){
         var data = snap.val();
+        PhasedProvider.team.members[id] = PhasedProvider.team.members[id] || {};
 
         // 2. apply data
         PhasedProvider.team.members[id].name = data.name;
@@ -722,202 +726,6 @@ angular.module('webappApp')
           $rootScope.$broadcast('Phased:membersComplete');
           doAfterMembers();
         }
-      });
-    }
-
-    /**
-    **
-    **  METADATA GATHERING FUNCTIONS
-    **  In which app constants are gathered from server
-    **  as well as information about the current user and team
-    **
-    **/
-
-    /**
-    *
-    * gather team data
-    * 1. watches the team's tasks
-    * 1.b  when a new task is posted, it refreshes the team membership
-    * 2. gets today's tasks for each member,
-    *    and adds them to the team's history
-    */
-    var setUpTeamMembers = function() {
-
-      var taskAddress = 'team/' + PhasedProvider.team.name + '/task';
-      // stash addresses to remove FB event handlers when switching teams
-      setUpTeamMembers.watches = [{address : taskAddress, event : 'value' }];
-
-      // get members
-      FBRef.child(taskAddress).on('value', function(users) {
-        users = users.val();
-
-        // ensure own ID is in user list
-        // in marginal case where own user hasn't submitted a status to teamname/tasks
-        if (!(users) || !(_Auth.user.uid in users)) {
-          users = [];
-          users[_Auth.user.uid] = {};
-        }
-
-        PhasedProvider.team.history = []; // clear history before populating
-
-        // both populated by users below
-        setUpTeamMembers.membersToGetHistFor = []; 
-        var membersToGet = [];
-
-        for (var id in users) {
-          // needs to be in function otherwise for loop screws up id in callback
-          (function(id, users) {
-            // add empty object to team.members so other fns can populate before these callbacks
-            PhasedProvider.team.members[id] = {uid : id};
-            membersToGet.push(id); // add synchronously
-            setUpTeamMembers.membersToGetHistFor.push(id);
-
-            FBRef.child('profile/' + id).once('value', function(data) {
-              data = data.val();
-              if (!data) return;
-
-              var style = false;
-              if (users[id].photo){
-                style = "background:url("+users[id].photo+") no-repeat center center fixed; -webkit-background-size: cover;-moz-background-size: cover; -o-background-size: cover; background-size: cover";
-              }
-
-              PhasedProvider.team.members[id].name = data.name;
-              PhasedProvider.team.members[id].pic = data.gravatar;
-              PhasedProvider.team.members[id].gravatar = data.gravatar;
-              PhasedProvider.team.members[id].task = users[id].name;
-              PhasedProvider.team.members[id].time = users[id].time;
-              PhasedProvider.team.members[id].weather = users[id].weather;
-              PhasedProvider.team.members[id].city = users[id].city;
-              PhasedProvider.team.members[id].email = data.email;
-              PhasedProvider.team.members[id].tel = data.tel;
-              PhasedProvider.team.members[id].uid = id;
-              PhasedProvider.team.members[id].photo = style;
-              PhasedProvider.team.members[id].newUser = data.newUser;
-
-              // set teams to array of { name : 'My Team' }
-              // leaves a bit of room for another async call to gather more team data
-              // (eg, member count as was used in team switcher in chromeapp)
-              PhasedProvider.team.members[id].teams = [];
-              for (var i in data.teams) {
-                PhasedProvider.team.members[id].teams.push({
-                  name : data.teams[i]
-                });
-              }
-
-              // get member role from server
-                $.post('./api/auth/role/get', {user: id, team : PhasedProvider.team.name})
-                  .success(function(data) {
-                      if (data.success) {
-                          PhasedProvider.team.members[id].role = data.role || 'member';
-                      } else {
-                          console.log('Auth error', data);
-                      }
-                  })
-                  .error(function(data){
-                    console.log(data);
-                  });
-
-              // PhasedProvider.team.members[id] = user;
-              // update teamLength
-              PhasedProvider.team.teamLength = Object.keys(PhasedProvider.team.members).length;
-
-              // 2. team and user histories synched
-              if (WATCH_HISTORY) {
-                PhasedProvider.team.lastUpdated.push(PhasedProvider.team.members[id]);
-                getMemberHistory(id);
-              }
-
-              // tell scope new data is in
-              $rootScope.$broadcast('Phased:member');
-
-              // rm this user from membersToGet
-              membersToGet.splice(membersToGet.indexOf(id), 1);
-              // if this is the last user in that list, emit Phased:membersComplete
-              if (membersToGet.length == 0) {
-                $rootScope.$broadcast('Phased:membersComplete');
-                doAfterMembers();
-              }
-
-              // tell scope current user profile is in
-              if (id == _Auth.user.uid) {
-                PhasedProvider.user.profile = PhasedProvider.team.members[id];
-                $rootScope.$broadcast('Phased:currentUserProfile');
-              }
-            });
-
-            // monitor the user's presence and lastOnline
-            if (WATCH_PRESENCE) {
-              var address = 'profile/' + id + '/presence/' + PhasedProvider.team.name;
-              setUpTeamMembers.watches.push({address : address, event : 'value' }); // stash to unwatch later
-
-              FBRef.child(address).on('value', function(snap) {
-                var data = snap.val();
-                if (data && PhasedProvider.team.members[id]) {
-                  PhasedProvider.team.members[id].presence = data.status;
-                  PhasedProvider.team.members[id].lastOnline = data.lastOnline;
-                }
-              });
-            }
-          })(id, users);
-        }
-
-        // tell scope new data is in
-        $rootScope.$broadcast('Phased:team');
-
-        // first time only: emit Phased:setup and do registered async calls
-        if (!PHASED_SET_UP) {
-          $rootScope.$broadcast('Phased:setup');
-          doAsync();
-        }
-      });
-    }
-
-    /**
-    *
-    * gets history for single team member
-    * adds to team history and lastUpdated if WATCH_TASK_STREAM
-    * adds to team.members[id] if getHistoryFor == id
-    *
-    */
-    var getMemberHistory = function(id) {
-      var endTime = new Date().getTime() - 31556926000;
-      // get /team/[teamname]/all/[memberID], ordered by time, once
-      // push to local team.history
-      FBRef.child('team/' + PhasedProvider.team.name + '/all/' + id).orderByChild('time').startAt(endTime).once('value',function(data) {
-        data = data.val();
-
-        PhasedProvider.team.members[id].history = []; // clear history before populating
-        if (data) {
-          var keys = Object.keys(data);
-
-          for (var i = 0; i < keys.length; i++){
-            // add this item only if it's not already in the stream
-            var addToHistory = true;
-            for (var j in PhasedProvider.team.history) {
-              // check time and user (can't use obj equiv bc angular adds properties)
-              if (PhasedProvider.team.history[j].time == data[keys[i]].time &&
-                PhasedProvider.team.history[j].user == data[keys[i]].user) {
-                addToHistory = false;
-              }
-            }
-
-            // add key property
-            data[keys[i]].key = keys[i];
-
-            if (addToHistory) 
-              PhasedProvider.team.history.push(data[keys[i]]);
-
-            PhasedProvider.team.members[id].history.push(data[keys[i]]); // always populate user histories
-          }
-        }
-        // tell scope new data is in
-        $rootScope.$broadcast('Phased:history');
-
-        // rm this user from setUpTeamMembers.membersToGetHistFor
-        setUpTeamMembers.membersToGetHistFor.splice(setUpTeamMembers.membersToGetHistFor.indexOf(id), 1);
-        // if this is the last user in that list, emit Phased:historyComplete
-        if (setUpTeamMembers.membersToGetHistFor.length == 0)
-          $rootScope.$broadcast('Phased:historyComplete');
       });
     }
 
@@ -1026,6 +834,75 @@ angular.module('webappApp')
       }
     }
 
+
+    /*
+    **
+    **  WATCHING FUNCTIONS
+    **
+    */
+
+    /*
+    *
+    * watchTeam
+    * sets up other firebase data event handlers for team data
+    * including statuses, projects/cards/statuses, team membership
+    *
+    */
+    var watchTeam = function() {
+      var teamKey = 'team/' + PhasedProvider.team.uid;
+
+      // name
+      FBRef.child(teamKey + '/name').on('value', function(snap){
+        PhasedProvider.team.name = snap.val();
+      });
+
+      // statuses
+      // adds the status if it's not already there
+      FBRef.child(teamKey + '/statuses').on('child_added', function(snap){
+        var key = snap.key();
+        if (!(key in PhasedProvider.team.statuses))
+          PhasedProvider.team.statuses[key] = snap.val();
+      });
+
+      // category (doesn't need memory references)
+      FBRef.child(teamKey + '/category').on('value', function(snap) {
+        var data = snap.val();
+        PhasedProvider.team.categoryObj = data;
+        PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
+      });
+
+      // billing
+      FBRef.child(teamKey + '/billing').on('value', function(snap){
+        checkPlanStatus(snap.val());
+      })
+
+      // members
+      FBRef.child(teamKey + '/members').on('child_changed', function(snap) {
+        var memberID = snap.key(),
+          data = snap.val();
+
+        // if new member, initialize
+        if (!(memberID in PhasedProvider.team.members)) {
+          initializeMember(memberID);
+        }
+
+        // update all keys as needed
+        for (var key in data) {
+          PhasedProvider.team.members[memberID][key] = data;
+        }
+      });
+    }
+
+    /*
+    *
+    * unwatchTeam - STUB/TODO
+    * prepares us to switch to another team by un-setting the active
+    * firebase event handlers
+    *
+    */
+    var unwatchTeam = function() {
+
+    }
 
     /**
     *
