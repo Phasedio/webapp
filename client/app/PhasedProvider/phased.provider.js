@@ -552,13 +552,13 @@ angular.module('webappApp')
     var watchPresence = function() {
       // 1. immediately
       FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).update({
-        status : PhasedProvider.PRESENCE_ID.ONLINE
+        presence : PhasedProvider.PRESENCE_ID.ONLINE
       });
 
       // 2. on disconnect
       FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).onDisconnect().update({
         lastOnline : Firebase.ServerValue.TIMESTAMP,
-        status : PhasedProvider.PRESENCE_ID.OFFLINE
+        presence : PhasedProvider.PRESENCE_ID.OFFLINE
       });
     }
 
@@ -577,7 +577,6 @@ angular.module('webappApp')
     var initializeMeta = function() {
       FBRef.child('meta').once('value', function(snap) {
         var data = snap.val();
-        console.log('initializeMeta', data);
 
         // task
         PhasedProvider.task = {
@@ -641,7 +640,6 @@ angular.module('webappApp')
     var initializeTeam = function() {
       FBRef.child('team/' + PhasedProvider.team.uid).once('value', function(snap) {
         var data = snap.val();
-        console.log('initializeTeam', data);
 
         PhasedProvider.team.name = data.name;
         PhasedProvider.team.members = data.members;
@@ -649,8 +647,8 @@ angular.module('webappApp')
         PhasedProvider.team.statuses = data.statuses;
         PhasedProvider.team.projects = data.projects;
         PhasedProvider.team.project_archive = data.project_archive;
-        PhasedProvider.team.categoryObj = data.cat;
-        PhasedProvider.team.categorySelect = objToArray(data.cat); // adds key prop
+        PhasedProvider.team.categoryObj = data.category;
+        PhasedProvider.team.categorySelect = objToArray(data.category); // adds key prop
 
         // get profile details for team members
         for (var id in PhasedProvider.team.members) {
@@ -668,7 +666,7 @@ angular.module('webappApp')
     *
     * 1. make one call to get initial data
     * 2. apply data to appropriate properties
-    * 3. set child_changed listener
+    * 3. set child_changed listener on /profile/$uid
     * 3B. which applies the incoming data to the appropriate key
     *
     * Logistical things:
@@ -691,8 +689,6 @@ angular.module('webappApp')
         PhasedProvider.team.members[id].email = data.email;
         PhasedProvider.team.members[id].tel = data.tel;
         PhasedProvider.team.members[id].uid = id;
-        PhasedProvider.team.members[id].presence = data.presence;
-        PhasedProvider.team.members[id].lastOnline = data.lastOnline;
         PhasedProvider.team.members[id].newUser = data.newUser;
 
         // 3. and then watch for changes
