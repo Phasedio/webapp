@@ -149,6 +149,7 @@ angular.module('webappApp')
     this.init = function(Auth) {
       _Auth = Auth;
       PhasedProvider.user = Auth.user.profile;
+      PhasedProvider.user.uid = Auth.user.uid;
       PhasedProvider.team.uid = Auth.currentTeam;
 
       checkPlanStatus();
@@ -514,22 +515,24 @@ angular.module('webappApp')
     *
     * Monitors current user's presence
     *
-    * 1. sets their presence to PhasedProvider.PRESENCE.ONLINE now
+    * NB: must be called after meta are in
     *
-    * 2. sets their presence attr to PhasedProvider.PRESENCE.OFFLINE 
+    * 1. sets their presence to PhasedProvider.PRESENCE_ID.ONLINE now
+    *
+    * 2. sets their presence attr to PhasedProvider.PRESENCE_ID.OFFLINE 
     * and updates lastOnline on FB disconnect
     *
     */
     var watchPresence = function() {
       // 1. immediately
-      FBRef.child('profile/' + _Auth.user.uid + '/presence/' + _Auth.currentTeam).update({
-        status : PhasedProvider.PRESENCE.ONLINE
+      FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).update({
+        status : PhasedProvider.PRESENCE_ID.ONLINE
       });
 
       // 2. on disconnect
-      FBRef.child('profile/' + _Auth.user.uid + '/presence/' + _Auth.currentTeam).onDisconnect().update({
+      FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).onDisconnect().update({
         lastOnline : Firebase.ServerValue.TIMESTAMP,
-        status : PhasedProvider.PRESENCE.OFFLINE
+        status : PhasedProvider.PRESENCE_ID.OFFLINE
       });
     }
 
