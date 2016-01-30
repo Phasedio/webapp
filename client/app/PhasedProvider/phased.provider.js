@@ -154,7 +154,6 @@ angular.module('webappApp')
       PhasedProvider.user.uid = Auth.user.uid;
       PhasedProvider.team.uid = Auth.currentTeam;
 
-      checkPlanStatus();
       initializeMeta(); // gathers static values set in DB
       initializeTeam();
       setUpTeamMembers();
@@ -665,7 +664,7 @@ angular.module('webappApp')
         }
 
         // get billing info
-
+        checkPlanStatus(data.billing);
       });
     }
 
@@ -1128,38 +1127,32 @@ angular.module('webappApp')
       NB: broken in chromeapp -- do we need to implement this?
       TODO // BUG // ATTENTION
     */
-    var checkPlanStatus = function() {
-      FBRef.child('team').child(_Auth.currentTeam).once('value', function(data){
-        var team = data.val();
+    var checkPlanStatus = function(billing) {
+      if (billing) {
+        $.post('./api/pays/find', {customer: billing.stripeid})
+          .success(function(data){
+            if (data.err) {
+              console.log(data.err);
+              // handle error
+            }
+            if (data.status == "active"){
+              //Show thing for active
+              PhasedProvider.viewType = 'active';
 
-        if (team.billing){
-          PhasedProvider.billingInfo = team.billing;
-
-          $.post('./api/pays/find', {customer: team.billing.stripeid})
-            .success(function(data){
-              if (data.err) {
-                console.log(data.err);
-                // handle error
-              }
-              if (data.status == "active"){
-                //Show thing for active
-                PhasedProvider.viewType = 'active';
-
-              } else if (data.status == 'past_due' || data.status == 'unpaid'){
-                //Show thing for problem with account
-                PhasedProvider.viewType = 'problem';
-              } else if (data.status == 'canceled'){
-                //Show thing for problem with canceled
-                PhasedProvider.viewType = 'notPaid';
-              }
-            })
-            .error(function(data){
-              console.log(data);
-            });
-        } else {
-          PhasedProvider.viewType = 'notPaid';
-        }
-      });
+            } else if (data.status == 'past_due' || data.status == 'unpaid'){
+              //Show thing for problem with account
+              PhasedProvider.viewType = 'problem';
+            } else if (data.status == 'canceled'){
+              //Show thing for problem with canceled
+              PhasedProvider.viewType = 'notPaid';
+            }
+          })
+          .error(function(data){
+            console.log(data);
+          });
+      } else {
+        PhasedProvider.viewType = 'notPaid';
+      }
     }
 
 
