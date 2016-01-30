@@ -68,7 +68,6 @@ angular.module('webappApp')
           teamLength : 0 // members counted in setUpTeamMembers
         },
         viewType : 'notPaid',
-        billing : {},
 
         // META CONSTANTS
         // set up in intializeMeta()
@@ -155,12 +154,7 @@ angular.module('webappApp')
       PhasedProvider.team.uid = Auth.currentTeam;
 
       initializeMeta(); // gathers static values set in DB
-      initializeTeam();
-      setUpTeamMembers();
-      getCategories();
-      getTaskPriorities();
-      getTaskStatuses();
-      if (WATCH_ASSIGNMENTS)
+      initializeTeam(); // gathers/watches team and members
         watchAssignments();
       if (WATCH_NOTIFICATIONS)
         watchNotifications();
@@ -743,78 +737,6 @@ angular.module('webappApp')
     **
     **/
 
-    // 1. static data
-
-    // gathers task Priorities, adds to _taskPriorities
-    var getTaskPriorities = function() {
-      FBRef.child('taskPriorities').once('value', function(tP /*taskPriorities*/ ) {
-        tP = tP.val();
-        if (typeof tP !== 'undefined' && tP != null){
-          // assign keys to obj, set to _taskPriorities
-          for (var i in tP) {
-            tP[i]['key'] = i;
-            PhasedProvider.TASK_PRIORITIES[i] = tP[i];
-          }
-
-        } else {
-          // no status priorities exist, add defaults
-          var obj = [
-            { name : 'High' },
-            { name : 'Medium' },
-            { name : 'Low' }
-          ];
-
-          // save to db
-          FBRef.child('taskPriorities').set(obj);
-          // get data from db to ensure synchronicity
-          FBRef.child('taskPriorities').once('value', function(tP /*taskPriorities*/ ) {
-            tP = tP.val();
-            // assign keys to obj and set to PhasedProvider.TASK_PRIORITIES
-            for (var i in tP) {
-              tP[i]['key'] = i;
-              PhasedProvider.TASK_PRIORITIES[i] = tP[i];
-            }
-          });
-        }
-      });
-    }
-
-    // gathers task Statuses, adds to PhasedProvider.TASK_STATUSES
-    var getTaskStatuses = function() {
-      FBRef.child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
-        tS = tS.val();
-        if (typeof tS !== 'undefined' && tS != null){
-          // assign keys to obj, set obj to $scope
-          for (var i in tS) {
-            tS[i]['key'] = i;
-            PhasedProvider.TASK_STATUSES[i] = tS[i];
-          }
-        } else {
-          // no status types exist, add defaults
-          var obj = [
-            { name : 'In Progress' },
-            { name : 'Complete' },
-            { name : 'Assigned' }
-          ];
-
-           // save to db
-          FBRef.child('taskStatuses').set(obj);
-          // get data from db to ensure synchronicity
-          FBRef.child('taskStatuses').once('value', function(tS /*taskStatuses*/ ) {
-            tS = tS.val();
-            // assign keys to obj and set to PhasedProvider.TASK_STATUSES
-            for (var i in tS) {
-              tS[i]['key'] = i;
-              PhasedProvider.TASK_STATUSES[i] = tS[i];
-            }
-          });
-        }
-      });
-    }
-
-
-    // 2. dynamic data (logged in user & team)
-
     /**
     *
     * gather team data
@@ -1072,53 +994,6 @@ angular.module('webappApp')
       });
     }
 
-    // gathers team categories data and adds to PhasedProvider.team
-    var getCategories = function() {
-      var team = _Auth.currentTeam;
-      FBRef.child('team').child(team).child('category').once('value', function(cat) {
-        cat = cat.val();
-        PhasedProvider.team.categorySelect = [];
-
-        if(typeof cat !== 'undefined' && cat != null){
-          var keys = Object.keys(cat);
-          PhasedProvider.team.categoryObj = cat;
-            for (var i = 0; i < keys.length; i++){
-              var obj = {
-                name : cat[keys[i]].name,
-                color : cat[keys[i]].color,
-                key : keys[i]
-              }
-              PhasedProvider.team.categorySelect.push(obj);
-            }
-        } else {
-          //they have no categories so add them
-          var obj = [
-            {
-              name : 'Communication',
-              color : '#ffcc00'
-            },
-            {
-              name : 'Planning',
-              color : '#5ac8fb'
-            }
-          ];
-          FBRef.child('team/' + team + '/category').set(obj);
-          FBRef.child('team/' + team + '/category').once('value', function(cat) {
-            cat = cat.val();
-            var keys = Object.keys(cat);
-            PhasedProvider.team.categoryObj = cat;
-              for(var i = 0; i < keys.length; i++){
-                var obj = {
-                  name : cat[keys[i]].name,
-                  color : cat[keys[i]].color,
-                  key : keys[i]
-                }
-                PhasedProvider.team.categorySelect.push(obj);
-              }
-          });
-        }
-      });
-    }
 
     // checks current plan status
     // retrofitted from main.controller.js to avoid using $http
