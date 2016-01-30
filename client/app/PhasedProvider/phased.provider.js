@@ -28,12 +28,14 @@ angular.module('webappApp')
     */
     var PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
+      PHASED_META_SET_UP = false, // set to true after static meta values are loaded
       WATCH_HISTORY = false, // set in setWatchHistory in config; tells init whether to do it
       WATCH_ASSIGNMENTS = false, // set in setWatchAssignments in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
       req_after_members = [], // filled with operations to complete after members are in
+      req_after_meta = [], // filled with operations to complete after meta are in
       getHistoryFor = '', // set to a member id if a member's history should be attached to their team.member reference (eg, profile page)
       assignmentIDs = {
         to_me : [],
@@ -164,7 +166,7 @@ angular.module('webappApp')
       if (WATCH_NOTIFICATIONS)
         watchNotifications();
       if (WATCH_PRESENCE)
-        watchPresence();
+        registerAfterMeta(watchPresence);
     }
 
     /**
@@ -277,7 +279,7 @@ angular.module('webappApp')
     *
     */
     var registerAfterMembers = function(callback, args) {
-      if (PHASED_SET_UP)
+      if (PHASED_MEMBERS_SET_UP)
         callback(args);
       else
         req_after_members.push({callback : callback, args : args });
@@ -297,6 +299,37 @@ angular.module('webappApp')
       PHASED_MEMBERS_SET_UP = true;
     }
 
+
+    /**
+    *
+    * registerAfterMeta
+    *
+    * (same pattern as above)
+    *
+    * if Phased is already set to go, do the thing
+    * otherwise, add it to the list of things to do
+    *
+    */
+    var registerAfterMeta = function(callback, args) {
+      if (PHASED_META_SET_UP)
+        callback(args);
+      else
+        req_after_meta.push({callback : callback, args : args });
+    }
+
+    /**
+    *
+    * doAfterMembers
+    * executes all registered callbacks
+    *
+    * sets PHASED_MEMBERS_SET_UP to TRUE
+    */
+    var doAfterMeta = function() {
+      for (var i in req_after_meta) {
+        req_after_meta[i].callback(req_after_meta[i].args || undefined);
+      }
+      PHASED_META_SET_UP = true;
+    }
 
     /**
     *
@@ -599,6 +632,8 @@ angular.module('webappApp')
         // NOTIF
         PhasedProvider.NOTIF_TYPE = data.NOTIF_TYPE;
         PhasedProvider.NOTIF_TYPE_ID = data.NOTIF_TYPE_ID;
+
+        doAfterMeta();
       });
     }
 
