@@ -163,7 +163,7 @@ var setUpFirebase = function() {
 				BUSY : 3
 			},
 	    NOTIF_TYPE : { 
-				0 : "History",
+				0 : "Status",
 				1 : "Assignment created",
 				2 : "Assignment archived",
 				3 : "Assignment unarchived",
@@ -174,7 +174,7 @@ var setUpFirebase = function() {
 				8 : "User created"
 	    },
 			NOTIF_TYPE_ID : {
-	      HISTORY : 0,
+	      STATUS : 0,
 	      ASSIGNMENT_CREATED : 1,
 	      ASSIGNMENT_ARCHIVED : 2,
 	      ASSIGNMENT_UNARCHIVED : 3,
@@ -239,8 +239,8 @@ var setUpFirebase = function() {
 			Phased : {
 				'0fcf827c-92d4-4343-afc4-7af8b093150f' : {
 					'0' : {
-						title : "User created",
-						body : "Welcome to the world",
+						title : [{ string : "User created" }],
+						body : [{ string : "Welcome to the world" }],
 						time : Firebase.ServerValue.TIMESTAMP,
 						type : 8
 					}
