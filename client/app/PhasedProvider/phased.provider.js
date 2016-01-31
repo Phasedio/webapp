@@ -29,7 +29,6 @@ angular.module('webappApp')
     var PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       PHASED_META_SET_UP = false, // set to true after static meta values are loaded
-      WATCH_HISTORY = false, // set in setWatchHistory in config; tells init whether to do it
       WATCH_ASSIGNMENTS = false, // set in setWatchAssignments in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
@@ -202,14 +201,6 @@ angular.module('webappApp')
     this.setFBRef = function(FURL) {
       FBRef = new Firebase(FURL);
       PhasedProvider.FBRef = FBRef;
-    }
-
-    // sets WATCH_HISTORY flag so provider knows to 
-    // set up history observers in init.
-    // must be called in .config block before init.
-    this.setWatchHistory = function(watch) {
-      if (watch)
-        WATCH_HISTORY = true;
     }
 
     // sets WATCH_ASSIGNMENTS flag so provider knows to 
@@ -2335,7 +2326,6 @@ angular.module('webappApp')
   })
   .config(['PhasedProvider', 'FURL', 'AuthProvider', function(PhasedProvider, FURL, AuthProvider) {
     PhasedProvider.setFBRef(FURL);
-    PhasedProvider.setWatchHistory(true);
     PhasedProvider.setWatchAssignments(true);
     PhasedProvider.setWatchNotifications(true);
     PhasedProvider.setWatchPresence(true);
