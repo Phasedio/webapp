@@ -37,7 +37,7 @@ exports.issueNotification = function(req, res) {
 	if (typeof team != 'string' || team.length <= 0) {
 		console.log('error - invalid team');
 		res.send({
-			err : 'invalid team name'
+			err : 'invalid team ID'
 		});
 		return;
 	}
@@ -46,7 +46,7 @@ exports.issueNotification = function(req, res) {
 	if (typeof user != 'string' || user.length <= 0) {
 		console.log('error - invalid user');
 		res.send({
-			err : 'invalid user id'
+			err : 'invalid user ID'
 		});
 		return;
 	}
@@ -64,7 +64,7 @@ exports.issueNotification = function(req, res) {
 			'required' : true
 		},
 		'type' : {
-			'type' : 'string',
+			'type' : 'number',
 			'required' : true
 		},
 		// could be implemented in the future
@@ -101,7 +101,7 @@ exports.issueNotification = function(req, res) {
 	// 2. get team members
 
 	// get users from FB
-	FBRef.child('team/' + team + '/task').once('value', function success(data) {
+	FBRef.child('team/' + team + '/members').once('value', function success(data) {
 		var users = data.val();
 
 		for (var id in users) {

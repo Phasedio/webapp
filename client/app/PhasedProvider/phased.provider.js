@@ -1686,12 +1686,12 @@ angular.module('webappApp')
       var newStatusRef = teamRef.child('statuses').push(newStatus, function(err){
         // after DB is updated, issue a notification to all users
         if (!err) {
-          // issueNotification({
-          //   title : [{ userID : _Auth.user.uid }],
-          //   body : [{ string : newStatus.name }],
-          //   cat : newStatus.cat,
-          //   type : PhasedProvider.NOTIF_TYPE_ID.HISTORY
-          // });
+          issueNotification({
+            title : [{ userID : _Auth.user.uid }],
+            body : [{ string : newStatus.name }],
+            cat : newStatus.cat,
+            type : PhasedProvider.NOTIF_TYPE_ID.STATUS
+          });
         }
       });
     }
