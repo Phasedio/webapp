@@ -63,6 +63,7 @@ angular.module('webappApp')
         FBRef : FBRef, // set in setFBRef()
         user : {}, // set in this.init() to Auth.user.profile
         team : { // set in initializeTeam()
+          _FBHandlers : [], // filled with callbacks to deregister in unwatchTeam()
           members : {},
           statuses : [], // stream of team's status updates
           teamLength : 0 // members counted in setUpTeamMembers
@@ -715,7 +716,15 @@ angular.module('webappApp')
         });
 
         // L1. stash handler to stop watching event if needed
-        PhasedProvider.team.members[id]._handler = handler;
+        var deregister_obj = {
+            address : 'profile/' + id,
+            callback : handler
+          };
+
+        ('_FBHandlers' in PhasedProvider.team.members[id] &&
+          typeof PhasedProvider.team.members[id]._FBHandlers == 'object') ?
+          PhasedProvider.team.members[id].push(deregister_obj) :
+          PhasedProvider.team.members[id]._FBHandlers = [deregister_obj];
 
         // L2. broadcast events to tell the rest of the app the team is set up
         $rootScope.$broadcast('Phased:member');
@@ -724,7 +733,9 @@ angular.module('webappApp')
         membersRetrieved++;
         if (membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
           $rootScope.$broadcast('Phased:membersComplete');
+          $rootScope.$broadcast('Phased:setup');
           doAfterMembers();
+          doAsync();
         }
       });
     }
@@ -847,37 +858,64 @@ angular.module('webappApp')
     * sets up other firebase data event handlers for team data
     * including statuses, projects/cards/statuses, team membership
     *
+    * stores for de-registering when switching teams
+    *
     */
     var watchTeam = function() {
-      var teamKey = 'team/' + PhasedProvider.team.uid;
+      var teamKey = 'team/' + PhasedProvider.team.uid,
+        cb = ''; // set to callback for each FBRef.on()
 
       // name
-      FBRef.child(teamKey + '/name').on('value', function(snap){
+      cb = FBRef.child(teamKey + '/name').on('value', function(snap){
         PhasedProvider.team.name = snap.val();
       });
 
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/name',
+        callback : cb
+      });
+
+
       // statuses
       // adds the status if it's not already there
-      FBRef.child(teamKey + '/statuses').on('child_added', function(snap){
+      cb = FBRef.child(teamKey + '/statuses').on('child_added', function(snap){
         var key = snap.key();
         if (!(key in PhasedProvider.team.statuses))
           PhasedProvider.team.statuses[key] = snap.val();
       });
 
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/statuses',
+        callback : cb
+      });
+
+
       // category (doesn't need memory references)
-      FBRef.child(teamKey + '/category').on('value', function(snap) {
+      cb = FBRef.child(teamKey + '/category').on('value', function(snap) {
         var data = snap.val();
         PhasedProvider.team.categoryObj = data;
         PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
       });
 
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/category',
+        callback : cb
+      });
+
+
       // billing
-      FBRef.child(teamKey + '/billing').on('value', function(snap){
+      cb = FBRef.child(teamKey + '/billing').on('value', function(snap){
         checkPlanStatus(snap.val());
-      })
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/billing',
+        callback : cb
+      });
+
 
       // members
-      FBRef.child(teamKey + '/members').on('child_changed', function(snap) {
+      cb = FBRef.child(teamKey + '/members').on('child_changed', function(snap) {
         var memberID = snap.key(),
           data = snap.val();
 
@@ -891,6 +929,11 @@ angular.module('webappApp')
           PhasedProvider.team.members[memberID][key] = data;
         }
       });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/members',
+        callback : cb
+      });
     }
 
     /*
@@ -901,7 +944,19 @@ angular.module('webappApp')
     *
     */
     var unwatchTeam = function() {
+      // unwatch all team watchers
+      for (var i in PhasedProvider.team._FBHandlers) {
+        var handler = PhasedProvider.team._FBHandlers[i];
+        FBRef.child(handler.address).off(handler.callback);
+      }
 
+      // unwatch all team members
+      for (var i in PhasedProvider.team.members) {
+        var handlers = PhasedProvider.team.members[i]._FBHandlers;
+        for (var j in handlers) {
+          FBRef.child(handlers[j].address).off(handlers[j].callback);
+        }
+      }
     }
 
     /**
