@@ -177,7 +177,7 @@ angular.module('webappApp')
       PhasedProvider.activateTask = _activateTask;
       PhasedProvider.takeTask = _takeTask;
       PhasedProvider.addAssignment = _addAssignment;
-      PhasedProvider.addTask = _addTask;
+      PhasedProvider.addStatus = _addStatus;
       PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
       PhasedProvider.addMember = _addMember;
       PhasedProvider.addTeam = _addTeam;
@@ -1214,9 +1214,9 @@ angular.module('webappApp')
       };
 
       // check for location
-      if ((typeof newTask.location).toLowerCase() === 'object' &&
-          (typeof newTask.location.lat).toLowerCase() === 'number' &&
-          (typeof newTask.location.long).toLowerCase() === 'number') {
+      if (typeof newTask.location === 'object' &&
+          typeof newTask.location.lat === 'number' &&
+          typeof newTask.location.long === 'number') {
         status.location = {
           lat : newTask.location.lat,
           long : newTask.location.long
@@ -1231,7 +1231,8 @@ angular.module('webappApp')
       // BATCH CHECKS:
       // required strings
       for (var i in required.strings) {
-        if ((typeof newTask[required.strings[i]]).toLowerCase() === 'string') {
+        if (typeof newTask[required.strings[i]] === 'string' &&
+            newTask[required.strings[i]] != '') {
           status[required.strings[i]] = newTask[required.strings[i]];
         } else {
           console.log('required property "' + required.strings[i] + '" not found in newTask; aborting');
@@ -1241,8 +1242,8 @@ angular.module('webappApp')
 
       // required numbers
       for (var i in required.numbers) {
-        if ((typeof newTask[required.numbers[i]]).toLowerCase() === 'number'
-          && !isNaN(newTask[required.numbers[i]])) {
+        if (typeof newTask[required.numbers[i]] === 'number' &&
+            !isNaN(newTask[required.numbers[i]])) {
           status[required.numbers[i]] = newTask[required.numbers[i]];
         } else {
           console.log('required property "' + required.numbers[i] + '" not found in newTask or is NaN; aborting');
@@ -1252,7 +1253,7 @@ angular.module('webappApp')
 
       // booleans
       for (var i in required.booleans) {
-        if ((typeof newTask[required.booleans[i]]).toLowerCase() === 'boolean') {
+        if (typeof newTask[required.booleans[i]] === 'boolean') {
           status[required.booleans[i]] = newTask[required.booleans[i]];
         } else {
           console.log('required property "' + required.booleans[i] + '" not found in newTask; aborting');
@@ -1262,14 +1263,15 @@ angular.module('webappApp')
 
       // optional strings
       for (var i in optional.strings) {
-        if ((typeof newTask[optional.strings[i]]).toLowerCase() === 'string') {
+        if (typeof newTask[optional.strings[i]] === 'string' &&
+            newTask[optional.strings[i]] != '') {
           status[optional.strings[i]] = newTask[optional.strings[i]];
         }
       }
 
       // optional numbers
       for (var i in optional.numbers) {
-        if ((typeof newTask[optional.numbers[i]]).toLowerCase() === 'number'
+        if (typeof newTask[optional.numbers[i]] === 'number'
           && !isNaN(newTask[optional.numbers[i]])) {
           status[optional.numbers[i]] = newTask[optional.numbers[i]];
         }
@@ -1277,7 +1279,7 @@ angular.module('webappApp')
 
       // booleans
       for (var i in optional.booleans) {
-        if ((typeof newTask[optional.booleans[i]]).toLowerCase() === 'boolean') {
+        if (typeof newTask[optional.booleans[i]] === 'boolean') {
           status[optional.booleans[i]] = newTask[optional.booleans[i]];
         }
       }
@@ -1662,37 +1664,36 @@ angular.module('webappApp')
     * sends a status update to the server, pushes to team
     * these are the normal status updates used in /feed
     *
-    * cleans newTask first. fails if bad data
+    * cleans newStatus first. fails if bad data
     *
     */
 
-    var _addTask = function(newTask) {
-      registerAsync(doAddTask, newTask);
+    var _addStatus = function(newStatus) {
+      registerAsync(doAddStatus, newStatus);
     }
 
-    var doAddTask = function(newTask) {
-      ga('send', 'event', 'Update', 'submitted');
-      ga('send', 'event', 'Task', 'task added');
+    var doAddStatus = function(newStatus) {
+      ga('send', 'event', 'Update', 'Submitted');
+      ga('send', 'event', 'Status', 'Status added');
 
       // clean task
-      newTask = makeTaskForDB(newTask);
-      if (!newTask) return;
+      newStatus = makeTaskForDB(newStatus);
+      if (!newStatus) return;
 
       // publish to stream
-      var ref = FBRef.child('team/' + PhasedProvider.team.name);
-      ref.child('task/' + PhasedProvider.user.uid).set(newTask);
-      var newTaskRef = ref.child('all/' + PhasedProvider.user.uid).push(newTask, function(err){
+      var teamRef = FBRef.child('team/' + PhasedProvider.team.uid);
+      teamRef.child('members/' + PhasedProvider.user.uid + '/currentStatus').set(newStatus);
+      var newStatusRef = teamRef.child('statuses').push(newStatus, function(err){
         // after DB is updated, issue a notification to all users
         if (!err) {
-          issueNotification({
-            title : [{ userID : _Auth.user.uid }],
-            body : [{ string : newTask.name }],
-            cat : newTask.cat,
-            type : PhasedProvider.notif.TYPE.HISTORY
-          });
+          // issueNotification({
+          //   title : [{ userID : _Auth.user.uid }],
+          //   body : [{ string : newStatus.name }],
+          //   cat : newStatus.cat,
+          //   type : PhasedProvider.NOTIF_TYPE_ID.HISTORY
+          // });
         }
       });
-      updateTaskHist(newTaskRef.key(), PhasedProvider.TASK_HISTORY_CHANGES.CREATED);
     }
 
     /**

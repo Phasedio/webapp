@@ -46,7 +46,7 @@
 						<input type="text" ng-model="task.name" ng-trim="false" maxlength="150" placeholder="enter your status here" required>
 						<div class="ph-form-extras">
 							<div class="ph-cat-list">
-								<button type="button"  ng-repeat="(key, category) in team.categoryObj" ng-show="$index<6" class="btn button-phased-wht" ng-class="{active : key == selectedCategory}" style="outline: none; color:#000; font-size:1.2rem;" ng-click="categoryChoice(key)">
+								<button type="button"  ng-repeat="(key, category) in team.categoryObj" ng-show="$index<6" class="btn button-phased-wht" ng-class="{active : key === selectedCategory}" style="outline: none; color:#000; font-size:1.2rem;" ng-click="categoryChoice(key)">
             <div class="feed-cat-color" style="width: 1rem; height: 1rem; margin-right:0.5rem; display: inline-block; background-color:{{category.color}}"></div>
             {{category.name}}
           </button>
@@ -65,7 +65,7 @@
 						</div>
 					</div>
 					<div class="ph-feed-roll">
-						<div class="ph-update" ng-repeat="item in team.statuses | orderBy : 'time':true | limitTo :100">
+						<div class="ph-update" ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100">
 							<div class="ph-feed-head">
 								<img src="{{$parent.team.members[item.user].pic}}" width="40px" height="40px">
 							</div>

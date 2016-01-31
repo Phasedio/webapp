@@ -157,7 +157,7 @@ angular.module('webappApp')
 
       console.log('status:', status);
       // push to db
-      Phased.addTask(status);
+      Phased.addStatus(status);
 
       // reset interface
       $scope.selectedCategory = undefined;
