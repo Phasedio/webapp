@@ -1754,32 +1754,54 @@ angular.module('webappApp')
     * 2B. if it does exist, run fail callback if it exists
     */
 
-    var _addTeam = function(teamName, success, failure) {
+    var _addTeam = function(teamName, success, failure, addToExistingTeam) {
       var args = {
         teamName : teamName,
         success : success,
-        failure : failure
+        failure : failure,
+        addToExistingTeam : typeof addToExistingTeam === 'boolean' ? addToExistingTeam : true // only use value if set
       }
       registerAsync(doAddTeam, args);
     }
 
     var doAddTeam = function(args) {
-      FBRef.child('team/' + args.teamName).once('value', function(snapshot) {
-        //if exists
-        if(snapshot.val() == null) {
-          FBRef.child('team/' + args.teamName + '/members/' + _Auth.user.uid).set(true,function(){
-            FBRef.child('profile/' + _Auth.user.uid + '/teams').push(args.teamName,function(){
-              var switchArgs = {
-                teamName : args.teamName,
-                callback : args.success
-              }
-              doSwitchTeam(switchArgs);
-            });
-          });
+      // get team with specified name
+      FBRef.child('team').orderByChild('name').equalTo(args.teamName).once('value', function(snap) {
+        var existingTeams = snap.val(),
+          newTeamRef = '',
+          newTeamKey = '';
+
+        // if it doesn't exist, make it
+        if (!existingTeams) {
+          var newTeam = Object.assign({name : args.teamName}, DEFAULTS.team); // copies DEFAULTS.team, adding name node
+          newTeamRef = FBRef.child('team').push(newTeam);
+          newTeamKey = newTeamRef.key();
+          console.log('new team created with key ' + newTeamKey);
+        } else if (existingTeams && !args.addToExistingTeam) { 
+          // if it does exist and we're not supposed to add, call failure
+          return args.failure();
         } else {
-          if (args.failure)
-            args.failure();
+          newTeamKey = Object.keys(existingTeams)[0];
+          newTeamRef = FBRef.child('team/' + newTeamKey);
         }
+
+        // add to new team
+        newTeamRef.child('members/' + _Auth.user.uid).update({
+          role : PhasedProvider.ROLE_ID.MEMBER
+        });
+
+        // add to my list of teams if not already in it
+        FBRef.child('profile/' + _Auth.user.uid + '/teams').orderByValue().equalTo(newTeamKey).once('value', function(snap){
+          if (!snap.val()) {
+            FBRef.child('profile/' + _Auth.user.uid + '/teams').push(newTeamKey);
+          }
+        });
+
+        // switch to that team
+        doSwitchTeam({
+          teamID : newTeamKey,
+          callback : args.success
+        });
       });
     }
 
@@ -1813,13 +1835,25 @@ angular.module('webappApp')
       if (WATCH_ASSIGNMENTS)
         watchAssignments();
 
-      // update user curTeam, presence on new team, presence and lastOnline on old team
-      FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamID);
-      FBRef.child('team/' + args.teamID + '/members/' + _Auth.user.uid + '/presence').set(PhasedProvider.PRESENCE_ID.ONLINE);
-      FBRef.child('team/' + oldTeam + '/members/' + _Auth.user.uid).update({
-        presence : PhasedProvider.PRESENCE_ID.OFFLINE,
-        lastOnline : Firebase.ServerValue.TIMESTAMP
+      // update user curTeam
+      FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamID, function() {
+        // execute callback if it exists
+        if (typeof args.callback == 'function')
+          args.callback();
       });
+
+      // update presence information for both teams
+      if (WATCH_PRESENCE) {
+        // cancel old handler
+        FBRef.child('team/' + oldTeam + '/members/' + PhasedProvider.user.uid).onDisconnect().cancel();
+        // go offline for old team
+        FBRef.child('team/' + oldTeam + '/members/' + _Auth.user.uid).update({
+          presence : PhasedProvider.PRESENCE_ID.OFFLINE,
+          lastOnline : Firebase.ServerValue.TIMESTAMP
+        });
+        // go online and set new handler for current team
+        watchPresence();
+      }
     }
 
     /**
