@@ -793,6 +793,7 @@ angular.module('webappApp')
         // L1. stash handler to stop watching event if needed
         var deregister_obj = {
             address : 'profile/' + id,
+            eventType : 'child_changed',
             callback : handler
           };
 
@@ -947,6 +948,7 @@ angular.module('webappApp')
 
       PhasedProvider.team._FBHandlers.push({
         address : teamKey + '/name',
+        eventType : 'value',
         callback : cb
       });
 
@@ -961,6 +963,7 @@ angular.module('webappApp')
 
       PhasedProvider.team._FBHandlers.push({
         address : teamKey + '/statuses',
+        eventType : 'child_added',
         callback : cb
       });
 
@@ -974,6 +977,7 @@ angular.module('webappApp')
 
       PhasedProvider.team._FBHandlers.push({
         address : teamKey + '/category',
+        eventType : 'value',
         callback : cb
       });
 
@@ -986,6 +990,7 @@ angular.module('webappApp')
 
       PhasedProvider.team._FBHandlers.push({
         address : teamKey + '/billing',
+        eventType : 'value',
         callback : cb
       });
 
@@ -1008,6 +1013,7 @@ angular.module('webappApp')
 
       PhasedProvider.team._FBHandlers.push({
         address : teamKey + '/members',
+        eventType : 'child_changed',
         callback : cb
       });
     }
@@ -1023,7 +1029,7 @@ angular.module('webappApp')
       // unwatch all team watchers
       for (var i in PhasedProvider.team._FBHandlers) {
         var handler = PhasedProvider.team._FBHandlers[i];
-        FBRef.child(handler.address).off(handler.callback);
+        FBRef.child(handler.address).off(handler.eventType, handler.callback);
       }
       PhasedProvider.team._FBHandlers = [];
 
@@ -1031,7 +1037,7 @@ angular.module('webappApp')
       for (var i in PhasedProvider.team.members) {
         var handlers = PhasedProvider.team.members[i]._FBHandlers;
         for (var j in handlers) {
-          FBRef.child(handlers[j].address).off(handlers[j].callback);
+          FBRef.child(handlers[j].address).off(handlers[j].eventType, handlers[j].callback);
         }
         PhasedProvider.team.members[i]._FBHandlers = [];
       }
