@@ -13,7 +13,8 @@
         </div>
         <div class="export-users col-xs-3">
           <h3>Categories</h3>
-          <select class="" name="">
+          <select class="" name="" ng-model="catSelect">
+            <option  value="">All</option>
             <option ng-repeat="(key, category) in team.categoryObj" value="{{key}}">{{category.name}}</option>
           </select>
         </div>
@@ -25,8 +26,38 @@
         </div>
       </div>
       <button ng-click="getTasks()"></button>
-      {{returnValues}}
 
+      <div class="export-data" ng-repeat="(key,user) in returnValues">
+        <h4>{{team.members[key].name}}</h4>
+        <table class="table">
+          <thead>
+            <tr class="row">
+              <th class="col-xs-6">
+                Task
+              </th>
+              <th class="col-xs-3">
+                Category
+              </th>
+              <th class="col-xs-3">
+                Time
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="row" ng-repeat="item in user | orderBy : 'time':true">
+              <td class="col-xs-6">
+                {{item.name}}
+              </td>
+              <td class="col-xs-3">
+                {{$parent.team.categoryObj[item.cat].name}}
+              </td>
+              <td class="col-xs-3">
+                <span>{{item.time | amDateFormat:'MM.DD.YYYY HH:mm:ss'}}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
  		 	<!-- <table class="table table-hover">
 				<tbody>

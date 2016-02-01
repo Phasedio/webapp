@@ -15,6 +15,7 @@ angular.module('webappApp')
 
     var users = [],category = [],time = [];
     $scope.returnValues = {};
+    $scope.catSelect = "";
 
 
     // bounce users without Admin or Owner permissions
@@ -45,17 +46,26 @@ angular.module('webappApp')
     }
 
     $scope.getTasks = function(){
+      console.log($scope.catSelect);
       for (var i = 0; i < users.length; i++) {
-        getData(users[i]);
+        getData(users[i],$scope.catSelect);
       }
     };
 
-    function getData(user){
+    function getData(user,cat){
       var x = user;
-      FBRef.child('team').child(Auth.currentTeam).child('all').child(x).once('value',function(snap){
-        $scope.returnValues[x] = snap.val();
+      if(cat){
+        FBRef.child('team').child(Auth.currentTeam).child('all').child(x).orderByChild("cat").equalTo(cat).once('value',function(snap){
+          $scope.returnValues[x] = snap.val();
 
-      });
+        });
+      }else{
+        FBRef.child('team').child(Auth.currentTeam).child('all').child(x).once('value',function(snap){
+          $scope.returnValues[x] = snap.val();
+
+        });
+      }
+
     }
 
 
