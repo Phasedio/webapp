@@ -224,11 +224,11 @@ var setUpFirebase = function() {
 					plan : 'basic'
 				},
 				category : {
-					'0' : {
+					'0a' : {
 						color : "#ffcc00",
 						name : 'Communication'
 					},
-					'1' : {
+					'1b' : {
 						color : "#5ac8fb",
 						name : "Planning"
 					}
