@@ -16,7 +16,13 @@ angular.module('webappApp')
     var users = [],category = [],time = [];
     $scope.returnValues = {};
     $scope.catSelect = "";
-
+    $scope.time = {
+      start : '',
+      end :''
+    };
+    var now = new Date().getTime();
+    $scope.time.start = new Date(now - 604800000);
+    $scope.time.end = new Date(now);
 
     // bounce users without Admin or Owner permissions
     $scope.$on('Phased:currentUserProfile', function(){
@@ -46,6 +52,8 @@ angular.module('webappApp')
     }
 
     $scope.getTasks = function(){
+      console.log($scope.time);
+      $scope.returnValues = {};
       console.log($scope.catSelect);
       for (var i = 0; i < users.length; i++) {
         getData(users[i],$scope.catSelect);
@@ -54,9 +62,21 @@ angular.module('webappApp')
 
     function getData(user,cat){
       var x = user;
+      var s = new Date($scope.time.start).getTime();//start time
+      var e = new Date($scope.time.end).getTime();//end time
       if(cat){
         FBRef.child('team').child(Auth.currentTeam).child('all').child(x).orderByChild("cat").equalTo(cat).once('value',function(snap){
-          $scope.returnValues[x] = snap.val();
+          var y = snap.val();
+          var a = []
+          console.log(y);
+          _.forOwn(y, function(value, key) {
+            if(value.time > s && value.time < e){
+              a.push(value);
+            }
+          } );
+
+          console.log(y,a);
+          $scope.returnValues[x] = a;
 
         });
       }else{
