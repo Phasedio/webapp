@@ -940,6 +940,7 @@ angular.module('webappApp')
         var handler = PhasedProvider.team._FBHandlers[i];
         FBRef.child(handler.address).off(handler.callback);
       }
+      PhasedProvider.team._FBHandlers = [];
 
       // unwatch all team members
       for (var i in PhasedProvider.team.members) {
@@ -947,6 +948,7 @@ angular.module('webappApp')
         for (var j in handlers) {
           FBRef.child(handlers[j].address).off(handlers[j].callback);
         }
+        PhasedProvider.team.members[i]._FBHandlers = [];
       }
     }
 
