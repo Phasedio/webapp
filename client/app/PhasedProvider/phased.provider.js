@@ -771,7 +771,7 @@ angular.module('webappApp')
         // clean notifications once
         $.post('./api/notification/clean', {
           user: PhasedProvider.user.uid,
-          team : PhasedProvider.team.name
+          team : PhasedProvider.team.uid
         })
           .success(function(data) {
             if (data.success) {
@@ -785,7 +785,7 @@ angular.module('webappApp')
           });
 
         // set up watcher
-        var notifAddress = 'notif/' + PhasedProvider.team.name + '/' + PhasedProvider.user.uid;
+        var notifAddress = 'notif/' + PhasedProvider.team.uid + '/' + PhasedProvider.user.uid;
         FBRef.child(notifAddress)
           .on('value', function(data) {
             var notifications = data.val();
@@ -1562,7 +1562,7 @@ angular.module('webappApp')
       _setAssignmentStatus(assignmentID, PhasedProvider.TASK_STATUS_ID.IN_PROGRESS);
 
       // publish to stream
-      var ref = FBRef.child('team/' + PhasedProvider.team.name);
+      var ref = FBRef.child('team/' + PhasedProvider.team.uid);
       ref.child('task/' + PhasedProvider.user.uid).set(task);
       ref.child('all/' + PhasedProvider.user.uid).push(task);
     }
@@ -1633,13 +1633,13 @@ angular.module('webappApp')
       ga('send', 'event', 'Task', 'task status update: ' + PhasedProvider.TASK_STATUSES[newStatus]);
 
       // push to database
-      FBRef.child('team/' + PhasedProvider.team.name + '/assignments/all/' + assignmentID + '/status').set(newStatus);
+      FBRef.child('team/' + PhasedProvider.team.uid + '/assignments/all/' + assignmentID + '/status').set(newStatus);
       updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.STATUS);
 
       // if issue was complete, timestamp it
       if (newStatus == 1) {
         var time = new Date().getTime();
-        FBRef.child('team/' + PhasedProvider.team.name + '/assignments/all/' + assignmentID).update({"completeTime" : time});
+        FBRef.child('team/' + PhasedProvider.team.uid + '/assignments/all/' + assignmentID).update({"completeTime" : time});
       }
     }
 
@@ -1655,7 +1655,7 @@ angular.module('webappApp')
 
     var doTakeTask = function(assignmentID) {
       ga('send', 'event', 'Task', 'task taken');
-      var assignmentsPath = 'team/' + PhasedProvider.team.name + '/assignments/';
+      var assignmentsPath = 'team/' + PhasedProvider.team.uid + '/assignments/';
 
       // 1. remove task from /unassigned
       delete assignmentIDs.unassigned[assignmentIDs.unassigned.indexOf(assignmentID)];
@@ -1901,13 +1901,13 @@ angular.module('webappApp')
       // 3A. category exists; update
       if (catExists) {
         console.log('cat exists at ' + key);
-        FBRef.child('team/' + PhasedProvider.team.name + '/category/' + key).set(category, getCategories);
+        FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(category, getCategories);
       }
 
       // 3B.
       else {
         console.log('cat doesn\'t exist');
-        FBRef.child('team/' + PhasedProvider.team.name + '/category').push(category, getCategories);
+        FBRef.child('team/' + PhasedProvider.team.uid + '/category').push(category, getCategories);
       }
     }
 
@@ -1933,7 +1933,7 @@ angular.module('webappApp')
       }
 
       // 2. 
-      FBRef.child('team/' + PhasedProvider.team.name + '/category/' + key).set(null, getCategories);
+      FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(null, getCategories);
     }
 
     /**
@@ -1974,13 +1974,13 @@ angular.module('webappApp')
           //console.log('invite sent to current user');
           var k = Object.keys(user);
           var memberData = {
-            teams : { 0 : PhasedProvider.team.name },
+            teams : { 0 : PhasedProvider.team.uid },
             email : invited.email,
             inviteEmail: _Auth.user.email,
             inviteName: _Auth.user.name
           }
           FBRef.child('team-invite-existing-member').push(memberData);
-          FBRef.child('profile/' + k[0] + '/teams').push(PhasedProvider.team.name);
+          FBRef.child('profile/' + k[0] + '/teams').push(PhasedProvider.team.uid);
         } else {
           //console.log('invited is not a current user, looking to see if they are in profile-in-waiting');
 
@@ -1991,11 +1991,11 @@ angular.module('webappApp')
               //console.log('invite sent to user in profile-in-waiting');
 
               var y = Object.keys(user);
-              FBRef.child('profile-in-waiting').child(y[0]).child('teams').push(PhasedProvider.team.name);
+              FBRef.child('profile-in-waiting').child(y[0]).child('teams').push(PhasedProvider.team.uid);
             } else {
               //console.log('invited is new to the system, setting up profile-in-waiting');
               var PIWData = {
-                'teams' : { 0 : PhasedProvider.team.name},
+                'teams' : { 0 : PhasedProvider.team.uid},
                 'email' : invited.email,
                 'inviteEmail': inviter.email,
                 'inviteName': inviter.name
@@ -2100,9 +2100,9 @@ angular.module('webappApp')
     * optionally calls a callback
     */
 
-    var _switchTeam = function(teamName, callback) {
+    var _switchTeam = function(teamID, callback) {
       var args = {
-        teamName : teamName,
+        teamID : teamID,
         callback : callback
       }
       registerAsync(doSwitchTeam, args);
@@ -2110,34 +2110,25 @@ angular.module('webappApp')
 
     var doSwitchTeam = function(args) {
       // stash team
-      var oldTeam = PhasedProvider.team.name + '';
+      var oldTeam = PhasedProvider.team.uid + '';
 
       // remove old event handlers
       unwatchTeam();
 
       // reload team data
-      PhasedProvider.team.name = args.teamName;
-      _Auth.currentTeam = args.teamName;
+      PhasedProvider.team.uid = args.teamID;
+      _Auth.currentTeam = args.teamID;
       initializeTeam();
 
       if (WATCH_ASSIGNMENTS)
         watchAssignments();
 
-      // update profile curTeam and presence
-      var updateData = {
-        curTeam : args.teamName,
-        presence : {}
-      };
-      updateData.presence[oldTeam] = { // offline for the old team
-          lastOnline : Firebase.ServerValue.TIMESTAMP,
-          status : PhasedProvider.PRESENCE.OFFLINE
-        };
-      updateData.presence[args.teamName] = { // online for the new team
-        status : PhasedProvider.PRESENCE.ONLINE
-      }
-      FBRef.child('profile/' + _Auth.user.uid).update(updateData, function() {
-        if (args.callback)
-          args.callback();
+      // update user curTeam, presence on new team, presence and lastOnline on old team
+      FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamID);
+      FBRef.child('team/' + args.teamID + '/members/' + _Auth.user.uid + '/presence').set(PhasedProvider.PRESENCE_ID.ONLINE);
+      FBRef.child('team/' + oldTeam + '/members/' + _Auth.user.uid).update({
+        presence : PhasedProvider.PRESENCE_ID.OFFLINE,
+        lastOnline : Firebase.ServerValue.TIMESTAMP
       });
     }
 
@@ -2170,7 +2161,7 @@ angular.module('webappApp')
       }
 
       PhasedProvider.notif.stream[index].read = true;
-      FBRef.child('notif/' + PhasedProvider.team.name + '/' + _Auth.user.uid + '/' + key).update({
+      FBRef.child('notif/' + PhasedProvider.team.uid + '/' + _Auth.user.uid + '/' + key).update({
         read : true
       });
 
