@@ -25,8 +25,11 @@
 
         </div>
       </div>
-      <button ng-click="getTasks()"></button>
+      <button ng-click="getTasks()">Get data</button>
 
+      <div ng-if="returnValues">
+        <button ng-click="exportData()">Export this data</button>
+      </div>
       <div class="export-data" ng-repeat="(key,user) in returnValues">
         <h4>{{team.members[key].name}}</h4>
         <table class="table">
@@ -56,7 +59,9 @@
               </td>
             </tr>
           </tbody>
+
         </table>
+        <h6 ng-show="user.length == 0" align="center">No updates</h6>
       </div>
 
  		 	<!-- <table class="table table-hover">

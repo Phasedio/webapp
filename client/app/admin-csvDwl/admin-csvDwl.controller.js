@@ -14,7 +14,7 @@ angular.module('webappApp')
     //form vars
 
     var users = [],category = [],time = [];
-    $scope.returnValues = {};
+    $scope.returnValues = false;
     $scope.catSelect = "";
     $scope.time = {
       start : '',
@@ -59,6 +59,10 @@ angular.module('webappApp')
         getData(users[i],$scope.catSelect);
       }
     };
+
+    $scope.exportData = function(){
+      console.log($scope.returnValues);
+    }
 
     function getData(user,cat){
       var x = user;
