@@ -26,7 +26,12 @@ angular.module('webappApp')
     /**
     * Internal vars
     */
-    var PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
+    var DEFAULTS = {
+      projectID : 0,
+      columnID : 0,
+      cardID : 0
+    }, 
+      PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       PHASED_META_SET_UP = false, // set to true after static meta values are loaded
       WATCH_ASSIGNMENTS = false, // set in setWatchAssignments in config; tells init whether to do it
@@ -1065,82 +1070,6 @@ angular.module('webappApp')
       });
     }; // end doWatchAssignments()
 
-    // updates 'all' property of an assignment container (eg, assignments.all or archive.all)
-    // matches all to incoming data
-    // internal only
-    var updateContainerAll = function(container, data) {
-      var all;
-      if (container == 'assignments')
-        all = PhasedProvider.assignments.all;
-      else if (container == 'archive')
-        all = PhasedProvider.archive.all;
-      else
-        return;
-
-      if (!data) {
-        all = {};
-        return;
-      }
-
-      // 1. if assignment doesn't exist in all, add it, end of story
-      // 2. else, check its properties and update those that are out of sync
-      // (i is the assignment uid)
-      for (var i in data) {
-        if (!(i in all)) {
-          // 1.
-          all[i] = data[i];
-
-        } else {
-          // 2.
-          // a. sync extant properties in all, delete those no longer in data
-          // b. add new properties from data
-          // (j is property name)
-
-          for (var j in all[i]) {
-            // a.
-            if (j in data[i]) {
-              all[i][j] = data[i][j];
-            } else {
-              delete all[i][j];
-            }
-          }
-
-          for (var j in data[i]) {
-            // b.
-            if (!(j in all[i])) {
-              all[i][j] = data[i][j];
-            }
-          }
-
-        }
-      } // end for var i in data
-
-      // if assignment isn't in data, delete it in all
-      for (var i in all) {
-        if (!(i in data)) {
-          delete all[i];
-        }
-      }
-    }
-
-    /**
-    *
-    * links up the archived tasks from the archiveContainerName to the appropriate $scope.archive address
-    * (sim to syncAssignments())
-    */
-    var syncArchive = function(archiveContainerName) {
-      if (!(archiveContainerName in archiveIDs)) return; // ensures valid address
-
-      var UIDContainer = archiveIDs[archiveContainerName];
-
-      for (var i in UIDContainer) {
-        var assignmentID = UIDContainer[i];
-        if (assignmentID in PhasedProvider.archive.all)
-          PhasedProvider.archive[archiveContainerName][assignmentID] = PhasedProvider.archive.all[assignmentID];
-        else
-          delete PhasedProvider.archive[archiveContainerName][assignmentID];
-      }
-    }
 
     /**
     *
@@ -1191,12 +1120,12 @@ angular.module('webappApp')
     var makeTaskForDB = function(newTask, includeHist) {
       // properties to check
       var required = {
-        strings : ['name', 'user'],
+        strings : ['name'],
         numbers : [],
         booleans: []
       };
       var optional = {
-        strings : ['cat', 'weather', 'taskPrefix', 'photo', 'assignee', 'assigned_by', 'city'],
+        strings : ['cat', 'taskPrefix', 'photo', 'user', 'created_by', 'assigned_to', 'assigned_by'],
         numbers : ['deadline', 'priority', 'status'],
         booleans : ['unassigned']
       };
@@ -1205,16 +1134,6 @@ angular.module('webappApp')
       var status = {
         time: new Date().getTime()
       };
-
-      // check for location
-      if (typeof newTask.location === 'object' &&
-          typeof newTask.location.lat === 'number' &&
-          typeof newTask.location.long === 'number') {
-        status.location = {
-          lat : newTask.location.lat,
-          long : newTask.location.long
-        }
-      }
 
       // check for history
       if (includeHist) {
@@ -1575,47 +1494,43 @@ angular.module('webappApp')
     *
     * adds a task
     * 1. check & format input
-    * 2. push to db
+    * 2. push to db (using default project / card if none specified)
     *
     */
-    var _addAssignment = function(newTask) {
-      registerAsync(doAddAssignment, newTask);
+    var _addAssignment = function(newTask, projectID, columnID, cardID) {
+      var args = {
+        newTask : newTask,
+        projectID : projectID,
+        columnID : columnID,
+        cardID : cardID
+      }
+      registerAsync(doAddAssignment, args);
     }
 
-    var doAddAssignment = function(newTask) {
+    var doAddAssignment = function(args) {
       ga('send', 'event', 'Task', 'task added');
 
+      var newTask = args.newTask,
+        projectID = args.projectID || DEFAULTS.projectID,
+        columnID = args.columnID || DEFAULTS.columnID,
+        cardID = args.cardID || DEFAULTS.cardID;
+
       // 1. clean newTask
-      newTask.user = _Auth.user.uid;
+      newTask.assigned_by = _Auth.user.uid; // this changes if the task is re-assigned
+      newTask.created_by = _Auth.user.uid; // this never changes
       newTask = makeTaskForDB(newTask);
       if (!newTask) return; // makeTask failed
 
       // 2. push to db
-
-      // 2A add task to team/(teamname)/assignments/all
-      // 2B add references to /to/assignee or /unassigned and /by/me
-
-      var team = PhasedProvider.team.name,
-        assignmentsRef = FBRef.child('team/' + team + '/assignments');
+      var newTaskRef = FBRef.child('team/' + PhasedProvider.team.uid + '/projects/' + projectID + '/columns/' + columnID + '/cards/' + cardID + '/tasks')
+        .push(newTask);
 
       // 2A
-      var newTaskRef = assignmentsRef.child('all').push(newTask);
-      var newTaskID = newTaskRef.key();
-      assignmentsRef.child('all/' + newTaskID + '/key').set(newTaskID); // set key on new task object
-      updateTaskHist(newTaskID, PhasedProvider.TASK_HISTORY_CHANGES.CREATED); // update new task's history
-      // 2B
-      assignmentIDs['by_me'].push(newTaskID);
-      assignmentsRef.child('by/' + PhasedProvider.user.uid).set(assignmentIDs['by_me']);
 
-      // get array, push (array style), send back to server
-      var path = newTask.unassigned ? 'unassigned' : 'to/' + newTask.assignee;
-      assignmentsRef.child(path).once('value', function(data) {
-        data = data.val();
-        data = data || [];
-        data = objToArray(data);
-        data.push(newTaskID);
-        assignmentsRef.child(path).set(data);
-      });
+      var newTaskID = newTaskRef.key();
+      // assignmentsRef.child('all/' + newTaskID + '/key').set(newTaskID); // set key on new task object
+      // updateTaskHist(newTaskID, PhasedProvider.TASK_HISTORY_CHANGES.CREATED); // update new task's history
+      
     }
 
     /**
