@@ -2192,25 +2192,17 @@ angular.module('webappApp')
     }
 
     var doSwitchTeam = function(args) {
-      // reset team
+      // stash team
       var oldTeam = PhasedProvider.team.name + '';
-      PhasedProvider.team.name = args.teamName;
-      _Auth.currentTeam = args.teamName;
-      PhasedProvider.team.members = {};
-      PhasedProvider.team.lastUpdated = [];
-      PhasedProvider.team.history = [];
-      PhasedProvider.team.teamLength = 0;
 
       // remove old event handlers
-      for (var i in setUpTeamMembers.watches) {
-        var address = setUpTeamMembers.watches[i].address,
-          event = setUpTeamMembers.watches[i].event;
-        FBRef.child(address).off(event);
-      }
-      setUpTeamMembers.watches = []; // clear
+      unwatchTeam();
 
       // reload team data
-      setUpTeamMembers();
+      PhasedProvider.team.name = args.teamName;
+      _Auth.currentTeam = args.teamName;
+      initializeTeam();
+
       if (WATCH_ASSIGNMENTS)
         watchAssignments();
 
