@@ -160,7 +160,9 @@ angular.module('webappApp')
 
       initializeMeta(); // gathers static values set in DB
       initializeTeam(); // gathers/watches team and members
-        watchAssignments();
+
+      /*if (WATCH_ASSIGNMENTS)
+        watchAssignments();*/
       if (WATCH_NOTIFICATIONS)
         watchNotifications();
       if (WATCH_PRESENCE)
@@ -176,17 +178,17 @@ angular.module('webappApp')
     this.$get = ['$rootScope', function(_rootScope) {
       $rootScope = _rootScope;
       // register functions listed after this in the script...
-      PhasedProvider.getArchiveFor = _getArchiveFor;
-      PhasedProvider.moveToFromArchive = _moveToFromArchive;
-      PhasedProvider.activateTask = _activateTask;
-      PhasedProvider.takeTask = _takeTask;
-      PhasedProvider.addAssignment = _addAssignment;
+      // PhasedProvider.getArchiveFor = _getArchiveFor;
+      // PhasedProvider.moveToFromArchive = _moveToFromArchive;
+      // PhasedProvider.activateTask = _activateTask;
+      // PhasedProvider.takeTask = _takeTask;
+      // PhasedProvider.addAssignment = _addAssignment;
       PhasedProvider.addStatus = _addStatus;
       PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
       PhasedProvider.addMember = _addMember;
       PhasedProvider.addTeam = _addTeam;
       PhasedProvider.switchTeam = _switchTeam;
-      PhasedProvider.watchMemberAssignments = _watchMemberAssignments;
+      // PhasedProvider.watchMemberAssignments = _watchMemberAssignments;
       PhasedProvider.changeMemberRole = _changeMemberRole;
       PhasedProvider.addCategory = _addCategory;
       PhasedProvider.deleteCategory = _deleteCategory;
@@ -957,119 +959,6 @@ angular.module('webappApp')
       }
     }
 
-    /**
-    *
-    * sets up watchers for current users task assignments (to and by
-    * and also unassigned tasks), filling Phased.assignments (as PhasedProvider.assignments)
-    * called in init() (could be exposed to controller)
-    *
-    *   - own assignments (to self or to others) assignments/to/(me)
-    *   - assignments to me by others assignments/by/(me)
-    *   - unassigned tasks assignments/un
-    */
-
-    var watchAssignments = function() {
-      // callbacks
-
-      /**
-      *
-      * updates PhasedProvider.assignments.all
-      *
-      * instead of replacing the whole object, compares assignments and props, then updates
-      * allowing for persistent references throughout the app
-      *
-      */
-      var updateAllAssignments = function(data) {
-        data = data.val();
-
-        updateContainerAll('assignments', data);
-
-        // sync all containers
-        for (var i in assignmentIDs) {
-          syncAssignments(i);
-        }
-
-        // once member data is in, broadcast that the assignment data is in
-        registerAfterMembers(function(){
-          $rootScope.$broadcast("Phased:assignments:data");
-        });
-      } // updateAllAssignments()
-
-
-      /**
-      *
-      * de-indexes and stores the data (list of task IDs),
-      * then calls syncAssignments
-      *
-      */
-
-      var updateAssignmentGroup = function(data, groupName) {
-        assignmentIDs[groupName] = objToArray(data);
-        syncAssignments(groupName);
-      }
-
-      /**
-      *
-      * syncs assignments (in PhasedProvider.assignments.all) listed in the UIDContainer to the assignmentContainer
-      * used to maintain a running list of references in the container, eg, PhasedProvider.assignments.by_me, that point to
-      * the right assignment objects in PhasedProvider.assignments.all
-      *
-      */
-      var syncAssignments = function(assignmentContainerName) {
-        var UIDContainer = assignmentIDs[assignmentContainerName];
-
-        // loop through list
-        // add to obj ref container if in UID list 
-        for (var i in UIDContainer) {
-          var assignmentID = UIDContainer[i];
-          if (assignmentID in PhasedProvider.assignments.all)
-            PhasedProvider.assignments[assignmentContainerName][assignmentID] = PhasedProvider.assignments.all[assignmentID];
-          else
-            delete PhasedProvider.assignments[assignmentContainerName][assignmentID];
-        }
-
-        // loop through obj ref container
-        // remove from container if not in all or list
-        for (var assignmentID in PhasedProvider.assignments[assignmentContainerName]) {
-          if (
-            !(assignmentID in PhasedProvider.assignments.all)
-            || UIDContainer.indexOf(assignmentID) < 0) {
-            delete PhasedProvider.assignments[assignmentContainerName][assignmentID];
-          }
-        }
-      }
-
-      // set up watchers
-      var refString = 'team/' + PhasedProvider.team.name + '/assignments';
-
-      FBRef.child(refString + '/all').on('value', updateAllAssignments);
-
-      FBRef.child(refString + '/to/' + PhasedProvider.user.uid).on('value', function(data) {
-        data = data.val();
-        updateAssignmentGroup(data, 'to_me');
-
-        registerAfterMembers(function (){ // only do after members are in
-          $rootScope.$broadcast("Phased:assignments:to_me");
-        });
-      });
-
-      FBRef.child(refString + '/by/' + PhasedProvider.user.uid).on('value', function(data) {
-        data = data.val();
-        updateAssignmentGroup(data, 'by_me');
-        registerAfterMembers(function(){
-          $rootScope.$broadcast("Phased:assignments:by_me");
-        });
-      });
-
-      FBRef.child(refString + '/unassigned').on('value', function(data) {
-        data = data.val();
-        updateAssignmentGroup(data, 'unassigned');
-        registerAfterMembers(function(){
-          $rootScope.$broadcast("Phased:assignments:unassigned");
-        });
-      });
-    }; // end doWatchAssignments()
-
 
     /**
     *
@@ -1206,289 +1095,6 @@ angular.module('webappApp')
     ** all registered as callbacks with registerAsync(),
     **
     **/
-
-    /**
-    *
-    * gets archived tasks at the requested address
-    *
-    * 1. checks that address is valid
-    * 2. makes firebase calls that fill PhasedProvider.archive.all and archiveIDs[address]
-    * 3. calls syncArchive which fills out PhasedProvider.archive[address]
-    *
-    * on demand, not watched
-    * can get to_me, by_me, and unassigned
-    */
-    var _getArchiveFor = function(address) {
-      registerAsync(doGetArchiveFor, address);
-    }
-
-    var doGetArchiveFor = function(address) {
-      ga('send', 'event', 'Archive', 'archive viewed');
-      var archivePath = 'team/' + PhasedProvider.team.name + '/assignments/archive/',
-        pathSuffix = '';
-
-      // 1
-      // in 'all' case, get entire archive and indexes and be done with it
-      // for every other valid address, only get that index key and all
-      switch(address) {
-        case 'all' :
-          FBRef.child(archivePath).once('value', function(data){
-            data = data.val() || [];
-
-            updateContainerAll('archive', data.all);
-            archiveIDs.to_me = data.to ? objToArray(data.to[_Auth.user.uid]) : [];
-            archiveIDs.by_me = data.by ? objToArray(data.by[_Auth.user.uid]) : [];
-            archiveIDs.unassigned = objToArray(data.unassigned);
-
-            syncArchive('to_me');
-            syncArchive('by_me');
-            syncArchive('unassigned');
-            // once member data is in, broadcast that the assignment data is in
-            registerAfterMembers(function(){
-              $rootScope.$broadcast("Phased:assignments:archive:data");
-            });
-          });
-          return;
-        case 'to_me' :
-          pathSuffix = 'to/' + PhasedProvider.user.uid;
-          break;
-        case 'by_me' :
-          pathSuffix = 'by/' + PhasedProvider.user.uid;
-          break;
-        case 'unassigned' :
-          pathSuffix = 'unassigned';
-          break;
-        default:
-          return;
-      }
-
-      // 2
-      // get archive/all
-      FBRef.child(archivePath + 'all').once('value', function(data){
-        PhasedProvider.archive.all = data.val() || [];
-
-        // once member data is in, broadcast that the assignment data is in
-        registerAfterMembers(function(){
-          $rootScope.$broadcast("Phased:assignments:archive:data");
-        });
-
-        // if other call is complete
-        if (archiveIDs[address])
-          syncArchive(address); // 3
-      });
-
-      // get appropriate IDs
-      FBRef.child(archivePath + pathSuffix).once('value', function(data){
-        archiveIDs[address] = objToArray(data.val());
-
-        // if other call is complete
-        if ('all' in PhasedProvider.archive)
-          syncArchive(address); // 3
-      });
-    }
-
-    /**
-    *
-    * moves a task to or from the archive
-    *
-    * 1.A remove from /to/(me) or /unassigned (& note which)
-    * 1.B remove from /by
-    * 1.C remove from /all
-    *
-    * 2.A add to archive/to/(me) or archive/unassigned
-    *   depending on which it was removed from
-    * 2.B add to archive/by
-    * 2.C add to archive/all
-    * 2.D add to $scope.archive.all and run sync, since archive isn't watched
-    */
-    var _moveToFromArchive = function(assignmentID, unarchive) {
-      var args = {
-        assignmentID : assignmentID,
-        unarchive : unarchive
-      }
-      registerAsync(doMoveToFromArchive, args);
-    }
-
-    var doMoveToFromArchive = function(args) {
-      ga('send', 'event', 'Task', 'task archived');
-      var path = "team/" + PhasedProvider.team.name + "/assignments/",
-        to_me = false,
-        idsContainer = assignmentIDs,
-        assignmentContainer = PhasedProvider.assignments,
-        assignmentID = args.assignmentID,
-        unarchive = args.unarchive || false,
-        assignment;
-
-      // ensure assignment is where it should be and get a reference
-      if (unarchive) {
-        // assignment should be in PhasedProvider.archive.all
-        if (assignmentID in PhasedProvider.archive.all)
-          assignment = PhasedProvider.archive.all[assignmentID];
-        else {
-          // not where it should be, break
-          console.log('assignment ' + assignmentID + ' missing from memory');
-          return false;
-        }
-      } else {
-        // assignment should be in PhasedProvider.assignments.all
-        if (assignmentID in PhasedProvider.assignments.all)
-          assignment = PhasedProvider.assignments.all[assignmentID];
-        else {
-          // not where it should be, break
-          console.log('assignment ' + assignmentID + ' missing from memory');
-          return false;
-        }
-      }
-
-      assignment = makeTaskForDB(assignment, true);
-      if (!assignment) return; // makeTaskForDB failed
-
-      // -1.A
-      // reverse everything if unarchive is true:
-      // remove from archiveIDs and PhasedProvider.archive here...
-      if (unarchive) {
-        path += 'archive/';
-        idsContainer = archiveIDs;
-        assignmentContainer = PhasedProvider.archive;
-        ga('send', 'event', 'Task', 'task unarchived');
-      } else {
-        ga('send', 'event', 'Task', 'task archived');
-      }
-
-      // 1. REMOVAL
-
-      // 1.A
-      if (idsContainer.to_me && idsContainer.to_me.indexOf(assignmentID) > -1) {
-        to_me = true;
-        FBRef.child(path + 'to/' + PhasedProvider.user.uid).set(popFromList(assignmentID, idsContainer['to_me']));
-      }
-      else if (idsContainer.unassigned && idsContainer.unassigned.indexOf(assignmentID) > -1) {
-        to_me = false;
-        FBRef.child(path + 'unassigned').set(popFromList(assignmentID, idsContainer['unassigned']));
-      }
-      else {
-        console.log('not found in to_me or unassigned (' + assignmentID + ')', idsContainer.to_me, idsContainer.unassigned);
-        return;
-      }
-
-      // 1.B
-      FBRef.child(path + 'by/' + PhasedProvider.user.uid).set(popFromList(assignmentID, idsContainer['by_me']));
-
-      // 1.C
-      FBRef.child(path + 'all/' + assignmentID).remove();
-
-      // -1.B
-      if (unarchive) {
-        path = "team/" + PhasedProvider.team.name + "/assignments/";
-        idsContainer = assignmentIDs;
-        assignmentContainer = PhasedProvider.assignments;
-      } else {
-        path += 'archive/';
-        idsContainer = archiveIDs;
-        assignmentContainer = PhasedProvider.archive;
-      }
-
-      // 2. ADDAL
-
-      // 2.A
-      // for this and 2.B, have to get list from server (in add to archive case)
-      if (to_me) {
-        FBRef.child(path + 'to/' + PhasedProvider.user.uid).once('value', function(data){
-          data = data.val();
-          idsContainer['to_me'] = data || [];
-          idsContainer['to_me'].push(assignmentID);
-          FBRef.child(path + 'to/' + PhasedProvider.user.uid).set(idsContainer['to_me']);
-          if ('all' in PhasedProvider.archive) syncArchive('to_me');
-        });
-      }
-      else { // unassigned
-        FBRef.child(path + 'unassigned').once('value', function(data){
-          data = data.val();
-          idsContainer['unassigned'] = data || [];
-          idsContainer['unassigned'].push(assignmentID);
-          FBRef.child(path + 'unassigned').set(idsContainer['unassigned']);
-          if ('all' in PhasedProvider.archive) syncArchive('unassigned');
-        });
-      }
-
-      // 2.B
-      FBRef.child(path + 'by/' + PhasedProvider.user.uid).once('value', function(data){
-        data = data.val();
-        idsContainer['by_me'] = data || [];
-        idsContainer['by_me'].push(assignmentID);
-        FBRef.child(path + 'by/' + PhasedProvider.user.uid).set(idsContainer['by_me']);
-      });
-
-      // 2.C
-      FBRef.child(path + 'all/' + assignmentID).set(assignment); // remote
-
-      // 2.D
-      if (unarchive) {
-        delete PhasedProvider.archive.all[assignmentID];
-        updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.UNARCHIVED);
-      } else {
-        PhasedProvider.archive.all[assignmentID] = assignment; // local, since archive isn't watched
-        updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.ARCHIVED);
-      }
-    }
-
-    /**
-    *
-    * watchs a member's assignments
-    *
-    * 1. get all assignments (once)
-    * 2. watch assigned /to/[user] and /by/[user]
-    * 3. push appropriate assignments from all into user.assignments.to_me or .by_me
-    *   (allowing the same object to be in both arrays at once)
-    *
-    */
-    var _watchMemberAssignments = function(id) {
-      registerAsync(doWatchMemberAssignments, id);
-    }
-
-    var doWatchMemberAssignments = function(id) {
-      var user = PhasedProvider.team.members[id];
-      user.assignments = {
-        to_me : [],
-        by_me: []
-      }
-
-      // 1.
-      var refString = 'team/' + PhasedProvider.team.name + '/assignments';
-      FBRef.child(refString + '/all').once('value', function(data) {
-        var all = data.val();
-        if (!all) return;
-
-        // 2.
-        FBRef.child(refString + '/to/' + id).on('value', function(data) {
-          data = data.val();
-          if (!data) return;
-          data = objToArray(data);
-
-          // 3.
-          // for each index in the to_me list, check if it's in all
-          // if it is, push it to the array
-          for (var i in data) {
-            if (data[i] in all)
-              user.assignments.to_me.push(all[data[i]]);
-          }
-        });
-        
-        // 2. same as above
-        FBRef.child(refString + '/by/' + id).on('value', function(data) {
-          data = data.val();
-          if (!data) return;
-          data = objToArray(data);
-
-          // 3. 
-          for (var i in data) {
-            if (data[i] in all)
-              user.assignments.by_me.push(all[data[i]]);
-          }
-        });
-      });
-    }
-
 
     /**
     *
@@ -2226,7 +1832,7 @@ angular.module('webappApp')
   })
   .config(['PhasedProvider', 'FURL', 'AuthProvider', function(PhasedProvider, FURL, AuthProvider) {
     PhasedProvider.setFBRef(FURL);
-    PhasedProvider.setWatchAssignments(true);
+    // PhasedProvider.setWatchAssignments(true);
     PhasedProvider.setWatchNotifications(true);
     PhasedProvider.setWatchPresence(true);
 
