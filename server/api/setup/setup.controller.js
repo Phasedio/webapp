@@ -207,6 +207,60 @@ var setUpFirebase = function() {
 						user : '0fcf827c-92d4-4343-afc4-7af8b093150f'
 					}
 				},
+				projects : {
+          '0A' : {
+            name : 'Default project',
+            description : 'This is the default project. It is hidden when it is the only project.',
+            isDefault : true, // isDefault to avoid default keyword
+            created : Firebase.ServerValue.TIMESTAMP,
+            columns : {
+              '0A' : {
+                name : 'Default column',
+                isDefault : true,
+                cards: {
+                  '0A' : {
+                    name : 'Default card',
+                    description : 'This is the default card. It is hidden when it is the only card.',
+                    isDefault : true,
+                    tasks : {}, // filled eventually
+                    history : {
+                      '0A' : {
+                        time : Firebase.ServerValue.TIMESTAMP,
+                        type : 0, // PhasedProvider.card.HISTORY_ID.CREATED
+                        snapshot : {
+                          name : 'Default card',
+                          description : 'This is the default card. It is hidden when it is the only card.',
+                          isDefault : true
+                        }
+                      }
+                    }
+                  }
+                },
+                history : {
+                  '0A' : {
+                    time : Firebase.ServerValue.TIMESTAMP,
+                    type : 0, // PhasedProvider.column.HISTORY_ID.CREATED
+                    snapshot : {
+                      name : 'Default column',
+                      isDefault : true
+                    }
+                  }
+                }
+              }
+            },
+            history : {
+              '0A' : {
+                time : Firebase.ServerValue.TIMESTAMP,
+                type : 0, // PhasedProvider.project.HISTORY_ID.CREATED
+                snapshot : {
+                  name : 'Default project',
+                  description : 'This is the default project. It is hidden when it is the only project.',
+                  isDefault : true
+                }
+              }
+            }
+          }
+        },
 				members : {
 					'0fcf827c-92d4-4343-afc4-7af8b093150f' : {
 						currentStatus : {

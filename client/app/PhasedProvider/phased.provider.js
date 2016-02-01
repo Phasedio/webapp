@@ -27,9 +27,86 @@ angular.module('webappApp')
     * Internal vars
     */
     var DEFAULTS = {
-      projectID : 0,
-      columnID : 0,
-      cardID : 0
+      // these all need to be strings
+      projectID : '0A',
+      columnID : '0A',
+      cardID : '0A',
+      // DEFAULTS.team is used in addTeam when creating a team
+      // it's important that the category etc keys be strings
+      team : {
+        statuses : {},
+        projects : {
+          '0A' : {
+            name : 'Default project',
+            description : 'This is the default project. It is hidden when it is the only project.',
+            isDefault : true, // isDefault to avoid default keyword
+            created : Firebase.ServerValue.TIMESTAMP,
+            columns : {
+              '0A' : {
+                name : 'Default column',
+                isDefault : true,
+                cards: {
+                  '0A' : {
+                    name : 'Default card',
+                    description : 'This is the default card. It is hidden when it is the only card.',
+                    isDefault : true,
+                    tasks : {}, // filled eventually
+                    history : {
+                      '0A' : {
+                        time : Firebase.ServerValue.TIMESTAMP,
+                        type : 0, // PhasedProvider.card.HISTORY_ID.CREATED
+                        snapshot : {
+                          name : 'Default card',
+                          description : 'This is the default card. It is hidden when it is the only card.',
+                          isDefault : true
+                        }
+                      }
+                    }
+                  }
+                },
+                history : {
+                  '0A' : {
+                    time : Firebase.ServerValue.TIMESTAMP,
+                    type : 0, // PhasedProvider.column.HISTORY_ID.CREATED
+                    snapshot : {
+                      name : 'Default column',
+                      isDefault : true
+                    }
+                  }
+                }
+              }
+            },
+            history : {
+              '0A' : {
+                time : Firebase.ServerValue.TIMESTAMP,
+                type : 0, // PhasedProvider.project.HISTORY_ID.CREATED
+                snapshot : {
+                  name : 'Default project',
+                  description : 'This is the default project. It is hidden when it is the only project.',
+                  isDefault : true
+                }
+              }
+            }
+          }
+        },
+        members : {},
+        billing : {
+          email : '',
+          name : '',
+          stripeid : '',
+          plan : 'basic'
+        },
+        category : {
+          '0A' : {
+            color: '#FFCC00',
+            name : 'Communication'
+          },
+          '1B' : {
+            color: '#5AC8FB',
+            name : 'Planning'
+          }
+        }
+      }
     }, 
       PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
