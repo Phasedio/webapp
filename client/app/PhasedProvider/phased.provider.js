@@ -735,7 +735,7 @@ angular.module('webappApp')
         watchTeam();
 
         // get billing info
-        checkPlanStatus(data.billing);
+        checkPlanStatus(data.billing.stripeid);
       });
     }
 
@@ -892,9 +892,9 @@ angular.module('webappApp')
       NB: broken in chromeapp -- do we need to implement this?
       TODO // BUG // ATTENTION
     */
-    var checkPlanStatus = function(billing) {
-      if (billing) {
-        $.post('./api/pays/find', {customer: billing.stripeid})
+    var checkPlanStatus = function(stripeid) {
+      if (stripeid) {
+        $.post('./api/pays/find', {customer: stripeid})
           .success(function(data){
             if (data.err) {
               console.log(data.err);
@@ -980,7 +980,8 @@ angular.module('webappApp')
 
       // billing
       cb = FBRef.child(teamKey + '/billing').on('value', function(snap){
-        checkPlanStatus(snap.val());
+        var billing = snap.val();
+        checkPlanStatus(billing.stripeid);
       });
 
       PhasedProvider.team._FBHandlers.push({
