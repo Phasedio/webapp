@@ -18,8 +18,26 @@ angular.module('webappApp')
       this.init() if not (via doAsync).
         Because of this, all methods exposed by PhasedProvider must be registered with registerAsync.
 
-        Currently team history is watched and synched with firebase but team assignments must explicitly
-      be watched (using PhasedProvider.watchAssignments() in some controller)
+      Class organization:
+
+      - Class setup
+        - Internal variables (defaults, flags, callback lists)
+        - Provider prototype definition
+        - general init -- this.init()
+        - constructor -- this.$get
+      - Config functions (which set flags)
+      - Async interfaces (which ensure exposed functions aren't called before data they depend on)
+      - Init functions (which gather team and member data and apply Firebase watchers, called in this.init())
+      - Watching functions (which observe firebase data and apply to the appropriate properties on the provider)
+      - Internal utilities (used by exposed functions to perform routine operations)
+        - issueNotification
+        - updateHistory
+        - cleaning objects to go to the DB
+        - other JS utils
+      - Exposed functions (which all use the async interfaces and are all applied to the Provider prototype)
+        - General account things
+        - "Data functions" (adding statuses or tasks, modifying projects, etc)
+
 
     **/
 
@@ -108,31 +126,23 @@ angular.module('webappApp')
         }
       }
     }, 
+
+      // FLAGS
       PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       PHASED_META_SET_UP = false, // set to true after static meta values are loaded
-      WATCH_ASSIGNMENTS = false, // set in setWatchAssignments in config; tells init whether to do it
+      WATCH_PROJECTS = false, // set in setWatchAssignments in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
+      
+      // ASYNC CALLBACKS
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
       req_after_members = [], // filled with operations to complete after members are in
       req_after_meta = [], // filled with operations to complete after meta are in
-      getHistoryFor = '', // set to a member id if a member's history should be attached to their team.member reference (eg, profile page)
-      assignmentIDs = {
-        to_me : [],
-        by_me : [],
-        unassigned : []
-      },
-      archiveIDs = {
-        to_me : [],
-        by_me : [],
-        unassigned : []
-      },
       membersRetrieved = 0; // incremented with each member's profile gathered
-    var ga = ga || function(){}; // in case ga isn't defined (as in chromeapp)
-
+    
     var _Auth, FBRef; // tacked on to PhasedProvider
-
+    var ga = ga || function(){}; // in case ga isn't defined (as in chromeapp)
     var $rootScope = { $broadcast : function(a){} }; // set in $get, default for if PhasedProvider isn't injected into any scope. not available in .config();
 
     /**
@@ -287,32 +297,66 @@ angular.module('webappApp')
       PhasedProvider.FBRef = FBRef;
     }
 
-    // sets WATCH_ASSIGNMENTS flag so provider knows to 
-    // set up assignment observers in init.
-    // must be called in .config block before init.
-    this.setWatchAssignments = function(watch) {
+    /*
+    **
+    **  FLAGS
+    **  must all be set in .config before this.init()
+    **
+    */
+
+    // sets WATCH_PROJECTS
+    // determines whether projects are monitored
+    this.setWatchProjects = function(watch) {
       if (watch)
-        WATCH_ASSIGNMENTS = true;
+        WATCH_PROJECTS = true;
     }
 
-    // sets WATCH_NOTIFICATIONS flag so provider knows
-    // to set up observers in init.
-    // must be called in .config block.
+    // sets WATCH_NOTIFICATIONS
+    // determines whether notifications are monitored
     this.setWatchNotifications = function(watch) {
       if (watch)
         WATCH_NOTIFICATIONS = true;
     }
 
     // sets WATCH_PRESENCE
+    // determines whether own user's presence is monitored
     this.setWatchPresence = function(watch) {
       if (watch)
         WATCH_PRESENCE = true;
     }
 
+
+    /*
+    **
+    **  ASYNC FUNCTIONS
+    **  An interface for functions that depend on remote data
+    **  Exposed functions call register____, passing it a reference
+    **  to the internal function that is needed. If the condition
+    **  determined by the flag is met, the callback is executed
+    **  immediately; if not, it is added to the list of callbacks
+    **  which are fired as soon as the condition is met.
+    **
+    **  in general,
+    **
+    **  PhasedProvider.exposedMethod = _exposedMethod;
+    **
+    **  // after condition is met
+    **  PHASED_CONDITION = true;
+    **  doCondition();
+    **
+    **  var _exposedMethod = function(args) {
+    **    registerCondition(doExposedMethod, args);
+    **  }
+    **  var doExposedMethod = function(args){
+    **    // some stuff;
+    **  }
+    **
+    */
+
     /**
     *
     * registerAsync
-    * if Phased is already set to go, do the thing
+    * if Phased has team and member data, do the thing
     * otherwise, add it to the list of things to do
     *
     */
@@ -323,12 +367,6 @@ angular.module('webappApp')
         req_callbacks.push({callback : callback, args : args });
     }
 
-    /**
-    *
-    * doAsync
-    * executes all registered callbacks
-    *
-    */
     var doAsync = function() {
       for (var i in req_callbacks) {
         req_callbacks[i].callback(req_callbacks[i].args || undefined);
@@ -336,47 +374,10 @@ angular.module('webappApp')
       PHASED_SET_UP = true;
     }
 
-
-    /**
-    *
-    * registerAfterMembers
-    *
-    * (same pattern as above)
-    *
-    * if Phased is already set to go, do the thing
-    * otherwise, add it to the list of things to do
-    *
-    */
-    var registerAfterMembers = function(callback, args) {
-      if (PHASED_MEMBERS_SET_UP)
-        callback(args);
-      else
-        req_after_members.push({callback : callback, args : args });
-    }
-
-    /**
-    *
-    * doAfterMembers
-    * executes all registered callbacks
-    *
-    * sets PHASED_MEMBERS_SET_UP to TRUE
-    */
-    var doAfterMembers = function() {
-      for (var i in req_after_members) {
-        req_after_members[i].callback(req_after_members[i].args || undefined);
-      }
-      PHASED_MEMBERS_SET_UP = true;
-    }
-
-
     /**
     *
     * registerAfterMeta
-    *
-    * (same pattern as above)
-    *
-    * if Phased is already set to go, do the thing
-    * otherwise, add it to the list of things to do
+    * called after meta is in from server
     *
     */
     var registerAfterMeta = function(callback, args) {
@@ -386,19 +387,475 @@ angular.module('webappApp')
         req_after_meta.push({callback : callback, args : args });
     }
 
-    /**
-    *
-    * doAfterMembers
-    * executes all registered callbacks
-    *
-    * sets PHASED_MEMBERS_SET_UP to TRUE
-    */
     var doAfterMeta = function() {
       for (var i in req_after_meta) {
         req_after_meta[i].callback(req_after_meta[i].args || undefined);
       }
       PHASED_META_SET_UP = true;
     }
+
+    /**
+    *
+    * registerAfterMembers
+    * called after member data is in from server
+    */
+    var registerAfterMembers = function(callback, args) {
+      if (PHASED_MEMBERS_SET_UP)
+        callback(args);
+      else
+        req_after_members.push({callback : callback, args : args });
+    }
+
+    var doAfterMembers = function() {
+      for (var i in req_after_members) {
+        req_after_members[i].callback(req_after_members[i].args || undefined);
+      }
+      PHASED_MEMBERS_SET_UP = true;
+    }
+
+
+
+
+    /*
+    **
+    **  INTIALIZING FUNCTIONS
+    **
+    */
+
+    /*
+    *
+    * Gathers all static data, applies to PhasedProvider
+    *
+    */
+    var initializeMeta = function() {
+      FBRef.child('meta').once('value', function(snap) {
+        var data = snap.val();
+
+        // task
+        PhasedProvider.task = {
+          PRIORITY : data.task.PRIORITY,
+          PRIORITY_ID : data.task.PRIORITY_ID,
+
+          HISTORY_ID : data.task.HISTORY_ID, // no strings for this one
+
+          STATUS : data.task.STATUS,
+          STATUS_ID : data.task.STATUS_ID
+        };
+
+        // PROJECT
+        PhasedProvider.project = {
+          PRIORITY : data.project.PRIORITY,
+          PRIORITY_ID : data.project.PRIORITY_ID,
+
+          HISTORY : data.project.HISTORY,
+          HISTORY_ID : data.project.HISTORY_ID
+        };
+
+        // COLUMN
+        PhasedProvider.column = {
+          HISTORY : data.column.HISTORY,
+          HISTORY_ID : data.column.HISTORY_ID
+        };
+
+        // CARD
+        PhasedProvider.card = {
+          PRIORITY : data.card.PRIORITY,
+          PRIORITY_ID : data.card.PRIORITY_ID,
+
+          HISTORY : data.card.HISTORY,
+          HISTORY_ID : data.card.HISTORY_ID
+        };
+
+        // ROLE
+        PhasedProvider.ROLE = data.ROLE;
+        PhasedProvider.ROLE_ID = data.ROLE_ID;
+
+        // PRESENCE
+        PhasedProvider.PRESENCE = data.PRESENCE;
+        PhasedProvider.PRESENCE_ID = data.PRESENCE_ID;
+
+        // NOTIF
+        PhasedProvider.NOTIF_TYPE = data.NOTIF_TYPE;
+        PhasedProvider.NOTIF_TYPE_ID = data.NOTIF_TYPE_ID;
+
+        doAfterMeta();
+      });
+    }
+
+    /*
+    *
+    * Gathers all of the team data for the first time and sets appropriate
+    * watching functions.
+    *
+    * Requires PhasedProvider.team.uid and PhasedProvider.user
+    *
+    */
+    var initializeTeam = function() {
+      FBRef.child('team/' + PhasedProvider.team.uid).once('value', function(snap) {
+        var data = snap.val();
+
+        PhasedProvider.team.name = data.name;
+        PhasedProvider.team.members = data.members;
+        PhasedProvider.team.teamLength = Object.keys(data.members).length;
+        PhasedProvider.team.statuses = data.statuses;
+        PhasedProvider.team.projects = data.projects;
+        PhasedProvider.team.project_archive = data.project_archive;
+        PhasedProvider.team.categoryObj = data.category;
+        PhasedProvider.team.categorySelect = objToArray(data.category); // adds key prop
+
+        // get profile details for team members
+        for (var id in PhasedProvider.team.members) {
+          initializeMember(id);
+        }
+
+        // monitor team for changes
+        watchTeam();
+
+        // get billing info
+        checkPlanStatus(data.billing.stripeid);
+      });
+    }
+
+    /**
+    *
+    * Gathers then watches a member's profile data
+    *
+    * 1. make one call to get initial data
+    * 2. apply data to appropriate properties
+    * 3. set child_changed listener on /profile/$uid
+    * 3B. which applies the incoming data to the appropriate key
+    *
+    * Logistical things:
+    * L1. stash handler so we can un-watch when needed
+    * L2. broadcast Phased:member for each member
+    * L3. broadcast Phased:membersComplete when all are in
+    * L4. call doAfterMembers() when all are in.
+    *
+    */
+    var initializeMember = function(id) {
+      // 1. gather all data once
+      FBRef.child('profile/' + id).once('value', function(snap){
+        var data = snap.val();
+        PhasedProvider.team.members[id] = PhasedProvider.team.members[id] || {};
+
+        // 2. apply data
+        PhasedProvider.team.members[id].name = data.name;
+        PhasedProvider.team.members[id].pic = data.gravatar;
+        PhasedProvider.team.members[id].gravatar = data.gravatar;
+        PhasedProvider.team.members[id].email = data.email;
+        PhasedProvider.team.members[id].tel = data.tel;
+        PhasedProvider.team.members[id].uid = id;
+        PhasedProvider.team.members[id].newUser = data.newUser;
+
+        // 3. and then watch for changes
+        var handler = FBRef.child('profile/' + id).on('child_changed', function(snap) {
+          var data = snap.val(),
+            key = snap.key(),
+            currentUser = id == PhasedProvider.user.uid;
+
+          // 3B. apply data to appropriate key
+          PhasedProvider.team.members[id][key] = data;
+          if (currentUser) // if this is for the current user
+            PhasedProvider.user[key] = data
+
+          // special duplicate case
+          if (key == 'gravatar') {
+            PhasedProvider.team.members[id].pic = data;
+            if (currentUser)
+              PhasedProvider.user.pic = data;
+          }
+        });
+
+        // L1. stash handler to stop watching event if needed
+        var deregister_obj = {
+            address : 'profile/' + id,
+            eventType : 'child_changed',
+            callback : handler
+          };
+
+        ('_FBHandlers' in PhasedProvider.team.members[id] &&
+          typeof PhasedProvider.team.members[id]._FBHandlers == 'object') ?
+          PhasedProvider.team.members[id].push(deregister_obj) :
+          PhasedProvider.team.members[id]._FBHandlers = [deregister_obj];
+
+        // L2. broadcast events to tell the rest of the app the team is set up
+        $rootScope.$broadcast('Phased:member');
+
+        // L3. and L4. (once all members are in)
+        membersRetrieved++;
+        if (membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
+          $rootScope.$broadcast('Phased:membersComplete');
+          $rootScope.$broadcast('Phased:setup');
+          doAfterMembers();
+          doAsync();
+        }
+      });
+    }
+
+    /**
+    *
+    * Checks current plan status
+    *
+    * Checks ./api/pays/find for the current team's viewType
+    * defaults to 'notPaid'
+    *
+    **/
+    var checkPlanStatus = function(stripeid) {
+      if (stripeid) {
+        $.post('./api/pays/find', {customer: stripeid})
+          .success(function(data){
+            if (data.err) {
+              console.log(data.err);
+              // handle error
+            }
+            if (data.status == "active"){
+              //Show thing for active
+              PhasedProvider.viewType = 'active';
+
+            } else if (data.status == 'past_due' || data.status == 'unpaid'){
+              //Show thing for problem with account
+              PhasedProvider.viewType = 'problem';
+            } else if (data.status == 'canceled'){
+              //Show thing for problem with canceled
+              PhasedProvider.viewType = 'notPaid';
+            }
+          })
+          .error(function(data){
+            console.log(data);
+          });
+      } else {
+        PhasedProvider.viewType = 'notPaid';
+      }
+    }
+
+
+    /*
+    **
+    **  WATCHING FUNCTIONS
+    **
+    */
+
+    /*
+    *
+    * watchTeam
+    * sets up other firebase data event handlers for team data
+    * including statuses, projects/cards/statuses, team membership
+    *
+    * stores for de-registering when switching teams
+    *
+    */
+    var watchTeam = function() {
+      var teamKey = 'team/' + PhasedProvider.team.uid,
+        cb = ''; // set to callback for each FBRef.on()
+
+      // name
+      cb = FBRef.child(teamKey + '/name').on('value', function(snap){
+        PhasedProvider.team.name = snap.val();
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/name',
+        eventType : 'value',
+        callback : cb
+      });
+
+
+      // statuses
+      // adds the status if it's not already there
+      cb = FBRef.child(teamKey + '/statuses').on('child_added', function(snap){
+        var key = snap.key();
+        if (!(key in PhasedProvider.team.statuses))
+          PhasedProvider.team.statuses[key] = snap.val();
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/statuses',
+        eventType : 'child_added',
+        callback : cb
+      });
+
+
+      // category (doesn't need memory references)
+      cb = FBRef.child(teamKey + '/category').on('value', function(snap) {
+        var data = snap.val();
+        PhasedProvider.team.categoryObj = data;
+        PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/category',
+        eventType : 'value',
+        callback : cb
+      });
+
+
+      // billing
+      cb = FBRef.child(teamKey + '/billing').on('value', function(snap){
+        var billing = snap.val();
+        checkPlanStatus(billing.stripeid);
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/billing',
+        eventType : 'value',
+        callback : cb
+      });
+
+
+      // members
+      cb = FBRef.child(teamKey + '/members').on('child_changed', function(snap) {
+        var memberID = snap.key(),
+          data = snap.val();
+
+        // if new member, initialize
+        if (!(memberID in PhasedProvider.team.members)) {
+          initializeMember(memberID);
+        }
+
+        // update all keys as needed
+        for (var key in data) {
+          PhasedProvider.team.members[memberID][key] = data;
+        }
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/members',
+        eventType : 'child_changed',
+        callback : cb
+      });
+    }
+
+    /*
+    *
+    * unwatchTeam - STUB/TODO
+    * prepares us to switch to another team by un-setting the active
+    * firebase event handlers
+    *
+    */
+    var unwatchTeam = function() {
+      // unwatch all team watchers
+      for (var i in PhasedProvider.team._FBHandlers) {
+        var handler = PhasedProvider.team._FBHandlers[i];
+        FBRef.child(handler.address).off(handler.eventType, handler.callback);
+      }
+      PhasedProvider.team._FBHandlers = [];
+
+      // unwatch all team members
+      for (var i in PhasedProvider.team.members) {
+        var handlers = PhasedProvider.team.members[i]._FBHandlers;
+        for (var j in handlers) {
+          FBRef.child(handlers[j].address).off(handlers[j].eventType, handlers[j].callback);
+        }
+        PhasedProvider.team.members[i]._FBHandlers = [];
+      }
+    }
+
+    /**
+    *
+    * gathers notifications for current user
+    * adds to PhasedProvider.notif.stream
+    *
+    * tells server to clean up old, read notifs for the user
+    *
+    */
+    var watchNotifications = function() {
+
+      // returns the interpreted string version of the title or body obj
+      var stringify = function(obj) {
+        // if obj is already a string, spit it out
+        if ((typeof obj).toLowerCase() == 'string')
+          return obj;
+
+        var out = '';
+        for (var j in obj) {
+          if (obj[j].string) {
+            out += obj[j].string;
+          } else if (obj[j].userID) {
+            if (obj[j].userID == PhasedProvider.user.uid) // use "you" for current user
+              out += 'you';
+            else
+              out += PhasedProvider.team.members[obj[j].userID].name;
+          }
+        }
+
+        return out;
+      }
+
+      registerAfterMembers(function doWatchNotifications(){
+        // clean notifications once
+        $.post('./api/notification/clean', {
+          user: PhasedProvider.user.uid,
+          team : PhasedProvider.team.uid
+        })
+          .success(function(data) {
+            if (data.success) {
+              // console.log('clean notifications success', data);
+            } else {
+              console.log('clean notifications error', data);
+            }
+          })
+          .error(function(data){
+            console.log('err', data.error());
+          });
+
+        // set up watcher
+        var notifAddress = 'notif/' + PhasedProvider.team.uid + '/' + PhasedProvider.user.uid;
+        FBRef.child(notifAddress)
+          .on('value', function(data) {
+            var notifications = data.val();
+
+            // format titles and bodies
+            for (var id in notifications) {
+              notifications[id].title = stringify(notifications[id].title);
+              notifications[id].body = stringify(notifications[id].body);
+              notifications[id].key = id;
+            }
+            // update stream
+            PhasedProvider.notif.stream = notifications;
+
+            // issue notification event
+            $rootScope.$broadcast('Phased:notification');
+          });
+      });
+    }
+
+    /**
+    *
+    * Monitors current user's presence
+    *
+    * NB: must be called after meta are in
+    *
+    * 1. sets their presence to PhasedProvider.PRESENCE_ID.ONLINE now
+    *
+    * 2. sets their presence attr to PhasedProvider.PRESENCE_ID.OFFLINE 
+    * and updates lastOnline on FB disconnect
+    *
+    */
+    var watchPresence = function() {
+      // 1. immediately
+      FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).update({
+        presence : PhasedProvider.PRESENCE_ID.ONLINE
+      });
+
+      // 2. on disconnect
+      FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).onDisconnect().update({
+        lastOnline : Firebase.ServerValue.TIMESTAMP,
+        presence : PhasedProvider.PRESENCE_ID.OFFLINE
+      });
+    }
+
+
+
+    /*
+    **
+    **  INTERNAL UTILITIES
+    **
+    **  utilities for 
+    **  - issuing notifications
+    **  - updating an object's history
+    **  - cleaning data to go to database
+    **  - JS utilities (popFromList and objToArray)
+    */
 
     /**
     *
@@ -612,438 +1069,6 @@ angular.module('webappApp')
       issueNotification(streamItem);
     }
 
-
-    /**
-    *
-    * Monitors current user's presence
-    *
-    * NB: must be called after meta are in
-    *
-    * 1. sets their presence to PhasedProvider.PRESENCE_ID.ONLINE now
-    *
-    * 2. sets their presence attr to PhasedProvider.PRESENCE_ID.OFFLINE 
-    * and updates lastOnline on FB disconnect
-    *
-    */
-    var watchPresence = function() {
-      // 1. immediately
-      FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).update({
-        presence : PhasedProvider.PRESENCE_ID.ONLINE
-      });
-
-      // 2. on disconnect
-      FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).onDisconnect().update({
-        lastOnline : Firebase.ServerValue.TIMESTAMP,
-        presence : PhasedProvider.PRESENCE_ID.OFFLINE
-      });
-    }
-
-    /*
-    **
-    **  INTIALIZING FUNCTIONS
-    **
-    */
-
-    /*
-    *
-    * Gathers all static data, applies to PhasedProvider
-    *
-    */
-
-    var initializeMeta = function() {
-      FBRef.child('meta').once('value', function(snap) {
-        var data = snap.val();
-
-        // task
-        PhasedProvider.task = {
-          PRIORITY : data.task.PRIORITY,
-          PRIORITY_ID : data.task.PRIORITY_ID,
-
-          HISTORY_ID : data.task.HISTORY_ID, // no strings for this one
-
-          STATUS : data.task.STATUS,
-          STATUS_ID : data.task.STATUS_ID
-        };
-
-        // PROJECT
-        PhasedProvider.project = {
-          PRIORITY : data.project.PRIORITY,
-          PRIORITY_ID : data.project.PRIORITY_ID,
-
-          HISTORY : data.project.HISTORY,
-          HISTORY_ID : data.project.HISTORY_ID
-        };
-
-        // COLUMN
-        PhasedProvider.column = {
-          HISTORY : data.column.HISTORY,
-          HISTORY_ID : data.column.HISTORY_ID
-        };
-
-        // CARD
-        PhasedProvider.card = {
-          PRIORITY : data.card.PRIORITY,
-          PRIORITY_ID : data.card.PRIORITY_ID,
-
-          HISTORY : data.card.HISTORY,
-          HISTORY_ID : data.card.HISTORY_ID
-        };
-
-        // ROLE
-        PhasedProvider.ROLE = data.ROLE;
-        PhasedProvider.ROLE_ID = data.ROLE_ID;
-
-        // PRESENCE
-        PhasedProvider.PRESENCE = data.PRESENCE;
-        PhasedProvider.PRESENCE_ID = data.PRESENCE_ID;
-
-        // NOTIF
-        PhasedProvider.NOTIF_TYPE = data.NOTIF_TYPE;
-        PhasedProvider.NOTIF_TYPE_ID = data.NOTIF_TYPE_ID;
-
-        doAfterMeta();
-      });
-    }
-
-    /*
-    *
-    * Gathers all of the team data for the first time and sets appropriate
-    * watching functions.
-    *
-    * Requires PhasedProvider.team.uid and PhasedProvider.user
-    *
-    */
-    var initializeTeam = function() {
-      FBRef.child('team/' + PhasedProvider.team.uid).once('value', function(snap) {
-        var data = snap.val();
-
-        PhasedProvider.team.name = data.name;
-        PhasedProvider.team.members = data.members;
-        PhasedProvider.team.teamLength = Object.keys(data.members).length;
-        PhasedProvider.team.statuses = data.statuses;
-        PhasedProvider.team.projects = data.projects;
-        PhasedProvider.team.project_archive = data.project_archive;
-        PhasedProvider.team.categoryObj = data.category;
-        PhasedProvider.team.categorySelect = objToArray(data.category); // adds key prop
-
-        // get profile details for team members
-        for (var id in PhasedProvider.team.members) {
-          initializeMember(id);
-        }
-
-        // monitor team for changes
-        watchTeam();
-
-        // get billing info
-        checkPlanStatus(data.billing.stripeid);
-      });
-    }
-
-    /**
-    *
-    * Gathers then watches a member's profile data
-    *
-    * 1. make one call to get initial data
-    * 2. apply data to appropriate properties
-    * 3. set child_changed listener on /profile/$uid
-    * 3B. which applies the incoming data to the appropriate key
-    *
-    * Logistical things:
-    * L1. stash handler so we can un-watch when needed
-    * L2. broadcast Phased:member for each member
-    * L3. broadcast Phased:membersComplete when all are in
-    * L4. call doAfterMembers() when all are in.
-    *
-    */
-
-    var initializeMember = function(id) {
-      // 1. gather all data once
-      FBRef.child('profile/' + id).once('value', function(snap){
-        var data = snap.val();
-        PhasedProvider.team.members[id] = PhasedProvider.team.members[id] || {};
-
-        // 2. apply data
-        PhasedProvider.team.members[id].name = data.name;
-        PhasedProvider.team.members[id].pic = data.gravatar;
-        PhasedProvider.team.members[id].gravatar = data.gravatar;
-        PhasedProvider.team.members[id].email = data.email;
-        PhasedProvider.team.members[id].tel = data.tel;
-        PhasedProvider.team.members[id].uid = id;
-        PhasedProvider.team.members[id].newUser = data.newUser;
-
-        // 3. and then watch for changes
-        var handler = FBRef.child('profile/' + id).on('child_changed', function(snap) {
-          var data = snap.val(),
-            key = snap.key(),
-            currentUser = id == PhasedProvider.user.uid;
-
-          // 3B. apply data to appropriate key
-          PhasedProvider.team.members[id][key] = data;
-          if (currentUser) // if this is for the current user
-            PhasedProvider.user[key] = data
-
-          // special duplicate case
-          if (key == 'gravatar') {
-            PhasedProvider.team.members[id].pic = data;
-            if (currentUser)
-              PhasedProvider.user.pic = data;
-          }
-        });
-
-        // L1. stash handler to stop watching event if needed
-        var deregister_obj = {
-            address : 'profile/' + id,
-            eventType : 'child_changed',
-            callback : handler
-          };
-
-        ('_FBHandlers' in PhasedProvider.team.members[id] &&
-          typeof PhasedProvider.team.members[id]._FBHandlers == 'object') ?
-          PhasedProvider.team.members[id].push(deregister_obj) :
-          PhasedProvider.team.members[id]._FBHandlers = [deregister_obj];
-
-        // L2. broadcast events to tell the rest of the app the team is set up
-        $rootScope.$broadcast('Phased:member');
-
-        // L3. and L4. (once all members are in)
-        membersRetrieved++;
-        if (membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
-          $rootScope.$broadcast('Phased:membersComplete');
-          $rootScope.$broadcast('Phased:setup');
-          doAfterMembers();
-          doAsync();
-        }
-      });
-    }
-
-    /**
-    *
-    * gathers notifications for current user
-    * adds to PhasedProvider.notif.stream
-    *
-    * tells server to clean up old, read notifs for the user
-    *
-    */
-    var watchNotifications = function() {
-
-      // returns the interpreted string version of the title or body obj
-      var stringify = function(obj) {
-        // if obj is already a string, spit it out
-        if ((typeof obj).toLowerCase() == 'string')
-          return obj;
-
-        var out = '';
-        for (var j in obj) {
-          if (obj[j].string) {
-            out += obj[j].string;
-          } else if (obj[j].userID) {
-            if (obj[j].userID == PhasedProvider.user.uid) // use "you" for current user
-              out += 'you';
-            else
-              out += PhasedProvider.team.members[obj[j].userID].name;
-          }
-        }
-
-        return out;
-      }
-
-      registerAfterMembers(function doWatchNotifications(){
-        // clean notifications once
-        $.post('./api/notification/clean', {
-          user: PhasedProvider.user.uid,
-          team : PhasedProvider.team.uid
-        })
-          .success(function(data) {
-            if (data.success) {
-              // console.log('clean notifications success', data);
-            } else {
-              console.log('clean notifications error', data);
-            }
-          })
-          .error(function(data){
-            console.log('err', data.error());
-          });
-
-        // set up watcher
-        var notifAddress = 'notif/' + PhasedProvider.team.uid + '/' + PhasedProvider.user.uid;
-        FBRef.child(notifAddress)
-          .on('value', function(data) {
-            var notifications = data.val();
-
-            // format titles and bodies
-            for (var id in notifications) {
-              notifications[id].title = stringify(notifications[id].title);
-              notifications[id].body = stringify(notifications[id].body);
-              notifications[id].key = id;
-            }
-            // update stream
-            PhasedProvider.notif.stream = notifications;
-
-            // issue notification event
-            $rootScope.$broadcast('Phased:notification');
-          });
-      });
-    }
-
-
-    // checks current plan status
-    // retrofitted from main.controller.js to avoid using $http
-    // may need changing but polls backend ok.
-    /*
-      NB: broken in chromeapp -- do we need to implement this?
-      TODO // BUG // ATTENTION
-    */
-    var checkPlanStatus = function(stripeid) {
-      if (stripeid) {
-        $.post('./api/pays/find', {customer: stripeid})
-          .success(function(data){
-            if (data.err) {
-              console.log(data.err);
-              // handle error
-            }
-            if (data.status == "active"){
-              //Show thing for active
-              PhasedProvider.viewType = 'active';
-
-            } else if (data.status == 'past_due' || data.status == 'unpaid'){
-              //Show thing for problem with account
-              PhasedProvider.viewType = 'problem';
-            } else if (data.status == 'canceled'){
-              //Show thing for problem with canceled
-              PhasedProvider.viewType = 'notPaid';
-            }
-          })
-          .error(function(data){
-            console.log(data);
-          });
-      } else {
-        PhasedProvider.viewType = 'notPaid';
-      }
-    }
-
-
-    /*
-    **
-    **  WATCHING FUNCTIONS
-    **
-    */
-
-    /*
-    *
-    * watchTeam
-    * sets up other firebase data event handlers for team data
-    * including statuses, projects/cards/statuses, team membership
-    *
-    * stores for de-registering when switching teams
-    *
-    */
-    var watchTeam = function() {
-      var teamKey = 'team/' + PhasedProvider.team.uid,
-        cb = ''; // set to callback for each FBRef.on()
-
-      // name
-      cb = FBRef.child(teamKey + '/name').on('value', function(snap){
-        PhasedProvider.team.name = snap.val();
-      });
-
-      PhasedProvider.team._FBHandlers.push({
-        address : teamKey + '/name',
-        eventType : 'value',
-        callback : cb
-      });
-
-
-      // statuses
-      // adds the status if it's not already there
-      cb = FBRef.child(teamKey + '/statuses').on('child_added', function(snap){
-        var key = snap.key();
-        if (!(key in PhasedProvider.team.statuses))
-          PhasedProvider.team.statuses[key] = snap.val();
-      });
-
-      PhasedProvider.team._FBHandlers.push({
-        address : teamKey + '/statuses',
-        eventType : 'child_added',
-        callback : cb
-      });
-
-
-      // category (doesn't need memory references)
-      cb = FBRef.child(teamKey + '/category').on('value', function(snap) {
-        var data = snap.val();
-        PhasedProvider.team.categoryObj = data;
-        PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
-      });
-
-      PhasedProvider.team._FBHandlers.push({
-        address : teamKey + '/category',
-        eventType : 'value',
-        callback : cb
-      });
-
-
-      // billing
-      cb = FBRef.child(teamKey + '/billing').on('value', function(snap){
-        var billing = snap.val();
-        checkPlanStatus(billing.stripeid);
-      });
-
-      PhasedProvider.team._FBHandlers.push({
-        address : teamKey + '/billing',
-        eventType : 'value',
-        callback : cb
-      });
-
-
-      // members
-      cb = FBRef.child(teamKey + '/members').on('child_changed', function(snap) {
-        var memberID = snap.key(),
-          data = snap.val();
-
-        // if new member, initialize
-        if (!(memberID in PhasedProvider.team.members)) {
-          initializeMember(memberID);
-        }
-
-        // update all keys as needed
-        for (var key in data) {
-          PhasedProvider.team.members[memberID][key] = data;
-        }
-      });
-
-      PhasedProvider.team._FBHandlers.push({
-        address : teamKey + '/members',
-        eventType : 'child_changed',
-        callback : cb
-      });
-    }
-
-    /*
-    *
-    * unwatchTeam - STUB/TODO
-    * prepares us to switch to another team by un-setting the active
-    * firebase event handlers
-    *
-    */
-    var unwatchTeam = function() {
-      // unwatch all team watchers
-      for (var i in PhasedProvider.team._FBHandlers) {
-        var handler = PhasedProvider.team._FBHandlers[i];
-        FBRef.child(handler.address).off(handler.eventType, handler.callback);
-      }
-      PhasedProvider.team._FBHandlers = [];
-
-      // unwatch all team members
-      for (var i in PhasedProvider.team.members) {
-        var handlers = PhasedProvider.team.members[i]._FBHandlers;
-        for (var j in handlers) {
-          FBRef.child(handlers[j].address).off(handlers[j].eventType, handlers[j].callback);
-        }
-        PhasedProvider.team.members[i]._FBHandlers = [];
-      }
-    }
-
-
     /**
     *
     * updates the task's history with the following object type:
@@ -1172,13 +1197,495 @@ angular.module('webappApp')
       return status;
     }
 
+    // cleans a project
+    var cleanProject = function(newProject) {
+
+    }
+
+    // cleans a column
+    var cleanColumn = function(newColumn) {
+
+    }
+
+    // cleans a card
+    var cleanCard = function(newCard) {
+
+    }
+
+    // cleans a status
+    var cleanStatus = function(newStatus) {
+
+    }
+
+    // cleans an assignment
+    var cleanAssignment = function(newAssignment) {
+
+    }
+
+    // remove an item from an array
+    // returns the new array
+    var popFromList = function(item, list) {
+      if (!('indexOf' in list)) {
+        list = objToArray(list); // change list to array if it's an object
+      }
+      var i = list.indexOf(item);
+      while (i > -1) {
+        delete list[i];
+        i = list.indexOf(item);
+      }
+      return list;
+    }
+
+    // convert object into array
+    // returns the new array
+    // useful for arrays with missing keys
+    // eg, [0 = '', 1 = '', 3 = ''];
+    var objToArray = function(obj) {
+      var newArray = [];
+      for (var i in obj) {
+        obj.key = i;
+        newArray.push(obj[i]);
+      }
+      return newArray;
+    }
+
+
+
 
     /**
     **
     ** EXPOSED FUNCTIONS
-    ** all registered as callbacks with registerAsync(),
+    ** all registered as callbacks with registerAsync()
     **
     **/
+
+    /**
+
+      General account and team things
+
+    **/
+
+    /**
+    *
+    * adds a member
+    * Brian's better add member function
+    * 1. checks if member is in /profile
+    * 2A. if so, adds to /team-invite-existing-member and registers current team on member's profile
+    * 2B. if not, checks whether they are a profile in waiting
+    * 2B1. if they are, add team to newMember's profile
+    * 2B2. if not, add to /profile-in-waiting and /profile-in-waiting2
+    */
+
+    var _addMember = function(newMember, inviter) {
+      var args = {
+        newMember : newMember,
+        inviter : inviter
+      }
+
+      registerAsync(doAddMember, args);
+    }
+
+    var doAddMember = function(args) {
+      ga('send', 'event', 'Team', 'Member added');
+      console.log(args);
+      var invited = args.newMember,
+        inviter = args.inviter;
+
+      invited.email = invited.email.toLowerCase(); // Change text to lowercase regardless of user input.
+
+      //Brian's better add member function
+      // find if memeber is already in db
+      // console.log(names.email);
+      FBRef.child("profile").orderByChild("email").startAt(invited.email).endAt(invited.email).limitToFirst(1).once('value',function(user){
+        user = user.val();
+        // console.log(user);
+        if (user) {
+          //console.log('invite sent to current user');
+          var k = Object.keys(user);
+          var memberData = {
+            teams : { 0 : PhasedProvider.team.uid },
+            email : invited.email,
+            inviteEmail: _Auth.user.email,
+            inviteName: _Auth.user.name
+          }
+          FBRef.child('team-invite-existing-member').push(memberData);
+          FBRef.child('profile/' + k[0] + '/teams').push(PhasedProvider.team.uid);
+        } else {
+          //console.log('invited is not a current user, looking to see if they are in profile-in-waiting');
+
+          FBRef.child("profile-in-waiting").orderByChild("email").startAt(invited.email).endAt(invited.email).limitToFirst(1).once('value',function(user){
+            user = user.val();
+
+            if (user) {
+              //console.log('invite sent to user in profile-in-waiting');
+
+              var y = Object.keys(user);
+              FBRef.child('profile-in-waiting').child(y[0]).child('teams').push(PhasedProvider.team.uid);
+            } else {
+              //console.log('invited is new to the system, setting up profile-in-waiting');
+              var PIWData = {
+                'teams' : { 0 : PhasedProvider.team.uid},
+                'email' : invited.email,
+                'inviteEmail': inviter.email,
+                'inviteName': inviter.name
+              };
+              FBRef.child('profile-in-waiting').push(PIWData);
+              FBRef.child('profile-in-waiting2').push(PIWData);
+            }
+          });
+        }
+      });
+    }
+
+    /**
+    *
+    * adds a team
+    * function mostly copied from chromeapp ctrl-createTeam.js
+    * 1. check if teamname is taken
+    * 2A. if not:
+    *  - create the team in /team
+    *  - add to current user's profile
+    *  - make it their current team
+    *  - run success callback if it exists
+    * 2B. if it does exist, run fail callback if it exists
+    */
+
+    var _addTeam = function(teamName, success, failure, addToExistingTeam) {
+      var args = {
+        teamName : teamName,
+        success : success,
+        failure : failure,
+        addToExistingTeam : typeof addToExistingTeam === 'boolean' ? addToExistingTeam : true // only use value if set
+      }
+      registerAsync(doAddTeam, args);
+    }
+
+    var doAddTeam = function(args) {
+      // get team with specified name
+      FBRef.child('team').orderByChild('name').equalTo(args.teamName).once('value', function(snap) {
+        var existingTeams = snap.val(),
+          newTeamRef = '',
+          newTeamKey = '';
+
+        // if it doesn't exist, make it
+        if (!existingTeams) {
+          var newTeam = Object.assign({name : args.teamName}, DEFAULTS.team); // copies DEFAULTS.team, adding name node
+          newTeamRef = FBRef.child('team').push(newTeam);
+          newTeamKey = newTeamRef.key();
+          console.log('new team created with key ' + newTeamKey);
+        } else if (existingTeams && !args.addToExistingTeam) { 
+          // if it does exist and we're not supposed to add, call failure
+          return args.failure();
+        } else {
+          newTeamKey = Object.keys(existingTeams)[0];
+          newTeamRef = FBRef.child('team/' + newTeamKey);
+        }
+
+        // add to new team
+        newTeamRef.child('members/' + _Auth.user.uid).update({
+          role : PhasedProvider.ROLE_ID.MEMBER
+        });
+
+        // add to my list of teams if not already in it
+        FBRef.child('profile/' + _Auth.user.uid + '/teams').orderByValue().equalTo(newTeamKey).once('value', function(snap){
+          if (!snap.val()) {
+            FBRef.child('profile/' + _Auth.user.uid + '/teams').push(newTeamKey);
+          }
+        });
+
+        // switch to that team
+        doSwitchTeam({
+          teamID : newTeamKey,
+          callback : args.success
+        });
+      });
+    }
+
+
+    /**
+    *
+    * switches current user's active team
+    * optionally calls a callback
+    */
+
+    var _switchTeam = function(teamID, callback) {
+      var args = {
+        teamID : teamID,
+        callback : callback
+      }
+      registerAsync(doSwitchTeam, args);
+    }
+
+    var doSwitchTeam = function(args) {
+      // stash team
+      var oldTeam = PhasedProvider.team.uid + '';
+
+      // remove old event handlers
+      unwatchTeam();
+
+      // reload team data
+      PhasedProvider.team.uid = args.teamID;
+      _Auth.currentTeam = args.teamID;
+      initializeTeam();
+
+      if (WATCH_ASSIGNMENTS)
+        watchAssignments();
+
+      // update user curTeam
+      FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamID, function() {
+        // execute callback if it exists
+        if (typeof args.callback == 'function')
+          args.callback();
+      });
+
+      // update presence information for both teams
+      if (WATCH_PRESENCE) {
+        // cancel old handler
+        FBRef.child('team/' + oldTeam + '/members/' + PhasedProvider.user.uid).onDisconnect().cancel();
+        // go offline for old team
+        FBRef.child('team/' + oldTeam + '/members/' + _Auth.user.uid).update({
+          presence : PhasedProvider.PRESENCE_ID.OFFLINE,
+          lastOnline : Firebase.ServerValue.TIMESTAMP
+        });
+        // go online and set new handler for current team
+        watchPresence();
+      }
+    }
+
+    /**
+    *
+    * changes a member's role
+    * Server side API takes care of database interaction and sanitization
+    * data passed = { 
+    *    user : current user id, 
+    *    assignee : id of user with new role
+    *    role : new role
+    *  }
+    *
+    */
+
+    var _changeMemberRole = function(memberID, newRole, currentRole) {
+      var args = {
+        member : memberID,
+        role : newRole,
+        currentRole : currentRole
+      }
+
+      registerAsync(doChangeMemberRole, args);
+    }
+
+    var doChangeMemberRole = function(args) {
+      // get user role from server
+      $.post('./api/auth/role/set', {
+        user: _Auth.user.uid,
+        assignee : args.member,
+        role : args.role
+      })
+        .success(function(data) {
+            if (data.success) {
+              // console.log('success', data);
+            } else {
+              // set back to old role if update fails
+              PhasedProvider.team.members[args.member].role = args.currentRole;
+              console.log('Auth error', data);
+            }
+        })
+        .error(function(data){
+          console.log('err', data.error());
+        });
+    }
+
+    /**
+    *
+    * marks a single notification as read
+    * without deleting it from the server
+    *
+    */
+    var _markNotifAsRead = function(key, index) {
+      var args = {
+        key : key,
+        index : index
+      }
+      registerAsync(doMarkNotifAsRead, args);
+    }
+
+    var doMarkNotifAsRead = function(args) {
+      var key = args.key;
+      var index = args.index;
+
+      // find index if not there
+      if (typeof index == 'undefined') {
+        for (var i in PhasedProvider.notif.stream) {
+          if (PhasedProvider.notif.stream[i].key == key) {
+            index = i;
+            break;
+          }
+        }
+      }
+
+      PhasedProvider.notif.stream[index].read = true;
+      FBRef.child('notif/' + PhasedProvider.team.uid + '/' + _Auth.user.uid + '/' + key).update({
+        read : true
+      });
+
+    }
+
+    /**
+    *
+    * marks all notifications as read
+    * without deleting them from the server
+    *
+    */
+    var _markAllNotifsAsRead = function() {
+      registerAsync(doMarkAllNotifsAsRead);
+    }
+
+    var doMarkAllNotifsAsRead = function() {
+      for (var i in PhasedProvider.notif.stream) {
+        doMarkNotifAsRead({ 
+          key : PhasedProvider.notif.stream[i].key,
+          index : i
+        });
+      }
+    }
+
+    /**
+    *
+    * add category to current team
+    *
+    * NB: This will update categories of the same name or key
+    *
+    * 1. check all incoming category properties
+    * 2. check if category with that name or key already exists
+    * 3A. if so, update it, then call getCategories() to update
+    * 3B. if not, create it, then call getCategories() to update
+    *
+    */
+    var _addCategory = function(category) {
+      registerAsync(doAddCategory, category);
+    }
+
+    var doAddCategory = function(args) {
+      var category = {
+        name :  args.name,
+        color : args.color
+      };
+
+      // 1.
+      // check colour
+      var regex = /^\#([a-zA-Z0-9]{3}|[a-zA-Z0-9]{6})$/;
+      if (!(category.color && regex.test(category.color))) {
+        console.log('bad category colour');
+        return;
+      }
+
+      // check name exists, has length, is a word
+      regex = /\w+/;
+      if (!(category.name && regex.test(category.name))) {
+        console.log('bad category name');
+        return;
+      }
+
+      category.created = new Date().getTime();
+      category.user = _Auth.user.uid;
+
+      console.log('creating category', category);
+
+      // 2. Check if category exists
+      var catExists = false;
+      var key = '';
+      for (key in PhasedProvider.team.categoryObj) {
+        var nameExists = PhasedProvider.team.categoryObj[key].name.toLowerCase() == category.name.toLowerCase();
+        var keyExists = key == args.key;
+        if (nameExists || keyExists) {
+          catExists = true;
+          break;
+        }
+      }
+
+      // 3A. category exists; update
+      if (catExists) {
+        console.log('cat exists at ' + key);
+        FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(category, getCategories);
+      }
+
+      // 3B.
+      else {
+        console.log('cat doesn\'t exist');
+        FBRef.child('team/' + PhasedProvider.team.uid + '/category').push(category, getCategories);
+      }
+    }
+
+    /**
+    *
+    * deletes category from current team
+    *
+    * NB: will attempt to delete a cat even if not there
+    *
+    * 1. ensure key is a string
+    * 2. delete category
+    */
+    var _deleteCategory = function(key) {
+      registerAsync(doDeleteCategory, key);
+    }
+
+    var doDeleteCategory = function(key) {
+      console.log('deleting cat at ' + key);
+      // 1.
+      if ((typeof key).toLowerCase() != 'string') {
+        console.log('bad key');
+        return;
+      }
+
+      // 2. 
+      FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(null, getCategories);
+    }
+
+
+    /**
+
+      Data functions
+      Things like adding statuses, assignments, projects, etc.
+
+    **/
+
+    /**
+    *
+    * sends a status update to the server, pushes to team
+    * these are the normal status updates used in /feed
+    *
+    * cleans newStatus first. fails if bad data.
+    *
+    */
+
+    var _addStatus = function(newStatus) {
+      registerAsync(doAddStatus, newStatus);
+    }
+
+    var doAddStatus = function(newStatus) {
+      ga('send', 'event', 'Update', 'Submitted');
+      ga('send', 'event', 'Status', 'Status added');
+
+      // clean task
+      newStatus = makeTaskForDB(newStatus);
+      if (!newStatus) return;
+
+      // publish to stream
+      var teamRef = FBRef.child('team/' + PhasedProvider.team.uid);
+      teamRef.child('members/' + PhasedProvider.user.uid + '/currentStatus').set(newStatus);
+      var newStatusRef = teamRef.child('statuses').push(newStatus, function(err){
+        // after DB is updated, issue a notification to all users
+        if (!err) {
+          issueNotification({
+            title : [{ userID : _Auth.user.uid }],
+            body : [{ string : newStatus.name }],
+            cat : newStatus.cat,
+            type : PhasedProvider.NOTIF_TYPE_ID.STATUS
+          });
+        }
+      });
+    }
+
 
     /**
     *
@@ -1255,43 +1762,6 @@ angular.module('webappApp')
       var ref = FBRef.child('team/' + PhasedProvider.team.uid);
       ref.child('task/' + PhasedProvider.user.uid).set(task);
       ref.child('all/' + PhasedProvider.user.uid).push(task);
-    }
-
-    /**
-    *
-    * sends a status update to the server, pushes to team
-    * these are the normal status updates used in /feed
-    *
-    * cleans newStatus first. fails if bad data
-    *
-    */
-
-    var _addStatus = function(newStatus) {
-      registerAsync(doAddStatus, newStatus);
-    }
-
-    var doAddStatus = function(newStatus) {
-      ga('send', 'event', 'Update', 'Submitted');
-      ga('send', 'event', 'Status', 'Status added');
-
-      // clean task
-      newStatus = makeTaskForDB(newStatus);
-      if (!newStatus) return;
-
-      // publish to stream
-      var teamRef = FBRef.child('team/' + PhasedProvider.team.uid);
-      teamRef.child('members/' + PhasedProvider.user.uid + '/currentStatus').set(newStatus);
-      var newStatusRef = teamRef.child('statuses').push(newStatus, function(err){
-        // after DB is updated, issue a notification to all users
-        if (!err) {
-          issueNotification({
-            title : [{ userID : _Auth.user.uid }],
-            body : [{ string : newStatus.name }],
-            cat : newStatus.cat,
-            type : PhasedProvider.NOTIF_TYPE_ID.STATUS
-          });
-        }
-      });
     }
 
     /**
@@ -1529,421 +1999,6 @@ angular.module('webappApp')
       FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'priority' : args.newPriority }, function(err){
         if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.PRIORITY);
       });
-    }
-
-    
-
-
-    /**
-    *
-    * add category to current team
-    *
-    * NB: This will update categories of the same name or key
-    *
-    * 1. check all incoming category properties
-    * 2. check if category with that name or key already exists
-    * 3A. if so, update it, then call getCategories() to update
-    * 3B. if not, create it, then call getCategories() to update
-    *
-    */
-    var _addCategory = function(category) {
-      registerAsync(doAddCategory, category);
-    }
-
-    var doAddCategory = function(args) {
-      var category = {
-        name :  args.name,
-        color : args.color
-      };
-
-      // 1.
-      // check colour
-      var regex = /^\#([a-zA-Z0-9]{3}|[a-zA-Z0-9]{6})$/;
-      if (!(category.color && regex.test(category.color))) {
-        console.log('bad category colour');
-        return;
-      }
-
-      // check name exists, has length, is a word
-      regex = /\w+/;
-      if (!(category.name && regex.test(category.name))) {
-        console.log('bad category name');
-        return;
-      }
-
-      category.created = new Date().getTime();
-      category.user = _Auth.user.uid;
-
-      console.log('creating category', category);
-
-      // 2. Check if category exists
-      var catExists = false;
-      var key = '';
-      for (key in PhasedProvider.team.categoryObj) {
-        var nameExists = PhasedProvider.team.categoryObj[key].name.toLowerCase() == category.name.toLowerCase();
-        var keyExists = key == args.key;
-        if (nameExists || keyExists) {
-          catExists = true;
-          break;
-        }
-      }
-
-      // 3A. category exists; update
-      if (catExists) {
-        console.log('cat exists at ' + key);
-        FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(category, getCategories);
-      }
-
-      // 3B.
-      else {
-        console.log('cat doesn\'t exist');
-        FBRef.child('team/' + PhasedProvider.team.uid + '/category').push(category, getCategories);
-      }
-    }
-
-    /**
-    *
-    * deletes category from current team
-    *
-    * NB: will attempt to delete a cat even if not there
-    *
-    * 1. ensure key is a string
-    * 2. delete category
-    */
-    var _deleteCategory = function(key) {
-      registerAsync(doDeleteCategory, key);
-    }
-
-    var doDeleteCategory = function(key) {
-      console.log('deleting cat at ' + key);
-      // 1.
-      if ((typeof key).toLowerCase() != 'string') {
-        console.log('bad key');
-        return;
-      }
-
-      // 2. 
-      FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(null, getCategories);
-    }
-
-    /**
-    *
-    * adds a member
-    * Brian's better add member function
-    * 1. checks if member is in /profile
-    * 2A. if so, adds to /team-invite-existing-member and registers current team on member's profile
-    * 2B. if not, checks whether they are a profile in waiting
-    * 2B1. if they are, add team to newMember's profile
-    * 2B2. if not, add to /profile-in-waiting and /profile-in-waiting2
-    */
-
-    var _addMember = function(newMember, inviter) {
-      var args = {
-        newMember : newMember,
-        inviter : inviter
-      }
-
-      registerAsync(doAddMember, args);
-    }
-
-    var doAddMember = function(args) {
-      ga('send', 'event', 'Team', 'Member added');
-      console.log(args);
-      var invited = args.newMember,
-        inviter = args.inviter;
-
-      invited.email = invited.email.toLowerCase(); // Change text to lowercase regardless of user input.
-
-      //Brian's better add member function
-      // find if memeber is already in db
-      // console.log(names.email);
-      FBRef.child("profile").orderByChild("email").startAt(invited.email).endAt(invited.email).limitToFirst(1).once('value',function(user){
-        user = user.val();
-        // console.log(user);
-        if (user) {
-          //console.log('invite sent to current user');
-          var k = Object.keys(user);
-          var memberData = {
-            teams : { 0 : PhasedProvider.team.uid },
-            email : invited.email,
-            inviteEmail: _Auth.user.email,
-            inviteName: _Auth.user.name
-          }
-          FBRef.child('team-invite-existing-member').push(memberData);
-          FBRef.child('profile/' + k[0] + '/teams').push(PhasedProvider.team.uid);
-        } else {
-          //console.log('invited is not a current user, looking to see if they are in profile-in-waiting');
-
-          FBRef.child("profile-in-waiting").orderByChild("email").startAt(invited.email).endAt(invited.email).limitToFirst(1).once('value',function(user){
-            user = user.val();
-
-            if (user) {
-              //console.log('invite sent to user in profile-in-waiting');
-
-              var y = Object.keys(user);
-              FBRef.child('profile-in-waiting').child(y[0]).child('teams').push(PhasedProvider.team.uid);
-            } else {
-              //console.log('invited is new to the system, setting up profile-in-waiting');
-              var PIWData = {
-                'teams' : { 0 : PhasedProvider.team.uid},
-                'email' : invited.email,
-                'inviteEmail': inviter.email,
-                'inviteName': inviter.name
-              };
-              FBRef.child('profile-in-waiting').push(PIWData);
-              FBRef.child('profile-in-waiting2').push(PIWData);
-            }
-          });
-        }
-      });
-    }
-
-    /**
-    *
-    * changes a member's role
-    * Server side API takes care of database interaction and sanitization
-    * data passed = { 
-    *    user : current user id, 
-    *    assignee : id of user with new role
-    *    role : new role
-    *  }
-    *
-    */
-
-    var _changeMemberRole = function(memberID, newRole, currentRole) {
-      var args = {
-        member : memberID,
-        role : newRole,
-        currentRole : currentRole
-      }
-
-      registerAsync(doChangeMemberRole, args);
-    }
-
-    var doChangeMemberRole = function(args) {
-      // get user role from server
-      $.post('./api/auth/role/set', {
-        user: _Auth.user.uid,
-        assignee : args.member,
-        role : args.role
-      })
-        .success(function(data) {
-            if (data.success) {
-              // console.log('success', data);
-            } else {
-              // set back to old role if update fails
-              PhasedProvider.team.members[args.member].role = args.currentRole;
-              console.log('Auth error', data);
-            }
-        })
-        .error(function(data){
-          console.log('err', data.error());
-        });
-    }
-
-    /**
-    *
-    * adds a team
-    * function mostly copied from chromeapp ctrl-createTeam.js
-    * 1. check if teamname is taken
-    * 2A. if not:
-    *  - create the team in /team
-    *  - add to current user's profile
-    *  - make it their current team
-    *  - run success callback if it exists
-    * 2B. if it does exist, run fail callback if it exists
-    */
-
-    var _addTeam = function(teamName, success, failure, addToExistingTeam) {
-      var args = {
-        teamName : teamName,
-        success : success,
-        failure : failure,
-        addToExistingTeam : typeof addToExistingTeam === 'boolean' ? addToExistingTeam : true // only use value if set
-      }
-      registerAsync(doAddTeam, args);
-    }
-
-    var doAddTeam = function(args) {
-      // get team with specified name
-      FBRef.child('team').orderByChild('name').equalTo(args.teamName).once('value', function(snap) {
-        var existingTeams = snap.val(),
-          newTeamRef = '',
-          newTeamKey = '';
-
-        // if it doesn't exist, make it
-        if (!existingTeams) {
-          var newTeam = Object.assign({name : args.teamName}, DEFAULTS.team); // copies DEFAULTS.team, adding name node
-          newTeamRef = FBRef.child('team').push(newTeam);
-          newTeamKey = newTeamRef.key();
-          console.log('new team created with key ' + newTeamKey);
-        } else if (existingTeams && !args.addToExistingTeam) { 
-          // if it does exist and we're not supposed to add, call failure
-          return args.failure();
-        } else {
-          newTeamKey = Object.keys(existingTeams)[0];
-          newTeamRef = FBRef.child('team/' + newTeamKey);
-        }
-
-        // add to new team
-        newTeamRef.child('members/' + _Auth.user.uid).update({
-          role : PhasedProvider.ROLE_ID.MEMBER
-        });
-
-        // add to my list of teams if not already in it
-        FBRef.child('profile/' + _Auth.user.uid + '/teams').orderByValue().equalTo(newTeamKey).once('value', function(snap){
-          if (!snap.val()) {
-            FBRef.child('profile/' + _Auth.user.uid + '/teams').push(newTeamKey);
-          }
-        });
-
-        // switch to that team
-        doSwitchTeam({
-          teamID : newTeamKey,
-          callback : args.success
-        });
-      });
-    }
-
-
-    /**
-    *
-    * switches current user's active team
-    * optionally calls a callback
-    */
-
-    var _switchTeam = function(teamID, callback) {
-      var args = {
-        teamID : teamID,
-        callback : callback
-      }
-      registerAsync(doSwitchTeam, args);
-    }
-
-    var doSwitchTeam = function(args) {
-      // stash team
-      var oldTeam = PhasedProvider.team.uid + '';
-
-      // remove old event handlers
-      unwatchTeam();
-
-      // reload team data
-      PhasedProvider.team.uid = args.teamID;
-      _Auth.currentTeam = args.teamID;
-      initializeTeam();
-
-      if (WATCH_ASSIGNMENTS)
-        watchAssignments();
-
-      // update user curTeam
-      FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamID, function() {
-        // execute callback if it exists
-        if (typeof args.callback == 'function')
-          args.callback();
-      });
-
-      // update presence information for both teams
-      if (WATCH_PRESENCE) {
-        // cancel old handler
-        FBRef.child('team/' + oldTeam + '/members/' + PhasedProvider.user.uid).onDisconnect().cancel();
-        // go offline for old team
-        FBRef.child('team/' + oldTeam + '/members/' + _Auth.user.uid).update({
-          presence : PhasedProvider.PRESENCE_ID.OFFLINE,
-          lastOnline : Firebase.ServerValue.TIMESTAMP
-        });
-        // go online and set new handler for current team
-        watchPresence();
-      }
-    }
-
-    /**
-    *
-    * marks a single notification as read
-    * without deleting it from the server
-    *
-    */
-    var _markNotifAsRead = function(key, index) {
-      var args = {
-        key : key,
-        index : index
-      }
-      registerAsync(doMarkNotifAsRead, args);
-    }
-
-    var doMarkNotifAsRead = function(args) {
-      var key = args.key;
-      var index = args.index;
-
-      // find index if not there
-      if (typeof index == 'undefined') {
-        for (var i in PhasedProvider.notif.stream) {
-          if (PhasedProvider.notif.stream[i].key == key) {
-            index = i;
-            break;
-          }
-        }
-      }
-
-      PhasedProvider.notif.stream[index].read = true;
-      FBRef.child('notif/' + PhasedProvider.team.uid + '/' + _Auth.user.uid + '/' + key).update({
-        read : true
-      });
-
-    }
-
-    /**
-    *
-    * marks all notifications as read
-    * without deleting them from the server
-    *
-    */
-    var _markAllNotifsAsRead = function() {
-      registerAsync(doMarkAllNotifsAsRead);
-    }
-
-    var doMarkAllNotifsAsRead = function() {
-      for (var i in PhasedProvider.notif.stream) {
-        doMarkNotifAsRead({ 
-          key : PhasedProvider.notif.stream[i].key,
-          index : i
-        });
-      }
-    }
-
-    /**
-    **
-    **  Utilities
-    **
-    **/
-
-    /**
-    *
-    * remove an item from an array
-    * returns the new array
-    *
-    */
-    var popFromList = function(item, list) {
-      if (!('indexOf' in list)) {
-        list = objToArray(list); // change list to array if it's an object
-      }
-      var i = list.indexOf(item);
-      while (i > -1) {
-        delete list[i];
-        i = list.indexOf(item);
-      }
-      return list;
-    }
-
-    // convert object into array
-    // useful for arrays with missing keys
-    // eg, [0 = '', 1 = '', 3 = ''];
-    var objToArray = function(obj) {
-      var newArray = [];
-      for (var i in obj) {
-        obj.key = i;
-        newArray.push(obj[i]);
-      }
-      return newArray;
     }
 
 
