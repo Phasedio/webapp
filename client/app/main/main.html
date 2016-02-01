@@ -15,7 +15,7 @@
 
           <div class="member-background">
             <div 
-              class="member-item presence-{{member.presence}}" 
+              class="member-item presence-{{Phased.PRESENCE[member.presence]}}" 
               ng-repeat="member in team.members | orderBy: 'name'" 
               ng-click="goToUser(member.uid)"
               >
