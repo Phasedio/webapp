@@ -1,0 +1,10 @@
+.export-users{
+  overflow: auto;
+  .export-user{
+    height: 25px;
+    width: 25px;
+    float: left;
+    margin-right: 1rem;
+    
+  }
+}

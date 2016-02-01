@@ -1,0 +1,28 @@
+<div ng-include="'components/navbar/navbar.html'"></div>
+
+
+<section class="container">
+  <div class="row">
+  	<div class="col-xs-12" ng-class="tasklistSize">
+		<div class="ph-card task-list">
+ 		 	<h1>ADMIN</h1>
+      <div class="export-users">
+        <div class="export-user" ng-repeat="member in team.members" style="background-image: url('{{member.pic}}')"></div>
+      </div>
+
+ 		 	<!-- <table class="table table-hover">
+				<tbody>
+					<tr class="task" ng-repeat="member in team.members" >
+						<td>
+							{{member.name}} --
+							<select ng-model="member.role" ng-change="changeRole(member, '{{member.role}}')">
+								<option ng-repeat="role in Phased.ROLES">{{role}}</option>
+							</select>
+						</td>
+					</tr>
+				</tbody>
+			</table> -->
+ 		</div>
+	</div>
+  </div>
+</section>
