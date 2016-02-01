@@ -185,7 +185,7 @@ angular.module('webappApp')
       PhasedProvider.editTaskPriority = _editTaskPriority;
       PhasedProvider.markNotifAsRead = _markNotifAsRead;
       PhasedProvider.markAllNotifsAsRead = _markAllNotifsAsRead;
-
+      
       return PhasedProvider;
     }];
 
@@ -195,7 +195,7 @@ angular.module('webappApp')
       PhasedProvider.FBRef = FBRef;
     }
 
-    // sets WATCH_HISTORY flag so provider knows to 
+    // sets WATCH_HISTORY flag so provider knows to
     // set up history observers in init.
     // must be called in .config block before init.
     this.setWatchHistory = function(watch) {
@@ -203,7 +203,7 @@ angular.module('webappApp')
         WATCH_HISTORY = true;
     }
 
-    // sets WATCH_ASSIGNMENTS flag so provider knows to 
+    // sets WATCH_ASSIGNMENTS flag so provider knows to
     // set up assignment observers in init.
     // must be called in .config block before init.
     this.setWatchAssignments = function(watch) {
@@ -291,7 +291,7 @@ angular.module('webappApp')
     *
     * title and body are arrays of objects which are either
     * { string : 'a simple string' }
-    * or { userID : 'aUserID' } 
+    * or { userID : 'aUserID' }
     * which will be interpreted when loaded by client (see watchNotifications)
     *
     */
@@ -338,7 +338,7 @@ angular.module('webappApp')
           // 2 self-assigned
           // 3 unassigned
 
-          if (data.taskSnapshot.assigned_by != data.taskSnapshot.assignee && 
+          if (data.taskSnapshot.assigned_by != data.taskSnapshot.assignee &&
             (data.taskSnapshot.assignee && !data.taskSnapshot.unassigned)) { // 1
               streamItem.title = [
                 { string : 'New task assigned to ' },
@@ -503,7 +503,7 @@ angular.module('webappApp')
     *
     * 1. sets their presence to PhasedProvider.PRESENCE.ONLINE now
     *
-    * 2. sets their presence attr to PhasedProvider.PRESENCE.OFFLINE 
+    * 2. sets their presence attr to PhasedProvider.PRESENCE.OFFLINE
     * and updates lastOnline on FB disconnect
     *
     */
@@ -628,7 +628,7 @@ angular.module('webappApp')
         PhasedProvider.team.history = []; // clear history before populating
 
         // both populated by users below
-        setUpTeamMembers.membersToGetHistFor = []; 
+        setUpTeamMembers.membersToGetHistFor = [];
         var membersToGet = [];
 
         for (var id in users) {
@@ -771,7 +771,7 @@ angular.module('webappApp')
             // add key property
             data[keys[i]].key = keys[i];
 
-            if (addToHistory) 
+            if (addToHistory)
               PhasedProvider.team.history.push(data[keys[i]]);
 
             PhasedProvider.team.members[id].history.push(data[keys[i]]); // always populate user histories
@@ -1009,7 +1009,7 @@ angular.module('webappApp')
         var UIDContainer = assignmentIDs[assignmentContainerName];
 
         // loop through list
-        // add to obj ref container if in UID list 
+        // add to obj ref container if in UID list
         for (var i in UIDContainer) {
           var assignmentID = UIDContainer[i];
           if (assignmentID in PhasedProvider.assignments.all)
@@ -1175,7 +1175,7 @@ angular.module('webappApp')
       FBRef.child('team/' + _Auth.currentTeam + '/assignments/' + location + '/' + taskID + '/history').push(data);
 
       // format and issue notification
-      issueTaskHistoryNotification(data);   
+      issueTaskHistoryNotification(data);
     }
 
     // makes a clean copy of the newTask for the db with the expected properties,
@@ -1547,14 +1547,14 @@ angular.module('webappApp')
               user.assignments.to_me.push(all[data[i]]);
           }
         });
-        
+
         // 2. same as above
         FBRef.child(refString + '/by/' + id).on('value', function(data) {
           data = data.val();
           if (!data) return;
           data = objToArray(data);
 
-          // 3. 
+          // 3.
           for (var i in data) {
             if (data[i] in all)
               user.assignments.by_me.push(all[data[i]]);
@@ -1761,7 +1761,7 @@ angular.module('webappApp')
       * B2. add to new by lookup
     * 2. update keys on task itself (assignee, user, assigned_by, status)
     *
-    */ 
+    */
     var _editTaskAssignee = function(task, newAssignee) {
       var args = {
         task : task,
@@ -1823,7 +1823,7 @@ angular.module('webappApp')
     * edit task name
     * (simple FB interaction)
     *
-    */ 
+    */
     var _editTaskName = function(taskID, newName) {
       var args = {
         taskID : taskID,
@@ -1843,7 +1843,7 @@ angular.module('webappApp')
     * edit task description
     * (simple FB interaction)
     *
-    */ 
+    */
     var _editTaskDesc = function(taskID, newDesc) {
       var args = {
         taskID : taskID,
@@ -1863,7 +1863,7 @@ angular.module('webappApp')
     * edit task deadline
     * (simple FB interaction)
     *
-    */ 
+    */
     var _editTaskDeadline = function(taskID, newDeadline) {
       var args = {
         taskID : taskID,
@@ -1885,7 +1885,7 @@ angular.module('webappApp')
     * edit task category
     * (simple FB interaction)
     *
-    */ 
+    */
     var _editTaskCategory = function(taskID, newCategory) {
       var args = {
         taskID : taskID,
@@ -1905,7 +1905,7 @@ angular.module('webappApp')
     * edit task priority
     * (simple FB interaction)
     *
-    */ 
+    */
     var _editTaskPriority = function(taskID, newPriority) {
       var args = {
         taskID : taskID,
@@ -1920,7 +1920,7 @@ angular.module('webappApp')
       });
     }
 
-    
+
 
 
     /**
@@ -2011,7 +2011,7 @@ angular.module('webappApp')
         return;
       }
 
-      // 2. 
+      // 2.
       FBRef.child('team/' + PhasedProvider.team.name + '/category/' + key).set(null, getCategories);
     }
 
@@ -2091,8 +2091,8 @@ angular.module('webappApp')
     *
     * changes a member's role
     * Server side API takes care of database interaction and sanitization
-    * data passed = { 
-    *    user : current user id, 
+    * data passed = {
+    *    user : current user id,
     *    assignee : id of user with new role
     *    role : new role
     *  }
@@ -2275,7 +2275,7 @@ angular.module('webappApp')
 
     var doMarkAllNotifsAsRead = function() {
       for (var i in PhasedProvider.notif.stream) {
-        doMarkNotifAsRead({ 
+        doMarkNotifAsRead({
           key : PhasedProvider.notif.stream[i].key,
           index : i
         });

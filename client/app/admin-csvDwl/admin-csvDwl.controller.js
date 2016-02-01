@@ -4,6 +4,7 @@ angular.module('webappApp')
   .controller('AdminCsvDwlCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location) {
     ga('send', 'pageview', '/admin');
 
+    var FBRef = new Firebase(FURL);
     $scope.viewType = Phased.viewType;
     $scope.myID = Auth.user.uid;
     $scope.team = Phased.team;
@@ -13,6 +14,8 @@ angular.module('webappApp')
     //form vars
 
     var users = [],category = [],time = [];
+    $scope.returnValues = {};
+
 
     // bounce users without Admin or Owner permissions
     $scope.$on('Phased:currentUserProfile', function(){
@@ -21,7 +24,7 @@ angular.module('webappApp')
     });
 
     $scope.toggleMember = function(uid){
-      var id = uid;
+      var id = String(uid);
       //check if uid is in arr
       var x = _.findIndex(users, function(o) { return o == uid;});
       console.log(x);
@@ -29,24 +32,32 @@ angular.module('webappApp')
         //if so remove it from arr
         _.remove(users,function(o) { return o == uid;});
         //remove active class to element
-        $("#"+uid).toggleClass("active");
-        //document.querySelectorAll("[data-member='"+uid+"']").className = "";
+        $("#"+id).toggleClass("active");
 
       }else{
         //if not add it
         users.push(uid);
         //add active class to element
-        $("#"+uid).toggleClass("active");
-        //document.querySelectorAll("[data-member='"+uid+"']").className = "active";
+        $("#"+id).toggleClass("active");
 
       }
       console.log(users);
-
-
-      //if not add it
-      //add active class to element
-
     }
+
+    $scope.getTasks = function(){
+      for (var i = 0; i < users.length; i++) {
+        getData(users[i]);
+      }
+    };
+
+    function getData(user){
+      var x = user;
+      FBRef.child('team').child(Auth.currentTeam).child('all').child(x).once('value',function(snap){
+        $scope.returnValues[x] = snap.val();
+
+      });
+    }
+
 
 
 
