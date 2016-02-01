@@ -100,16 +100,16 @@ angular.module('webappApp')
   .filter('historyType', ['Phased', function(Phased) {
     return function(input) {
       var types = {};
-      types[Phased.TASK_HISTORY_CHANGES.CREATED] = "Task created";
-      types[Phased.TASK_HISTORY_CHANGES.ARCHIVED] = "Task archived";
-      types[Phased.TASK_HISTORY_CHANGES.UNARCHIVED] = "Task unarchived";
-      types[Phased.TASK_HISTORY_CHANGES.NAME] = "Task name changed";
-      types[Phased.TASK_HISTORY_CHANGES.DESCRIPTION] = "Task description changed";
-      types[Phased.TASK_HISTORY_CHANGES.ASSIGNEE] = "Task assignee changed";
-      types[Phased.TASK_HISTORY_CHANGES.DEADLINE] = "Task deadline changed";
-      types[Phased.TASK_HISTORY_CHANGES.CATEGORY] = "Task category changed";
-      types[Phased.TASK_HISTORY_CHANGES.PRIORITY] = "Task priority changed";
-      types[Phased.TASK_HISTORY_CHANGES.STATUS] = "Task status changed";
+      types[Phased.task.HISTORY.CREATED] = "Task created";
+      types[Phased.task.HISTORY.ARCHIVED] = "Task archived";
+      types[Phased.task.HISTORY.UNARCHIVED] = "Task unarchived";
+      types[Phased.task.HISTORY.NAME] = "Task name changed";
+      types[Phased.task.HISTORY.DESCRIPTION] = "Task description changed";
+      types[Phased.task.HISTORY.ASSIGNEE] = "Task assignee changed";
+      types[Phased.task.HISTORY.DEADLINE] = "Task deadline changed";
+      types[Phased.task.HISTORY.CATEGORY] = "Task category changed";
+      types[Phased.task.HISTORY.PRIORITY] = "Task priority changed";
+      types[Phased.task.HISTORY.STATUS] = "Task status changed";
 
       return types[input] || input; // fail gracefully
     }
@@ -118,11 +118,11 @@ angular.module('webappApp')
     ga('send', 'pageview', '/tasks');
 
     $scope.viewType = Phased.viewType;
-    $scope.taskPriorities = Phased.TASK_PRIORITIES; // in new task modal
-    $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
-    $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
-    $scope.taskStatusID = Phased.TASK_STATUS_ID;
-    $scope.taskHistType = Phased.TASK_HISTORY_CHANGES;
+    $scope.taskPriorities = Phased.task.PRIORITIES; // in new task modal
+    $scope.taskStatuses = Phased.task.STATUSES; // in new task modal
+    $scope.taskPriorityID = Phased.task.PRIORITY_ID;
+    $scope.taskStatusID = Phased.task.STATUS_ID;
+    $scope.taskHistType = Phased.task.HISTORY;
     $scope.myID = Auth.user.uid;
 
     console.log(Phased);
@@ -197,7 +197,7 @@ angular.module('webappApp')
     // default active stream is 'to_me'
     $scope.activeStream = Phased.assignments.to_me;
     $scope.activeStreamName = 'assignments.to_me';
-    $scope.activeStatusFilter = '!' + Phased.TASK_STATUS_ID.COMPLETE; // not completed tasks
+    $scope.activeStatusFilter = '!' + Phased.task.STATUS_ID.COMPLETE; // not completed tasks
     $scope.activeCategoryFilter = undefined;
     $scope.filterView = $scope.activeStreamName;//for the select filter
     $scope.eventSources = [];//needed for the calendar
@@ -216,11 +216,11 @@ angular.module('webappApp')
       switch (streamName) {
         case 'assignments.all':
           $scope.activeStream = Phased.assignments.all;
-          $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
+          $scope.setStatusFilter('!' + Phased.task.STATUS_ID.COMPLETE);
           break;
         case 'assignments.to_me':
           $scope.activeStream = Phased.assignments.to_me;
-          $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
+          $scope.setStatusFilter('!' + Phased.task.STATUS_ID.COMPLETE);
           break;
         case 'assignments.by_me':
           $scope.activeStream = Phased.assignments.by_me;
@@ -245,21 +245,21 @@ angular.module('webappApp')
         case 'completed' : 
           $scope.activeStream = Phased.assignments.all;
           streamName = 'assignments.all'; // jimmy this in there...
-          $scope.setStatusFilter(Phased.TASK_STATUS_ID.COMPLETE);
+          $scope.setStatusFilter(Phased.task.STATUS_ID.COMPLETE);
           break;
         case 'assigned' : 
           $scope.activeStream = Phased.assignments.all;
           streamName = 'assignments.all'; 
-          $scope.setStatusFilter(Phased.TASK_STATUS_ID.ASSIGNED);
+          $scope.setStatusFilter(Phased.task.STATUS_ID.ASSIGNED);
           break;
         case 'in_progress' : 
           $scope.activeStream = Phased.assignments.all;
           streamName = 'assignments.all'; 
-          $scope.setStatusFilter(Phased.TASK_STATUS_ID.IN_PROGRESS);
+          $scope.setStatusFilter(Phased.task.STATUS_ID.IN_PROGRESS);
           break;
         default:
           $scope.activeStream = Phased.assignments.to_me;
-          $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
+          $scope.setStatusFilter('!' + Phased.task.STATUS_ID.COMPLETE);
           streamName = 'assignments.to_me';
           break;
       }
@@ -283,7 +283,7 @@ angular.module('webappApp')
         }
 
         // default to 'not COMPLETE' on false
-        if (!(statusID in Phased.TASK_STATUSES)) {
+        if (!(statusID in Phased.task.STATUSES)) {
           statusID = '1';
           filterNot = true;
         }
@@ -307,21 +307,11 @@ angular.module('webappApp')
 
     $scope.addAssignment = function(newTask){
       // format object
-      var taskPrefix = '',
-        weather = '';
       var status = {
-        name: taskPrefix + newTask.name,
+        name: newTask.name,
         cat : newTask.category ? newTask.category : '',
-        city: $scope.city ? $scope.city : 0,
-        weather: weather,
-        taskPrefix : taskPrefix,
-        photo : $scope.bgPhoto ? $scope.bgPhoto : 0,
-        location: {
-          lat : $scope.lat ? $scope.lat : 0,
-          long : $scope.long ? $scope.long : 0
-        },
         assigned_by : $scope.myID,
-        status: Phased.TASK_STATUS_ID.ASSIGNED,
+        status: Phased.task.STATUS_ID.ASSIGNED,
         priority : parseInt($scope.newTask.priority)
       };
 
@@ -329,15 +319,12 @@ angular.module('webappApp')
         status.deadline = newTask.deadline.getTime();
 
       // set assignee or unassigned
-      if (newTask.unassigned)
+      if (newTask.unassigned || (!('assignee' in newTask) && !('assigned_to' in newTask)))
         status.unassigned = true;
-      else if (newTask.assignee)
-        status.assignee = newTask.assignee;
-      else {
-        console.log('no assignee but not unassigned; breaking...');
-        return;
-      }
-
+      else if (newTask.assigned_to)
+        status.assigned_to = newTask.assigned_to;
+      else
+        status.assigned_to = newTask.assignee
 
       // push to db
       Phased.addAssignment(status);
@@ -355,38 +342,16 @@ angular.module('webappApp')
       if (!newTodo.name) {
 				return;
 			}
-      // format object
-      var taskPrefix = '',
-        weather = '';
       var status = {
-        name: taskPrefix + newTodo.name,
-        cat : '',
-        city: 0,
-        weather: weather,
-        taskPrefix : taskPrefix,
-        photo :  0,
-        location: {
-          lat :  0,
-          long :  0
-        },
+        name: newTodo.name,
         assigned_by : $scope.myID,
-        status: Phased.TASK_STATUS_ID.ASSIGNED,
-        priority : 1
+        status: Phased.task.STATUS_ID.ASSIGNED,
+        priority : Phased.task.PRIORITY_ID.MEDIUM,
+        assigned_to : $scope.myID
       };
-      status.assignee = $scope.myID;
-
-
 
       Phased.addAssignment(status);
       $scope.newTodo = '';
-			// $scope.saving = true;
-			// store.insert(newTodo)
-			// 	.then(function success() {
-			// 		$scope.newTodo = '';
-			// 	})
-			// 	.finally(function () {
-			// 		$scope.saving = false;
-			// 	});
 		};
 
     // moves task into my to_me if unassigned,
@@ -397,7 +362,7 @@ angular.module('webappApp')
       Phased.activateTask(task.key);
 
       $scope.activeStream = Phased.assignments.to_me;
-      $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
+      $scope.setStatusFilter('!' + Phased.task.STATUS_ID.COMPLETE);
     }
 
     $scope.moveToArchive = function(assignmentID) {
@@ -415,7 +380,7 @@ angular.module('webappApp')
     }
 
     $scope.setTaskCompleted = function(assignmentID) {
-      Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
+      Phased.setAssignmentStatus(assignmentID, Phased.task.STATUS_ID.COMPLETE);
     }
 
     // Broadcasts that user is working on Task
