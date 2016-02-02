@@ -1134,116 +1134,153 @@ angular.module('webappApp')
       issueTaskHistoryNotification(data);   
     }
 
-    // makes a clean copy of the newTask for the db with the expected properties,
-    // as well as verifying that they're type we expect
-    // returns the clean copy
-    // expandable: just add property names to the appropriate objects and the loops do the rest
-    // optionally include the task's history object
-    var makeTaskForDB = function(newTask, includeHist) {
-      // properties to check
-      var required = {
-        strings : ['name'],
-        numbers : [],
-        booleans: []
-      };
-      var optional = {
-        strings : ['cat', 'taskPrefix', 'photo', 'user', 'created_by', 'assigned_to', 'assigned_by'],
-        numbers : ['deadline', 'priority', 'status'],
-        booleans : ['unassigned']
-      };
+    /**
+    *
+    * cleanObjectShallow()
+    *
+    * performs a single-level cleaning of an incoming associative array
+    * ensuring required nodes are present and allowing optional nodes
+    * returns a pristine copy of dirtyObj (ie, a new object) or false if 
+    * required nodes are missing
+    *
+    * expects config to have two properties, 'required' & 'optional',
+    * which themselves have type-organized lists of node names, ie
+    *
+    *  config = {
+    *    required : {
+    *      strings : [],
+    *      numbers : [],
+    *      booleans : []
+    *    },
+    *    optional : {
+    *      strings : [],
+    *      numbers : [],
+    *      booleans : []
+    *    }
+    *  }
+    *
+    */
+    var cleanObjectShallow = function(dirtyObj, config) {
+      var cleanObj = {}, 
+        required = config.required,
+        optional = config.optional;
 
-      // clean output object
-      var status = {
-        time: new Date().getTime()
-      };
+      // REQUIRED:
+      if ('required' in config) {
+        // required strings
+        for (var i in required.strings) {
+          if (typeof dirtyObj[required.strings[i]] === 'string' &&
+              dirtyObj[required.strings[i]] != '') {
+            cleanObj[required.strings[i]] = dirtyObj[required.strings[i]];
+          } else {
+            console.log('required property "' + required.strings[i] + '" not found; aborting');
+            return false;
+          }
+        }
 
-      // check for history
-      if (includeHist) {
-        status.history = angular.copy(newTask.history); // copies and removes $$hashkeys
-      }
+        // required numbers
+        for (var i in required.numbers) {
+          if (typeof dirtyObj[required.numbers[i]] === 'number' &&
+              !isNaN(dirtyObj[required.numbers[i]])) {
+            cleanObj[required.numbers[i]] = dirtyObj[required.numbers[i]];
+          } else {
+            console.log('required property "' + required.numbers[i] + '" not found or is NaN; aborting');
+            return false;
+          }
+        }
 
-      // BATCH CHECKS:
-      // required strings
-      for (var i in required.strings) {
-        if (typeof newTask[required.strings[i]] === 'string' &&
-            newTask[required.strings[i]] != '') {
-          status[required.strings[i]] = newTask[required.strings[i]];
-        } else {
-          console.log('required property "' + required.strings[i] + '" not found in newTask; aborting');
-          return;
+        // booleans
+        for (var i in required.booleans) {
+          if (typeof dirtyObj[required.booleans[i]] === 'boolean') {
+            cleanObj[required.booleans[i]] = dirtyObj[required.booleans[i]];
+          } else {
+            console.log('required property "' + required.booleans[i] + '" not found; aborting');
+            return false;
+          }
         }
       }
 
-      // required numbers
-      for (var i in required.numbers) {
-        if (typeof newTask[required.numbers[i]] === 'number' &&
-            !isNaN(newTask[required.numbers[i]])) {
-          status[required.numbers[i]] = newTask[required.numbers[i]];
-        } else {
-          console.log('required property "' + required.numbers[i] + '" not found in newTask or is NaN; aborting');
-          return;
+      // OPTIONAL
+      if ('optional' in config) {
+        // optional strings
+        for (var i in optional.strings) {
+          if (typeof dirtyObj[optional.strings[i]] === 'string' &&
+              dirtyObj[optional.strings[i]] != '') {
+            cleanObj[optional.strings[i]] = dirtyObj[optional.strings[i]];
+          }
+        }
+
+        // optional numbers
+        for (var i in optional.numbers) {
+          if (typeof dirtyObj[optional.numbers[i]] === 'number'
+            && !isNaN(dirtyObj[optional.numbers[i]])) {
+            cleanObj[optional.numbers[i]] = dirtyObj[optional.numbers[i]];
+          }
+        }
+
+        // booleans
+        for (var i in optional.booleans) {
+          if (typeof dirtyObj[optional.booleans[i]] === 'boolean') {
+            cleanObj[optional.booleans[i]] = dirtyObj[optional.booleans[i]];
+          }
         }
       }
 
-      // booleans
-      for (var i in required.booleans) {
-        if (typeof newTask[required.booleans[i]] === 'boolean') {
-          status[required.booleans[i]] = newTask[required.booleans[i]];
-        } else {
-          console.log('required property "' + required.booleans[i] + '" not found in newTask; aborting');
-          return;
-        }
-      }
-
-      // optional strings
-      for (var i in optional.strings) {
-        if (typeof newTask[optional.strings[i]] === 'string' &&
-            newTask[optional.strings[i]] != '') {
-          status[optional.strings[i]] = newTask[optional.strings[i]];
-        }
-      }
-
-      // optional numbers
-      for (var i in optional.numbers) {
-        if (typeof newTask[optional.numbers[i]] === 'number'
-          && !isNaN(newTask[optional.numbers[i]])) {
-          status[optional.numbers[i]] = newTask[optional.numbers[i]];
-        }
-      }
-
-      // booleans
-      for (var i in optional.booleans) {
-        if (typeof newTask[optional.booleans[i]] === 'boolean') {
-          status[optional.booleans[i]] = newTask[optional.booleans[i]];
-        }
-      }
-
-      return status;
+      return cleanObj;
     }
 
-    // cleans a project
+    // cleans a project ~~ STUB
     var cleanProject = function(newProject) {
 
     }
 
-    // cleans a column
+    // cleans a column ~~ STUB
     var cleanColumn = function(newColumn) {
 
     }
 
-    // cleans a card
+    // cleans a card ~~ STUB
     var cleanCard = function(newCard) {
 
     }
 
-    // cleans a status
-    var cleanStatus = function(newStatus) {
+    // cleans an assignment
+    var cleanAssignment = function(newAssignment, includeHist) {
+      // properties to check
+      var config = {
+          required : {
+          strings : ['name', 'created_by', 'assigned_by']
+        },
+        optional : {
+          strings : ['cat', 'taskPrefix', 'photo', 'assigned_to'],
+          numbers : ['deadline', 'priority', 'status'],
+          booleans : ['unassigned']
+        }
+      };
 
+      var assignment = cleanObjectShallow(newAssignment, config);
+
+      // check for history
+      if (includeHist) {
+        assignment.history = angular.copy(newAssignment.history); // copies and removes $$hashkeys
+      }
+
+      return assignment;
     }
 
-    // cleans an assignment
-    var cleanAssignment = function(newAssignment) {
+    // cleans a status
+    var cleanStatus = function(newStatus) {
+      // properties to check
+      var config = {
+          required : {
+          strings : ['name', 'user']
+        },
+        optional : {
+          strings : ['cat', 'taskPrefix']
+        }
+      };
 
+      return cleanObjectShallow(newStatus, config);
     }
 
     // remove an item from an array
@@ -1690,9 +1727,12 @@ angular.module('webappApp')
       ga('send', 'event', 'Update', 'Submitted');
       ga('send', 'event', 'Status', 'Status added');
 
-      // clean task
-      newStatus = makeTaskForDB(newStatus);
+      // clean
+      newStatus.user = _Auth.user.uid;
+      newStatus = cleanStatus(newStatus);
       if (!newStatus) return;
+
+      newStatus.time = new Date().getTime();
 
       // publish to stream
       var teamRef = FBRef.child('team/' + PhasedProvider.team.uid);
@@ -1739,8 +1779,10 @@ angular.module('webappApp')
       // 1. clean newTask
       newTask.assigned_by = _Auth.user.uid; // this changes if the task is re-assigned
       newTask.created_by = _Auth.user.uid; // this never changes
-      newTask = makeTaskForDB(newTask);
+      newTask = cleanAssignment(newTask);
       if (!newTask) return; // makeTask failed
+
+      newTask.time = new Date().getTime();
 
       // 2. push to db
       var newTaskRef = FBRef.child('team/' + PhasedProvider.team.uid + '/projects/' + projectID + '/columns/' + columnID + '/cards/' + cardID + '/tasks')
