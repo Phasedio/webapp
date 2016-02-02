@@ -61,6 +61,14 @@ exports.send = function(req, res) {
 
 
   }
+   fs.writeFile('file.csv', theCSV, function(err) {
+      if (err) throw err;
+   //    console.log('file saved');
+   //    res.set('Content-Type', 'application/octet-stream');
+   // res.set('Content-Disposition', 'attachment;filename=\"file.csv\"');
+   // res.download('file.csv');
+   //res.send('file.csv');
+  });
   console.log(theCSV);
   //res.send(theCSV);
 
@@ -68,9 +76,10 @@ exports.send = function(req, res) {
 
 };
 exports.dwl = function(req, res) {
-	var file = req.param('file');
+    console.log('happed');
+	//var file = req.param('file');
     res.set('Content-Type', 'application/octet-stream');
 	res.set('Content-Disposition', 'attachment;filename=\"file.csv\"');
-	res.download(file);
+	res.download('file.csv');
 
 };

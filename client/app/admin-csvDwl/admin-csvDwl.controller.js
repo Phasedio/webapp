@@ -68,7 +68,7 @@ angular.module('webappApp')
       });
 
       console.log($scope.returnValues,dict);
- 
+
       //Package for transport.
       var p = {
         data: $scope.returnValues,
@@ -76,6 +76,10 @@ angular.module('webappApp')
       }
       $http.post('/api/downloads',{hose:p}).then(function(res){
         console.log(res);
+        window.open("/api/downloads");
+        // $http.get('/api/downloads',{file:'file'}).then(function(res){
+        //   console.log(res);
+        // })
       })
     }
 
