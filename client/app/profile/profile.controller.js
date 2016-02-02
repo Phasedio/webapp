@@ -22,7 +22,6 @@ angular.module('webappApp')
     else profileUser = Auth.user.uid;
 
     $scope.currentUser = Phased.team.members[profileUser];
-    Phased.watchMemberAssignments(profileUser);
 
     $scope.$on('Phased:setup', function(){
       $scope.currentUser = Phased.team.members[profileUser];
