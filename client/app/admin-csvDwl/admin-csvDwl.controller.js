@@ -72,8 +72,10 @@ angular.module('webappApp')
       //Package for transport.
       var p = {
         data: $scope.returnValues,
-        dict: dict
+        dict: dict,
+        cat: $scope.team.categoryObj
       }
+      console.log(p);
       $http.post('/api/downloads',{hose:p}).then(function(res){
         console.log(res);
         //window.open("/api/downloads");

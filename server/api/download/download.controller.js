@@ -34,6 +34,9 @@ exports.send = function(req, res) {
       	//console.log('new task');
       	var task = dataJson.data[users[y]][keys[i]];
       	var obj = {}
+        if (task.cat != "" && dataJson.cat[task.cat].name) {
+          obj.category = dataJson.cat[task.cat].name;
+        }
       	obj.time = new Date(task.time).toLocaleTimeString();
       	obj.date = new Date(task.time).toLocaleDateString();
       	obj.task = task.name;
