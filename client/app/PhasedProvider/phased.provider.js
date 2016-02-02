@@ -131,7 +131,7 @@ angular.module('webappApp')
       PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       PHASED_META_SET_UP = false, // set to true after static meta values are loaded
-      WATCH_PROJECTS = false, // set in setWatchAssignments in config; tells init whether to do it
+      WATCH_PROJECTS = false, // set in setWatchProjects in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
       
@@ -248,8 +248,6 @@ angular.module('webappApp')
       initializeMeta(); // gathers static values set in DB
       initializeTeam(); // gathers/watches team and members
 
-      /*if (WATCH_ASSIGNMENTS)
-        watchAssignments();*/
       if (WATCH_NOTIFICATIONS)
         watchNotifications();
       if (WATCH_PRESENCE)
@@ -723,11 +721,15 @@ angular.module('webappApp')
         eventType : 'child_changed',
         callback : cb
       });
+
+      // projects
+      if (WATCH_PROJECTS)
+        watchProjects();
     }
 
     /*
     *
-    * unwatchTeam - STUB/TODO
+    * unwatchTeam
     * prepares us to switch to another team by un-setting the active
     * firebase event handlers
     *
@@ -800,7 +802,7 @@ angular.module('webappApp')
 
         // set up watcher
         var notifAddress = 'notif/' + PhasedProvider.team.uid + '/' + PhasedProvider.user.uid;
-        FBRef.child(notifAddress)
+        var cb = FBRef.child(notifAddress)
           .on('value', function(data) {
             var notifications = data.val();
 
@@ -816,6 +818,13 @@ angular.module('webappApp')
             // issue notification event
             $rootScope.$broadcast('Phased:notification');
           });
+
+        // stash for deregistering
+        PhasedProvider.team._FBHandlers.push({
+          address : notifAddress,
+          eventType : 'value',
+          callback : cb
+        });
       });
     }
 
@@ -842,6 +851,21 @@ angular.module('webappApp')
         lastOnline : Firebase.ServerValue.TIMESTAMP,
         presence : PhasedProvider.PRESENCE_ID.OFFLINE
       });
+    }
+
+
+    /**
+    *
+    * Watches a team's projects after they've been loaded once
+    *
+    * Should only be called from watchTeam if WATCH_PROJECTS is set
+    * Replaces watchAssignments()
+    *
+    * ~~STUB~~
+    *
+    */ 
+    var watchProjects = function() {
+      console.log('watchProjects');
     }
 
 
@@ -1428,8 +1452,8 @@ angular.module('webappApp')
       _Auth.currentTeam = args.teamID;
       initializeTeam();
 
-      if (WATCH_ASSIGNMENTS)
-        watchAssignments();
+      if (WATCH_NOTIFICATIONS)
+        watchNotifications();
 
       // update user curTeam
       FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamID, function() {
@@ -2005,7 +2029,7 @@ angular.module('webappApp')
   })
   .config(['PhasedProvider', 'FURL', 'AuthProvider', function(PhasedProvider, FURL, AuthProvider) {
     PhasedProvider.setFBRef(FURL);
-    // PhasedProvider.setWatchAssignments(true);
+    PhasedProvider.setWatchProjects(true);
     PhasedProvider.setWatchNotifications(true);
     PhasedProvider.setWatchPresence(true);
 
