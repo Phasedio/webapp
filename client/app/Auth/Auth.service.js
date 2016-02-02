@@ -58,19 +58,27 @@ angular.module('webappApp')
                     };
 
                     if (data) {
+                        // get profile-in-waiting (PIW)
+                        var PIWID = Object.keys(data)[0];
+                        var PIW = data[PIWID];
+
                         // 1B.
-                        profile.teams = data.teams; // add to user's own teams
-                        for (var i in data.teams) {
+                        profile.teams = PIW.teams; // add to user's own teams
+                        for (var i in PIW.teams) {
                             // add to team member list
-                            ref.child('team/' + i + '/members/' + uid).update({
+                            ref.child('team/' + PIW.teams[i] + '/members/' + uid).update({
                                 role: 0 // member
                             });
                         }
                     }
 
-                    // 2. create profile
+                    // 2. create profile and remove PIW
                     ref.child('profile/' + uid).set(profile, function(){
                         Auth.login(user);
+
+                        if (PIWID) {
+                            ref.child('profile-in-waiting/' + PIWID).remove();
+                        }
                     });
                 }, function(err){
                     toaster.pop('error', 'Error', 'Could not create profile...');
@@ -184,6 +192,10 @@ angular.module('webappApp')
                 if (user) {
                     Auth.user.profile = user;
                     Auth.currentTeam = user.curTeam;
+                    if (!user.curTeam && user.teams) {
+                        Auth.currentTeam = user.teams[Object.keys(user.teams)[0]]; // first of the user's teams
+                        ref.child('profile/' + uid + '/curTeam').set(Auth.currentTeam);
+                    }
 
                     doAllAfterAuth(Auth);
                     getProfileDetails.then(getProfileDetails.args);

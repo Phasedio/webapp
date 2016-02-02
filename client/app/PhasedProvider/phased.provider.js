@@ -1337,10 +1337,9 @@ angular.module('webappApp')
     * 2B2. if not, add to /profile-in-waiting and /profile-in-waiting2
     */
 
-    var _addMember = function(newMember, inviter) {
+    var _addMember = function(newMember) {
       var args = {
-        newMember : newMember,
-        inviter : inviter
+        newMember : newMember
       }
 
       registerAsync(doAddMember, args);
@@ -1348,50 +1347,49 @@ angular.module('webappApp')
 
     var doAddMember = function(args) {
       ga('send', 'event', 'Team', 'Member added');
-      console.log(args);
-      var invited = args.newMember,
-        inviter = args.inviter;
-
+      var invited = args.newMember;
       invited.email = invited.email.toLowerCase(); // Change text to lowercase regardless of user input.
+      
+      /**
+        1. if user in /profile, simply add to team
+        2. if user in /profile-in-waiting, add team to profile-in-waiting and wait for user to join
+        3. if user in neither, create profile-in-waiting
+      **/
 
-      //Brian's better add member function
-      // find if memeber is already in db
-      // console.log(names.email);
-      FBRef.child("profile").orderByChild("email").startAt(invited.email).endAt(invited.email).limitToFirst(1).once('value',function(user){
-        user = user.val();
-        // console.log(user);
-        if (user) {
-          //console.log('invite sent to current user');
-          var k = Object.keys(user);
-          var memberData = {
+      FBRef.child("profile").orderByChild("email").equalTo(invited.email).once('value',function(snap){
+        var users = snap.val();
+
+        if (users) {
+          var userID = Object.keys(users)[0];
+          // 1. add to team, send email
+          var inviteData = {
             teams : { 0 : PhasedProvider.team.uid },
             email : invited.email,
-            inviteEmail: _Auth.user.email,
-            inviteName: _Auth.user.name
+            inviteEmail: PhasedProvider.user.email,
+            inviteName: PhasedProvider.user.name
           }
-          FBRef.child('team-invite-existing-member').push(memberData);
-          FBRef.child('profile/' + k[0] + '/teams').push(PhasedProvider.team.uid);
+
+          FBRef.child('profile/' + userID + '/teams').push(PhasedProvider.team.uid); // add to user's teams
+          FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + userID).update({role : PhasedProvider.ROLE_ID.MEMBER}); // add to this team
         } else {
-          //console.log('invited is not a current user, looking to see if they are in profile-in-waiting');
+          // 2. check if in profile-in-waiting
+          FBRef.child("profile-in-waiting").orderByChild("email").equalTo(invited.email).once('value',function(snap){
+            var users = snap.val();
 
-          FBRef.child("profile-in-waiting").orderByChild("email").startAt(invited.email).endAt(invited.email).limitToFirst(1).once('value',function(user){
-            user = user.val();
-
-            if (user) {
-              //console.log('invite sent to user in profile-in-waiting');
-
-              var y = Object.keys(user);
-              FBRef.child('profile-in-waiting').child(y[0]).child('teams').push(PhasedProvider.team.uid);
+            if (users) {
+              var PIWID = Object.keys(users)[0];
+              // already in PIW, add our team and wait for user
+              FBRef.child('profile-in-waiting/' + PIWID + '/teams').push(PhasedProvider.team.uid);
             } else {
-              //console.log('invited is new to the system, setting up profile-in-waiting');
+              // newly add to PIW
               var PIWData = {
                 'teams' : { 0 : PhasedProvider.team.uid},
                 'email' : invited.email,
-                'inviteEmail': inviter.email,
-                'inviteName': inviter.name
+                'inviteEmail': PhasedProvider.user.email,
+                'inviteName': PhasedProvider.user.name
               };
               FBRef.child('profile-in-waiting').push(PIWData);
-              FBRef.child('profile-in-waiting2').push(PIWData);
+              FBRef.child('profile-in-waiting2').push(PIWData); // for Zapier
             }
           });
         }
