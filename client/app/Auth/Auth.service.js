@@ -3,9 +3,9 @@
 angular.module('webappApp')
   .provider('Auth', function() {
 
-    this.$get = ['FURL', '$firebaseAuth', '$firebase', '$firebaseObject', '$location', '$rootScope',
-        function (FURL, $firebaseAuth, $firebase,$firebaseObject,$location,$rootScope) {
-            return new AuthProvider(FURL, $firebaseAuth, $firebase,$firebaseObject,$location,$rootScope);
+    this.$get = ['FURL', '$firebaseAuth', '$firebase', '$firebaseObject', '$location', '$rootScope', 'toaster',
+        function (FURL, $firebaseAuth, $firebase,$firebaseObject,$location,$rootScope, toaster) {
+            return new AuthProvider(FURL, $firebaseAuth, $firebase,$firebaseObject,$location,$rootScope, toaster);
         }];
 
     // array of callbacks to execute after auth is finished
@@ -31,7 +31,7 @@ angular.module('webappApp')
     }
 
     // AngularJS will instantiate a singleton by calling "new" on this function
-    var AuthProvider = function(FURL, $firebaseAuth, $firebase,$firebaseObject,$location,$rootScope) {
+    var AuthProvider = function(FURL, $firebaseAuth, $firebase,$firebaseObject,$location,$rootScope, toaster) {
         var ref = new Firebase(FURL);
         var auth = $firebaseAuth(ref);
 
@@ -39,16 +39,49 @@ angular.module('webappApp')
             user: {},
             fb : auth,
             newTeam : false,
+            /**
+            *   Creates a new profile for a user coming to the site
+            *
+            *   1. check if profile-in-waiting has been set up by some team admin
+            *       1B - if so, add to those teams
+            *   2. create profile
+            *
+            */
             createProfile: function(uid, user) {
-                var profile = {
-                    name: user.name,
-                    email: user.email,
-                    gravatar: get_gravatar(user.email, 40)
-                };
+                // 1.
+                return ref.child('profile-in-waiting').orderByChild('email').equalTo(user.email).once('value', function(snap){
+                    var data = snap.val();
+                    var profile = {
+                        name: user.name,
+                        email: user.email,
+                        gravatar: get_gravatar(user.email, 40)
+                    };
 
-                return new Firebase(FURL).child('profile').child(uid).set(profile);
+                    if (data) {
+                        // 1B.
+                        profile.teams = data.teams; // add to user's own teams
+                        for (var i in data.teams) {
+                            // add to team member list
+                            ref.child('team/' + i + '/members/' + uid).update({
+                                role: 0 // member
+                            });
+                        }
+                    }
+
+                    // 2. create profile
+                    ref.child('profile/' + uid).set(profile, function(){
+                        Auth.login(user);
+                    });
+                }, function(err){
+                    toaster.pop('error', 'Error', 'Could not create profile...');
+                });
             },
             login: function(user, success, failure) {
+                if (typeof success == 'undefined')
+                    var success = function() {};
+                if (typeof failure == 'undefined')
+                    var failure = function() {};
+
                 auth.$authWithPassword(
                     {email: user.email, password: user.password}
                 ).then(
@@ -66,12 +99,21 @@ angular.module('webappApp')
             },
             register : function(user) {
                 user.email = user.email.toLowerCase();
-                return auth.$createUser({email: user.email, password: user.password}).then(function() {
-                    return Auth.login(user);
+                return ref.createUser({email: user.email, password: user.password}, function(err, data) {
+                    if (err) {
+                        switch (err.code) {
+                            case 'EMAIL_TAKEN':
+                                toaster.pop('error', 'Error', user.email + ' is already registered.');
+                                break;
+                            default :
+                                toaster.pop('error', 'Error', 'Could not register user.');
+                                break;
+                        }
+                    } else {
+                        console.log('no errors, creating profile');
+                        Auth.createProfile(data.uid, user);
+                    }
                 })
-                .then(function(data) {
-                    return Auth.createProfile(data.uid, user);
-                });
             },
             logout: function() {
                 console.log('logged out');

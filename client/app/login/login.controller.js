@@ -19,11 +19,8 @@ angular.module('webappApp')
     // register a new user
     $scope.regUser = function(user){
       // console.log('will show new modal here');
-      Auth.register(user).then(function() {
-        ga('send', 'event', 'Register', 'new user');
-        // console.log('will show new modal here');
-        $location.path("/");
-      });
+      Auth.register(user)
+      ga('send', 'event', 'Register', 'new user');
     }
 
     // show create account form
