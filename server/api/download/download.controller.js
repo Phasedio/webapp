@@ -78,8 +78,11 @@ exports.send = function(req, res) {
 exports.dwl = function(req, res) {
     console.log('happed');
 	//var file = req.param('file');
+  var filestream = fs.createReadStream('file.csv');
+
     res.set('Content-Type', 'application/octet-stream');
 	res.set('Content-Disposition', 'attachment;filename=\"file.csv\"');
-	res.download('file.csv');
+  filestream.pipe(res);
+	//res.download('file.csv');
 
 };

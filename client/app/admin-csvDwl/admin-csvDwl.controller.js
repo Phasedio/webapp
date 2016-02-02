@@ -76,10 +76,21 @@ angular.module('webappApp')
       }
       $http.post('/api/downloads',{hose:p}).then(function(res){
         console.log(res);
-        window.open("/api/downloads");
-        // $http.get('/api/downloads',{file:'file'}).then(function(res){
-        //   console.log(res);
-        // })
+        //window.open("/api/downloads");
+        $http.get('/api/downloads',{file:'file'}).then(function(res){
+          //console.log(res);
+          var file = new Blob([ res.data ], {
+                        type : 'application/csv'
+                    });
+                    //trick to download store a file having its URL
+                    var fileURL = URL.createObjectURL(file);
+                    var a         = document.createElement('a');
+                    a.href        = fileURL;
+                    a.target      = '_blank';
+                    a.download    = 'export.csv';
+                    document.body.appendChild(a);
+                    a.click();
+        })
       })
     }
 
