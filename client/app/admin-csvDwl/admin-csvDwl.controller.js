@@ -62,6 +62,21 @@ angular.module('webappApp')
 
     $scope.exportData = function(){
       console.log($scope.returnValues);
+      var dict = {}
+      _.forEach(users,function(value){
+        dict[value] = $scope.team.members[value];
+      });
+
+      console.log($scope.returnValues,dict);
+ 
+      //Package for transport.
+      var p = {
+        data: $scope.returnValues,
+        dict: dict
+      }
+      $http.post('/api/downloads',{hose:p}).then(function(res){
+        console.log(res);
+      })
     }
 
     function getData(user,cat){
@@ -69,23 +84,37 @@ angular.module('webappApp')
       var s = new Date($scope.time.start).getTime();//start time
       var e = new Date($scope.time.end).getTime();//end time
       if(cat){
+        //With category
         FBRef.child('team').child(Auth.currentTeam).child('all').child(x).orderByChild("cat").equalTo(cat).once('value',function(snap){
           var y = snap.val();
           var a = []
-          console.log(y);
+
+          //Remove all results out of scope of the time selected
           _.forOwn(y, function(value, key) {
             if(value.time > s && value.time < e){
               a.push(value);
             }
           } );
 
-          console.log(y,a);
+
           $scope.returnValues[x] = a;
 
         });
       }else{
+        //With out category
         FBRef.child('team').child(Auth.currentTeam).child('all').child(x).once('value',function(snap){
-          $scope.returnValues[x] = snap.val();
+          var y = snap.val();
+          var a = []
+
+          //Remove all results out of scope of the time selected
+          _.forOwn(y, function(value, key) {
+            if(value.time > s && value.time < e){
+              a.push(value);
+            }
+          } );
+
+
+          $scope.returnValues[x] = a;
 
         });
       }
