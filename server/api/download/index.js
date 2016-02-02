@@ -5,7 +5,7 @@ var controller = require('./download.controller');
 
 var router = express.Router();
 
-router.get('/', controller.index);
+router.get('/', controller.dwl);
 router.post('/', controller.send);
 router.get('/:file', controller.dwl);
 

@@ -1,0 +1,24 @@
+.export-users{
+  overflow: auto;
+  .export-user{
+    img{
+      height: 50px;
+      width: 50px;
+    }
+
+    float: left;
+    margin-right: 1rem;
+    margin-bottom:1rem;
+
+    &.active > img{
+      background-color: $accColor;
+    }
+  }
+
+  input[type="date"]{
+    font-size: 0.95rem;
+    padding: 0;
+    margin: 0;
+    line-height: 25px;
+  }
+}
