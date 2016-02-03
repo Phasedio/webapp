@@ -23,17 +23,18 @@ angular.module('webappApp')
     }
     ];
 
-    // add Admin link if user has permissions
-    var addAdminNavOption = function(){
+    $scope.showAdmin = false;
+
+    // show Admin link if user has permissions
+    var showAdminLink = function(){
       if (Auth.user.role == 'admin' || Auth.user.role == 'owner') 
-        $scope.menu.push({ 'title': 'Admin', 'link' : '/admin' });
+        $scope.showAdmin = true;
       else
-        if ($scope.menu[$scope.menu.length - 1].title == 'Admin')
-          $scope.menu.pop();
+        $scope.showAdmin = false;
     }
 
-    addAdminNavOption(); // in case of moving within app and not updating profile
-    $scope.$on('Phased:currentUserProfile', addAdminNavOption);
+    showAdminLink(); // in case of moving within app and not updating profile
+    $scope.$on('Phased:currentUserProfile', showAdminLink);
 
     $scope.isCollapsed = true;
 
