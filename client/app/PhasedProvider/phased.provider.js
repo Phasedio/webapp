@@ -1626,8 +1626,8 @@ angular.module('webappApp')
     *
     * 1. check all incoming category properties
     * 2. check if category with that name or key already exists
-    * 3A. if so, update it, then call getCategories() to update
-    * 3B. if not, create it, then call getCategories() to update
+    * 3A. if so, update it
+    * 3B. if not, create it
     *
     */
     var _addCategory = function(category) {
@@ -1675,13 +1675,13 @@ angular.module('webappApp')
       // 3A. category exists; update
       if (catExists) {
         console.log('cat exists at ' + key);
-        FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(category, getCategories);
+        FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(category);
       }
 
       // 3B.
       else {
         console.log('cat doesn\'t exist');
-        FBRef.child('team/' + PhasedProvider.team.uid + '/category').push(category, getCategories);
+        FBRef.child('team/' + PhasedProvider.team.uid + '/category').push(category);
       }
     }
 
@@ -1707,7 +1707,7 @@ angular.module('webappApp')
       }
 
       // 2. 
-      FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(null, getCategories);
+      FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(null);
     }
 
 
