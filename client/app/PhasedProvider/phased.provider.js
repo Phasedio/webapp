@@ -1416,7 +1416,7 @@ angular.module('webappApp')
         failure : failure,
         addToExistingTeam : typeof addToExistingTeam === 'boolean' ? addToExistingTeam : true // only use value if set
       }
-      registerAsync(doAddTeam, args);
+      registerAfterMeta(doAddTeam, args); // can be called before Phased team but needs Meta
     }
 
     var doAddTeam = function(args) {
@@ -1424,14 +1424,15 @@ angular.module('webappApp')
       FBRef.child('team').orderByChild('name').equalTo(args.teamName).once('value', function(snap) {
         var existingTeams = snap.val(),
           newTeamRef = '',
-          newTeamKey = '';
+          newTeamKey = '',
+          newRole = PhasedProvider.ROLE_ID.MEMBER;
 
         // if it doesn't exist, make it
         if (!existingTeams) {
           var newTeam = Object.assign({name : args.teamName}, DEFAULTS.team); // copies DEFAULTS.team, adding name node
           newTeamRef = FBRef.child('team').push(newTeam);
           newTeamKey = newTeamRef.key();
-          console.log('new team created with key ' + newTeamKey);
+          newRole = PhasedProvider.ROLE_ID.OWNER; // if you make it, you own it
         } else if (existingTeams && !args.addToExistingTeam) { 
           // if it does exist and we're not supposed to add, call failure
           return args.failure();
@@ -1442,7 +1443,7 @@ angular.module('webappApp')
 
         // add to new team
         newTeamRef.child('members/' + _Auth.user.uid).update({
-          role : PhasedProvider.ROLE_ID.MEMBER
+          role : newRole
         });
 
         // add to my list of teams if not already in it
