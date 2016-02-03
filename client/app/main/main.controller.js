@@ -79,8 +79,8 @@ angular.module('webappApp')
       Phased.addTeam(teamName, function success() {
         $('#addTeamModal').modal('hide');
         toaster.pop('success', 'Success', 'Welcome to Phased, ' + teamName);
-      }, function error() {
-        toaster.pop('error', 'Error', 'We had some trouble adding that team. Please try again.');
+      }, function error(teamName) {
+        toaster.pop('error', 'Error', teamName + ' already exists. Please ask the team administrator for an invitation to join.');
       });
     }
 

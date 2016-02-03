@@ -1441,7 +1441,7 @@ angular.module('webappApp')
           newRole = PhasedProvider.ROLE_ID.OWNER; // if you make it, you own it
         } else if (existingTeams && !args.addToExistingTeam) { 
           // if it does exist and we're not supposed to add, call failure
-          return args.failure();
+          return args.failure(teamName);
         } else {
           newTeamKey = Object.keys(existingTeams)[0];
           newTeamRef = FBRef.child('team/' + newTeamKey);
