@@ -192,9 +192,17 @@ angular.module('webappApp')
                 if (user) {
                     Auth.user.profile = user;
                     Auth.currentTeam = user.curTeam;
-                    if (!user.curTeam && user.teams) {
-                        Auth.currentTeam = user.teams[Object.keys(user.teams)[0]]; // first of the user's teams
-                        ref.child('profile/' + uid + '/curTeam').set(Auth.currentTeam);
+
+                    // if user isn't currently on a team
+                    if (!user.curTeam) {
+                        // if the user has teams, set the first one to active
+                        if ( user.teams ) {
+                            Auth.currentTeam = user.teams[Object.keys(user.teams)[0]]; // first of the user's teams
+                            ref.child('profile/' + uid + '/curTeam').set(Auth.currentTeam);
+                        } else {
+                            // if the user doesn't have teams, main.controller will prompt to add one
+                            Auth.currentTeam = false;
+                        }
                     }
 
                     doAllAfterAuth(Auth);

@@ -49,6 +49,11 @@ angular.module('webappApp')
       $location.path('/profile/' + uid);
     }
 
+    /**
+    *
+    * Add members modal
+    *
+    */
     $scope.addMembers = function(newMember) {
       $('#myModal').modal('toggle');
       Phased.addMember(newMember);
@@ -58,6 +63,27 @@ angular.module('webappApp')
       ga('send', 'event', 'Modal', 'Member add');
       $('#myModal').modal('toggle');
     }
+
+    /**
+    *
+    * Add team modal
+    *
+    */
+    $scope.$on('Phased:meta', function(){
+      if (!Phased.team.uid) {
+        $('#addTeamModal').modal('show');
+      }
+    });
+
+    $scope.addTeam = function(teamName) {
+      Phased.addTeam(teamName, function success() {
+        $('#addTeamModal').modal('hide');
+        toaster.pop('success', 'Success', 'Welcome to Phased, ' + teamName);
+      }, function error() {
+        toaster.pop('error', 'Error', 'We had some trouble adding that team. Please try again.');
+      });
+    }
+
 
     function getTodaysUpdates(){
       //return var init

@@ -246,12 +246,17 @@ angular.module('webappApp')
       PhasedProvider.team.uid = Auth.currentTeam;
 
       initializeMeta(); // gathers static values set in DB
-      initializeTeam(); // gathers/watches team and members
 
-      if (WATCH_NOTIFICATIONS)
-        watchNotifications();
-      if (WATCH_PRESENCE)
-        registerAfterMeta(watchPresence);
+      // only do these if user is on a team for which they can see members,
+      // notifications, have presence logged!
+      if (Auth.currentTeam) {
+        initializeTeam(); // gathers/watches team and members
+
+        if (WATCH_NOTIFICATIONS)
+          watchNotifications();
+        if (WATCH_PRESENCE)
+          registerAfterMeta(watchPresence);
+      }
     }
 
     /**
@@ -477,6 +482,7 @@ angular.module('webappApp')
         PhasedProvider.NOTIF_TYPE_ID = data.NOTIF_TYPE_ID;
 
         doAfterMeta();
+        $rootScope.$broadcast('Phased:meta');
       });
     }
 
@@ -1478,7 +1484,7 @@ angular.module('webappApp')
 
     var doSwitchTeam = function(args) {
       // stash team
-      var oldTeam = PhasedProvider.team.uid + '';
+      var oldTeam = PhasedProvider.team.uid ? PhasedProvider.team.uid + '' : false;
 
       // remove old event handlers
       unwatchTeam();
@@ -1500,13 +1506,15 @@ angular.module('webappApp')
 
       // update presence information for both teams
       if (WATCH_PRESENCE) {
-        // cancel old handler
-        FBRef.child('team/' + oldTeam + '/members/' + PhasedProvider.user.uid).onDisconnect().cancel();
-        // go offline for old team
-        FBRef.child('team/' + oldTeam + '/members/' + _Auth.user.uid).update({
-          presence : PhasedProvider.PRESENCE_ID.OFFLINE,
-          lastOnline : Firebase.ServerValue.TIMESTAMP
-        });
+        if (oldTeam) {
+          // cancel old handler
+          FBRef.child('team/' + oldTeam + '/members/' + PhasedProvider.user.uid).onDisconnect().cancel();
+          // go offline for old team
+          FBRef.child('team/' + oldTeam + '/members/' + _Auth.user.uid).update({
+            presence : PhasedProvider.PRESENCE_ID.OFFLINE,
+            lastOnline : Firebase.ServerValue.TIMESTAMP
+          });
+        }
         // go online and set new handler for current team
         watchPresence();
       }
