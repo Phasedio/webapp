@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('NavbarCtrl', function ($scope, $location, Auth, FURL) {
+  .controller('NavbarCtrl', function ($scope, $location, Auth, Phased, FURL) {
     $scope.team = Auth.currentTeam;
 
     $scope.menu = [
@@ -27,14 +27,19 @@ angular.module('webappApp')
 
     // show Admin link if user has permissions
     var showAdminLink = function(){
-      if (Auth.user.role == 'admin' || Auth.user.role == 'owner') 
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', showAdminLink);
+        return;
+      }
+
+      var myRole = Phased.team.members[Auth.user.uid].role;
+      if (myRole == Phased.ROLE_ID.ADMIN || myRole == Phased.ROLE_ID.OWNER) 
         $scope.showAdmin = true;
       else
         $scope.showAdmin = false;
     }
-
     showAdminLink(); // in case of moving within app and not updating profile
-    $scope.$on('Phased:currentUserProfile', showAdminLink);
 
     $scope.isCollapsed = true;
 
