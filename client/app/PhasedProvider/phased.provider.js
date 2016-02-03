@@ -151,6 +151,7 @@ angular.module('webappApp')
     * returned by this.$get
     */
     var PhasedProvider = {
+        SET_UP : false, // exposed duplicate of PHASED_SET_UP
         FBRef : FBRef, // set in setFBRef()
         user : {}, // set in this.init() to Auth.user.profile
         team : { // set in initializeTeam()
@@ -375,6 +376,7 @@ angular.module('webappApp')
         req_callbacks[i].callback(req_callbacks[i].args || undefined);
       }
       PHASED_SET_UP = true;
+      PhasedProvider.SET_UP = true;
     }
 
     /**
@@ -588,10 +590,10 @@ angular.module('webappApp')
         // L3. and L4. (once all members are in)
         membersRetrieved++;
         if (membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
-          $rootScope.$broadcast('Phased:membersComplete');
-          $rootScope.$broadcast('Phased:setup');
           doAfterMembers();
+          $rootScope.$broadcast('Phased:membersComplete');
           doAsync();
+          $rootScope.$broadcast('Phased:setup');
         }
       });
     }
