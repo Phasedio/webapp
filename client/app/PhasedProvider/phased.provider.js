@@ -1420,7 +1420,7 @@ angular.module('webappApp')
         teamName : teamName,
         success : success,
         failure : failure,
-        addToExistingTeam : typeof addToExistingTeam === 'boolean' ? addToExistingTeam : true // only use value if set
+        addToExistingTeam : typeof addToExistingTeam === 'boolean' ? addToExistingTeam : false // only use value if set
       }
       registerAfterMeta(doAddTeam, args); // can be called before Phased team but needs Meta
     }
