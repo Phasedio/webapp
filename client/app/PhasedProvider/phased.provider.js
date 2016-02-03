@@ -1310,7 +1310,8 @@ angular.module('webappApp')
     var objToArray = function(obj) {
       var newArray = [];
       for (var i in obj) {
-        obj.key = i;
+        if (typeof obj[i] == 'object' || typeof obj[i] == 'function')
+          obj[i].key = i;
         newArray.push(obj[i]);
       }
       return newArray;
