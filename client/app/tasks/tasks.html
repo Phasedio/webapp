@@ -50,7 +50,7 @@
 
 				<table class="table table-hover">
 					<tbody>
-						<tr class="task" ng-repeat="assignment in activeStream | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time' : true" >
+						<tr class="task" ng-repeat="assignment in activeProject.columns['0A'].cards['0A'].tasks | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time' : true" >
 							<td ng-click="selectTask(assignment)">
 								{{assignment.name}} <small>{{taskStatuses[assignment.status].name}}</small>
 							</td>
@@ -61,7 +61,12 @@
                     {{assignment.deadline | date : 'd MMM yy'}}
                   </div>
                   <div class="task-assigned" ng-click="selectTask(assignment)">
-                    <img src="{{team.members[assignment.assignee].pic}}" width="25px" height="25px">
+                    <img
+                      ng-if="!assignment.unassigned"
+                      ng-src="{{team.members[assignment.assigned_to].pic}}"
+                      width="25px"
+                      height="25px"
+                      />
                   </div>
                   <div class="task-quick-action">
                     <button type="button" class="btn btn-phased-blue btn-circle" uib-tooltip="Post as status" name="button" ng-if="assignment.status != taskStatusID.ASSIGNED" ng-click="broadcastTask(assignment)"><i class="fa fa-lg fa-share"></i></button>

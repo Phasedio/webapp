@@ -273,7 +273,7 @@ angular.module('webappApp')
       // PhasedProvider.moveToFromArchive = _moveToFromArchive;
       // PhasedProvider.activateTask = _activateTask;
       // PhasedProvider.takeTask = _takeTask;
-      // PhasedProvider.addAssignment = _addAssignment;
+      PhasedProvider.addAssignment = _addAssignment;
       PhasedProvider.addStatus = _addStatus;
       PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
       PhasedProvider.addMember = _addMember;
@@ -870,16 +870,198 @@ angular.module('webappApp')
 
     /**
     *
-    * Watches a team's projects after they've been loaded once
+    * Watches a team's projects, keeping them in sync with FireBase
     *
-    * Should only be called from watchTeam if WATCH_PROJECTS is set
-    * Replaces watchAssignments()
+    * A slightly recursive function. It watches all projects (via
+    * child_added) with watchOneProject, which calls watchOneColumn
+    * on each of that project's columns, which calls watchOneCard on each
+    * card, which calls watchOneTask on each task.
+    *
+    * Should only be called from watchTeam if WATCH_PROJECTS is set.
+    * Replaces watchAssignments().
+    * Stashes all even listeners in the team's _FBHandlers for 
+    * deregistration when switching teams.
     *
     * ~~STUB~~
     *
     */ 
     var watchProjects = function() {
-      console.log('watchProjects');
+      var projAddr = 'team/' + PhasedProvider.team.uid + '/projects';
+      var projectsRef = FBRef.child(projAddr);
+
+      // sets up watchers for a single project
+      var watchOneProject = function(projID) {
+        var thisProj = PhasedProvider.team.projects[projID],
+          projRef = projectsRef.child(projID);
+
+        // then watch own children
+        cb = projRef.on('child_changed', function(snap) {
+          var key = snap.key();
+          if (key != 'tasks') // don't directly update the tasks key
+            thisProj[key] = snap.val();
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + projID,
+          eventType : 'child_changed',
+          callback : cb
+        });
+
+        cb = projRef.on('child_added', function(snap){
+          var key = snap.key()
+          thisProj[key] = snap.val();
+          // if tasks is freshly added, watch them
+          if (key == 'columns') {
+            watchOneColumn(Object.keys(thisProj.columns)[0], projID); // gets ID for only task
+          }
+
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + projID,
+          eventType : 'child_added',
+          callback : cb
+        });
+
+        cb = projRef.on('child_removed', function(snap){
+          delete thisProj[snap.key()];
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + projID,
+          eventType : 'child_removed',
+          callback : cb
+        });
+      }
+
+      var watchOneColumn = function(colID, projID) {
+        var thisCol = PhasedProvider.team.projects[projID].columns[colID],
+          thisColAddr = projID + '/columns/' + colID;
+        var colRef = projectsRef.child(thisColAddr);
+
+        // then watch own children
+        cb = colRef.on('child_changed', function(snap) {
+          var key = snap.key();
+          if (key != 'tasks') // don't directly update the tasks key
+            thisCol[key] = snap.val();
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + thisColAddr,
+          eventType : 'child_changed',
+          callback : cb
+        });
+
+        cb = colRef.on('child_added', function(snap){
+          var key = snap.key()
+          thisCol[key] = snap.val();
+          // if cards is freshly added, watch them
+          if (key == 'cards') {
+            watchOneCard(Object.keys(thisCol.cards)[0], colID, projID); // gets ID for only task
+          }
+
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + thisColAddr,
+          eventType : 'child_added',
+          callback : cb
+        });
+
+        cb = colRef.on('child_removed', function(snap){
+          delete thisCol[snap.key()];
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + thisColAddr,
+          eventType : 'child_removed',
+          callback : cb
+        });
+      }
+
+      var watchOneCard = function(cardID, colID, projID) {
+        var thisCard = PhasedProvider.team.projects[projID].columns[colID].cards[cardID],
+          thisCardAddr = projID + '/columns/' + colID + '/cards/' + cardID;
+        var cardRef = projectsRef.child(thisCardAddr);
+
+        // then watch own children
+        cb = cardRef.on('child_changed', function(snap) {
+          var key = snap.key();
+          if (key != 'tasks') // don't directly update the tasks key
+            thisCard[key] = snap.val();
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + thisCardAddr,
+          eventType : 'child_changed',
+          callback : cb
+        });
+
+        cb = cardRef.on('child_added', function(snap){
+          var key = snap.key()
+          thisCard[key] = snap.val();
+          // if tasks is freshly added, watch them
+          if (key == 'tasks') {
+            watchOneTask(Object.keys(thisCard.tasks)[0], cardID, colID, projID); // gets ID for only task
+          }
+
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + thisCardAddr,
+          eventType : 'child_added',
+          callback : cb
+        });
+
+        cb = cardRef.on('child_removed', function(snap){
+          delete thisCard[snap.key()];
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + thisCardAddr,
+          eventType : 'child_removed',
+          callback : cb
+        });
+      }
+
+      var watchOneTask = function(taskID, cardID, colID, projID) {
+        var thisTask = PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID],
+          thisTaskAddr = projID + '/columns/' + colID + '/cards/' + cardID + '/tasks/' + taskID;
+        var taskRef = projectsRef.child(thisTaskAddr);
+        var cb = '';
+
+        cb = taskRef.on('child_changed', function(snap) {
+          thisTask[snap.key()] = snap.val();
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + thisTaskAddr,
+          eventType : 'child_changed',
+          callback : cb
+        });
+
+        cb = taskRef.on('child_added', function(snap){
+          thisTask[snap.key()] = snap.val();
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + thisTaskAddr,
+          eventType : 'child_added',
+          callback : cb
+        });
+
+        cb = taskRef.on('child_removed', function(snap){
+          delete thisTask[snap.key()];
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projAddr + '/' + thisTaskAddr,
+          eventType : 'child_removed',
+          callback : cb
+        });
+      }
+
+      // watch projects
+      var cb = projectsRef.on('child_added', function(snap){
+        // add project
+        PhasedProvider.team.projects[snap.key()] = snap.val();
+        // watch project
+        watchOneProject(snap.key());
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : projAddr,
+        eventType : 'child_added',
+        callback : cb
+      });
     }
 
 
@@ -1825,11 +2007,8 @@ angular.module('webappApp')
         .push(newTask);
 
       // 2A
-
-      var newTaskID = newTaskRef.key();
-      // assignmentsRef.child('all/' + newTaskID + '/key').set(newTaskID); // set key on new task object
-      // updateTaskHist(newTaskID, PhasedProvider.TASK_HISTORY_CHANGES.CREATED); // update new task's history
-      
+      // var newTaskID = newTaskRef.key();
+      // updateTaskHist(newTaskID, PhasedProvider.task.HISTORY.CREATED); // update new task's history
     }
 
     /**
