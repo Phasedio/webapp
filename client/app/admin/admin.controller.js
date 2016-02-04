@@ -1,11 +1,10 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('AdminCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location) {
+  .controller('AdminCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location, toaster) {
     ga('send', 'pageview', '/admin');
 
     $scope.viewType = Phased.viewType;
-    $scope.myID = Auth.user.uid;
     $scope.team = Phased.team;
     $scope.Phased = Phased;
 
@@ -23,9 +22,9 @@ angular.module('webappApp')
     }
     checkRole();
 
-
-  $scope.changeRole = function(member, oldRole) {
-    Phased.changeMemberRole(member.uid, member.role, oldRole);
-  }
-
+    $scope.changeRole = function(member, oldRole) {
+      Phased.changeMemberRole(member.uid, member.role, parseInt(oldRole), function failure(message){
+        toaster.pop('error', 'Error', message);
+      });
+    }
   });

@@ -1525,45 +1525,65 @@ angular.module('webappApp')
 
     /**
     *
-    * changes a member's role
-    * Server side API takes care of database interaction and sanitization
-    * data passed = { 
-    *    user : current user id, 
-    *    assignee : id of user with new role
-    *    role : new role
-    *  }
+    * changes any member's role
+    *
+    * FB additionally validates security and data type, but we do it here
+    * also for speed. Reverts ID and calls failure function on failure.
+    * 
+    * 1. check own role
+    * 2. validate new data type
+    * 3. validate member is on team
+    * 4. update DB
     *
     */
 
-    var _changeMemberRole = function(memberID, newRole, currentRole) {
+    var _changeMemberRole = function(memberID, newRole, oldRole, failure) {
       var args = {
-        member : memberID,
-        role : newRole,
-        currentRole : currentRole
+        memberID : memberID,
+        newRole : newRole,
+        oldRole : oldRole, 
+        failure : failure
       }
 
       registerAsync(doChangeMemberRole, args);
     }
 
     var doChangeMemberRole = function(args) {
-      // get user role from server
-      $.post('./api/auth/role/set', {
-        user: _Auth.user.uid,
-        assignee : args.member,
-        role : args.role
-      })
-        .success(function(data) {
-            if (data.success) {
-              // console.log('success', data);
-            } else {
-              // set back to old role if update fails
-              PhasedProvider.team.members[args.member].role = args.currentRole;
-              console.log('Auth error', data);
-            }
-        })
-        .error(function(data){
-          console.log('err', data.error());
-        });
+      // convenience for checking args.failure before calling
+      var fail = function(code, message) {
+        if (typeof args.oldRole == 'number') // revert if possible
+          PhasedProvider.team.members[args.memberID].role = args.oldRole;
+        if (typeof args.failure == 'function') // call failure callback if possible
+          args.failure(code);
+        return;
+      }
+
+      // 1. check own auth
+      var myRole = PhasedProvider.team.members[PhasedProvider.user.uid].role;
+      if (myRole != PhasedProvider.ROLE_ID.ADMIN && myRole != PhasedProvider.ROLE_ID.OWNER) {
+        fail('PERMISSION_DENIED', 'You are not authorized to change another user\'s role on this team.');        
+        return;
+      }
+
+      // 2. validate new auth
+      if (!(args.newRole in PhasedProvider.ROLE)) {
+        fail('INVALID_ROLE', 'Invalid role data');
+        return;
+      }
+
+      // 3. ensure member is on team
+      if (!(args.memberID in PhasedProvider.team.members)) {
+        fail('INVALID_USER', 'Cannot change role for member not on team');
+        return;
+      }
+
+      // 4. update DB (which will update UI);
+      FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + args.memberID + '/role').set(args.newRole, function(err){
+        if (err) {
+          var strings = err.message.split(': ');
+          fail(strings[0], 'Server says: "' + strings[1] + '"');
+        }
+      });
     }
 
     /**

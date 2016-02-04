@@ -10,9 +10,13 @@
 				<tbody>
 					<tr class="task" ng-repeat="member in team.members" >
 						<td>
-							{{member.name}} -- 
-							<select ng-model="member.role" ng-change="changeRole(member, '{{member.role}}')">
-								<option ng-repeat="role in Phased.ROLES">{{role}}</option>
+							{{member.name}}
+						</td>
+						<td>
+							<select 
+								ng-change="changeRole(member, '{{member.role}}')"
+								ng-model="member.role" 
+								ng-options="role as Phased.ROLE[role] for role in Phased.ROLE_ID">
 							</select>
 						</td>
 					</tr>
@@ -22,3 +26,6 @@
 	</div>
   </div>
 </section>
+
+
+  <toaster-container toaster-options="{'time-out': 2000, 'close-button':true, 'animation-class': 'toast-top-right'}"></toaster-container>
