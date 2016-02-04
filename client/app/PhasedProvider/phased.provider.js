@@ -743,21 +743,27 @@ angular.module('webappApp')
     *
     */
     var unwatchTeam = function() {
+      var count = 0;
       // unwatch all team watchers
       for (var i in PhasedProvider.team._FBHandlers) {
         var handler = PhasedProvider.team._FBHandlers[i];
         FBRef.child(handler.address).off(handler.eventType, handler.callback);
+        count++;
       }
       PhasedProvider.team._FBHandlers = [];
+      console.log(count + ' team event handlers removed.');
 
       // unwatch all team members
+      count = 0;
       for (var i in PhasedProvider.team.members) {
         var handlers = PhasedProvider.team.members[i]._FBHandlers;
         for (var j in handlers) {
           FBRef.child(handlers[j].address).off(handlers[j].eventType, handlers[j].callback);
+          count++;
         }
         PhasedProvider.team.members[i]._FBHandlers = [];
       }
+      console.log(count + ' member event handlers removed.');
     }
 
     /**
