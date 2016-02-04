@@ -720,7 +720,7 @@ angular.module('webappApp')
 
         // update all keys as needed
         for (var key in data) {
-          PhasedProvider.team.members[memberID][key] = data;
+          PhasedProvider.team.members[memberID][key] = data[key];
         }
       });
 
