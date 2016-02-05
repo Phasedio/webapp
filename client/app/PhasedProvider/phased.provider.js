@@ -1390,25 +1390,54 @@ angular.module('webappApp')
     *  taskSnapshot : [copy of the task at this time, minus the history object]
     * }
     *
-    * also issues a notification to the team
+    * also issues a notification to the team.
+    *
+    * needs args.FBRef and args.task, but can make both of these with args.taskID.
+    * fails if one of FBRef or task are missing AND taskID is also missing.
+    *
+    * args = {
+    *   task : task, // optional. task object to make snapshot of.
+    *   taskID : taskID, // optional. task's ID
+    *   taskRef : taskRef // optional. reference to task in Firebase
+    *   type : type // REQUIRED. type of history update.
+    *  }
+    *
+    * 0. decide whether to fail
+    * 1. gather information:
+    *   1A. get taskRef if not supplied
+    *   1B. get task if not supplied
+    *   1C. create the snapshot
+    * 2. update db
+    * 3. issue notification 
     *
     */
 
     var updateTaskHist = function(args) {
+      var ids;
 
-      // get FireBase reference
-      var taskRef = args.taskRef,
-        ids;
-      if (!(args.taskRef)) {
-        if (!(args.taskID)) {
-          return false;
-        }
-        
-        ids = find(args.taskID, 'task');
-        taskRef = FBRef.child('team/' + PhasedProvider.team.uid + '/projects/' + ids.projID + '/columns/' + ids.colID + '/cards/' + ids.cardID + '/tasks/' + ids.taskID);
+      // 0. decide if we have enough info to continue
+      if (
+          (
+            (
+              !('taskRef' in args) || !('task' in args) // either of taskRef or task are missing
+            ) && 
+            !('taskID' in args) // and taskID is also missing
+          ) || (
+            !('type' in args) // or type is missing
+          )
+        ) {
+        console.error('Phased.updateTaskHist failed: not enough information');
+        return false;
       }
 
-      // get current task data
+      // 1A. get taskRef if not present
+      var taskRef = args.taskRef
+      if (!(args.taskRef)) {
+        ids = find(args.taskID, 'task');
+        taskRef = FBRef.child(ids.FBAddr);
+      }
+
+      // 1B. get task if not present
       var task = args.task;
       if (!(args.task)) {
         if (!ids)
@@ -1417,7 +1446,7 @@ angular.module('webappApp')
         task = PhasedProvider.team.projects[ids.projID].columns[ids.colID].cards[ids.cardID].tasks[ids.taskID];
       }
 
-      // create the snapshot by removing the history obj
+      // 1C. create the snapshot by removing the history obj
       task = angular.copy(task);
       delete task.history;
 
@@ -1427,10 +1456,10 @@ angular.module('webappApp')
         snapshot : task
       }
 
-      // update history in DB
+      // 2. update history in DB
       taskRef.child('history').push(data);
 
-      // format and issue notification
+      // 3. format and issue notification
       // issueTaskHistoryNotification(data);   
     }
 
@@ -2261,9 +2290,13 @@ angular.module('webappApp')
       if (newStatus == PhasedProvider.task.STATUS_ID.COMPLETE)
         update.completeTime = new Date().getTime();
 
-      FBRef.child(find(taskID, 'task').FBAddr)
-        .update(update);
-      updateTaskHist(taskID, PhasedProvider.task.HISTORY_ID.STATUS);
+      var taskRef = FBRef.child(find(taskID, 'task').FBAddr);
+      taskRef.update(update);
+      updateTaskHist({
+        taskRef: taskRef,
+        taskID : taskID,
+        type: PhasedProvider.task.HISTORY_ID.STATUS
+      });
     }
 
     /**
@@ -2289,7 +2322,10 @@ angular.module('webappApp')
           unassigned : null
         }, function(err) {
           if (!err)
-            updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.ASSIGNEE);
+            updateTaskHist({
+              taskID : args.taskID,
+              type : PhasedProvider.task.HISTORY_ID.ASSIGNEE
+            });
         });
     }
 
@@ -2320,7 +2356,11 @@ angular.module('webappApp')
     var doSetTaskName = function(args) {
       FBRef.child(find(args.taskID, 'task').FBAddr)
         .update({ name : args.newName }, function(err){
-        if (!err) updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.NAME);
+        if (!err) 
+          updateTaskHist({
+            taskID : args.taskID, 
+            type: PhasedProvider.task.HISTORY_ID.NAME
+          });
       });
     }
 
@@ -2341,7 +2381,11 @@ angular.module('webappApp')
     var doSetTaskDesc = function(args) {
       FBRef.child(find(args.taskID, 'task').FBAddr)
         .update({'description' : args.newDesc}, function(err){
-        if (!err) updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.DESCRIPTION);
+        if (!err) 
+          updateTaskHist({
+            taskID : args.taskID,
+            type : PhasedProvider.task.HISTORY_ID.DESCRIPTION
+          });
       });
     }
 
@@ -2364,7 +2408,11 @@ angular.module('webappApp')
       var newDeadline = args.newDeadline ? new Date(args.newDeadline).getTime() : '';
       FBRef.child(find(args.taskID, 'task').FBAddr)
         .update({'deadline' : newDeadline }, function(err){
-        if (!err) updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.DEADLINE);
+        if (!err) 
+          updateTaskHist({
+            taskID : args.taskID,
+            type : PhasedProvider.task.HISTORY_ID.DEADLINE
+          });
       });
     }
 
@@ -2385,7 +2433,11 @@ angular.module('webappApp')
     var doSetTaskCategory = function(args) {
       FBRef.child(find(args.taskID, 'task').FBAddr)
         .update({'cat' : args.newCategory }, function(err){
-        if (!err) updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.CATEGORY);
+        if (!err) 
+          updateTaskHist({
+            taskID : args.taskID,
+            type : PhasedProvider.task.HISTORY_ID.CATEGORY
+          });
       });
     }
 
@@ -2406,7 +2458,11 @@ angular.module('webappApp')
     var doSetTaskPriority = function(args) {
       FBRef.child(find(args.taskID, 'task').FBAddr)
         .update({'priority' : args.newPriority }, function(err){
-        if (!err) updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.PRIORITY);
+        if (!err) 
+          updateTaskHist({
+            taskID : args.taskID,
+            type : PhasedProvider.task.HISTORY_ID.PRIORITY
+          });
       });
     }
 
