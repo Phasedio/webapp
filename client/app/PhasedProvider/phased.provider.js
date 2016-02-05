@@ -1211,11 +1211,11 @@ angular.module('webappApp')
         /**
         *   TASK CREATED
         */
-        case PhasedProvider.TASK_HISTORY_CHANGES.CREATED :
+        case PhasedProvider.task.HISTORY_ID.CREATED :
           streamItem = {
             body : [{string : data.snapshot.name}],
             cat : data.snapshot.cat,
-            type : PhasedProvider.notif.TYPE.ASSIGNMENT.CREATED
+            type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_CREATED
           };
 
           // make title :
@@ -1223,15 +1223,15 @@ angular.module('webappApp')
           // 2 self-assigned
           // 3 unassigned
 
-          if (data.snapshot.assigned_by != data.snapshot.assignee && 
-            (data.snapshot.assignee && !data.snapshot.unassigned)) { // 1
+          if (data.snapshot.assigned_by != data.snapshot.assigned_to && 
+            (data.snapshot.assigned_to && !data.snapshot.unassigned)) { // 1
               streamItem.title = [
                 { string : 'New task assigned to ' },
-                { userID : data.snapshot.assignee },
+                { userID : data.snapshot.assigned_to },
                 { string : ' by ' },
                 { userID : data.snapshot.assigned_by }
               ];
-          } else if (data.snapshot.assigned_by == data.snapshot.assignee) { // 2
+          } else if (data.snapshot.assigned_by == data.snapshot.assigned_to) { // 2
             streamItem.title = [
               { userID : data.snapshot.assigned_by },
               { string : ' self-assigned a new task' }
@@ -1250,115 +1250,115 @@ angular.module('webappApp')
         *   TASK ARCHIVED
         *   nb: an archived task snapshot could appear in an active task's history
         */
-        case PhasedProvider.TASK_HISTORY_CHANGES.ARCHIVED :
+        case PhasedProvider.task.HISTORY_ID.ARCHIVED :
           streamItem = {
             title : [{ string : 'Task archived' }],
             body : [{ string : data.snapshot.name }],
             cat : data.snapshot.cat,
-            type : PhasedProvider.notif.TYPE.ASSIGNMENT.ARCHIVED
+            type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_ARCHIVED
           }
           break;
         /**
         *   TASK UNARCHIVED
         */
-        case PhasedProvider.TASK_HISTORY_CHANGES.UNARCHIVED :
+        case PhasedProvider.task.HISTORY_ID.UNARCHIVED :
           streamItem = {
             title : [{ string : 'Task unarchived' }],
             body : [{ string : data.snapshot.name }],
             cat : data.snapshot.cat,
-            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UNARCHIVED
+            type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_UNARCHIVED
           }
           break;
         /**
         *   TASK NAME CHANGED
         */
-        case PhasedProvider.TASK_HISTORY_CHANGES.NAME :
+        case PhasedProvider.task.HISTORY_ID.NAME :
           streamItem = {
             title : [{ string : 'Task name changed' }],
             body : [{ string : 'to "' + data.snapshot.name + '"' }],
             cat : data.snapshot.cat,
-            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+            type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_UPDATED
           }
           break;
         /**
         *   TASK DESC CHANGED
         */
-        case PhasedProvider.TASK_HISTORY_CHANGES.DESCRIPTION :
+        case PhasedProvider.task.HISTORY_ID.DESCRIPTION :
           streamItem = {
             title : [{ string : 'Task description changed' }],
             body : [{ string : data.snapshot.name }],
             cat : data.snapshot.cat,
-            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+            type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_UPDATED
           }
           break;
 
         /**
         *   TASK ASSIGNEE CHANGED
         */
-        case PhasedProvider.TASK_HISTORY_CHANGES.ASSIGNEE :
+        case PhasedProvider.task.HISTORY_ID.ASSIGNEE :
           streamItem = {
             title : [
               { string : 'Task assigned to '},
-              { userID : data.snapshot.assignee }
+              { userID : data.snapshot.assigned_to }
             ],
             body : [{ string : data.snapshot.name }],
             cat : data.snapshot.cat,
-            type : PhasedProvider.notif.TYPE.ASSIGNMENT.ASSIGNED
+            type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_ASSIGNED
           }
           break;
         /**
         *   TASK DEADLINE CHANGED
         */
-        case PhasedProvider.TASK_HISTORY_CHANGES.DEADLINE :
+        case PhasedProvider.task.HISTORY_ID.DEADLINE :
           streamItem = {
             title : [{ string : 'Task deadline changed' }],
             body : [{ string : data.snapshot.name }],
             cat : data.snapshot.cat,
-            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+            type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_UPDATED
           }
           break;
         /**
-        *   TASK PRIORITY CHANGEd
+        *   TASK PRIORITY CHANGED
         */
-        case PhasedProvider.TASK_HISTORY_CHANGES.CATEGORY :
+        case PhasedProvider.task.HISTORY_ID.CATEGORY :
           streamItem = {
             title : [{ string : 'Task category changed' }],
             body : [{ string : data.snapshot.name }],
             cat : data.snapshot.cat,
-            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+            type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_UPDATED
           }
           break;
 
         /**
         *   TASK PRIORITY CHANGED
         */
-        case PhasedProvider.TASK_HISTORY_CHANGES.PRIORITY :
+        case PhasedProvider.task.HISTORY_ID.PRIORITY :
           streamItem = {
             title : [{ string : 'Task priority changed' }],
             body : [{ string : data.snapshot.name }],
             cat : data.snapshot.cat,
-            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+            type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_UPDATED
           }
           break;
 
         /**
         *   TASK STATUS CHANGED
         */
-        case PhasedProvider.TASK_HISTORY_CHANGES.STATUS :
+        case PhasedProvider.task.HISTORY_ID.STATUS :
           streamItem = {
             title : [{ string : 'Task status changed' }],
             body : [{ string : data.snapshot.name }],
             cat : data.snapshot.cat,
-            type : PhasedProvider.notif.TYPE.ASSIGNMENT.STATUS
+            type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_STATUS
           }
           switch (data.snapshot.status) {
-            case PhasedProvider.TASK_STATUS_ID.IN_PROGRESS :
+            case PhasedProvider.task.STATUS_ID.IN_PROGRESS :
               streamItem.title = [{ string : 'Task in progress' }];
               break;
-            case PhasedProvider.TASK_STATUS_ID.COMPLETE :
+            case PhasedProvider.task.STATUS_ID.COMPLETE :
               streamItem.title = [{ string : 'Task completed' }];
               break;
-            case PhasedProvider.TASK_STATUS_ID.ASSIGNED :
+            case PhasedProvider.task.STATUS_ID.ASSIGNED :
               streamItem.title = [{ string : 'Task assigned' }];
               break;
             default:
@@ -1373,7 +1373,7 @@ angular.module('webappApp')
             title : [{ string : 'Task updated' }],
             body : [{ string : data.snapshot.name }],
             cat : data.snapshot.cat,
-            type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
+            type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_UPDATED
           }
           break;
       }
@@ -1460,7 +1460,7 @@ angular.module('webappApp')
       taskRef.child('history').push(data);
 
       // 3. format and issue notification
-      // issueTaskHistoryNotification(data);   
+      issueTaskHistoryNotification(data);   
     }
 
     /**
