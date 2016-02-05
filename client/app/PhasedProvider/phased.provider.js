@@ -873,9 +873,17 @@ angular.module('webappApp')
     * Watches a team's projects, keeping them in sync with FireBase
     *
     * A slightly recursive function. It watches all projects (via
-    * child_added) with watchOneProject, which calls watchOneColumn
-    * on each of that project's columns, which calls watchOneCard on each
-    * card, which calls watchOneTask on each task.
+    * child_added) with watchOneProject, which calls watchAllColumns, 
+    * which calls watchOneColumn on each of that project's columns, 
+    * which calls wachAllCards and so on.
+    *
+    * in short, we need to add a watch at each level:
+    * /projects
+    *   -- /$projID
+    *       |- /columns
+    *         -- /$colID
+    *           |- /cards
+    * etc.
     *
     * Should only be called from watchTeam if WATCH_PROJECTS is set.
     * Replaces watchAssignments().
@@ -886,19 +894,19 @@ angular.module('webappApp')
     *
     */ 
     var watchProjects = function() {
-      var projAddr = 'team/' + PhasedProvider.team.uid + '/projects';
-      var projectsRef = FBRef.child(projAddr);
+      var projAddr = 'team/' + PhasedProvider.team.uid + '/projects',
+        projectsRef = FBRef.child(projAddr),
+        cb;
 
       // sets up watchers for a single project
       var watchOneProject = function(projID) {
-        var thisProj = PhasedProvider.team.projects[projID],
-          projRef = projectsRef.child(projID);
+        var projRef = projectsRef.child(projID);
 
         // then watch own children
         cb = projRef.on('child_changed', function(snap) {
           var key = snap.key();
-          if (key != 'tasks') // don't directly update the tasks key
-            thisProj[key] = snap.val();
+          if (key != 'columns') // don't directly update the columns key
+            PhasedProvider.team.projects[projID][key] = snap.val();
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + projID,
@@ -908,12 +916,10 @@ angular.module('webappApp')
 
         cb = projRef.on('child_added', function(snap){
           var key = snap.key()
-          thisProj[key] = snap.val();
-          // if tasks is freshly added, watch them
-          if (key == 'columns') {
-            watchOneColumn(Object.keys(thisProj.columns)[0], projID); // gets ID for only task
-          }
-
+          PhasedProvider.team.projects[projID][key] = snap.val();
+          // watch columns after they're added
+          if (key == 'columns')
+            watchAllColumns(projID, projRef);
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + projID,
@@ -922,7 +928,7 @@ angular.module('webappApp')
         });
 
         cb = projRef.on('child_removed', function(snap){
-          delete thisProj[snap.key()];
+          delete PhasedProvider.team.projects[projID][snap.key()];
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + projID,
@@ -931,16 +937,38 @@ angular.module('webappApp')
         });
       }
 
+      // observe when cards are added to or removed from a col
+      var watchAllColumns = function(projID, projRef) {
+        cb = projRef.child('columns').on('child_added', function(snap){
+          var colID = snap.key();
+          PhasedProvider.team.projects[projID].columns[colID] = snap.val();
+          watchOneColumn(colID, projID);
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : projRef.child('columns').key(),
+          eventType : 'child_added',
+          callback : cb
+        });
+
+        cb = projRef.child('columns').on('child_removed', function(snap){
+          delete PhasedProvider.team.projects[projID].columns[snap.key()];
+        });
+
+        PhasedProvider.team._FBHandlers.push({
+          address : projRef.child('columns').key(),
+          eventType : 'child_removed',
+          callback : cb
+        });
+      }
       var watchOneColumn = function(colID, projID) {
-        var thisCol = PhasedProvider.team.projects[projID].columns[colID],
-          thisColAddr = projID + '/columns/' + colID;
+        var thisColAddr = projID + '/columns/' + colID;
         var colRef = projectsRef.child(thisColAddr);
 
         // then watch own children
         cb = colRef.on('child_changed', function(snap) {
           var key = snap.key();
-          if (key != 'tasks') // don't directly update the tasks key
-            thisCol[key] = snap.val();
+          if (key != 'cards') // don't directly update the cards key
+            PhasedProvider.team.projects[projID].columns[colID][key] = snap.val();
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisColAddr,
@@ -950,12 +978,10 @@ angular.module('webappApp')
 
         cb = colRef.on('child_added', function(snap){
           var key = snap.key()
-          thisCol[key] = snap.val();
-          // if cards is freshly added, watch them
-          if (key == 'cards') {
-            watchOneCard(Object.keys(thisCol.cards)[0], colID, projID); // gets ID for only task
-          }
-
+          PhasedProvider.team.projects[projID].columns[colID][key] = snap.val();
+          // watch cards after they're added
+          if (key == 'cards') 
+            watchAllCards(colID, projID, colRef);
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisColAddr,
@@ -964,7 +990,7 @@ angular.module('webappApp')
         });
 
         cb = colRef.on('child_removed', function(snap){
-          delete thisCol[snap.key()];
+          delete PhasedProvider.team.projects[projID].columns[colID][snap.key()];
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisColAddr,
@@ -973,16 +999,39 @@ angular.module('webappApp')
         });
       }
 
+      // observe when cards are added to or removed from a col
+      var watchAllCards = function(colID, projID, colRef) {
+        var cb = '';
+        cb = colRef.child('cards').on('child_added', function(snap){
+          var cardID = snap.key();
+          PhasedProvider.team.projects[projID].columns[colID].cards[cardID] = snap.val();
+          watchOneCard(cardID, colID, projID);
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : colRef.child('cards').key(),
+          eventType : 'child_added',
+          callback : cb
+        });
+
+        cb = colRef.child('cards').on('child_removed', function(snap){
+          delete PhasedProvider.team.projects[projID].columns[colID].cards[snap.key()];
+        });
+
+        PhasedProvider.team._FBHandlers.push({
+          address : colRef.child('cards').key(),
+          eventType : 'child_removed',
+          callback : cb
+        });
+      }
       var watchOneCard = function(cardID, colID, projID) {
-        var thisCard = PhasedProvider.team.projects[projID].columns[colID].cards[cardID],
-          thisCardAddr = projID + '/columns/' + colID + '/cards/' + cardID;
+        var thisCardAddr = projID + '/columns/' + colID + '/cards/' + cardID;
         var cardRef = projectsRef.child(thisCardAddr);
 
         // then watch own children
         cb = cardRef.on('child_changed', function(snap) {
           var key = snap.key();
           if (key != 'tasks') // don't directly update the tasks key
-            thisCard[key] = snap.val();
+            PhasedProvider.team.projects[projID].columns[colID].cards[cardID][key] = snap.val();
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisCardAddr,
@@ -992,12 +1041,11 @@ angular.module('webappApp')
 
         cb = cardRef.on('child_added', function(snap){
           var key = snap.key()
-          thisCard[key] = snap.val();
-          // if tasks is freshly added, watch them
+          PhasedProvider.team.projects[projID].columns[colID].cards[cardID][key] = snap.val();
+          // watch tasks when they are added
           if (key == 'tasks') {
-            watchOneTask(Object.keys(thisCard.tasks)[0], cardID, colID, projID); // gets ID for only task
+            watchAllTasks(cardID, colID, projID, cardRef);
           }
-
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisCardAddr,
@@ -1006,7 +1054,7 @@ angular.module('webappApp')
         });
 
         cb = cardRef.on('child_removed', function(snap){
-          delete thisCard[snap.key()];
+          delete PhasedProvider.team.projects[projID].columns[colID].cards[cardID][snap.key()];
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisCardAddr,
@@ -1015,14 +1063,37 @@ angular.module('webappApp')
         });
       }
 
+      // observe when tasks are added to or removed from a card
+      var watchAllTasks = function(cardID, colID, projID, cardRef) {
+        var cb = '';
+        cb = cardRef.child('tasks').on('child_added', function(snap){
+          var taskID = snap.key();
+          PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID] = snap.val();
+          watchOneTask(taskID, cardID, colID, projID);
+        });
+        PhasedProvider.team._FBHandlers.push({
+          address : cardRef.child('tasks').key(),
+          eventType : 'child_added',
+          callback : cb
+        });
+
+        cb = cardRef.child('tasks').on('child_removed', function(snap){
+          delete PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[snap.key()];
+        });
+
+        PhasedProvider.team._FBHandlers.push({
+          address : cardRef.child('tasks').key(),
+          eventType : 'child_removed',
+          callback : cb
+        });
+      }
       var watchOneTask = function(taskID, cardID, colID, projID) {
-        var thisTask = PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID],
-          thisTaskAddr = projID + '/columns/' + colID + '/cards/' + cardID + '/tasks/' + taskID;
+        var thisTaskAddr = projID + '/columns/' + colID + '/cards/' + cardID + '/tasks/' + taskID;
         var taskRef = projectsRef.child(thisTaskAddr);
         var cb = '';
 
         cb = taskRef.on('child_changed', function(snap) {
-          thisTask[snap.key()] = snap.val();
+          PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID][snap.key()] = snap.val();
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisTaskAddr,
@@ -1031,7 +1102,7 @@ angular.module('webappApp')
         });
 
         cb = taskRef.on('child_added', function(snap){
-          thisTask[snap.key()] = snap.val();
+          PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID][snap.key()] = snap.val();
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisTaskAddr,
@@ -1040,7 +1111,7 @@ angular.module('webappApp')
         });
 
         cb = taskRef.on('child_removed', function(snap){
-          delete thisTask[snap.key()];
+          delete PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID][snap.key()];
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisTaskAddr,
@@ -1050,7 +1121,8 @@ angular.module('webappApp')
       }
 
       // watch projects
-      var cb = projectsRef.on('child_added', function(snap){
+      var cb = '';
+      cb = projectsRef.on('child_added', function(snap){
         // add project
         PhasedProvider.team.projects[snap.key()] = snap.val();
         // watch project
@@ -1060,6 +1132,17 @@ angular.module('webappApp')
       PhasedProvider.team._FBHandlers.push({
         address : projAddr,
         eventType : 'child_added',
+        callback : cb
+      });
+
+      cb = projectsRef.on('child_removed', function(snap){
+        // remove project
+        delete PhasedProvider.team.projects[snap.key()];
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : projAddr,
+        eventType : 'child_removed',
         callback : cb
       });
     }
@@ -1121,8 +1204,8 @@ angular.module('webappApp')
         */
         case PhasedProvider.TASK_HISTORY_CHANGES.CREATED :
           streamItem = {
-            body : [{string : data.taskSnapshot.name}],
-            cat : data.taskSnapshot.cat,
+            body : [{string : data.snapshot.name}],
+            cat : data.snapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.CREATED
           };
 
@@ -1131,22 +1214,22 @@ angular.module('webappApp')
           // 2 self-assigned
           // 3 unassigned
 
-          if (data.taskSnapshot.assigned_by != data.taskSnapshot.assignee && 
-            (data.taskSnapshot.assignee && !data.taskSnapshot.unassigned)) { // 1
+          if (data.snapshot.assigned_by != data.snapshot.assignee && 
+            (data.snapshot.assignee && !data.snapshot.unassigned)) { // 1
               streamItem.title = [
                 { string : 'New task assigned to ' },
-                { userID : data.taskSnapshot.assignee },
+                { userID : data.snapshot.assignee },
                 { string : ' by ' },
-                { userID : data.taskSnapshot.assigned_by }
+                { userID : data.snapshot.assigned_by }
               ];
-          } else if (data.taskSnapshot.assigned_by == data.taskSnapshot.assignee) { // 2
+          } else if (data.snapshot.assigned_by == data.snapshot.assignee) { // 2
             streamItem.title = [
-              { userID : data.taskSnapshot.assigned_by },
+              { userID : data.snapshot.assigned_by },
               { string : ' self-assigned a new task' }
             ];
-          } else if (data.taskSnapshot.unassigned) { // 3.
+          } else if (data.snapshot.unassigned) { // 3.
             streamItem.title = [
-              { userID : data.taskSnapshot.assigned_by},
+              { userID : data.snapshot.assigned_by},
               { string : ' created a new unassigned task'}
             ]
           } else {
@@ -1161,8 +1244,8 @@ angular.module('webappApp')
         case PhasedProvider.TASK_HISTORY_CHANGES.ARCHIVED :
           streamItem = {
             title : [{ string : 'Task archived' }],
-            body : [{ string : data.taskSnapshot.name }],
-            cat : data.taskSnapshot.cat,
+            body : [{ string : data.snapshot.name }],
+            cat : data.snapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.ARCHIVED
           }
           break;
@@ -1172,8 +1255,8 @@ angular.module('webappApp')
         case PhasedProvider.TASK_HISTORY_CHANGES.UNARCHIVED :
           streamItem = {
             title : [{ string : 'Task unarchived' }],
-            body : [{ string : data.taskSnapshot.name }],
-            cat : data.taskSnapshot.cat,
+            body : [{ string : data.snapshot.name }],
+            cat : data.snapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.UNARCHIVED
           }
           break;
@@ -1183,8 +1266,8 @@ angular.module('webappApp')
         case PhasedProvider.TASK_HISTORY_CHANGES.NAME :
           streamItem = {
             title : [{ string : 'Task name changed' }],
-            body : [{ string : 'to "' + data.taskSnapshot.name + '"' }],
-            cat : data.taskSnapshot.cat,
+            body : [{ string : 'to "' + data.snapshot.name + '"' }],
+            cat : data.snapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
           }
           break;
@@ -1194,8 +1277,8 @@ angular.module('webappApp')
         case PhasedProvider.TASK_HISTORY_CHANGES.DESCRIPTION :
           streamItem = {
             title : [{ string : 'Task description changed' }],
-            body : [{ string : data.taskSnapshot.name }],
-            cat : data.taskSnapshot.cat,
+            body : [{ string : data.snapshot.name }],
+            cat : data.snapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
           }
           break;
@@ -1207,10 +1290,10 @@ angular.module('webappApp')
           streamItem = {
             title : [
               { string : 'Task assigned to '},
-              { userID : data.taskSnapshot.assignee }
+              { userID : data.snapshot.assignee }
             ],
-            body : [{ string : data.taskSnapshot.name }],
-            cat : data.taskSnapshot.cat,
+            body : [{ string : data.snapshot.name }],
+            cat : data.snapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.ASSIGNED
           }
           break;
@@ -1220,8 +1303,8 @@ angular.module('webappApp')
         case PhasedProvider.TASK_HISTORY_CHANGES.DEADLINE :
           streamItem = {
             title : [{ string : 'Task deadline changed' }],
-            body : [{ string : data.taskSnapshot.name }],
-            cat : data.taskSnapshot.cat,
+            body : [{ string : data.snapshot.name }],
+            cat : data.snapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
           }
           break;
@@ -1231,8 +1314,8 @@ angular.module('webappApp')
         case PhasedProvider.TASK_HISTORY_CHANGES.CATEGORY :
           streamItem = {
             title : [{ string : 'Task category changed' }],
-            body : [{ string : data.taskSnapshot.name }],
-            cat : data.taskSnapshot.cat,
+            body : [{ string : data.snapshot.name }],
+            cat : data.snapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
           }
           break;
@@ -1243,8 +1326,8 @@ angular.module('webappApp')
         case PhasedProvider.TASK_HISTORY_CHANGES.PRIORITY :
           streamItem = {
             title : [{ string : 'Task priority changed' }],
-            body : [{ string : data.taskSnapshot.name }],
-            cat : data.taskSnapshot.cat,
+            body : [{ string : data.snapshot.name }],
+            cat : data.snapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
           }
           break;
@@ -1255,11 +1338,11 @@ angular.module('webappApp')
         case PhasedProvider.TASK_HISTORY_CHANGES.STATUS :
           streamItem = {
             title : [{ string : 'Task status changed' }],
-            body : [{ string : data.taskSnapshot.name }],
-            cat : data.taskSnapshot.cat,
+            body : [{ string : data.snapshot.name }],
+            cat : data.snapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.STATUS
           }
-          switch (data.taskSnapshot.status) {
+          switch (data.snapshot.status) {
             case PhasedProvider.TASK_STATUS_ID.IN_PROGRESS :
               streamItem.title = [{ string : 'Task in progress' }];
               break;
@@ -1279,8 +1362,8 @@ angular.module('webappApp')
         default :
           streamItem = {
             title : [{ string : 'Task updated' }],
-            body : [{ string : data.taskSnapshot.name }],
-            cat : data.taskSnapshot.cat,
+            body : [{ string : data.snapshot.name }],
+            cat : data.snapshot.cat,
             type : PhasedProvider.notif.TYPE.ASSIGNMENT.UPDATED
           }
           break;
@@ -1302,32 +1385,109 @@ angular.module('webappApp')
     *
     */
 
-    var updateTaskHist = function(taskID, type) {
+    var updateTaskHist = function(args) {
+
+      // get FireBase reference
+      var taskRef = args.taskRef,
+        ids;
+      if (!(args.taskRef)) {
+        if (!(args.taskID)) {
+          return false;
+        }
+        
+        ids = find(args.taskID, 'task');
+        taskRef = FBRef.child('team/' + PhasedProvider.team.uid + '/projects/' + ids.projID + '/columns/' + ids.colID + '/cards/' + ids.cardID + '/tasks/' + ids.taskID);
+      }
+
+      // get current task data
+      var task = args.task;
+      if (!(args.task)) {
+        if (!ids)
+          ids = find(args.taskID, 'task'); // only do this when needed
+
+        task = PhasedProvider.team.projects[ids.projID].columns[ids.colID].cards[ids.cardID].tasks[ids.taskID];
+      }
+
+      // create the snapshot by removing the history obj
+      task = angular.copy(task);
+      delete task.history;
+
       var data = {
-        time : new Date().getTime(),
-        type : type
+        time : Firebase.ServerValue.TIMESTAMP,
+        type : args.type, // history type
+        snapshot : task
       }
-      var location = ''; // set to appropriate of 'all' or 'archive/all'
-
-      // set location and snapshot
-      if (taskID in PhasedProvider.assignments.all) { // assignment is currently not archived
-        data.taskSnapshot = angular.copy( PhasedProvider.assignments.all[taskID] );
-        location = 'all';
-      } else if (taskID in PhasedProvider.archive.all) {
-        data.taskSnapshot = angular.copy( PhasedProvider.archive.all[taskID] );
-        location = 'archive/all';
-      } else {
-        console.warn('Cannot update history (task ' + taskID + ' not currently in memory).');
-        return;
-      }
-
-      delete data.taskSnapshot.history;
 
       // update history in DB
-      FBRef.child('team/' + _Auth.currentTeam + '/assignments/' + location + '/' + taskID + '/history').push(data);
+      taskRef.child('history').push(data);
 
       // format and issue notification
-      issueTaskHistoryNotification(data);   
+      // issueTaskHistoryNotification(data);   
+    }
+
+    /**
+    *
+    * finds a column, card, or task in the project tree
+    * returns an object with the project, column, card, task IDs
+    *
+    */
+    var find = function(needleID, type) {
+      var out = {
+        projID : ''
+      };
+
+      // traverses levels of the project tree
+      var walker = function(haystack, callback) {
+        for (var i in haystack) {
+          callback(haystack[i], i);
+        }
+      }
+
+      // find column
+      if (type.toLowerCase().indexOf('col') >= 0) {
+        walker(PhasedProvider.team.projects, function(project, projID) {
+          walker(project.columns, function(column, colID) {
+            if (colID == needleID)
+              return {
+                projID : projID,
+                colID : colID
+              };
+          });
+        });
+      }
+      // find card
+      else if (type.toLowerCase() == 'card') {
+        walker(PhasedProvider.team.projects, function(project, projID) {
+          walker(project.columns, function(column, colID) {
+            walker(column.cards, function(card, cardID) {
+              if (cardID == needleID)
+                return {
+                  projID : projID,
+                  colID : colID,
+                  cardID : cardID
+                };
+            });
+          });
+        });
+      }
+      // find task
+      else if (type.toLowerCase() == 'task' || type.toLowerCase() == 'assignment') {
+        walker(PhasedProvider.team.projects, function(project, projID) {
+          walker(project.columns, function(column, colID) {
+            walker(column.cards, function(card, cardID) {
+              walker(card.tasks, function(task, taskID) {
+                if (taskID == needleID)
+                  return {
+                    projID : projID,
+                    colID : colID,
+                    cardID : cardID,
+                    taskID : taskID
+                  };
+              });
+            });
+          });
+        });
+      }
     }
 
     /**
@@ -1974,6 +2134,7 @@ angular.module('webappApp')
     * adds a task
     * 1. check & format input
     * 2. push to db (using default project / card if none specified)
+    * 3. update history to created
     *
     */
     var _addAssignment = function(newTask, projectID, columnID, cardID) {
@@ -2006,9 +2167,8 @@ angular.module('webappApp')
       var newTaskRef = FBRef.child('team/' + PhasedProvider.team.uid + '/projects/' + projectID + '/columns/' + columnID + '/cards/' + cardID + '/tasks')
         .push(newTask);
 
-      // 2A
-      // var newTaskID = newTaskRef.key();
-      // updateTaskHist(newTaskID, PhasedProvider.task.HISTORY.CREATED); // update new task's history
+      // 3. update history
+      updateTaskHist({taskRef : newTaskRef, type : PhasedProvider.task.HISTORY_ID.CREATED, task : newTask }); // update new task's history
     }
 
     /**

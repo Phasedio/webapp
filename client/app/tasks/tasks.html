@@ -50,7 +50,9 @@
 
 				<table class="table table-hover">
 					<tbody>
-						<tr class="task" ng-repeat="assignment in activeProject.columns['0A'].cards['0A'].tasks | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time' : true" >
+            <!-- for this ng-repeat to work, it has to be based on team or possibly Phased; if we start
+            with it on projects['0A'], it will watch before it's loaded and will thus be looking just at undefined rather than a property that could change -->
+						<tr class="task" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time' : true" >
 							<td ng-click="selectTask(assignment)">
 								{{assignment.name}} <small>{{taskStatuses[assignment.status].name}}</small>
 							</td>

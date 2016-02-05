@@ -100,16 +100,16 @@ angular.module('webappApp')
   .filter('historyType', ['Phased', function(Phased) {
     return function(input) {
       var types = {};
-      types[Phased.task.HISTORY.CREATED] = "Task created";
-      types[Phased.task.HISTORY.ARCHIVED] = "Task archived";
-      types[Phased.task.HISTORY.UNARCHIVED] = "Task unarchived";
-      types[Phased.task.HISTORY.NAME] = "Task name changed";
-      types[Phased.task.HISTORY.DESCRIPTION] = "Task description changed";
-      types[Phased.task.HISTORY.ASSIGNEE] = "Task assignee changed";
-      types[Phased.task.HISTORY.DEADLINE] = "Task deadline changed";
-      types[Phased.task.HISTORY.CATEGORY] = "Task category changed";
-      types[Phased.task.HISTORY.PRIORITY] = "Task priority changed";
-      types[Phased.task.HISTORY.STATUS] = "Task status changed";
+      types[Phased.task.HISTORY_ID.CREATED] = "Task created";
+      types[Phased.task.HISTORY_ID.ARCHIVED] = "Task archived";
+      types[Phased.task.HISTORY_ID.UNARCHIVED] = "Task unarchived";
+      types[Phased.task.HISTORY_ID.NAME] = "Task name changed";
+      types[Phased.task.HISTORY_ID.DESCRIPTION] = "Task description changed";
+      types[Phased.task.HISTORY_ID.ASSIGNEE] = "Task assignee changed";
+      types[Phased.task.HISTORY_ID.DEADLINE] = "Task deadline changed";
+      types[Phased.task.HISTORY_ID.CATEGORY] = "Task category changed";
+      types[Phased.task.HISTORY_ID.PRIORITY] = "Task priority changed";
+      types[Phased.task.HISTORY_ID.STATUS] = "Task status changed";
 
       return types[input] || input; // fail gracefully
     }
