@@ -269,26 +269,35 @@ angular.module('webappApp')
     this.$get = ['$rootScope', function(_rootScope) {
       $rootScope = _rootScope;
       // register functions listed after this in the script...
-      // PhasedProvider.getArchiveFor = _getArchiveFor;
-      // PhasedProvider.moveToFromArchive = _moveToFromArchive;
-      // PhasedProvider.activateTask = _activateTask;
-      // PhasedProvider.takeTask = _takeTask;
-      PhasedProvider.addAssignment = _addAssignment;
-      PhasedProvider.addStatus = _addStatus;
-      PhasedProvider.setAssignmentStatus = _setAssignmentStatus;
+
+      // add member and team
       PhasedProvider.addMember = _addMember;
+      PhasedProvider.changeMemberRole = _changeMemberRole;
       PhasedProvider.addTeam = _addTeam;
       PhasedProvider.switchTeam = _switchTeam;
-      // PhasedProvider.watchMemberAssignments = _watchMemberAssignments;
-      PhasedProvider.changeMemberRole = _changeMemberRole;
+
+      // STATUS update (formerly HISTORY or TASKS)
+      PhasedProvider.addStatus = _addStatus;
+
+      // CATEGORY manipulation (per-team)
       PhasedProvider.addCategory = _addCategory;
       PhasedProvider.deleteCategory = _deleteCategory;
-      PhasedProvider.editTaskName = _editTaskName;
-      PhasedProvider.editTaskDesc = _editTaskDesc;
-      PhasedProvider.editTaskDeadline = _editTaskDeadline;
-      PhasedProvider.editTaskAssignee = _editTaskAssignee;
-      PhasedProvider.editTaskCategory = _editTaskCategory;
-      PhasedProvider.editTaskPriority = _editTaskPriority;
+
+      // TASKS (formerly ASSIGNMENTS and also TASKS... kind of...)
+      // creating and manipulating
+      PhasedProvider.addTask = _addTask;
+      PhasedProvider.setTaskStatus = _setTaskStatus;
+      PhasedProvider.setTaskName = _setTaskName;
+      PhasedProvider.setTaskDesc = _setTaskDesc;
+      PhasedProvider.setTaskDeadline = _setTaskDeadline;
+      PhasedProvider.setTaskAssignee = _setTaskAssignee;
+      PhasedProvider.setTaskCategory = _setTaskCategory;
+      PhasedProvider.setTaskPriority = _setTaskPriority;
+      // activating / shuffling
+      PhasedProvider.activateTask = _activateTask;
+      PhasedProvider.takeTask = _takeTask;
+
+      // NOTIFS
       PhasedProvider.markNotifAsRead = _markNotifAsRead;
       PhasedProvider.markAllNotifsAsRead = _markAllNotifsAsRead;
 
@@ -1429,12 +1438,15 @@ angular.module('webappApp')
     *
     * finds a column, card, or task in the project tree
     * returns an object with the project, column, card, task IDs
+    * also generates an address to that item in firebase
+    *
+    * NB: somewhat expensive operation; try to avoid if you already have
+    * the IDs or a FBRef somewhere else
     *
     */
     var find = function(needleID, type) {
-      var out = {
-        projID : ''
-      };
+      var teamAddr = 'team/' + PhasedProvider.team.uid;
+      var out;
 
       // traverses levels of the project tree
       var walker = function(haystack, callback) {
@@ -1448,9 +1460,10 @@ angular.module('webappApp')
         walker(PhasedProvider.team.projects, function(project, projID) {
           walker(project.columns, function(column, colID) {
             if (colID == needleID)
-              return {
+              out = {
                 projID : projID,
-                colID : colID
+                colID : colID,
+                FBAddr : teamAddr + '/projects/' + projID + '/columns/' + colID
               };
           });
         });
@@ -1461,10 +1474,11 @@ angular.module('webappApp')
           walker(project.columns, function(column, colID) {
             walker(column.cards, function(card, cardID) {
               if (cardID == needleID)
-                return {
+                out = {
                   projID : projID,
                   colID : colID,
-                  cardID : cardID
+                  cardID : cardID,
+                  FBAddr : teamAddr + '/projects/' + projID + '/columns/' + colID + '/cards/' + cardID
                 };
             });
           });
@@ -1477,17 +1491,20 @@ angular.module('webappApp')
             walker(column.cards, function(card, cardID) {
               walker(card.tasks, function(task, taskID) {
                 if (taskID == needleID)
-                  return {
+                  out = {
                     projID : projID,
                     colID : colID,
                     cardID : cardID,
-                    taskID : taskID
+                    taskID : taskID,
+                    FBAddr : teamAddr + '/projects/' + projID + '/columns/' + colID + '/cards/' + cardID + '/tasks/' + taskID
                   };
               });
             });
           });
         });
       }
+
+      return out;
     }
 
     /**
@@ -2137,17 +2154,17 @@ angular.module('webappApp')
     * 3. update history to created
     *
     */
-    var _addAssignment = function(newTask, projectID, columnID, cardID) {
+    var _addTask = function(newTask, projectID, columnID, cardID) {
       var args = {
         newTask : newTask,
         projectID : projectID,
         columnID : columnID,
         cardID : cardID
       }
-      registerAsync(doAddAssignment, args);
+      registerAsync(doAddTask, args);
     }
 
-    var doAddAssignment = function(args) {
+    var doAddTask = function(args) {
       ga('send', 'event', 'Task', 'task added');
 
       var newTask = args.newTask,
@@ -2173,36 +2190,40 @@ angular.module('webappApp')
 
     /**
     *
-    * sets an assigned task to the user's active task
-    * and sets status of that task to "In Progress" (0)
+    * a user starts working on a task 
+    *
+    * 1. take the task if it's not already assigned to you
+    * 2. set the task status to In Progress
+    * 3. add it as a status update
     *
     */
-    var _activateTask = function (assignmentID) {
-      registerAsync(doActivateTask, assignmentID);
+    var _activateTask = function (taskID, task) {
+      var args = {
+        task : task,
+        taskID : taskID
+      }
+      registerAsync(doActivateTask, args);
     }
 
-    var doActivateTask = function(assignmentID) {
-      ga('send', 'event', 'Update', 'submitted');
-      ga('send', 'event', 'Task', 'activated');
-
-      // copy task so we don't damage the original assignment
-      var task = angular.copy(PhasedProvider.assignments.all[assignmentID]);
+    var doActivateTask = function(args) {
+      var task = angular.copy( args.task ),
+        taskID = args.taskID;
 
       // update time to now and place to here (feature pending)
       task.time = new Date().getTime();
-      // task.lat = $scope.lat ? $scope.lat : 0;
-      // task.long = $scope.long ? $scope.long : 0;
 
-      // in case of unassigned tasks, which don't have a user property
-      task.user = PhasedProvider.user.uid;
+      // take the task if it's not already ours
+      if (task.assigned_to != PhasedProvider.user.uid)
+        _takeTask(taskID);
 
       // update original assignment status to In Progress
-      _setAssignmentStatus(assignmentID, PhasedProvider.TASK_STATUS_ID.IN_PROGRESS);
+      _setTaskStatus(taskID, PhasedProvider.task.STATUS_ID.IN_PROGRESS);
 
       // publish to stream
-      var ref = FBRef.child('team/' + PhasedProvider.team.uid);
-      ref.child('task/' + PhasedProvider.user.uid).set(task);
-      ref.child('all/' + PhasedProvider.user.uid).push(task);
+      _addStatus(task);
+
+      ga('send', 'event', 'Update', 'submitted');
+      ga('send', 'event', 'Task', 'activated');
     }
 
     /**
@@ -2210,135 +2231,77 @@ angular.module('webappApp')
     * sets an assignment's status
     * fails if newStatus isn't valid
     */
-    var _setAssignmentStatus = function(assignmentID, newStatus) {
+    var _setTaskStatus = function(taskID, newStatus) {
       var args = {
-        assignmentID : assignmentID,
+        taskID : taskID,
         newStatus : newStatus
       }
-      registerAsync(doSetAssignmentStatus, args);
+      registerAsync(doSetTaskStatus, args);
     }
 
-    var doSetAssignmentStatus = function(args) {
-      var assignmentID = args.assignmentID,
+    var doSetTaskStatus = function(args) {
+      var taskID = args.taskID,
         newStatus = args.newStatus;
-      if (!(newStatus in PhasedProvider.TASK_STATUSES)) { // not a valid ID
-        var i = PhasedProvider.TASK_STATUSES.indexOf(newStatus);
-        if (i !== -1) {
+      if (!(newStatus in PhasedProvider.task.STATUS)) { // not a valid ID, might be a valid string
+        var i = PhasedProvider.task.STATUS.indexOf(newStatus); // get index of possible string
+        if (i !== -1) { // found it
           console.log(newStatus + ' is a valid status name');
           newStatus = i; // set newStatus to be status ID, not name
-        } else {
+        } else { // didn't find it
           console.log('err: ' + newStatus + ' is not a valid status name or ID');
           return;
         }
       }
-      ga('send', 'event', 'Task', 'task status update: ' + PhasedProvider.TASK_STATUSES[newStatus]);
+      ga('send', 'event', 'Task', 'task status update: ' + PhasedProvider.task.STATUS[newStatus]);
 
       // push to database
-      FBRef.child('team/' + PhasedProvider.team.uid + '/assignments/all/' + assignmentID + '/status').set(newStatus);
-      updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.STATUS);
+      var update = {status : newStatus};
+      // add completeTime to task if it's been completed
+      // (we could probably also just check against the history snapshot and time)
+      if (newStatus == PhasedProvider.task.STATUS_ID.COMPLETE)
+        update.completeTime = new Date().getTime();
 
-      // if issue was complete, timestamp it
-      if (newStatus == 1) {
-        var time = new Date().getTime();
-        FBRef.child('team/' + PhasedProvider.team.uid + '/assignments/all/' + assignmentID).update({"completeTime" : time});
-      }
-    }
-
-    /**
-    *
-    * moves a task from /unassigned into /to/(me)
-    * without touching status
-    *
-    */
-    var _takeTask = function(assignmentID) {
-      registerAsync(doTakeTask, assignmentID);
-    }
-
-    var doTakeTask = function(assignmentID) {
-      ga('send', 'event', 'Task', 'task taken');
-      var assignmentsPath = 'team/' + PhasedProvider.team.uid + '/assignments/';
-
-      // 1. remove task from /unassigned
-      delete assignmentIDs.unassigned[assignmentIDs.unassigned.indexOf(assignmentID)];
-      FBRef.child(assignmentsPath + 'unassigned').set(assignmentIDs.unassigned);
-
-      // 2. add task to /to/(me)
-      assignmentIDs.to_me.push(assignmentID);
-      FBRef.child(assignmentsPath + 'to/' + PhasedProvider.user.uid).set(assignmentIDs.to_me);
-
-      // 3. set assignee attr
-      FBRef.child(assignmentsPath + 'all/' + assignmentID + '/assignee').set(PhasedProvider.user.uid);
-
-      updateTaskHist(assignmentID, PhasedProvider.TASK_HISTORY_CHANGES.ASSIGNEE);
+      FBRef.child(find(taskID, 'task').FBAddr)
+        .update(update);
+      updateTaskHist(taskID, PhasedProvider.task.HISTORY_ID.STATUS);
     }
 
     /**
     *
     * edit task assignee
     *
-    * 1. change lookup lists
-      * A1. rm from old to lookup or unassigned
-      * A2. add to new to lookup
-      * B1. rm from old by lookup
-      * B2. add to new by lookup
-    * 2. update keys on task itself (assignee, user, assigned_by, status)
-    *
+    * sets assigned_to, assigned_by (to self), and status to ASSIGNED
     */ 
-    var _editTaskAssignee = function(task, newAssignee) {
+    var _setTaskAssignee = function(taskID, newAssignee) {
       var args = {
-        task : task,
+        taskID : taskID,
         newAssignee : newAssignee
       }
-      registerAsync(doEditTaskAssignee, args);
+      registerAsync(doSetTaskAssignee, args);
     }
 
-    var doEditTaskAssignee = function(args) {
-      var assignmentsRef = 'team/' + _Auth.currentTeam + '/assignments';
-      var task = args.task,
-        taskID = task.key;
-      var oldAssignee = task.assignee || false;
-      var newAssignee = args.newAssignee;
-
-      // 1. change lookup lists
-      // A1. remove from assigned to lookup
-      if (oldAssignee) {
-        // get list
-        FBRef.child(assignmentsRef + '/to/' + oldAssignee).once('value', function(data) {
-          var list = data.val();
-          list = popFromList(task.key, list)
-          FBRef.child(assignmentsRef + '/to/' + oldAssignee).set(list);
+    var doSetTaskAssignee = function(args) {
+      FBRef.child(find(args.taskID, 'task').FBAddr)
+        .update({
+          assigned_to : args.newAssignee,
+          assigned_by : PhasedProvider.user.uid,
+          status : PhasedProvider.task.STATUS_ID.ASSIGNED,
+          unassigned : null
+        }, function(err) {
+          if (!err)
+            updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.ASSIGNEE);
         });
-      } else { // remove from unassigned
-        // we already have the list
-        assignmentIDs['unassigned'] = popFromList(task.key, assignmentIDs['unassigned']);
-        FBRef.child(assignmentsRef + '/unassigned').set(assignmentIDs['unassigned']);
-      }
-
-      // A2. add to new assigned to lookup
-      FBRef.child(assignmentsRef + '/to/' + newAssignee).push(task.key);
-
-      // B1. remove from assigned by lookup
-      // get list
-      FBRef.child(assignmentsRef + '/by/' + task.assigned_by).once('value', function(data) {
-        var list = data.val();
-        list = popFromList(task.key, list)
-        FBRef.child(assignmentsRef + '/by/' + task.assigned_by).set(list);
-      });
-
-      // B2. add to new assigned to lookup
-      FBRef.child(assignmentsRef + '/by/' + _Auth.user.uid).push(task.key);
-
-
-      // 2. update assignment itself (this will clear task.key)
-      FBRef.child(assignmentsRef + '/all/' + task.key).update({
-        'assignee' : args.newAssignee,
-        'user' : args.newAssignee,
-        'assigned_by' : _Auth.user.uid,
-        'status' : PhasedProvider.TASK_STATUS_ID.ASSIGNED,
-        'unassigned' : false
-      });
-      updateTaskHist(taskID, PhasedProvider.TASK_HISTORY_CHANGES.ASSIGNEE);
     }
+
+    /**
+    *
+    * shorthand for self-assigning a task
+    *
+    */
+    var _takeTask = function(taskID) {
+      _setTaskAssignee(taskID, PhasedProvider.user.uid);
+    }
+
 
     /**
     *
@@ -2346,17 +2309,18 @@ angular.module('webappApp')
     * (simple FB interaction)
     *
     */ 
-    var _editTaskName = function(taskID, newName) {
+    var _setTaskName = function(taskID, newName) {
       var args = {
         taskID : taskID,
         newName : newName
       }
-      registerAsync(doEditTaskName, args);
+      registerAsync(doSetTaskName, args);
     }
 
-    var doEditTaskName = function(args) {
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID + "/name").set(args.newName, function(err){
-        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.NAME);
+    var doSetTaskName = function(args) {
+      FBRef.child(find(args.taskID, 'task').FBAddr)
+        .update({ name : args.newName }, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.NAME);
       });
     }
 
@@ -2366,17 +2330,18 @@ angular.module('webappApp')
     * (simple FB interaction)
     *
     */ 
-    var _editTaskDesc = function(taskID, newDesc) {
+    var _setTaskDesc = function(taskID, newDesc) {
       var args = {
         taskID : taskID,
         newDesc : newDesc
       }
-      registerAsync(doEditTaskDesc, args);
+      registerAsync(doSetTaskDesc, args);
     }
 
-    var doEditTaskDesc = function(args) {
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'desc' : args.newDesc}, function(err){
-        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.DESCRIPTION);
+    var doSetTaskDesc = function(args) {
+      FBRef.child(find(args.taskID, 'task').FBAddr)
+        .update({'description' : args.newDesc}, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.DESCRIPTION);
       });
     }
 
@@ -2386,19 +2351,20 @@ angular.module('webappApp')
     * (simple FB interaction)
     *
     */ 
-    var _editTaskDeadline = function(taskID, newDeadline) {
+    var _setTaskDeadline = function(taskID, newDeadline) {
       var args = {
         taskID : taskID,
         newDeadline : newDeadline
       }
-      registerAsync(doEditTaskDeadline, args);
+      registerAsync(doSetTaskDeadline, args);
     }
 
-    var doEditTaskDeadline = function(args) {
+    var doSetTaskDeadline = function(args) {
       // if newDate is set, get timestamp; else null
       var newDeadline = args.newDeadline ? new Date(args.newDeadline).getTime() : '';
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'deadline' : newDeadline }, function(err){
-        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.DEADLINE);
+      FBRef.child(find(args.taskID, 'task').FBAddr)
+        .update({'deadline' : newDeadline }, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.DEADLINE);
       });
     }
 
@@ -2408,17 +2374,18 @@ angular.module('webappApp')
     * (simple FB interaction)
     *
     */ 
-    var _editTaskCategory = function(taskID, newCategory) {
+    var _setTaskCategory = function(taskID, newCategory) {
       var args = {
         taskID : taskID,
         newCategory : newCategory
       }
-      registerAsync(doEditTaskCategory, args);
+      registerAsync(doSetTaskCategory, args);
     }
 
-    var doEditTaskCategory = function(args) {
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'cat' : args.newCategory }, function(err){
-        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.CATEGORY);
+    var doSetTaskCategory = function(args) {
+      FBRef.child(find(args.taskID, 'task').FBAddr)
+        .update({'cat' : args.newCategory }, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.CATEGORY);
       });
     }
 
@@ -2428,17 +2395,18 @@ angular.module('webappApp')
     * (simple FB interaction)
     *
     */ 
-    var _editTaskPriority = function(taskID, newPriority) {
+    var _setTaskPriority = function(taskID, newPriority) {
       var args = {
         taskID : taskID,
         newPriority : newPriority
       }
-      registerAsync(doEditTaskPriority, args);
+      registerAsync(doSetTaskPriority, args);
     }
 
-    var doEditTaskPriority = function(args) {
-      FBRef.child("team/" + _Auth.currentTeam + '/assignments/all/' + args.taskID).update({'priority' : args.newPriority }, function(err){
-        if (!err) updateTaskHist(args.taskID, PhasedProvider.TASK_HISTORY_CHANGES.PRIORITY);
+    var doSetTaskPriority = function(args) {
+      FBRef.child(find(args.taskID, 'task').FBAddr)
+        .update({'priority' : args.newPriority }, function(err){
+        if (!err) updateTaskHist(args.taskID, PhasedProvider.task.HISTORY_ID.PRIORITY);
       });
     }
 

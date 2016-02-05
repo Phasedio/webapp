@@ -276,7 +276,7 @@ angular.module('webappApp')
         }
 
         // default to 'not COMPLETE' on false
-        if (!(statusID in Phased.task.STATUSES)) {
+        if (!(statusID in Phased.task.STATUS)) {
           statusID = '1';
           filterNot = true;
         }
@@ -320,7 +320,7 @@ angular.module('webappApp')
         status.assigned_to = newTask.assignee
 
       // push to db
-      Phased.addAssignment(status);
+      Phased.addTask(status);
 
       //reset current task in feed
       $('#myModal').modal('toggle');
@@ -345,16 +345,13 @@ angular.module('webappApp')
         assigned_to : $scope.myID
       };
 
-      Phased.addAssignment(status);
+      Phased.addTask(status);
       $scope.newTodo = '';
 		};
 
-    // moves task into my to_me if unassigned,
     // then starts it
     $scope.startTask = function(task) {
-      if (!task.user || task.unassigned)
-        Phased.takeTask(task.key);
-      Phased.activateTask(task.key);
+      Phased.activateTask(task.key, task);
 
       $scope.activeStream = Phased.assignments.to_me;
       $scope.setStatusFilter('!' + Phased.task.STATUS_ID.COMPLETE);
@@ -380,36 +377,36 @@ angular.module('webappApp')
 
     // Broadcasts that user is working on Task
     $scope.broadcastTask = function(task) {
-      Phased.activateTask(task.key);
+      Phased.activateTask(task.key, task);
       toaster.pop('success', "Success!", "Your task was posted");
     }
 
     // Edit name
     $scope.taskEditName = function(taskID, newName) {
-      Phased.editTaskName(taskID, newName);
+      Phased.setTaskName(taskID, newName);
     }
 
     // edit description
     $scope.taskEditDesc = function(taskID, desc) {
-      Phased.editTaskDesc(taskID, desc);
+      Phased.setTaskDesc(taskID, desc);
     }
 
     // Edit assigned user
-    $scope.taskEditAssigned = function(taskObj, userID) {
-      Phased.editTaskAssignee(taskObj, userID);
+    $scope.taskEditAssigned = function(taskID, userID) {
+      Phased.setTaskAssignee(taskID, userID);
     }
     // Edits date of deadline or clears it
     $scope.taskEditDate = function(taskID, date) {
-      Phased.editTaskDeadline(taskID, date);
+      Phased.setTaskDeadline(taskID, date);
     }
 
     // change category
     $scope.changeCategory = function(taskID, catKey) {
-      Phased.editTaskCategory(taskID, catKey);
+      Phased.setTaskCategory(taskID, catKey);
     }
     // change priority
     $scope.changePriority = function(taskID, priorityKey) {
-      Phased.editTaskPriority(taskID, priorityKey);
+      Phased.setTaskPriority(taskID, priorityKey);
     }
 
 
