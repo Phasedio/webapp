@@ -118,14 +118,7 @@ angular.module('webappApp')
     ga('send', 'pageview', '/tasks');
 
     $scope.viewType = Phased.viewType;
-    $scope.taskPriorities = Phased.task.PRIORITIES; // in new task modal
-    $scope.taskStatuses = Phased.task.STATUSES; // in new task modal
-    $scope.taskPriorityID = Phased.task.PRIORITY_ID;
-    $scope.taskStatusID = Phased.task.STATUS_ID;
-    $scope.taskHistType = Phased.task.HISTORY;
     $scope.myID = Auth.user.uid;
-
-    console.log(Phased);
 
     $scope.today = new Date().getTime();
     var StatusID = {
