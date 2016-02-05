@@ -189,7 +189,7 @@ angular.module('webappApp')
 
     $scope.today = new Date().getTime(); // min date for deadline datepicker
 
-    $scope.phased = Phased;
+    $scope.Phased = Phased;
     $scope.team = Phased.team;
     $scope.projects = Phased.team.projects;
 
