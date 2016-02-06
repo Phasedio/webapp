@@ -1974,12 +1974,17 @@ angular.module('webappApp')
         if (typeof args.oldRole == 'number') // revert if possible
           PhasedProvider.team.members[args.memberID].role = args.oldRole;
         if (typeof args.failure == 'function') // call failure callback if possible
-          args.failure(code);
+          args.failure(code, message);
         return;
       }
 
       // 1. check own auth
       var myRole = PhasedProvider.team.members[PhasedProvider.user.uid].role;
+      // changes in the model are immediate (jeez, thanks angular) so if we're changing our own role,
+      // we need to use the old value
+      if (args.memberID == PhasedProvider.user.uid)
+        myRole = args.oldRole;
+
       if (myRole != PhasedProvider.ROLE_ID.ADMIN && myRole != PhasedProvider.ROLE_ID.OWNER) {
         fail('PERMISSION_DENIED', 'You are not authorized to change another user\'s role on this team.');        
         return;
