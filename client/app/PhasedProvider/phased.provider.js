@@ -870,23 +870,28 @@ angular.module('webappApp')
     *
     * NB: must be called after meta are in
     *
-    * 1. sets their presence to PhasedProvider.PRESENCE_ID.ONLINE now
+    * 1. sets their presence to PhasedProvider.PRESENCE_ID.ONLINE when connected
     *
     * 2. sets their presence attr to PhasedProvider.PRESENCE_ID.OFFLINE 
     * and updates lastOnline on FB disconnect
     *
     */
     var watchPresence = function() {
-      // 1. immediately
-      FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).update({
-        presence : PhasedProvider.PRESENCE_ID.ONLINE
-      });
+      FBRef.child('.info/connected').on('value', function(snap){
+        // we're connected, handle this stuff
+        if (snap.val() == true) {
+          // 1. immediately set us to "present"
+          FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).update({
+            presence : PhasedProvider.PRESENCE_ID.ONLINE
+          });
 
-      // 2. on disconnect
-      FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).onDisconnect().update({
-        lastOnline : Firebase.ServerValue.TIMESTAMP,
-        presence : PhasedProvider.PRESENCE_ID.OFFLINE
-      });
+          // 2. register disconnect handler
+          FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).onDisconnect().update({
+            lastOnline : Firebase.ServerValue.TIMESTAMP,
+            presence : PhasedProvider.PRESENCE_ID.OFFLINE
+          });
+        }
+      }); 
     }
 
 
@@ -1782,14 +1787,7 @@ angular.module('webappApp')
 
         if (users) {
           var userID = Object.keys(users)[0];
-          // 1. add to team, send email
-          var inviteData = {
-            teams : { 0 : PhasedProvider.team.uid },
-            email : invited.email,
-            inviteEmail: PhasedProvider.user.email,
-            inviteName: PhasedProvider.user.name
-          }
-
+          // 1. add to team
           FBRef.child('profile/' + userID + '/teams').push(PhasedProvider.team.uid); // add to user's teams
           FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + userID).update({role : PhasedProvider.ROLE_ID.MEMBER}); // add to this team
           
