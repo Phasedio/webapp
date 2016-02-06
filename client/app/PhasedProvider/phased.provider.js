@@ -257,6 +257,19 @@ angular.module('webappApp')
           watchNotifications();
         if (WATCH_PRESENCE)
           registerAfterMeta(watchPresence);
+
+        // if the user is new, welcome them to the world
+        // and remove newUser flag
+        // doesn't need to be done after team data is in, since the server
+        // will do that heavy lifting
+        if (Auth.user.newUser) {
+          FBRef.child('profile/' + PhasedProvider.user.uid + '/newUser').remove();
+          issueNotification({
+            title : [{string : 'Welcome to Phased, ' + Auth.user.name}],
+            body : [],
+            type : PhasedProvider.NOTIF_TYPE_ID.USER_CREATED
+          });
+        }
       }
     }
 
@@ -899,8 +912,6 @@ angular.module('webappApp')
     * Stashes all even listeners in the team's _FBHandlers for 
     * deregistration when switching teams.
     *
-    * ~~STUB~~
-    *
     */ 
     var watchProjects = function() {
       var projAddr = 'team/' + PhasedProvider.team.uid + '/projects',
@@ -1178,6 +1189,13 @@ angular.module('webappApp')
     * { string : 'a simple string' }
     * or { userID : 'aUserID' } 
     * which will be interpreted when loaded by client (see watchNotifications)
+    *
+    * example
+    * {
+    *   title : [{string: 'A simple notification'}]
+    *   body : [{string: 'this is an example notification'}]
+    *   type : PhasedProvider.NOTIF_TYPE_ID.STATUS // or whatever is applicable
+    * }
     *
     */
     var issueNotification = function(notification) {
@@ -1734,7 +1752,7 @@ angular.module('webappApp')
     * adds a member
     * Brian's better add member function
     * 1. checks if member is in /profile
-    * 2A. if so, adds to /team-invite-existing-member and registers current team on member's profile
+    * 2A. if so, registers current team on member's profile and adds to our team
     * 2B. if not, checks whether they are a profile in waiting
     * 2B1. if they are, add team to newMember's profile
     * 2B2. if not, add to /profile-in-waiting and /profile-in-waiting2
@@ -1774,6 +1792,12 @@ angular.module('webappApp')
 
           FBRef.child('profile/' + userID + '/teams').push(PhasedProvider.team.uid); // add to user's teams
           FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + userID).update({role : PhasedProvider.ROLE_ID.MEMBER}); // add to this team
+          
+          issueNotification({
+            title : [{userID : userID}, {string : ' has joined your team'}],
+            body : [],
+            type : PhasedProvider.NOTIF_TYPE_ID.USER_JOINED
+          });
         } else {
           // 2. check if in profile-in-waiting
           FBRef.child("profile-in-waiting").orderByChild("email").equalTo(invited.email).once('value',function(snap){
@@ -1976,6 +2000,12 @@ angular.module('webappApp')
         if (err) {
           var strings = err.message.split(': ');
           fail(strings[0], 'Server says: "' + strings[1] + '"');
+        } else {
+          issueNotification({
+            title : [{string : 'Role for '}, {userID : args.memberID}, {string: ' has changed'}],
+            body : [{string : 'to ' + PhasedProvider.ROLE[args.newRole]}],
+            type : PhasedProvider.NOTIF_TYPE_ID.USER_ROLE_CHANGED
+          });
         }
       });
     }
@@ -2012,7 +2042,6 @@ angular.module('webappApp')
       FBRef.child('notif/' + PhasedProvider.team.uid + '/' + _Auth.user.uid + '/' + key).update({
         read : true
       });
-
     }
 
     /**
@@ -2092,12 +2121,26 @@ angular.module('webappApp')
       if (catExists) {
         console.log('cat exists at ' + key);
         FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(category);
+
+        issueNotification({
+          title : [{string : '"' + category.name + '" category has been modified'}],
+          body : [],
+          cat : key,
+          type : PhasedProvider.NOTIF_TYPE_ID.CATEGORY_CHANGED
+        });
       }
 
       // 3B.
       else {
         console.log('cat doesn\'t exist');
-        FBRef.child('team/' + PhasedProvider.team.uid + '/category').push(category);
+        var newCatRef = FBRef.child('team/' + PhasedProvider.team.uid + '/category').push(category);
+
+        issueNotification({
+          title : [{string : '"' + category.name + '" category has been created'}],
+          body : [],
+          cat : newCatRef.key(),
+          type : PhasedProvider.NOTIF_TYPE_ID.CATEGORY_ADDED
+        });
       }
     }
 
@@ -2115,15 +2158,24 @@ angular.module('webappApp')
     }
 
     var doDeleteCategory = function(key) {
-      console.log('deleting cat at ' + key);
       // 1.
       if ((typeof key).toLowerCase() != 'string') {
         console.log('bad key');
         return;
       }
 
+      var catName = PhasedProvider.team.categoryObj[key].name; // stash cat name
+      console.log('deleting cat ' + catName);
+
       // 2. 
       FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(null);
+
+      // 3.
+      issueNotification({
+        title : [{string : '"' + catName + '" category has been deleted'}],
+        body : [],
+        type : PhasedProvider.NOTIF_TYPE_ID.CATEGORY_DELETED
+      });
     }
 
 

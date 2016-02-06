@@ -54,7 +54,8 @@ angular.module('webappApp')
                     var profile = {
                         name: user.name,
                         email: user.email,
-                        gravatar: get_gravatar(user.email, 40)
+                        gravatar: get_gravatar(user.email, 40),
+                        newUser : true
                     };
 
                     if (data) {
