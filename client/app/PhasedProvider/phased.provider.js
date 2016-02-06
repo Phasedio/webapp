@@ -592,6 +592,9 @@ angular.module('webappApp')
             if (currentUser)
               PhasedProvider.user.pic = data;
           }
+
+          // notify
+          $rootScope.$broadcast('Phased:memberChanged');
         });
 
         // L1. stash handler to stop watching event if needed
@@ -744,6 +747,7 @@ angular.module('webappApp')
         for (var key in data) {
           PhasedProvider.team.members[memberID][key] = data[key];
         }
+        $rootScope.$broadcast('Phased:memberChanged');
       });
 
       PhasedProvider.team._FBHandlers.push({
