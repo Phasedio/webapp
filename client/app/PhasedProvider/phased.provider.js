@@ -525,8 +525,8 @@ angular.module('webappApp')
         PhasedProvider.team.name = data.name;
         PhasedProvider.team.members = data.members;
         PhasedProvider.team.teamLength = Object.keys(data.members).length;
-        PhasedProvider.team.statuses = data.statuses;
-        PhasedProvider.team.projects = data.projects;
+        PhasedProvider.team.statuses = data.statuses || []; // need to do this here bc FB doesn't store empty vals
+        PhasedProvider.team.projects = data.projects || [];
         PhasedProvider.team.project_archive = data.project_archive;
         PhasedProvider.team.categoryObj = data.category;
         PhasedProvider.team.categorySelect = objToArray(data.category); // adds key prop
@@ -575,6 +575,9 @@ angular.module('webappApp')
         PhasedProvider.team.members[id].uid = id;
         PhasedProvider.team.members[id].newUser = data.newUser;
 
+        if (id == PhasedProvider.user.uid)
+          getUsersTeams(data.teams);
+
         // 3. and then watch for changes
         var handler = FBRef.child('profile/' + id).on('child_changed', function(snap) {
           var data = snap.val(),
@@ -583,8 +586,13 @@ angular.module('webappApp')
 
           // 3B. apply data to appropriate key
           PhasedProvider.team.members[id][key] = data;
-          if (currentUser) // if this is for the current user
-            PhasedProvider.user[key] = data
+          if (currentUser) { // if this is for the current user
+            if (key == 'teams') { // need to get team names and keep IDs
+              getUsersTeams(data);
+            } else { // simply assign
+              PhasedProvider.user[key] = data
+            }
+          }
 
           // special duplicate case
           if (key == 'gravatar') {
@@ -621,6 +629,21 @@ angular.module('webappApp')
           $rootScope.$broadcast('Phased:setup');
         }
       });
+
+      // get user's team names. have to go to DB bc team names are only stored at /team/$teamID/name
+      var getUsersTeams = function(teamList) {
+        for (var i in teamList) {
+          (function(teamIndex){
+          var teamID = teamList[teamIndex];
+          FBRef.child('team/' + teamID + '/name').once('value', function(snap){
+            PhasedProvider.user.teams[teamIndex] = {
+              id : teamID,
+              name : snap.val()
+            }
+          });
+        })(i)
+        }
+      }
     }
 
     /**
@@ -1921,10 +1944,17 @@ angular.module('webappApp')
         watchNotifications();
 
       // update user curTeam
-      FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamID, function() {
+      FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamID, function(err) {
+        // switch back on error
+        if (typeof err != 'undefined' && !('recursing' in args)) {
+          doSwitchTeam({teamID : oldTeam, recursing : true});
+          return;
+        }
         // execute callback if it exists
         if (typeof args.callback == 'function')
           args.callback();
+
+        $rootScope.$broadcast('Phased:switchedTeam');
       });
 
       // update presence information for both teams

@@ -69,8 +69,8 @@
               Switch to team...
             </h5>
             <ul>
-              <li ng-repeat="otherTeam in Phased.user.profile.teams">
-                <a href="#" ng-click="Phased.switchTeam(otherTeam.name)">{{otherTeam.name}}</a>
+              <li ng-repeat="otherTeam in Phased.user.teams">
+                <a href="#" ng-click="Phased.switchTeam(otherTeam.id)">{{otherTeam.name}}</a>
               </li>
             </ul>
           </div>
