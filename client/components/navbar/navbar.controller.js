@@ -40,6 +40,7 @@ angular.module('webappApp')
         $scope.showAdmin = false;
     }
     showAdminLink(); // in case of moving within app and not updating profile
+    $scope.$on('Phased:memberChanged', showAdminLink);
 
     $scope.isCollapsed = true;
 
