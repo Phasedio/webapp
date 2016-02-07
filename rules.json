@@ -1,0 +1,230 @@
+{
+  "rules": {
+    "meta" : {
+      ".read" : "auth.uid != null",
+      ".write" : false
+    },
+    "profile": {
+      ".read" : "auth.uid != null", // TODO : change to "data.child(auth.uid).exists() || auth.uid == 'user-server'" and move creating profile from PIW to server
+			"$uid": {
+			  /*
+			    - anyone can read their own profile
+			    - team admins and owners from any team can read anyone's profile (in order to invite someone)
+			    - members on the same team can read a profile
+			  */
+		    /*
+		      THESE DON'T WORK FOR POLLING /profile DIRECTLY
+		    ".read" : "auth.uid == $uid || auth.uid == 'notif-server' || auth.uid == 'modServer' || true ||
+		      (
+          	(root.child('team/' + root.child('profile/' + auth.uid + '/curTeam').val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/ADMIN').val() 
+          	|| root.child('team/' + root.child('profile/' + auth.uid + '/curTeam').val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/OWNER').val())
+          ) || (
+            root.child('team/' + root.child('profile/' + auth.uid + '/curTeam').val() + '/members/' + $uid).exists()
+          )",*/
+        "$default" : {
+          ".write" : "auth.uid == $uid", // in general, only the same user can write to their own profile
+          ".validate" : "data.isString()"
+        },
+        "teams" : {
+          // team admins/owners can add or remove a user's teams
+          ".write" : "$uid == auth.uid || 
+            (!data.exists()  && 
+            	(root.child('team/' + data.val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/ADMIN').val() 
+            	|| root.child('team/' + data.val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/OWNER').val())
+            )",
+          ".validate" : "root.child('team/' + data.val()).exists()"
+        },
+        "curTeam" : {
+          ".write" : "auth.uid === $uid",
+          ".validate" : "root.child('team/' + data.val()).exists()"
+        }
+			}
+    },
+    "profile-in-waiting": {
+      /*
+        read : user is logged in
+        write : user is logged in
+      */
+      ".read" : "auth.uid != null",
+      ".write" : "auth.uid != null"
+    },
+    "profile-in-waiting2": {
+      /*
+        read : user is logged in
+        write : user is logged in
+      */
+      ".read" : "auth.uid != null",
+      ".write" : "auth.uid != null"
+    },
+    "notif" : {
+      "$teamID" : {
+        "$userID" : {
+          /*
+            read: only user and server
+            write: only user and server can write
+          */
+          ".read" : "auth.uid === $userID || auth.uid === 'notif-server'",
+          ".write" : "auth.uid === $userID || auth.uid === 'notif-server'",
+          ".indexOn" : "time"
+        }
+      }
+    },
+    "team": {
+      "$teamID" : {
+        // anyone on the team can read the data; so can the notif server
+        ".read" : "data.child('members/' + auth.uid).exists() || auth.uid == 'notif-server'",
+        "statuses" : {
+          /*
+            read: only users on this team
+            write: only users on this team
+          */
+          ".write" :  "data.parent().child('members/' + auth.uid).exists()"
+        },
+        "projects": {
+          "$projID" : {
+            /*
+              all aspects of a project can be modified by anyone on the team
+            */
+            ".write" :  "root.child('team/' + $teamID + '/members/' + auth.uid).exists()",
+            "name" : {},
+            "description" : {},
+            "created" : {},
+            "deadline" : {},
+            "priority" : {},
+            "columns" : {
+              "$colID" : {
+                "name" : {},
+                "cards" : {
+                  "$cardID" : {
+                    "name" : {},
+                    "description" : {},
+                    "deadline" : {},
+                    "priority" : {},
+                    "tasks" : {
+                      "$taskID" : {
+                        "name" : {},
+                        "created_by" : {},
+                        "description" : {},
+                        "time" : {},
+                        "assigned_by" : {},
+                        "assigned_to" : {},
+                        "status" : {},
+                        "cat" : {},
+                        "history" : {
+                          "$histID" : {
+                            "time" : {},
+                            "type" : {},
+                            "snapshot" : {
+                              "name" : {},
+                              "created_by" : {},
+                              "description" : {},
+                              "time" : {},
+                              "assigned_by" : {},
+                              "assigned_to" : {},
+                              "status" : {},
+                              "cat" : {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "history" : {
+                      "$histID" : {
+                        "time" : {},
+                        "type" : {},
+                        "snapshot" : {
+                          "name" : {},
+                          "description" : {},
+                          "deadline" : {},
+                          "priority" : {}
+                        }
+                      }
+                    }
+                  }
+                },
+                "history" : {
+                  "$histID" : {
+                    "time" : {},
+                    "type" : {},
+                    "snapshot" : {
+                      "name" : {}
+                    }
+                  }
+                }
+              }
+            },
+            "history" : {
+              "$histID" : {
+                "time" : {},
+                "type" : {},
+                "snapshot" : {
+                  "name" : {},
+                  "description" : {},
+                  "created" : {},
+                  "deadline" : {},
+                  "priority" : {}
+                }
+              }
+            }
+          }
+        },
+        "members" : {
+          "$memberID" : {
+            "lastOnline" : {
+              /*
+                write: only current user
+                validate: number
+              */
+              ".write" : "auth.uid == $memberID",
+              ".validate" : "newData.isNumber()"
+            },
+            "presence" : {
+              /*
+                write : only current user
+                validate: meta/PRESENCE
+              */
+              ".write" : "auth.uid == $memberID",
+              ".validate" : "root.child('meta/PRESENCE/' + newData.val()).exists()"
+            },
+            "role" : {
+              /*
+                write : if user is admin or owner
+                validate: must be one of the keys of meta/ROLE
+              */
+              ".write" : "data.parent().parent().child(auth.uid + '/role').val() === root.child('meta/ROLE_ID/ADMIN').val() || 
+                          data.parent().parent().child(auth.uid + '/role').val() === root.child('meta/ROLE_ID/OWNER').val()",
+              ".validate" : "root.child('meta/ROLE/' + newData.val()).exists()"
+            },
+            "currentStatus" : {
+              /*
+                write: only current user
+              */
+              ".write" : "auth.uid == $memberID" 
+            }
+          }
+        },
+        "category" : {
+          /*
+            write: only users on this team
+            (could be modified to only allow admin)
+          */
+          ".write" :  "data.parent().child('members/' + auth.uid).exists()"
+        },
+        "billing" : {
+          /*
+            (should be changed to only server or only admin/owner,
+            but would need to be outside of team key)
+            read: user on current team
+            write: user on current team
+          */
+          ".read" : "data.parent().child('members/' + auth.uid).exists()",
+          ".write" : "data.parent().child('members/' + auth.uid).exists()"
+        },
+        "$default" : {
+          // only members of this team can write
+          ".write" : "data.child('members/' + auth.uid).exists() || auth.uid == 'notif-server'" 
+        }
+      }
+    }
+  }
+}
