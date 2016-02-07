@@ -168,8 +168,8 @@
           <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED">  post as status  <i class="fa fa-lg fa-share"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo.key)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
-          <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button>
-          <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName == 'archive.all' || activeStreamName == 'archive.to_me'" ng-click="moveFromArchive(taskInfo.key);">unarchive</button>
+          <!-- <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button> -->
+          <!-- <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName == 'archive'" ng-click="moveFromArchive(taskInfo.key);">unarchive</button> -->
         </div>
 
 
