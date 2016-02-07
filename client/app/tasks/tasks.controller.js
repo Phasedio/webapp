@@ -70,6 +70,56 @@ angular.module('webappApp')
     }
   })
   /**
+  * filters tasks by assignment
+  *
+  * (preface direction with ! to filter out users)
+  */
+  .filter('filterTaskByAssignment', function() {
+    return function(input, direction, uid) {
+      if (!input) return input;
+      if (!direction) return input;
+      // direction must be "to" or "by" AND have uid OR be "unassigned" or "delegated"
+      if (
+        !( (direction == 'to' || direction == 'by') && typeof uid !== 'undefined' ) 
+        && (direction != 'unassigned' && direction != 'delegated') 
+        )
+        return input;
+
+      var result = {}; // output obj
+
+      if (direction[0] === '!') {
+        direction = direction.slice(1); // remove leading !
+        // negative filter -- filter out tasks with uid
+        angular.forEach(input, function(value, key) {
+          if (direction == 'to' && uid != value.assigned_to) {
+            result[key] = value;
+          } else if (direction == 'by' && uid != value.assigned_by) {
+            result[key] = value;
+          } else if (direction == 'delegated' && !((value.assigned_by != value.assigned_to) && !(value.unassigned)) ) { // delegated if assigned to a different person
+            result[key] = value;
+          } else if (direction == 'unassigned' && !(value.unassigned)) {
+            result[key] = value;
+          }
+        });
+      } else {
+        // only include tasks with uid
+        angular.forEach(input, function(value, key) {
+          if (direction == 'to' && uid == value.assigned_to) {
+            result[key] = value;
+          } else if (direction == 'by' && uid == value.assigned_by) {
+            result[key] = value;
+          } else if (direction == 'delegated' && (value.assigned_by != value.assigned_to) && !(value.unassigned) ) { // delegated if assigned to a different person
+            result[key] = value;
+          } else if (direction == 'unassigned' && value.unassigned) {
+            result[key] = value;
+          }
+        });
+      }
+
+      return result;
+    }
+  })
+  /**
   *
   * allows ordering an object as if it were an array,
   * at the cost of being able to access its original index
@@ -206,56 +256,50 @@ angular.module('webappApp')
     // optionally gets archive if not present
     $scope.setActiveStream = function(streamName) {
       // check and set status
-      // switch (streamName) {
-      //   case 'assignments.all':
-      //     $scope.activeStream = Phased.assignments.all;
-      //     $scope.setStatusFilter('!' + Phased.task.STATUS_ID.COMPLETE);
-      //     break;
-      //   case 'assignments.to_me':
-      //     $scope.activeStream = Phased.assignments.to_me;
-      //     $scope.setStatusFilter('!' + Phased.task.STATUS_ID.COMPLETE);
-      //     break;
-      //   case 'assignments.by_me':
-      //     $scope.activeStream = Phased.assignments.by_me;
-      //     $scope.setStatusFilter(undefined);
-      //     break;
-      //   case 'assignments.unassigned':
-      //     $scope.activeStream = Phased.assignments.unassigned;
-      //     $scope.setStatusFilter(undefined);
-      //     break;
-      //   case 'archive.to_me':
-      //     if (!('to_me' in Phased.archive)) Phased.getArchiveFor('to_me'); // get archive if needed
-      //     $scope.activeStream = Phased.archive.to_me;
-      //     $scope.setStatusFilter(undefined);
-      //     break;
-      //   case 'archive.all':
-      //     Phased.getArchiveFor('all');
-      //     $scope.activeStream = Phased.archive.all;
-      //     $scope.setStatusFilter(undefined);
-      //     break;
-      //   // the following aren't an actual address, but at least 
-      //   // they let us use the status filter properly...
-      //   case 'completed' : 
-      //     $scope.activeStream = Phased.assignments.all;
-      //     streamName = 'assignments.all'; // jimmy this in there...
-      //     $scope.setStatusFilter(Phased.task.STATUS_ID.COMPLETE);
-      //     break;
-      //   case 'assigned' : 
-      //     $scope.activeStream = Phased.assignments.all;
-      //     streamName = 'assignments.all'; 
-      //     $scope.setStatusFilter(Phased.task.STATUS_ID.ASSIGNED);
-      //     break;
-      //   case 'in_progress' : 
-      //     $scope.activeStream = Phased.assignments.all;
-      //     streamName = 'assignments.all'; 
-      //     $scope.setStatusFilter(Phased.task.STATUS_ID.IN_PROGRESS);
-      //     break;
-      //   default:
-      //     $scope.activeStream = Phased.assignments.to_me;
-      //     $scope.setStatusFilter('!' + Phased.task.STATUS_ID.COMPLETE);
-      //     streamName = 'assignments.to_me';
-      //     break;
-      // }
+      switch (streamName) {
+        case 'all':
+          $scope.setStatusFilter(undefined);
+          $scope.setAssignmentFilter(undefined);
+          break;
+        case 'assigned_to_me':
+          $scope.setStatusFilter(undefined);
+          $scope.setAssignmentFilter('to', Phased.user.uid);
+          break;
+        case 'assigned_by_me':
+          $scope.setStatusFilter(undefined);
+          $scope.setAssignmentFilter('by', Phased.user.uid);
+          break;
+        case 'unassigned':
+          $scope.setStatusFilter(undefined);
+          $scope.setAssignmentFilter('unassigned');
+          break;
+        case 'delegated' :
+          $scope.setStatusFilter(undefined);
+          $scope.setAssignmentFilter('delegated');
+          break;
+        // case 'archive': // not implemented
+        //   Phased.getArchiveFor('all');
+        //   $scope.setStatusFilter(undefined);
+        //   break;
+        // the following aren't an actual address, but at least 
+        // they let us use the status filter properly...
+        case 'completed' : 
+          $scope.setStatusFilter(Phased.task.STATUS_ID.COMPLETE);
+          $scope.setAssignmentFilter(undefined);
+          break;
+        case 'assigned' : 
+          $scope.setStatusFilter(Phased.task.STATUS_ID.ASSIGNED);
+          $scope.setAssignmentFilter(undefined);
+          break;
+        case 'in_progress' : 
+          $scope.setStatusFilter(Phased.task.STATUS_ID.IN_PROGRESS);
+          $scope.setAssignmentFilter(undefined);
+          break;
+        default:
+          $scope.setStatusFilter(undefined);
+          $scope.setAssignmentFilter(undefined);
+          break;
+      }
 
       // $scope.activeStreamName = streamName;
     }
@@ -283,6 +327,20 @@ angular.module('webappApp')
 
         // set activeStatusFilter
         $scope.activeStatusFilter = filterNot ? '!' + statusID : statusID;
+      }
+    }
+
+    $scope.setAssignmentFilter = function(direction, uid) {
+      if (
+          (
+            (direction == 'to' || direction == 'by') 
+            && typeof uid !== 'undefined'
+          ) 
+          ||
+          (direction == 'unassigned' || direction == 'delegated')
+        ) {
+        $scope.activeAssignmentDirection = direction;
+        $scope.activeAssignmentID = uid;
       }
     }
 

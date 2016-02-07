@@ -27,15 +27,15 @@
         <div class="task-filter">
           <button class="btn btn-phased-blue add-new-task" ng-click="addAssignmentModal();">New task</button>
           <div class="styled-select">
-            <select ng-model="filterView" ng-change="setActiveStream(filterView)">
-              <option value="assignments.to_me" >assigned to me</option>
-              <option value="assignments.by_me">my created tasks</option>
-              <option value="assignments.unassigned">unassigned tasks</option>
-              <option value="assigned">assigned to others</option>
+            <select ng-model="filterView" ng-change="setActiveStream(filterView)" ng-init="filterView = 'all'">
+              <option value="assigned_to_me" >assigned to me</option>
+              <option value="assigned_by_me">tasks I've assigned</option>
+              <option value="unassigned">unassigned tasks</option>
+              <option value="delegated">delegated to others</option>
               <option value="in_progress">in progress</option>
               <option value="completed">closed tasks</option>
-              <option value="assignments.all">all</option>
-              <option value="archive.all">archived tasks</option>
+              <option value="all">all</option>
+              <!-- <option value="archive">archived tasks</option> -->
             </select>
           </div>
         </div>
@@ -52,7 +52,11 @@
 					<tbody>
             <!-- for this ng-repeat to work, it has to be based on team or possibly Phased; if we start
             with it on projects['0A'], it will watch before it's loaded and will thus be looking just at undefined rather than a property that could change -->
-						<tr class="task" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | filterTaskByStatus : activeStatusFilter | filterTaskByCategory : activeCategoryFilter | orderObjectBy : 'time' : true" >
+						<tr class="task" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | 
+            filterTaskByStatus : activeStatusFilter | 
+            filterTaskByCategory : activeCategoryFilter | 
+            filterTaskByAssignment : activeAssignmentDirection : activeAssignmentID |
+            orderObjectBy : 'time' : true" >
 							<td ng-click="selectTask(assignment)">
 								{{assignment.name}} <small>{{Phased.task.STATUS[assignment.status]}}</small>
 							</td>
