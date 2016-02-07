@@ -88,12 +88,11 @@
         <div class="task-header">
           <ul class="task-meta-bar">
             <li class="task-meta-bar-item ">
-              <p ng-if="taskInfo.assignee">Assigned </p>
-              <p ng-if="!taskInfo.assignee">Assign task to </p>
+              <p ng-if="taskInfo.assigned_to">Assigned </p>
+              <p ng-if="taskInfo.unassigned">Assign task to </p>
               <div class="dropdown">
                 <button id="dLabel" type="button" class="btn btn-transparent" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <img ng-if="taskInfo.assignee" src="{{team.members[taskInfo.assignee].pic}}" width="35px" height="35px">
-
+                  <img ng-if="taskInfo.assigned_to" src="{{team.members[taskInfo.assigned_to].pic}}" width="35px" height="35px">
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dLabel">
                   <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo.key,member.uid)"><img src="{{member.pic}}" width="35px" height="35px"> <p>
