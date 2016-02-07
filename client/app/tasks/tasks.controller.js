@@ -330,6 +330,7 @@ angular.module('webappApp')
       }
     }
 
+    // 'assignment' referring to how a task is assigned
     $scope.setAssignmentFilter = function(direction, uid) {
       if (
           (
@@ -430,7 +431,7 @@ angular.module('webappApp')
     }
 
     $scope.setTaskCompleted = function(assignmentID) {
-      Phased.setAssignmentStatus(assignmentID, Phased.task.STATUS_ID.COMPLETE);
+      Phased.setTaskStatus(assignmentID, Phased.task.STATUS_ID.COMPLETE);
     }
 
     // Broadcasts that user is working on Task
