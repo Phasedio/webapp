@@ -2437,7 +2437,7 @@ angular.module('webappApp')
     var _setTaskName = function(taskID, newName) {
       var args = {
         taskID : taskID,
-        newName : newName
+        newName : newName || ''
       }
       registerAsync(doSetTaskName, args);
     }
@@ -2462,7 +2462,7 @@ angular.module('webappApp')
     var _setTaskDesc = function(taskID, newDesc) {
       var args = {
         taskID : taskID,
-        newDesc : newDesc
+        newDesc : newDesc || ''
       }
       registerAsync(doSetTaskDesc, args);
     }
@@ -2487,7 +2487,7 @@ angular.module('webappApp')
     var _setTaskDeadline = function(taskID, newDeadline) {
       var args = {
         taskID : taskID,
-        newDeadline : newDeadline
+        newDeadline : newDeadline || ''
       }
       registerAsync(doSetTaskDeadline, args);
     }
@@ -2514,7 +2514,7 @@ angular.module('webappApp')
     var _setTaskCategory = function(taskID, newCategory) {
       var args = {
         taskID : taskID,
-        newCategory : newCategory
+        newCategory : newCategory || ''
       }
       registerAsync(doSetTaskCategory, args);
     }
@@ -2539,7 +2539,7 @@ angular.module('webappApp')
     var _setTaskPriority = function(taskID, newPriority) {
       var args = {
         taskID : taskID,
-        newPriority : newPriority
+        newPriority : newPriority || ''
       }
       registerAsync(doSetTaskPriority, args);
     }
