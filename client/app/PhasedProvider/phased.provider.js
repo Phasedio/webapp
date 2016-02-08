@@ -160,6 +160,11 @@ angular.module('webappApp')
           statuses : [], // stream of team's status updates
           teamLength : 0 // members counted in setUpTeamMembers
         },
+        get : { // a read-only unordered list of objects which otherwise would have been nested. 
+          columns : {},
+          cards : {},
+          tasks : {}
+        },
         viewType : 'notPaid',
 
         // META CONSTANTS
@@ -531,6 +536,22 @@ angular.module('webappApp')
         PhasedProvider.team.categoryObj = data.category;
         PhasedProvider.team.categorySelect = objToArray(data.category); // adds key prop
 
+        // set up references in .get[objectName] to their respective objects
+        // this allows us to have an unordered collection of, eg, all tasks, to gather data
+        // (this is similar to how .assignments.all used to work)
+        for (var i in PhasedProvider.team.projects) {
+          for (var j in PhasedProvider.team.projects[i].columns)
+            PhasedProvider.get.columns[j] = PhasedProvider.team.projects[i].columns[j];
+        }
+        for (var i in PhasedProvider.get.columns) {
+          for (var j in PhasedProvider.get.columns[i].cards)
+            PhasedProvider.get.cards[j] = PhasedProvider.get.columns[i].cards[j];
+        }
+        for (var i in PhasedProvider.get.cards) {
+          for (var j in PhasedProvider.get.cards[i].tasks)
+            PhasedProvider.get.tasks[j] = PhasedProvider.get.cards[i].tasks[j];
+        }
+
         // get profile details for team members
         for (var id in PhasedProvider.team.members) {
           initializeMember(id);
@@ -813,6 +834,13 @@ angular.module('webappApp')
         PhasedProvider.team.members[i]._FBHandlers = [];
       }
       console.log(count + ' member event handlers removed.');
+
+      // unlink get
+      PhasedProvider.get = {
+        tasks : {},
+        columns : {},
+        cards : {}
+      }
     }
 
     /**
@@ -994,6 +1022,7 @@ angular.module('webappApp')
         cb = projRef.child('columns').on('child_added', function(snap){
           var colID = snap.key();
           PhasedProvider.team.projects[projID].columns[colID] = snap.val();
+          PhasedProvider.get.columns[colID] = PhasedProvider.team.projects[projID].columns[colID];
           watchOneColumn(colID, projID);
         });
         PhasedProvider.team._FBHandlers.push({
@@ -1003,6 +1032,7 @@ angular.module('webappApp')
         });
 
         cb = projRef.child('columns').on('child_removed', function(snap){
+          delete PhasedProvider.get.columns[snap.key()];
           delete PhasedProvider.team.projects[projID].columns[snap.key()];
         });
 
@@ -1057,6 +1087,7 @@ angular.module('webappApp')
         cb = colRef.child('cards').on('child_added', function(snap){
           var cardID = snap.key();
           PhasedProvider.team.projects[projID].columns[colID].cards[cardID] = snap.val();
+          PhasedProvider.get.cards[cardID] = PhasedProvider.team.projects[projID].columns[colID].cards[cardID];
           watchOneCard(cardID, colID, projID);
         });
         PhasedProvider.team._FBHandlers.push({
@@ -1066,6 +1097,7 @@ angular.module('webappApp')
         });
 
         cb = colRef.child('cards').on('child_removed', function(snap){
+          delete PhasedProvider.get.cards[cardID];
           delete PhasedProvider.team.projects[projID].columns[colID].cards[snap.key()];
         });
 
@@ -1121,6 +1153,7 @@ angular.module('webappApp')
         cb = cardRef.child('tasks').on('child_added', function(snap){
           var taskID = snap.key();
           PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID] = snap.val();
+          PhasedProvider.get.tasks[taskID] = PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID];
           watchOneTask(taskID, cardID, colID, projID);
         });
         PhasedProvider.team._FBHandlers.push({
@@ -1130,6 +1163,7 @@ angular.module('webappApp')
         });
 
         cb = cardRef.child('tasks').on('child_removed', function(snap){
+          delete PhasedProvider.get.tasks[snap.key()];
           delete PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[snap.key()];
         });
 
