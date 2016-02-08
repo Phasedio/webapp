@@ -741,6 +741,8 @@ angular.module('webappApp')
         var key = snap.key();
         if (!(key in PhasedProvider.team.statuses))
           PhasedProvider.team.statuses[key] = snap.val();
+
+        $rootScope.$broadcast('Phased:newStatus');
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -1024,6 +1026,7 @@ angular.module('webappApp')
           PhasedProvider.team.projects[projID].columns[colID] = snap.val();
           PhasedProvider.get.columns[colID] = PhasedProvider.team.projects[projID].columns[colID];
           watchOneColumn(colID, projID);
+          $rootScope.$broadcast('Phased:columnAdded');
         });
         PhasedProvider.team._FBHandlers.push({
           address : projRef.child('columns').key(),
@@ -1034,6 +1037,7 @@ angular.module('webappApp')
         cb = projRef.child('columns').on('child_removed', function(snap){
           delete PhasedProvider.get.columns[snap.key()];
           delete PhasedProvider.team.projects[projID].columns[snap.key()];
+          $rootScope.$broadcast('Phased:columnDeleted');
         });
 
         PhasedProvider.team._FBHandlers.push({
@@ -1089,6 +1093,7 @@ angular.module('webappApp')
           PhasedProvider.team.projects[projID].columns[colID].cards[cardID] = snap.val();
           PhasedProvider.get.cards[cardID] = PhasedProvider.team.projects[projID].columns[colID].cards[cardID];
           watchOneCard(cardID, colID, projID);
+          $rootScope.$broadcast('Phased:cardAdded');
         });
         PhasedProvider.team._FBHandlers.push({
           address : colRef.child('cards').key(),
@@ -1099,6 +1104,7 @@ angular.module('webappApp')
         cb = colRef.child('cards').on('child_removed', function(snap){
           delete PhasedProvider.get.cards[cardID];
           delete PhasedProvider.team.projects[projID].columns[colID].cards[snap.key()];
+          $rootScope.$broadcast('Phased:cardDeleted');
         });
 
         PhasedProvider.team._FBHandlers.push({
@@ -1155,6 +1161,7 @@ angular.module('webappApp')
           PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID] = snap.val();
           PhasedProvider.get.tasks[taskID] = PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID];
           watchOneTask(taskID, cardID, colID, projID);
+          $rootScope.$broadcast('Phased:taskAdded');
         });
         PhasedProvider.team._FBHandlers.push({
           address : cardRef.child('tasks').key(),
@@ -1165,6 +1172,7 @@ angular.module('webappApp')
         cb = cardRef.child('tasks').on('child_removed', function(snap){
           delete PhasedProvider.get.tasks[snap.key()];
           delete PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[snap.key()];
+          $rootScope.$broadcast('Phased:taskDeleted');
         });
 
         PhasedProvider.team._FBHandlers.push({
@@ -1213,6 +1221,7 @@ angular.module('webappApp')
         PhasedProvider.team.projects[snap.key()] = snap.val();
         // watch project
         watchOneProject(snap.key());
+        $rootScope.$broadcast('Phased:projectAdded');
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -1224,6 +1233,7 @@ angular.module('webappApp')
       cb = projectsRef.on('child_removed', function(snap){
         // remove project
         delete PhasedProvider.team.projects[snap.key()];
+        $rootScope.$broadcast('Phased:projectDeleted');
       });
 
       PhasedProvider.team._FBHandlers.push({
