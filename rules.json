@@ -5,37 +5,31 @@
       ".write" : false
     },
     "profile": {
-      ".read" : "auth.uid != null", // TODO : change to "data.child(auth.uid).exists() || auth.uid == 'user-server'" and move creating profile from PIW to server
+      ".read" : "auth.uid == 'registration-server'",
       "$uid": {
         /*
           - anyone can read their own profile
-          - team admins and owners from any team can read anyone's profile (in order to invite someone)
+          - servers can read any profile
           - members on the same team can read a profile
         */
-        /*
-          THESE DON'T WORK FOR POLLING /profile DIRECTLY
-        ".read" : "auth.uid == $uid || auth.uid == 'notif-server' || auth.uid == 'modServer' || true ||
-          (
-            (root.child('team/' + root.child('profile/' + auth.uid + '/curTeam').val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/ADMIN').val() 
-            || root.child('team/' + root.child('profile/' + auth.uid + '/curTeam').val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/OWNER').val())
-          ) || (
-            root.child('team/' + root.child('profile/' + auth.uid + '/curTeam').val() + '/members/' + $uid).exists()
-          )",*/
+        ".read" : "auth.uid == $uid || auth.uid == 'notif-server' || auth.uid == 'modServer' || auth.uid == 'registration-server' ||
+          root.child('team/' + root.child('profile/' + auth.uid + '/curTeam').val() + '/members/' + $uid).exists()",
+        ".write" : "auth.uid == 'registration-server'",
         "$default" : {
-          ".write" : "auth.uid == $uid", // in general, only the same user can write to their own profile
-          ".validate" : "newData.isString() || newData.isNumber()"
+          ".write" : "auth.uid == $uid" // in general, only the user can write to their own profile
         },
         "teams" : {
           // team admins/owners can add or remove a user's teams
           ".write" : "$uid == auth.uid || 
-            (!data.exists()  && 
-              (root.child('team/' + data.val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/ADMIN').val() 
-              || root.child('team/' + data.val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/OWNER').val())
-            )",
+            (
+              root.child('team/' + data.val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/ADMIN').val() 
+              || root.child('team/' + data.val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/OWNER').val()
+            )
+            ||  auth.uid == 'registration-server'",
           ".validate" : "root.child('team/' + data.val()).exists()"
         },
         "curTeam" : {
-          ".write" : "auth.uid === $uid",
+          ".write" : "auth.uid === $uid ||  auth.uid == 'registration-server'",
           ".validate" : "root.child('team/' + data.val()).exists()"
         }
       }
@@ -46,7 +40,8 @@
         write : user is logged in
       */
       ".read" : "auth.uid != null",
-      ".write" : "auth.uid != null"
+      ".write" : "auth.uid == 'registration-server'",
+      ".indexOn" : "email"
     },
     "profile-in-waiting2": {
       /*

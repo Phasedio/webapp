@@ -12,7 +12,7 @@ module.exports = function(app) {
   app.use('/api/downloads', require('./api/download'));
   app.use('/api/pays', require('./api/pay'));
   app.use('/api/things', require('./api/thing'));
-  app.use('/api/auth', require('./api/auth'));
+  app.use('/api/registration', require('./api/registration'));
 
   // generous api endpoint spellings
   app.use('/api/notification', require('./api/notification'));
