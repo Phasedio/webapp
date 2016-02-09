@@ -936,6 +936,11 @@ angular.module('webappApp')
     *
     */
     var watchPresence = function() {
+      if (!('uid' in PhasedProvider.team)) {
+        console.log('Cannot watch presence for user not on a team');
+        return;
+      }
+
       FBRef.child('.info/connected').on('value', function(snap){
         // we're connected, handle this stuff
         if (snap.val() == true) {
@@ -950,7 +955,17 @@ angular.module('webappApp')
             presence : PhasedProvider.PRESENCE_ID.OFFLINE
           });
         }
-      }); 
+      });
+
+      // go "offline" when deauthenticated
+      FBRef.onAuth(function(authData){
+        if (!authData) {
+          FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid).update({
+            lastOnline : Firebase.ServerValue.TIMESTAMP,
+            presence : PhasedProvider.PRESENCE_ID.OFFLINE
+          });
+        }
+      });
     }
 
 
