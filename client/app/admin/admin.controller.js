@@ -1,22 +1,32 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('AdminCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location) {
+  .controller('AdminCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location, toaster) {
     ga('send', 'pageview', '/admin');
 
     $scope.viewType = Phased.viewType;
-    $scope.myID = Auth.user.uid;
     $scope.team = Phased.team;
     $scope.Phased = Phased;
 
     // bounce users without Admin or Owner permissions
-    $scope.$on('Phased:currentUserProfile', function(){
-      if (Auth.user.role != 'admin' || Auth.user.role != 'owner')
-        $location.path('/feed');
-    });
+    var checkRole = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkRole);
+        return;
+      }
 
-  $scope.changeRole = function(member, oldRole) {
-    Phased.changeMemberRole(member.uid, member.role, oldRole);
-  }
+      var myRole = Phased.team.members[Auth.user.uid].role;
+      if (myRole != Phased.ROLE_ID.ADMIN && myRole != Phased.ROLE_ID.OWNER) 
+        $location.path('/');
+    }
+    checkRole();
 
+    $scope.$on('Phased:memberChanged', checkRole);
+
+    $scope.changeRole = function(member, oldRole) {
+      Phased.changeMemberRole(member.uid, member.role, parseInt(oldRole), function failure(code, message){
+        toaster.pop('error', 'Error', message);
+      });
+    }
   });

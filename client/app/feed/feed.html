@@ -18,13 +18,35 @@
 
 	<div class="container-fluid">
 		<div class="row">
+			<!-- <div class="col-xs-12 col-md-4 col-lg-6">
+				<div class="ph-card ph-team">
+
+					<div class="ph-tasks">
+						<p class="semi">
+							tasks
+						</p>
+						<div class="ph-task" ng-repeat="assignment in activeStream  | filterTaskByStatus : activeStatusFilter | orderObjectBy : 'time'">
+							<p>{{assignment.name}} - <small>{{taskStatuses[assignment.status].name}}</small></p>
+							<div class="ph-task-btns">
+								<button class="btn btn-phased-blue" ng-if="assignment.status == taskStatusID.ASSIGNED" ng-click="startTask(assignment)">Start</button>
+			          <button class="btn btn-phased-blue" ng-if="assignment.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(assignment.key)">complete</button>
+							</div>
+
+						</div>
+						<div class="ph-task blank" ng-repeat="item in taskTable">
+							<textarea></textarea>
+						</div>
+						<a class="btn btn-phased-blue btn-block" href="/tasks">Add New</a>
+					</div>
+				</div>
+			</div> -->
 			<div class="col-xs-12 col-md-8 col-lg-6 col-lg-offset-3 ph-update-area">
 				<div class="ph-card">
 					<form class="ph-form-feed" name="taskForm" ng-submit="addTask(task)" novalidation>
 						<input type="text" ng-model="task.name" ng-trim="false" maxlength="150" placeholder="enter your status here" required>
 						<div class="ph-form-extras">
 							<div class="ph-cat-list">
-								<button type="button"  ng-repeat="(key, category) in team.categoryObj" ng-show="$index<6" class="btn button-phased-wht" ng-class="{active : key == selectedCategory}" style="outline: none; color:#000; font-size:1.2rem;" ng-click="categoryChoice(key)">
+								<button type="button"  ng-repeat="(key, category) in team.categoryObj" ng-show="$index<6" class="btn button-phased-wht" ng-class="{active : key === selectedCategory}" style="outline: none; color:#000; font-size:1.2rem;" ng-click="categoryChoice(key)">
             <div class="feed-cat-color" style="width: 1rem; height: 1rem; margin-right:0.5rem; display: inline-block; background-color:{{category.color}}"></div>
             {{category.name}}
           </button>
@@ -39,11 +61,11 @@
 
 					<div class="ph-feed-filter">
 						<div class="ph-feed-total">
-							<p class="semi">updates <span>{{team.history.length}}</span>
+							<p class="semi">updates <span>{{team.statuses.length}}</span>
 						</div>
 					</div>
 					<div class="ph-feed-roll">
-						<div class="ph-update" ng-repeat="item in team.history | orderBy : 'time':true | limitTo :100">
+						<div class="ph-update" ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100">
 							<div class="ph-feed-head">
 								<img src="{{$parent.team.members[item.user].pic}}" width="40px" height="40px">
 							</div>
@@ -63,11 +85,20 @@
 					</div>
 				</div>
 			</div>
-			<div class="col-lg-3  ">
+			<div class="hidden">
 					<div class="ph-card">
-						<h6>Number of tasks assigned to you</h6>
-						<h2>{{countActiveTasks}}</h2>
-						<a class="btn btn-phased-blue btn-block" href="/tasks">View Tasks</a>
+						<div class="ph-member-total">
+								<p class="semi">members <span>{{team.teamLength}}</span>
+						</div>
+						<div class="ph-members">
+							<div class="ph-member-head" ng-repeat="member in team.members | orderBy : 'time':true ">
+								<img src="{{member.pic}}" width="40px" height="40px">
+								<p>Last update <span am-time-ago="member.time"></span> </p>
+							</div>
+
+
+						</div>
+
 					</div>
 			</div>
 
