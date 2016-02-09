@@ -13,6 +13,83 @@ exports.index = function(req, res) {
 	res.json([]);
 };
 
+// used in registerTeam when creating a team
+// it's important that the category etc keys be strings
+var defaultTeam = {
+    statuses : {},
+    projects : {
+      '0A' : {
+        name : 'Default project',
+        description : 'This is the default project. It is hidden when it is the only project.',
+        isDefault : true, // isDefault to avoid default keyword
+        created : Firebase.ServerValue.TIMESTAMP,
+        columns : {
+          '0A' : {
+            name : 'Default column',
+            isDefault : true,
+            cards: {
+              '0A' : {
+                name : 'Default card',
+                description : 'This is the default card. It is hidden when it is the only card.',
+                isDefault : true,
+                tasks : {}, // filled eventually
+                history : {
+                  '0A' : {
+                    time : Firebase.ServerValue.TIMESTAMP,
+                    type : 0, // PhasedProvider.card.HISTORY_ID.CREATED
+                    snapshot : {
+                      name : 'Default card',
+                      description : 'This is the default card. It is hidden when it is the only card.',
+                      isDefault : true
+                    }
+                  }
+                }
+              }
+            },
+            history : {
+              '0A' : {
+                time : Firebase.ServerValue.TIMESTAMP,
+                type : 0, // PhasedProvider.column.HISTORY_ID.CREATED
+                snapshot : {
+                  name : 'Default column',
+                  isDefault : true
+                }
+              }
+            }
+          }
+        },
+        history : {
+          '0A' : {
+            time : Firebase.ServerValue.TIMESTAMP,
+            type : 0, // PhasedProvider.project.HISTORY_ID.CREATED
+            snapshot : {
+              name : 'Default project',
+              description : 'This is the default project. It is hidden when it is the only project.',
+              isDefault : true
+            }
+          }
+        }
+      }
+    },
+    members : {},
+    billing : {
+      email : '',
+      name : '',
+      stripeid : '',
+      plan : 'basic'
+    },
+    category : {
+      '0A' : {
+        color: '#FFCC00',
+        name : 'Communication'
+      },
+      '1B' : {
+        color: '#5AC8FB',
+        name : 'Planning'
+      }
+    }
+  }
+
 /** 
 *
 * 	Invites a user to a team
@@ -46,6 +123,11 @@ exports.invite = function(req, res) {
 
 	// 0. Authenticate request
 	FBRef.authWithCustomToken(token, function(error, authData) {
+		if (error) {
+			res.send(error);
+			return;
+		}
+
     invitedEmail = invitedEmail.toLowerCase(); // Change text to lowercase regardless of user input.
 
     FBRef.child("profile").orderByChild("email").equalTo(invitedEmail).once('value',function(snap){
@@ -191,6 +273,74 @@ exports.register = function(req, res) {
 			  });
 	    }
 	  });
+	});
+}
+
+
+/**
+*
+*	Regsiters a new team
+*	1. check if teamname is taken
+* 2. if not:
+*  - create the team in /team
+*  - add to current user's profile
+*  - make it their current team
+*  - run success callback if it exists
+*/
+exports.registerTeam = function(req, res) {
+	var teamName = req.body.teamName,
+		userID = req.body.userID;
+
+	// 0. Authenticate request
+	FBRef.authWithCustomToken(token, function(error, authData) {
+		if (error) {
+			res.send(error);
+			return;
+		}
+
+		// get team with specified name
+    FBRef.child('team').orderByChild('name').equalTo(teamName).once('value', function(snap) {
+      var existingTeams = snap.val(),
+        newTeamRef = '',
+        newTeamKey = '',
+        newRole = 2; // owner
+
+      // if it doesn't exist, make it
+      if (!existingTeams) {
+        defaultTeam.name = teamName;
+        newTeamRef = FBRef.child('team').push(defaultTeam);
+        newTeamKey = newTeamRef.key();
+      } else { 
+      	// bail since the team exists
+      	res.send({
+      		err : 'TEAM_EXISTS'
+      	});
+      	return;
+      } 
+
+      // add to new team
+      newTeamRef.child('members/' + userID).update({
+        role : newRole
+      });
+
+      // add to my list of teams if not already in it
+      FBRef.child('profile/' + userID + '/teams').orderByValue().equalTo(newTeamKey).once('value', function(snap){
+        if (!snap.val()) {
+          FBRef.child('profile/' + userID + '/teams').push(newTeamKey, function(err){
+          	if (!err)
+		        	res.send({
+		        		success:true,
+		        		teamID : newTeamKey
+		        	});
+          });
+        } else {
+        	res.send({
+        		success:true,
+        		teamID : newTeamKey
+        	});
+        }
+      });
+    });		
 	});
 }
 

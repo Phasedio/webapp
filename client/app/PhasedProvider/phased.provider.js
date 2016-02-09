@@ -48,83 +48,7 @@ angular.module('webappApp')
       // these all need to be strings
       projectID : '0A',
       columnID : '0A',
-      cardID : '0A',
-      // DEFAULTS.team is used in addTeam when creating a team
-      // it's important that the category etc keys be strings
-      team : {
-        statuses : {},
-        projects : {
-          '0A' : {
-            name : 'Default project',
-            description : 'This is the default project. It is hidden when it is the only project.',
-            isDefault : true, // isDefault to avoid default keyword
-            created : Firebase.ServerValue.TIMESTAMP,
-            columns : {
-              '0A' : {
-                name : 'Default column',
-                isDefault : true,
-                cards: {
-                  '0A' : {
-                    name : 'Default card',
-                    description : 'This is the default card. It is hidden when it is the only card.',
-                    isDefault : true,
-                    tasks : {}, // filled eventually
-                    history : {
-                      '0A' : {
-                        time : Firebase.ServerValue.TIMESTAMP,
-                        type : 0, // PhasedProvider.card.HISTORY_ID.CREATED
-                        snapshot : {
-                          name : 'Default card',
-                          description : 'This is the default card. It is hidden when it is the only card.',
-                          isDefault : true
-                        }
-                      }
-                    }
-                  }
-                },
-                history : {
-                  '0A' : {
-                    time : Firebase.ServerValue.TIMESTAMP,
-                    type : 0, // PhasedProvider.column.HISTORY_ID.CREATED
-                    snapshot : {
-                      name : 'Default column',
-                      isDefault : true
-                    }
-                  }
-                }
-              }
-            },
-            history : {
-              '0A' : {
-                time : Firebase.ServerValue.TIMESTAMP,
-                type : 0, // PhasedProvider.project.HISTORY_ID.CREATED
-                snapshot : {
-                  name : 'Default project',
-                  description : 'This is the default project. It is hidden when it is the only project.',
-                  isDefault : true
-                }
-              }
-            }
-          }
-        },
-        members : {},
-        billing : {
-          email : '',
-          name : '',
-          stripeid : '',
-          plan : 'basic'
-        },
-        category : {
-          '0A' : {
-            color: '#FFCC00',
-            name : 'Communication'
-          },
-          '1B' : {
-            color: '#5AC8FB',
-            name : 'Planning'
-          }
-        }
-      }
+      cardID : '0A'
     }, 
 
       // FLAGS
@@ -637,7 +561,7 @@ angular.module('webappApp')
 
         ('_FBHandlers' in PhasedProvider.team.members[id] &&
           typeof PhasedProvider.team.members[id]._FBHandlers == 'object') ?
-          PhasedProvider.team.members[id].push(deregister_obj) :
+          PhasedProvider.team.members[id]._FBHandlers.push(deregister_obj) :
           PhasedProvider.team.members[id]._FBHandlers = [deregister_obj];
 
         // L2. broadcast events to tell the rest of the app the team is set up
@@ -659,6 +583,9 @@ angular.module('webappApp')
           (function(teamIndex){
           var teamID = teamList[teamIndex];
           FBRef.child('team/' + teamID + '/name').once('value', function(snap){
+            if (typeof PhasedProvider.user.teams != 'object') 
+              PhasedProvider.user.teams = {};
+
             PhasedProvider.user.teams[teamIndex] = {
               id : teamID,
               name : snap.val()
@@ -678,7 +605,7 @@ angular.module('webappApp')
     *
     **/
     var checkPlanStatus = function(stripeid) {
-      if (stripeid) {
+      if (typeof stripeid == 'string' && stripeid.length > 0) {
         $.post('./api/pays/find', {customer: stripeid})
           .success(function(data){
             if (data.err) {
@@ -1892,13 +1819,9 @@ angular.module('webappApp')
     *
     * adds a team
     * function mostly copied from chromeapp ctrl-createTeam.js
-    * 1. check if teamname is taken
-    * 2A. if not:
-    *  - create the team in /team
-    *  - add to current user's profile
-    *  - make it their current team
-    *  - run success callback if it exists
-    * 2B. if it does exist, run fail callback if it exists
+    * 1. offload work to server
+    * 2A. if making team was successful, switch to that team
+    * 2B. if it already exists, run fail callback
     */
 
     var _addTeam = function(teamName, success, failure, addToExistingTeam) {
@@ -1912,45 +1835,31 @@ angular.module('webappApp')
     }
 
     var doAddTeam = function(args) {
-      // get team with specified name
-      FBRef.child('team').orderByChild('name').equalTo(args.teamName).once('value', function(snap) {
-        var existingTeams = snap.val(),
-          newTeamRef = '',
-          newTeamKey = '',
-          newRole = PhasedProvider.ROLE_ID.MEMBER;
-
-        // if it doesn't exist, make it
-        if (!existingTeams) {
-          var newTeam = Object.assign({name : args.teamName}, DEFAULTS.team); // copies DEFAULTS.team, adding name node
-          newTeamRef = FBRef.child('team').push(newTeam);
-          newTeamKey = newTeamRef.key();
-          newRole = PhasedProvider.ROLE_ID.OWNER; // if you make it, you own it
-        } else if (existingTeams && !args.addToExistingTeam) { 
-          // if it does exist and we're not supposed to add, call failure
-          return args.failure(teamName);
+      // 1.
+      $.post('./api/registration/registerTeam', {
+        userID : PhasedProvider.user.uid,
+        teamName : args.teamName
+      })
+      .success(function(data){
+        if (data.success) {
+          // 2A. switch to that team
+          doSwitchTeam({
+            teamID : data.teamID,
+            callback : args.success
+          });
         } else {
-          newTeamKey = Object.keys(existingTeams)[0];
-          newTeamRef = FBRef.child('team/' + newTeamKey);
+          // fail
+          console.log(data);
+          if (typeof args.failure == 'function')
+            args.failure(args.teamName);
         }
-
-        // add to new team
-        newTeamRef.child('members/' + _Auth.user.uid).update({
-          role : newRole
-        });
-
-        // add to my list of teams if not already in it
-        FBRef.child('profile/' + _Auth.user.uid + '/teams').orderByValue().equalTo(newTeamKey).once('value', function(snap){
-          if (!snap.val()) {
-            FBRef.child('profile/' + _Auth.user.uid + '/teams').push(newTeamKey);
-          }
-        });
-
-        // switch to that team
-        doSwitchTeam({
-          teamID : newTeamKey,
-          callback : args.success
-        });
-      });
+      })
+      .error(function(error){
+        // 2B. fail!
+        console.log(error);
+        if (typeof args.failure == 'function')
+          args.failure(args.teamName);
+      })
     }
 
 
@@ -1970,7 +1879,7 @@ angular.module('webappApp')
 
     var doSwitchTeam = function(args) {
       // stash team
-      var oldTeam = PhasedProvider.team.uid ? PhasedProvider.team.uid + '' : false;
+      var oldTeam = typeof PhasedProvider.team.uid == 'string' ? PhasedProvider.team.uid + '' : false;
 
       // remove old event handlers
       unwatchTeam();
@@ -1986,7 +1895,7 @@ angular.module('webappApp')
       // update user curTeam
       FBRef.child('profile/' + _Auth.user.uid + '/curTeam').set(args.teamID, function(err) {
         // switch back on error
-        if (typeof err != 'undefined' && !('recursing' in args)) {
+        if (err && !('recursing' in args)) {
           doSwitchTeam({teamID : oldTeam, recursing : true});
           return;
         }

@@ -6,6 +6,7 @@
     },
     "profile": {
       ".read" : "auth.uid == 'registration-server'",
+      ".indexOn" : "email",
       "$uid": {
         /*
           - anyone can read their own profile
@@ -26,11 +27,13 @@
               || root.child('team/' + data.val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/OWNER').val()
             )
             ||  auth.uid == 'registration-server'",
-          ".validate" : "root.child('team/' + data.val()).exists()"
+          "$default" : {
+            ".validate" : "root.child('team/' + newData.val()).exists()"
+          }
         },
         "curTeam" : {
           ".write" : "auth.uid === $uid ||  auth.uid == 'registration-server'",
-          ".validate" : "root.child('team/' + data.val()).exists()"
+          ".validate" : "root.child('team/' + newData.val()).exists()"
         }
       }
     },
@@ -72,15 +75,19 @@
       }
     },
     "team": {
+      ".read" : "auth.uid == 'registration-server'",
+      ".write" : "auth.uid == 'registration-server'",
+      ".indexOn" : "name",
       "$teamID" : {
-        // anyone on the team can read the data; so can the notif server
-        ".read" : "data.child('members/' + auth.uid).exists() || auth.uid == 'notif-server'",
+        // anyone on the team can read the data; so can the server
+        ".read" : "data.child('members/' + auth.uid).exists() || auth.uid == 'notif-server' || auth.uid == 'registration-server'",
         "statuses" : {
           /*
             read: only users on this team
             write: only users on this team
           */
-          ".write" :  "data.parent().child('members/' + auth.uid).exists()"
+          ".write" :  "data.parent().child('members/' + auth.uid).exists()",
+          ".indexOn" : "time"
         },
         "projects": {
           "$projID" : {
@@ -172,6 +179,7 @@
         },
         "members" : {
           "$memberID" : {
+            ".write" : "auth.uid === 'registration-server'",
             "lastOnline" : {
               /*
                 write: only current user
