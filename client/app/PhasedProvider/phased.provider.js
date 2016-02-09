@@ -267,12 +267,14 @@ angular.module('webappApp')
         // and remove newUser flag
         // doesn't need to be done after team data is in, since the server
         // will do that heavy lifting
-        if (Auth.user.newUser) {
+        if (Auth.user.profile.newUser) {
           FBRef.child('profile/' + PhasedProvider.user.uid + '/newUser').remove();
-          issueNotification({
-            title : [{string : 'Welcome to Phased, ' + Auth.user.name}],
-            body : [],
-            type : PhasedProvider.NOTIF_TYPE_ID.USER_CREATED
+          registerAfterMembers(function() {
+            issueNotification({
+              title : [{string : 'Welcome to Phased, '}, {userID: Auth.user.uid}],
+              body : [],
+              type : PhasedProvider.NOTIF_TYPE_ID.USER_CREATED
+            });
           });
         }
       }
@@ -1844,51 +1846,30 @@ angular.module('webappApp')
 
     var doAddMember = function(args) {
       ga('send', 'event', 'Team', 'Member added');
-      var invited = args.newMember;
-      invited.email = invited.email.toLowerCase(); // Change text to lowercase regardless of user input.
-      
-      /**
-        1. if user in /profile, simply add to team
-        2. if user in /profile-in-waiting, add team to profile-in-waiting and wait for user to join
-        3. if user in neither, create profile-in-waiting
-      **/
-
-      FBRef.child("profile").orderByChild("email").equalTo(invited.email).once('value',function(snap){
-        var users = snap.val();
-
-        if (users) {
-          var userID = Object.keys(users)[0];
-          // 1. add to team
-          FBRef.child('profile/' + userID + '/teams').push(PhasedProvider.team.uid); // add to user's teams
-          FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + userID).update({role : PhasedProvider.ROLE_ID.MEMBER}); // add to this team
-          
-          issueNotification({
-            title : [{userID : userID}, {string : ' has joined your team'}],
-            body : [],
-            type : PhasedProvider.NOTIF_TYPE_ID.USER_JOINED
-          });
+      $.post('./api/registration/invite', {
+        invitedEmail: args.newMember.email,
+        inviterEmail : PhasedProvider.user.email,
+        inviterName : PhasedProvider.user.name,
+        team : PhasedProvider.team.uid
+      })
+      .success(function(data) {
+        if (data.success) {
+          console.log('success', data);
+          if (data.added) {
+            issueNotification({
+              title : [{userID : data.userID}, {string : ' has joined your team'}],
+              body : [],
+              type : PhasedProvider.NOTIF_TYPE_ID.USER_JOINED
+            });
+          } else if (data.invited) {
+            console.log('User was invited to join Phased');
+          }
         } else {
-          // 2. check if in profile-in-waiting
-          FBRef.child("profile-in-waiting").orderByChild("email").equalTo(invited.email).once('value',function(snap){
-            var users = snap.val();
-
-            if (users) {
-              var PIWID = Object.keys(users)[0];
-              // already in PIW, add our team and wait for user
-              FBRef.child('profile-in-waiting/' + PIWID + '/teams').push(PhasedProvider.team.uid);
-            } else {
-              // newly add to PIW
-              var PIWData = {
-                'teams' : { 0 : PhasedProvider.team.uid},
-                'email' : invited.email,
-                'inviteEmail': PhasedProvider.user.email,
-                'inviteName': PhasedProvider.user.name
-              };
-              FBRef.child('profile-in-waiting').push(PIWData);
-              FBRef.child('profile-in-waiting2').push(PIWData); // for Zapier
-            }
-          });
+          console.log('err', data);
         }
+      })
+      .error(function(data){
+        console.log('err', data);
       });
     }
 

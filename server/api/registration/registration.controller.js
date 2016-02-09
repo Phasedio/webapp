@@ -15,65 +15,82 @@ exports.index = function(req, res) {
 
 /** 
 *
-* gives user's current role on a team
+* 	Invites a user to a team
 *
-*	1A. if team is set, get member's role on that team
-* 1B. if team is not set, get members role on their current team
-* 2. for the selected team, retrieve user's value from roles/
+*		1. if user in /profile, simply add to team
+*		2. if user in /profile-in-waiting, add team to profile-in-waiting and wait for user to join
+*		3. if user in neither, create profile-in-waiting
 *
 */
 
 exports.invite = function(req, res) {
-	res.send('ERROR: this endpoint is not active');
+	console.log(req.body);
+	var invitedEmail = req.body.invitedEmail,
+		teamID = req.body.team,
+		inviterEmail = req.body.inviterEmail,
+		inviterName = req.body.inviterName;
+
+	// check data
+	if (!(typeof invitedEmail == 'string' && invitedEmail.length > 0 ) 
+		|| !(typeof teamID == 'string' && teamID.length > 0)
+		|| !(typeof inviterEmail == 'string' && inviterEmail.length > 0)
+		|| !(typeof inviterName == 'string' && inviterName.length > 0)
+		) {
+		res.send({
+			err: true,
+			message: 'bad data'
+		});
+		return;
+	}
+
 
 	// 0. Authenticate request
 	FBRef.authWithCustomToken(token, function(error, authData) {
+    invitedEmail = invitedEmail.toLowerCase(); // Change text to lowercase regardless of user input.
 
+    FBRef.child("profile").orderByChild("email").equalTo(invitedEmail).once('value',function(snap){
+      var users = snap.val();
+
+      if (users) {
+        var userID = Object.keys(users)[0];
+        // 1. add to team
+        FBRef.child('profile/' + userID + '/teams').push(teamID); // add to user's teams
+        FBRef.child('team/' + teamID + '/members/' + userID).update({role : 0}); // add to this team
+        
+        res.send({
+        	success : true,
+        	added : true,
+        	userID : userID
+        });
+      } else {
+        // 2. check if in profile-in-waiting
+        FBRef.child("profile-in-waiting").orderByChild("email").equalTo(invitedEmail).once('value',function(snap){
+          var users = snap.val();
+
+          if (users) {
+            var PIWID = Object.keys(users)[0];
+            // already in PIW, add our team and wait for user
+            FBRef.child('profile-in-waiting/' + PIWID + '/teams').push(teamID);
+          } else {
+            // newly add to PIW
+            var PIWData = {
+              'teams' : { 0 : teamID},
+              'email' : invitedEmail,
+              'inviteEmail': inviterEmail,
+              'inviteName': inviterName
+            };
+            FBRef.child('profile-in-waiting').push(PIWData);
+            FBRef.child('profile-in-waiting2').push(PIWData); // for Zapier
+
+		        res.send({
+		        	success : true,
+		        	invited : true
+		        });
+          }
+        });
+      }
+    }, function(err){ console.log(err) });
 	});
-	// var user = req.body.user;
-	// var team = req.body.team;
- 	
- // 	// 2. actually go and get the role
- // 	var getRoleForTeam = function(user, team) {
-	// 	// get current role
-	// 	FBRef.child('team/' + team + '/roles/' + user).once('value', function(data){
-	// 		var role = data.val();
-	// 		// if no role, default to 'member'
-	// 		if (!role) {
-	// 			res.send({
-	// 				success : true,
-	// 				role : 'member'
-	// 			});
-	// 		} else {
-	// 			// send role
-	// 			res.send({
-	// 				success : true,
-	// 				role : role
-	// 			});
-	// 		}
-	// 	});
- // 	}
-
- // 	// 1A.
- // 	if (team) {
- // 		getRoleForTeam(user, team);
- // 		return;
- // 	} else {
- // 		// 1B.
-	// 	// get current team
-	// 	FBRef.child('profile/' + user + '/curTeam').once('value', function(data){
-	// 		var team = data.val();
-	// 		// if no team, respond with error
-	// 		if (!team) {
-	// 			res.send({
-	// 				err : 'no team'
-	// 			});
-	// 			return;
-	// 		}
-
-	// 		getRoleForTeam(user, team);
-	// 	});
-	// }
 }
 
 /**
