@@ -103,6 +103,9 @@ angular.module('webappApp')
                             getProfileDetails(Auth.user.uid)
                                 .then(success, authData);
                         }
+                    },
+                    function(err) {
+                        failure(err);
                     }
                 );
             },
@@ -147,7 +150,7 @@ angular.module('webappApp')
               else
                 return false;
 
-              var profile = ref.child("profile").child(uid).child('tel').set(user.tel, function(){
+              var profile = ref.child("profile/" + uid + '/tel').set(user.tel, function(err){
                 // after updating, send a welcome SMS
                 ref.child('newTel').push(user.tel);
               });

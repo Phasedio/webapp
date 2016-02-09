@@ -11,7 +11,7 @@ angular.module('webappApp')
     $scope.loginUser = function(user) {
       ga('send', 'event', 'Login', 'Login User');
       Auth.login(user, function() {}, function(err){
-        console.dir(err);
+        console.log(err);
         alert(err);
       });
     }
