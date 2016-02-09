@@ -1787,7 +1787,7 @@ angular.module('webappApp')
     }
 
     var doAddMember = function(args) {
-      ga('send', 'event', 'Team', 'Member added');
+      ga('send', 'event', 'Team', 'Member invited');
       $.post('./api/registration/invite', {
         invitedEmail: args.newMember.email,
         inviterEmail : PhasedProvider.user.email,
@@ -1842,6 +1842,7 @@ angular.module('webappApp')
       })
       .success(function(data){
         if (data.success) {
+          ga('send', 'event', 'Team', 'team added');
           // 2A. switch to that team
           doSwitchTeam({
             teamID : data.teamID,
@@ -1902,6 +1903,7 @@ angular.module('webappApp')
         // execute callback if it exists
         if (typeof args.callback == 'function')
           args.callback();
+        ga('send', 'event', 'Team', 'Team switched');
 
         $rootScope.$broadcast('Phased:switchedTeam');
       });
@@ -1987,6 +1989,7 @@ angular.module('webappApp')
           var strings = err.message.split(': ');
           fail(strings[0], 'Server says: "' + strings[1] + '"');
         } else {
+          ga('send', 'event', 'Member', 'Role changed');
           issueNotification({
             title : [{string : 'Role for '}, {userID : args.memberID}, {string: ' has changed'}],
             body : [{string : 'to ' + PhasedProvider.ROLE[args.newRole]}],
@@ -2028,6 +2031,7 @@ angular.module('webappApp')
       FBRef.child('notif/' + PhasedProvider.team.uid + '/' + _Auth.user.uid + '/' + key).update({
         read : true
       });
+      ga('send', 'event', 'Notification', 'Read');
     }
 
     /**
@@ -2107,7 +2111,7 @@ angular.module('webappApp')
       if (catExists) {
         console.log('cat exists at ' + key);
         FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(category);
-
+        ga('send', 'event', 'Category', 'Changed');
         issueNotification({
           title : [{string : '"' + category.name + '" category has been modified'}],
           body : [],
@@ -2120,7 +2124,7 @@ angular.module('webappApp')
       else {
         console.log('cat doesn\'t exist');
         var newCatRef = FBRef.child('team/' + PhasedProvider.team.uid + '/category').push(category);
-
+        ga('send', 'event', 'Category', 'Created');
         issueNotification({
           title : [{string : '"' + category.name + '" category has been created'}],
           body : [],
@@ -2155,6 +2159,7 @@ angular.module('webappApp')
 
       // 2. 
       FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(null);
+      ga('send', 'event', 'Category', 'Deleted');
 
       // 3.
       issueNotification({
@@ -2359,11 +2364,13 @@ angular.module('webappApp')
           status : PhasedProvider.task.STATUS_ID.ASSIGNED,
           unassigned : null
         }, function(err) {
-          if (!err)
+          if (!err) {
+            ga('send', 'event', 'Task', 'Assigned');
             updateTaskHist({
               taskID : args.taskID,
               type : PhasedProvider.task.HISTORY_ID.ASSIGNEE
             });
+          }
         });
     }
 
@@ -2394,11 +2401,13 @@ angular.module('webappApp')
     var doSetTaskName = function(args) {
       FBRef.child(find(args.taskID, 'task').FBAddr)
         .update({ name : args.newName }, function(err){
-        if (!err) 
+        if (!err) {
+          ga('send', 'event', 'Task', 'Name changed');
           updateTaskHist({
             taskID : args.taskID, 
             type: PhasedProvider.task.HISTORY_ID.NAME
           });
+        }
       });
     }
 
@@ -2419,11 +2428,13 @@ angular.module('webappApp')
     var doSetTaskDesc = function(args) {
       FBRef.child(find(args.taskID, 'task').FBAddr)
         .update({'description' : args.newDesc}, function(err){
-        if (!err) 
+        if (!err) {
+          ga('send', 'event', 'Task', 'Description changed');
           updateTaskHist({
             taskID : args.taskID,
             type : PhasedProvider.task.HISTORY_ID.DESCRIPTION
           });
+        }
       });
     }
 
@@ -2446,11 +2457,13 @@ angular.module('webappApp')
       var newDeadline = args.newDeadline ? new Date(args.newDeadline).getTime() : '';
       FBRef.child(find(args.taskID, 'task').FBAddr)
         .update({'deadline' : newDeadline }, function(err){
-        if (!err) 
+        if (!err) {
+          ga('send', 'event', 'Task', 'Deadline changed');
           updateTaskHist({
             taskID : args.taskID,
             type : PhasedProvider.task.HISTORY_ID.DEADLINE
           });
+        }
       });
     }
 
@@ -2471,11 +2484,13 @@ angular.module('webappApp')
     var doSetTaskCategory = function(args) {
       FBRef.child(find(args.taskID, 'task').FBAddr)
         .update({'cat' : args.newCategory }, function(err){
-        if (!err) 
+        if (!err) {
+          ga('send', 'event', 'Task', 'Category changed');
           updateTaskHist({
             taskID : args.taskID,
             type : PhasedProvider.task.HISTORY_ID.CATEGORY
           });
+        }
       });
     }
 
@@ -2496,11 +2511,13 @@ angular.module('webappApp')
     var doSetTaskPriority = function(args) {
       FBRef.child(find(args.taskID, 'task').FBAddr)
         .update({'priority' : args.newPriority }, function(err){
-        if (!err) 
+        if (!err) {
+          ga('send', 'event', 'Task', 'Priority changed');
           updateTaskHist({
             taskID : args.taskID,
             type : PhasedProvider.task.HISTORY_ID.PRIORITY
           });
+        }
       });
     }
 
