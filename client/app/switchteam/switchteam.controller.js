@@ -7,7 +7,8 @@ angular.module('webappApp')
     $scope.Phased = Phased;
 
     $scope.addTeam = function(teamName) {
-      Phased.addTeam(teamName, function success() {
+      console.log($scope.Phased.user.email);
+      Phased.addTeam(teamName,$scope.Phased.user.email, function success() {
         $location.path("/feed");
         // $('#addTeamModal').modal('hide');
         // toaster.pop('success', 'Success', 'Welcome to Phased, ' + teamName);
@@ -15,6 +16,10 @@ angular.module('webappApp')
         toaster.pop('error', 'Error', teamName + ' already exists. Please ask the team administrator for an invitation to join.');
       });
     }
+
+
+    $scope.$on('Phased:meta', function(){$scope.$apply()});
+    $scope.$on('Phased:setup', function(){$scope.$apply()});
 
     // $scope.teamList = [];
     // $scope.activeTeam = '';

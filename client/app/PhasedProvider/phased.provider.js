@@ -49,7 +49,7 @@ angular.module('webappApp')
       projectID : '0A',
       columnID : '0A',
       cardID : '0A'
-    }, 
+    },
 
       // FLAGS
       PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
@@ -58,13 +58,13 @@ angular.module('webappApp')
       WATCH_PROJECTS = false, // set in setWatchProjects in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
-      
+
       // ASYNC CALLBACKS
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
       req_after_members = [], // filled with operations to complete after members are in
       req_after_meta = [], // filled with operations to complete after meta are in
       membersRetrieved = 0; // incremented with each member's profile gathered
-    
+
     var _Auth, FBRef; // tacked on to PhasedProvider
     var ga = ga || function(){}; // in case ga isn't defined (as in chromeapp)
     var $rootScope = { $broadcast : function(a){} }; // set in $get, default for if PhasedProvider isn't injected into any scope. not available in .config();
@@ -84,7 +84,7 @@ angular.module('webappApp')
           statuses : [], // stream of team's status updates
           teamLength : 0 // members counted in setUpTeamMembers
         },
-        get : { // a read-only unordered list of objects which otherwise would have been nested. 
+        get : { // a read-only unordered list of objects which otherwise would have been nested.
           columns : {},
           cards : {},
           tasks : {}
@@ -143,7 +143,7 @@ angular.module('webappApp')
 
         // data streams
         // data updated with FBRef.on() watches
-        // 
+        //
         notif : {}, // notifications for current user
         assignments : { // Phased.assignments
           all : {}, // all of the team's assignments
@@ -583,7 +583,7 @@ angular.module('webappApp')
           (function(teamIndex){
           var teamID = teamList[teamIndex];
           FBRef.child('team/' + teamID + '/name').once('value', function(snap){
-            if (typeof PhasedProvider.user.teams != 'object') 
+            if (typeof PhasedProvider.user.teams != 'object')
               PhasedProvider.user.teams = {};
 
             PhasedProvider.user.teams[teamIndex] = {
@@ -612,7 +612,7 @@ angular.module('webappApp')
               console.log(data.err);
               // handle error
             }
-            if (data.status == "active"){
+            if (data.status == "active" || data.status == "trialing"){
               //Show thing for active
               PhasedProvider.viewType = 'active';
 
@@ -858,7 +858,7 @@ angular.module('webappApp')
     *
     * 1. sets their presence to PhasedProvider.PRESENCE_ID.ONLINE when connected
     *
-    * 2. sets their presence attr to PhasedProvider.PRESENCE_ID.OFFLINE 
+    * 2. sets their presence attr to PhasedProvider.PRESENCE_ID.OFFLINE
     * and updates lastOnline on FB disconnect
     *
     */
@@ -901,8 +901,8 @@ angular.module('webappApp')
     * Watches a team's projects, keeping them in sync with FireBase
     *
     * A slightly recursive function. It watches all projects (via
-    * child_added) with watchOneProject, which calls watchAllColumns, 
-    * which calls watchOneColumn on each of that project's columns, 
+    * child_added) with watchOneProject, which calls watchAllColumns,
+    * which calls watchOneColumn on each of that project's columns,
     * which calls wachAllCards and so on.
     *
     * in short, we need to add a watch at each level:
@@ -915,10 +915,10 @@ angular.module('webappApp')
     *
     * Should only be called from watchTeam if WATCH_PROJECTS is set.
     * Replaces watchAssignments().
-    * Stashes all even listeners in the team's _FBHandlers for 
+    * Stashes all even listeners in the team's _FBHandlers for
     * deregistration when switching teams.
     *
-    */ 
+    */
     var watchProjects = function() {
       var projAddr = 'team/' + PhasedProvider.team.uid + '/projects',
         projectsRef = FBRef.child(projAddr),
@@ -1010,7 +1010,7 @@ angular.module('webappApp')
           var key = snap.key()
           PhasedProvider.team.projects[projID].columns[colID][key] = snap.val();
           // watch cards after they're added
-          if (key == 'cards') 
+          if (key == 'cards')
             watchAllCards(colID, projID, colRef);
         });
         PhasedProvider.team._FBHandlers.push({
@@ -1193,7 +1193,7 @@ angular.module('webappApp')
     **
     **  INTERNAL UTILITIES
     **
-    **  utilities for 
+    **  utilities for
     **  - issuing notifications
     **  - updating an object's history
     **  - cleaning data to go to database
@@ -1207,7 +1207,7 @@ angular.module('webappApp')
     *
     * title and body are arrays of objects which are either
     * { string : 'a simple string' }
-    * or { userID : 'aUserID' } 
+    * or { userID : 'aUserID' }
     * which will be interpreted when loaded by client (see watchNotifications)
     *
     * example
@@ -1261,7 +1261,7 @@ angular.module('webappApp')
           // 2 self-assigned
           // 3 unassigned
 
-          if (data.snapshot.assigned_by != data.snapshot.assigned_to && 
+          if (data.snapshot.assigned_by != data.snapshot.assigned_to &&
             (data.snapshot.assigned_to && !data.snapshot.unassigned)) { // 1
               streamItem.title = [
                 { string : 'New task assigned to ' },
@@ -1446,7 +1446,7 @@ angular.module('webappApp')
     *   1B. get task if not supplied
     *   1C. create the snapshot
     * 2. update db
-    * 3. issue notification 
+    * 3. issue notification
     *
     */
 
@@ -1458,7 +1458,7 @@ angular.module('webappApp')
           (
             (
               !('taskRef' in args) || !('task' in args) // either of taskRef or task are missing
-            ) && 
+            ) &&
             !('taskID' in args) // and taskID is also missing
           ) || (
             !('type' in args) // or type is missing
@@ -1498,7 +1498,7 @@ angular.module('webappApp')
       taskRef.child('history').push(data);
 
       // 3. format and issue notification
-      issueTaskHistoryNotification(data);   
+      issueTaskHistoryNotification(data);
     }
 
     /**
@@ -1580,7 +1580,7 @@ angular.module('webappApp')
     *
     * performs a single-level cleaning of an incoming associative array
     * ensuring required nodes are present and allowing optional nodes
-    * returns a pristine copy of dirtyObj (ie, a new object) or false if 
+    * returns a pristine copy of dirtyObj (ie, a new object) or false if
     * required nodes are missing
     *
     * expects config to have two properties, 'required' & 'optional',
@@ -1601,7 +1601,7 @@ angular.module('webappApp')
     *
     */
     var cleanObjectShallow = function(dirtyObj, config) {
-      var cleanObj = {}, 
+      var cleanObj = {},
         required = config.required,
         optional = config.optional;
 
@@ -1824,9 +1824,10 @@ angular.module('webappApp')
     * 2B. if it already exists, run fail callback
     */
 
-    var _addTeam = function(teamName, success, failure, addToExistingTeam) {
+    var _addTeam = function(teamName,email, success, failure, addToExistingTeam) {
       var args = {
         teamName : teamName,
+        email :email,
         success : success,
         failure : failure,
         addToExistingTeam : typeof addToExistingTeam === 'boolean' ? addToExistingTeam : false // only use value if set
@@ -1930,7 +1931,7 @@ angular.module('webappApp')
     *
     * FB additionally validates security and data type, but we do it here
     * also for speed. Reverts ID and calls failure function on failure.
-    * 
+    *
     * 1. check own role
     * 2. validate new data type
     * 3. validate member is on team
@@ -1942,7 +1943,7 @@ angular.module('webappApp')
       var args = {
         memberID : memberID,
         newRole : newRole,
-        oldRole : oldRole, 
+        oldRole : oldRole,
         failure : failure
       }
 
@@ -1967,7 +1968,7 @@ angular.module('webappApp')
         myRole = args.oldRole;
 
       if (myRole != PhasedProvider.ROLE_ID.ADMIN && myRole != PhasedProvider.ROLE_ID.OWNER) {
-        fail('PERMISSION_DENIED', 'You are not authorized to change another user\'s role on this team.');        
+        fail('PERMISSION_DENIED', 'You are not authorized to change another user\'s role on this team.');
         return;
       }
 
@@ -2046,7 +2047,7 @@ angular.module('webappApp')
 
     var doMarkAllNotifsAsRead = function() {
       for (var i in PhasedProvider.notif.stream) {
-        doMarkNotifAsRead({ 
+        doMarkNotifAsRead({
           key : PhasedProvider.notif.stream[i].key,
           index : i
         });
@@ -2157,7 +2158,7 @@ angular.module('webappApp')
       var catName = PhasedProvider.team.categoryObj[key].name; // stash cat name
       console.log('deleting cat ' + catName);
 
-      // 2. 
+      // 2.
       FBRef.child('team/' + PhasedProvider.team.uid + '/category/' + key).set(null);
       ga('send', 'event', 'Category', 'Deleted');
 
@@ -2262,7 +2263,7 @@ angular.module('webappApp')
 
     /**
     *
-    * a user starts working on a task 
+    * a user starts working on a task
     *
     * 1. take the task if it's not already assigned to you
     * 2. set the task status to In Progress
@@ -2347,7 +2348,7 @@ angular.module('webappApp')
     * edit task assignee
     *
     * sets assigned_to, assigned_by (to self), and status to ASSIGNED
-    */ 
+    */
     var _setTaskAssignee = function(taskID, newAssignee) {
       var args = {
         taskID : taskID,
@@ -2389,7 +2390,7 @@ angular.module('webappApp')
     * edit task name
     * (simple FB interaction)
     *
-    */ 
+    */
     var _setTaskName = function(taskID, newName) {
       var args = {
         taskID : taskID,
@@ -2404,7 +2405,7 @@ angular.module('webappApp')
         if (!err) {
           ga('send', 'event', 'Task', 'Name changed');
           updateTaskHist({
-            taskID : args.taskID, 
+            taskID : args.taskID,
             type: PhasedProvider.task.HISTORY_ID.NAME
           });
         }
@@ -2416,7 +2417,7 @@ angular.module('webappApp')
     * edit task description
     * (simple FB interaction)
     *
-    */ 
+    */
     var _setTaskDesc = function(taskID, newDesc) {
       var args = {
         taskID : taskID,
@@ -2443,7 +2444,7 @@ angular.module('webappApp')
     * edit task deadline
     * (simple FB interaction)
     *
-    */ 
+    */
     var _setTaskDeadline = function(taskID, newDeadline) {
       var args = {
         taskID : taskID,
@@ -2472,7 +2473,7 @@ angular.module('webappApp')
     * edit task category
     * (simple FB interaction)
     *
-    */ 
+    */
     var _setTaskCategory = function(taskID, newCategory) {
       var args = {
         taskID : taskID,
@@ -2499,7 +2500,7 @@ angular.module('webappApp')
     * edit task priority
     * (simple FB interaction)
     *
-    */ 
+    */
     var _setTaskPriority = function(taskID, newPriority) {
       var args = {
         taskID : taskID,

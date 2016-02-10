@@ -6,8 +6,9 @@ var Firebase = require("firebase");
 var FirebaseTokenGenerator = require("firebase-token-generator");
 
 var FBRef = new Firebase("https://phased-dev2.firebaseio.com/");
-var tokenGenerator = new FirebaseTokenGenerator("A50wFi5OxaLYNzb4jnEyFMQWmE8mjRyWJCKW723g");
-var token = tokenGenerator.createToken({uid: "registration-server" });
+var tokenGenerator = new FirebaseTokenGenerator("igwdoQvGJzn0LXBPKWmn5RllwVZSFqIOo3JLeBm0");
+var token = tokenGenerator.createToken({uid: "registration-server",isReg: true });
+var stripe = require('stripe')('sk_test_XCwuQhHhSTCGrbXl12ubBE8Y');
 
 exports.index = function(req, res) {
 	res.json([]);
@@ -90,7 +91,7 @@ var defaultTeam = {
     }
   }
 
-/** 
+/**
 *
 * 	Invites a user to a team
 *
@@ -108,7 +109,7 @@ exports.invite = function(req, res) {
 		inviterName = req.body.inviterName;
 
 	// check data
-	if (!(typeof invitedEmail == 'string' && invitedEmail.length > 0 ) 
+	if (!(typeof invitedEmail == 'string' && invitedEmail.length > 0 )
 		|| !(typeof teamID == 'string' && teamID.length > 0)
 		|| !(typeof inviterEmail == 'string' && inviterEmail.length > 0)
 		|| !(typeof inviterName == 'string' && inviterName.length > 0)
@@ -138,7 +139,7 @@ exports.invite = function(req, res) {
         // 1. add to team
         FBRef.child('profile/' + userID + '/teams').push(teamID); // add to user's teams
         FBRef.child('team/' + teamID + '/members/' + userID).update({role : 0}); // add to this team
-        
+
         res.send({
         	success : true,
         	added : true,
@@ -185,7 +186,7 @@ exports.register = function(req, res) {
 	var user = req.body.user; // user who is authorized to do the changing
 	user = JSON.parse(user);
 	console.log('user', user);
-	
+
 	// 0. authenticate request
 	FBRef.authWithCustomToken(token, function(error, authData) {
 		if (error) {
@@ -289,6 +290,7 @@ exports.register = function(req, res) {
 */
 exports.registerTeam = function(req, res) {
 	var teamName = req.body.teamName,
+		email = req.body.email,
 		userID = req.body.userID;
 
 	// 0. Authenticate request
@@ -297,6 +299,7 @@ exports.registerTeam = function(req, res) {
 			res.send(error);
 			return;
 		}
+		console.log(authData);
 
 		// get team with specified name
     FBRef.child('team').orderByChild('name').equalTo(teamName).once('value', function(snap) {
@@ -310,13 +313,49 @@ exports.registerTeam = function(req, res) {
         defaultTeam.name = teamName;
         newTeamRef = FBRef.child('team').push(defaultTeam);
         newTeamKey = newTeamRef.key();
-      } else { 
+      } else {
       	// bail since the team exists
       	res.send({
       		err : 'TEAM_EXISTS'
       	});
       	return;
-      } 
+      }
+			// Add team to sub and start trial
+
+			FBRef.child('profile/' + userID).once('value',function(snap){
+				snap = snap.val();
+				if(snap){
+					stripe.customers.create({
+						description: 'Pays for team: ' + newTeamKey,
+						email : snap.email,
+						plan: "basic",
+					}, function(err, customer) {
+						// asynchronously called
+						if (err) {
+								 // bad things
+										console.log(err);
+										res.send({err:err});
+						} else {
+								// successful charge
+								 console.log(customer.id);
+								 console.log(snap.email);
+								 console.log(userID);
+								 FBRef.authWithCustomToken(token, function(error, authData) {
+									 FBRef.child('team').child(newTeamKey).child('billing').set({
+										 "name": userID,
+										 "email": snap.email,
+										 "plan": "basic",
+										 "stripeid": customer.id
+									 });
+								 })
+
+						 }
+					});
+				}
+			});
+
+
+
 
       // add to new team
       newTeamRef.child('members/' + userID).update({
@@ -340,7 +379,7 @@ exports.registerTeam = function(req, res) {
         	});
         }
       });
-    });		
+    });
 	});
 }
 
