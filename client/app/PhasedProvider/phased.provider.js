@@ -612,6 +612,7 @@ angular.module('webappApp')
               console.log(data.err);
               // handle error
             }
+            console.log(data.status);
             if (data.status == "active" || data.status == "trialing"){
               //Show thing for active
               PhasedProvider.viewType = 'active';
@@ -619,6 +620,7 @@ angular.module('webappApp')
             } else if (data.status == 'past_due' || data.status == 'unpaid'){
               //Show thing for problem with account
               PhasedProvider.viewType = 'problem';
+              $location.path('/team-expired');
             } else if (data.status == 'canceled'){
               //Show thing for problem with canceled
               PhasedProvider.viewType = 'notPaid';
