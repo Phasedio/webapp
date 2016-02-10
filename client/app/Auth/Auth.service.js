@@ -134,8 +134,8 @@ angular.module('webappApp')
             getProfileDetails.then = function() {};
             getProfileDetails.args = {};
             // below is returned
-            var pseudoPromise = { 
-                then : function(doAfter, args) { 
+            var pseudoPromise = {
+                then : function(doAfter, args) {
                     if (doAfter)
                         getProfileDetails.then = doAfter;
                     if (args)
@@ -166,6 +166,7 @@ angular.module('webappApp')
                     getProfileDetails.then(getProfileDetails.args);
                 } else {
                     console.warn('Grave error, user ' + uid + ' does not exist');
+                    $location.path('/login');
                 }
             });
 
@@ -247,8 +248,8 @@ angular.module('webappApp')
 
             // go places
             $rootScope.$apply(
-                function() { 
-                    $location.path(path); 
+                function() {
+                    $location.path(path);
                 }
             );
         });
