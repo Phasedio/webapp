@@ -48,7 +48,8 @@ angular.module('webappApp')
     */
     $scope.$on('Phased:meta', function(){
       if (!Phased.team.uid) {
-        $('#addTeamModal').modal('show');
+        $location.path('/switchteam');
+        //$('#addTeamModal').modal('show');
       }
     });
 
@@ -159,7 +160,7 @@ angular.module('webappApp')
     // do all of the above (resetting their data beforehand)
     var sortData = function() {
       if (!Phased.SET_UP) return;
-      
+
       // reset data
       $scope.labelsPie = ["Download Sales"];
       $scope.data = [[],[0]];
