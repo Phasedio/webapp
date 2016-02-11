@@ -4,6 +4,27 @@ angular.module('webappApp')
   .controller('EditcategoryCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,$location) {
     ga('send', 'pageview', '/editcategory');
     var ref = new Firebase(FURL);
+
+    // bounce users if team has problems
+    var checkTeam = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkTeam);
+        return;
+      }
+      var teamCheck = Phased.viewType;
+      console.log(teamCheck);
+      if (teamCheck == 'problem'){
+        $location.path('/team-expired');
+      }else if (teamCheck == 'canceled') {
+        $location.path('/switchteam');
+      }
+
+    }
+    $scope.$on('Phased:PaymentInfo', checkTeam);
+    checkTeam();
+
+
     $scope.team = {
       name : '',
       members : {},

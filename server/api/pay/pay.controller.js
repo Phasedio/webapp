@@ -56,7 +56,12 @@ exports.find = function(req, res) {
     function(err, subscription) {
       // asynchronously called
       if (err){
-    	  res.send({err:err});
+        if (err.statusCode == 404) {
+          res.send({status:'canceled'});
+        }else{
+          res.send({err:err});
+        }
+
     	}else{
     	  if(subscription){
     	    res.send({status:subscription.status});
@@ -209,19 +214,19 @@ exports.cancel = function(req, res) {
         if (s.role == 2) {
           console.log( 'Canceling team');
           //Remove team from member profiles
-          // FBRef.child('team').child(team).child('members').once('value',function(snap){
-          //   snap.forEach(function(childSnapshot) {
-          //     // key will be "fred" the first time and "barney" the second time
-          //     var key = childSnapshot.key();
-          //     console.log(key);
-          //     FBRef.child('profile').child(key).child('teams').orderByValue().equalTo(team).limitToFirst(1).once('value',function(snap){
-          //       var memberRef = snap.val();
-          //       var teamKey = Object.keys(memberRef);
-          //       FBRef.child('profile').child(key).child('teams').child(teamKey[0]).remove();
-          //       console.log(memberRef);
-          //     });
-          //   });
-          // });
+          FBRef.child('team').child(team).child('members').once('value',function(snap){
+            snap.forEach(function(childSnapshot) {
+              // key will be "fred" the first time and "barney" the second time
+              var key = childSnapshot.key();
+              console.log(key);
+              FBRef.child('profile').child(key).child('teams').orderByValue().equalTo(team).limitToFirst(1).once('value',function(snap){
+                var memberRef = snap.val();
+                var teamKey = Object.keys(memberRef);
+                FBRef.child('profile').child(key).child('teams').child(teamKey[0]).remove();
+                console.log(memberRef);
+              });
+            });
+          });
           console.log( 'Canceling team');
           FBRef.child('team').child(team).child('billing').once('value',function(shot) {
             shot = shot.val();

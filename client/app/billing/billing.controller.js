@@ -1,7 +1,10 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('BillingCtrl', function ($scope, $http, stripe, Auth, FURL,Phased) {
+  .controller('BillingCtrl', function ($scope, $http, stripe, Auth, FURL,Phased,$location) {
+
+
+
     ga('send', 'pageview', '/billing');
     var ref = new Firebase(FURL);
     $scope.Phased = Phased;
@@ -29,6 +32,26 @@ angular.module('webappApp')
     checkRole();
 
     $scope.$on('Phased:memberChanged', checkRole);
+
+
+    // bounce users if team has problems
+    var checkTeam = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkTeam);
+        return;
+      }
+      var teamCheck = Phased.viewType;
+      console.log(teamCheck);
+      if (teamCheck == 'problem'){
+        $location.path('/team-expired');
+      }else if (teamCheck == 'canceled') {
+        $location.path('/switchteam');
+      }
+
+    }
+    $scope.$on('Phased:PaymentInfo', checkTeam);
+    checkTeam();
 
 
     $scope.removeTeam = function () {

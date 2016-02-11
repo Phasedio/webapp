@@ -620,21 +620,14 @@ angular.module('webappApp')
             } else if (data.status == 'past_due' || data.status == 'unpaid'){
               //Show thing for problem with account
               PhasedProvider.viewType = 'problem';
-              var s = $location.path();
-              if(s != '/team-expired'){
-                //incase the user is already on that page.
-                $location.path('/team-expired');
-              }
+
 
             } else if (data.status == 'canceled'){
               //Show thing for problem with canceled
-              PhasedProvider.viewType = 'notPaid';
-              var s = $location.path();
-              if(s != '/team-expired'){
-                //incase the user is already on that page.
-                $location.path('/switchteam');
-              }
+              PhasedProvider.viewType = 'canceled';
+
             }
+            $rootScope.$broadcast('Phased:PaymentInfo');
           })
           .error(function(data){
             console.log(data);

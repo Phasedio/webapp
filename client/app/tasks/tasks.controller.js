@@ -80,8 +80,8 @@ angular.module('webappApp')
       if (!direction) return input;
       // direction must be "to" or "by" AND have uid OR be "unassigned" or "delegated"
       if (
-        !( (direction == 'to' || direction == 'by') && typeof uid !== 'undefined' ) 
-        && (direction != 'unassigned' && direction != 'delegated') 
+        !( (direction == 'to' || direction == 'by') && typeof uid !== 'undefined' )
+        && (direction != 'unassigned' && direction != 'delegated')
         )
         return input;
 
@@ -164,7 +164,7 @@ angular.module('webappApp')
       return types[input] || input; // fail gracefully
     }
   }])
-  .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig) {
+  .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig,$location) {
     ga('send', 'pageview', '/tasks');
 
     $scope.viewType = Phased.viewType;
@@ -194,7 +194,26 @@ angular.module('webappApp')
 
     var d=new Date();
     console.log(d.getDay());
-    $('.dropdown-toggle').dropdown()
+    $('.dropdown-toggle').dropdown();
+
+    // bounce users if team has problems
+    var checkTeam = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkTeam);
+        return;
+      }
+      var teamCheck = Phased.viewType;
+      console.log(teamCheck);
+      if (teamCheck == 'problem'){
+        $location.path('/team-expired');
+      }else if (teamCheck == 'canceled') {
+        $location.path('/switchteam');
+      }
+
+    }
+    $scope.$on('Phased:PaymentInfo', checkTeam);
+    checkTeam();
 
 
 
@@ -281,17 +300,17 @@ angular.module('webappApp')
         //   Phased.getArchiveFor('all');
         //   $scope.setStatusFilter(undefined);
         //   break;
-        // the following aren't an actual address, but at least 
+        // the following aren't an actual address, but at least
         // they let us use the status filter properly...
-        case 'completed' : 
+        case 'completed' :
           $scope.setStatusFilter(Phased.task.STATUS_ID.COMPLETE);
           $scope.setAssignmentFilter(undefined);
           break;
-        case 'assigned' : 
+        case 'assigned' :
           $scope.setStatusFilter(Phased.task.STATUS_ID.ASSIGNED);
           $scope.setAssignmentFilter(undefined);
           break;
-        case 'in_progress' : 
+        case 'in_progress' :
           $scope.setStatusFilter(Phased.task.STATUS_ID.IN_PROGRESS);
           $scope.setAssignmentFilter(undefined);
           break;
@@ -334,9 +353,9 @@ angular.module('webappApp')
     $scope.setAssignmentFilter = function(direction, uid) {
       if (
           (
-            (direction == 'to' || direction == 'by') 
+            (direction == 'to' || direction == 'by')
             && typeof uid !== 'undefined'
-          ) 
+          )
           ||
           (direction == 'unassigned' || direction == 'delegated')
         ) {

@@ -44,6 +44,23 @@ angular.module('webappApp')
     var tomorrow = midnight + 86400000;
     var weekOffSet = midnight - ((new Date(midnight).getDay()) * 86400000 * 7);
 
+    // bounce users if team has problems
+    var checkTeam = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkTeam);
+        return;
+      }
+      var teamCheck = Phased.viewType;
+      if (teamCheck == 'problem'){
+        $location.path('/team-expired');
+      }else if (teamCheck == 'canceled') {
+        $location.path('/switchteam');
+      }
+
+    }
+    checkTeam();
+
     return function(input, since) {
       var out = {};
       var after, before;
@@ -148,6 +165,25 @@ angular.module('webappApp')
     $scope.phased = Phased;
     $scope.team = Phased.team;
     $scope.viewType = Phased.viewType;
+
+    // bounce users if team has problems
+    var checkTeam = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkTeam);
+        return;
+      }
+      var teamCheck = Phased.viewType;
+      console.log(teamCheck);
+      if (teamCheck == 'problem'){
+        $location.path('/team-expired');
+      }else if (teamCheck == 'canceled') {
+        $location.path('/switchteam');
+      }
+
+    }
+    $scope.$on('Phased:PaymentInfo', checkTeam);
+    checkTeam();
 
     // Check to see if there are route perams for this page if so load up that user
     var profileUser;
