@@ -487,7 +487,7 @@ angular.module('webappApp')
         watchTeam();
 
         // get billing info
-        checkPlanStatus(data.billing.stripeid);
+        checkPlanStatus(data.billing.stripeid, data.billing.subid);
       });
     }
 
@@ -604,9 +604,9 @@ angular.module('webappApp')
     * defaults to 'notPaid'
     *
     **/
-    var checkPlanStatus = function(stripeid) {
+    var checkPlanStatus = function(stripeid,subid) {
       if (typeof stripeid == 'string' && stripeid.length > 0) {
-        $.post('./api/pays/find', {customer: stripeid})
+        $.post('./api/pays/find', {customer: stripeid,sub:subid})
           .success(function(data){
             if (data.err) {
               console.log(data.err);
@@ -620,10 +620,20 @@ angular.module('webappApp')
             } else if (data.status == 'past_due' || data.status == 'unpaid'){
               //Show thing for problem with account
               PhasedProvider.viewType = 'problem';
-              $location.path('/team-expired');
+              var s = $location.path();
+              if(s != '/team-expired'){
+                //incase the user is already on that page.
+                $location.path('/team-expired');
+              }
+
             } else if (data.status == 'canceled'){
               //Show thing for problem with canceled
               PhasedProvider.viewType = 'notPaid';
+              var s = $location.path();
+              if(s != '/team-expired'){
+                //incase the user is already on that page.
+                $location.path('/switchteam');
+              }
             }
           })
           .error(function(data){
@@ -700,7 +710,7 @@ angular.module('webappApp')
       // billing
       cb = FBRef.child(teamKey + '/billing').on('value', function(snap){
         var billing = snap.val();
-        checkPlanStatus(billing.stripeid);
+        checkPlanStatus(billing.stripeid, billing.subid);
       });
 
       PhasedProvider.team._FBHandlers.push({

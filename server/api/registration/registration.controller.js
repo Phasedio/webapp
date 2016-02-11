@@ -338,6 +338,7 @@ exports.registerTeam = function(req, res) {
 						} else {
 								// successful charge
 								 console.log(customer.id);
+								 console.log(customer.subscriptions.data[0].id);
 								 console.log(snap.email);
 								 console.log(userID);
 								 FBRef.authWithCustomToken(token, function(error, authData) {
@@ -345,7 +346,8 @@ exports.registerTeam = function(req, res) {
 										 "name": userID,
 										 "email": snap.email,
 										 "plan": "basic",
-										 "stripeid": customer.id
+										 "stripeid": customer.id,
+										 "subid" : customer.subscriptions.data[0].id
 									 });
 								 })
 

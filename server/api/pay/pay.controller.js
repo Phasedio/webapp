@@ -44,69 +44,45 @@ exports.create = function(req, res) {
     });
 
   });
-
-
-  //   stripe.customers.update("cus_7s8iu7vv2w0OkR", {
-  //   description: "Customer for test@example.com"
-  // }, function(err, customer) {
-  //   // asynchronously called
-  // });
-
-
-	// stripe.customers.create({
-	//   description: 'Pays for team: ' + req.body.team,
-	//   email : req.body.email,
-	//   source: req.body.token // obtained with Stripe.js
-	// }, function(err, customer) {
-	//   // asynchronously called
-	//   if (err) {
-	// 	     // bad things
-	// 	        console.log(err);
-	// 	        res.send({err:err});
-	//   } else {
-	// 	    // successful charge
-	// 	     console.log(customer.id);
-	// 	     stripe.customers.createSubscription(
-	// 	     	customer.id,
-	// 	     	{
-	// 	     		plan: 'basic',
-	// 	     		quantity : amount
-	// 	     	},
-	// 	     	function(err, sub){
-	// 	     		if(err){
-	// 	     			console.log(err);
-	// 	     			res.send({err:err});
-	// 	     		}
-	// 	     		else{
-	// 	     			console.log(sub);
-	// 	     			res.send({success:true, customer : customer.id});
-	// 	     		}
-	// 	     	}
-	// 	     	)
-	// 	 }
-	// });
-	// console.log(req.body);
-
 };
+
 exports.find = function(req, res) {
 	var user = req.body.customer;
-  stripe.customers.retrieve(
-	  user,
-	  function(err, customer) {
-	    // asynchronously called
-	    if (err){
-	    	res.send({err:err});
-	    }else{
-	    	if(customer.subscriptions.data[0]){
-	    		res.send({status:customer.subscriptions.data[0].status});
-	    	}else{
-	    		res.send({err:'no subs'});
-	    	}
+  var sub = req.body.sub;
 
-	    }
-
-	  }
-	);
+  stripe.customers.retrieveSubscription(
+    user,
+    sub,
+    function(err, subscription) {
+      // asynchronously called
+      if (err){
+    	  res.send({err:err});
+    	}else{
+    	  if(subscription){
+    	    res.send({status:subscription.status});
+    	  }else{
+    	    res.send({err:'no subs'});
+    	  }
+      }
+    }
+  );
+  // stripe.customers.retrieve(
+	//   user,
+	//   function(err, customer) {
+	//     // asynchronously called
+	//     if (err){
+	//     	res.send({err:err});
+	//     }else{
+	//     	if(customer.subscriptions.data[0]){
+	//     		res.send({status:customer.subscriptions.data[0].status});
+	//     	}else{
+	//     		res.send({err:'no subs'});
+	//     	}
+  //
+	//     }
+  //
+	//   }
+	// );
 };
 
 exports.expired = function(req, res) {
@@ -206,4 +182,103 @@ exports.expired = function(req, res) {
       });
     }
 
-}
+};
+
+exports.cancel = function(req, res) {
+  /*
+  Cancel plan on stripe
+  Set team for manual deletion
+  return success and unauth the user
+  */
+  console.log( 'Canceling team');
+  var team = req.body.team;
+  var user = req.body.user;
+  var billing = {};
+  //check if user is able to cancel the account (owners priv)
+  FBRef.authWithCustomToken(token, function(error, authData) {
+    if (error) {
+      res.send(error);
+      return;
+    }
+    console.log( 'Canceling team');
+    //Remove from Stripe
+    FBRef.child('team').child(team).child('members').child(user).once('value',function(snap){
+      var s = snap.val();
+      if(s){
+        //if true then get the stripe token and find the sub.
+        if (s.role == 2) {
+          console.log( 'Canceling team');
+          //Remove team from member profiles
+          // FBRef.child('team').child(team).child('members').once('value',function(snap){
+          //   snap.forEach(function(childSnapshot) {
+          //     // key will be "fred" the first time and "barney" the second time
+          //     var key = childSnapshot.key();
+          //     console.log(key);
+          //     FBRef.child('profile').child(key).child('teams').orderByValue().equalTo(team).limitToFirst(1).once('value',function(snap){
+          //       var memberRef = snap.val();
+          //       var teamKey = Object.keys(memberRef);
+          //       FBRef.child('profile').child(key).child('teams').child(teamKey[0]).remove();
+          //       console.log(memberRef);
+          //     });
+          //   });
+          // });
+          console.log( 'Canceling team');
+          FBRef.child('team').child(team).child('billing').once('value',function(shot) {
+            shot = shot.val();
+            if(shot){
+              billing = shot;
+              //Find sub
+              stripe.customers.retrieve(
+            	  billing.stripeid,
+            	  function(err, customer) {
+            	    // asynchronously called
+            	    if (err){
+                    console.log(err);
+            	    	res.send({err:err});
+            	    }else{
+            	    	if(customer.subscriptions.data[0]){
+                      //Cancel the sub
+                      stripe.customers.cancelSubscription(
+                        billing.stripeid,
+                        customer.subscriptions.data[0].id,
+                        function(err, confirmation) {
+                          // asynchronously called
+                          if (err) {
+                            console.log(err);
+                            res.send({err:'no subs'});
+                          }else{
+                            //Sub is now canceled.
+                            //Remove team from members.
+                            res.send({message:confirmation});
+
+                          }
+                        }
+                      );
+
+            	    	}else{
+            	    		res.send({err:'no subs'});
+            	    	}
+
+            	    }
+
+            	  }
+            	);
+
+
+            }
+          });
+        }
+        //res.send({err:'Not high enough priv'});
+      }
+    });
+
+
+    //res.send('done');
+  });
+
+  // cancel sub.
+
+
+
+
+};

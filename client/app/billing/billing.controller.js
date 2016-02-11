@@ -5,12 +5,13 @@ angular.module('webappApp')
     ga('send', 'pageview', '/billing');
     var ref = new Firebase(FURL);
     $scope.Phased = Phased;
+    $scope.ccSubmited = false;
     console.log(Phased);
     // $scope.currentTeam = {};
     // $scope.viewType = '';
     // $scope.billinInfo = {};
   	// $scope.payment = {
-  	// 	card: {}
+  	// 	card: {}d
   	// };
 
     // bounce users without Admin or Owner permissions
@@ -29,6 +30,18 @@ angular.module('webappApp')
 
     $scope.$on('Phased:memberChanged', checkRole);
 
+
+    $scope.removeTeam = function () {
+      //ref.child('deletedTeams').push({team:"hi"});
+      var p = {
+        team : Phased.team.uid,
+        user : Phased.user.uid
+      };
+      console.log( 'sending');
+      $http.post('./api/pays/cancel', p).then(function(data){
+        console.log( data);
+      });
+    };
     /**
     * charge
     */
