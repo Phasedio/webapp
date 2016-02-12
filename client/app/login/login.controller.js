@@ -30,8 +30,14 @@ angular.module('webappApp')
     // register a new user
     $scope.regUser = function(user){
       // console.log('will show new modal here');
-      Auth.register(user)
-      ga('send', 'event', 'Register', 'new user');
+      if($scope.regForm.$valid){
+        Auth.register(user)
+        ga('send', 'event', 'Register', 'new user');
+      }else{
+        if($scope.regForm.$error.required){
+          alert("please fill in the highlighted inputs");
+        }
+      }
     }
 
     // show create account form
@@ -48,7 +54,7 @@ angular.module('webappApp')
 
     // attempts to send reset password email
     $scope.forgotPassword = function(email){
-      if($scope.regForm.$valid){
+
       $scope.regSubmited = true;
       // console.log("will send email to :", email);
       ref.resetPassword({
@@ -63,11 +69,7 @@ angular.module('webappApp')
           // console.log("Error sending password reset email:", error);
         }
       });
-    }else{
-      if($scope.regForm.$error.required){
-        alert("please fill in the highlighted inputs");
-      }
-    }
+    
   }
 
 
