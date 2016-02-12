@@ -5,8 +5,18 @@ angular.module('webappApp')
     ga('send', 'pageview', '/switchteam');
     var ref = new Firebase(FURL);
     $scope.Phased = Phased;
+    $scope.creatingTeam = false;
+
+
+    // logout
+    $scope.logout = function(){
+      console.log('logging you out');
+      Auth.logout();
+      $location.path('/login');
+    }
 
     $scope.addTeam = function(teamName) {
+      $scope.creatingTeam = true;
       console.log($scope.Phased.user.email);
       Phased.addTeam(teamName,$scope.Phased.user.email, function success() {
         $location.path("/feed");
@@ -21,39 +31,6 @@ angular.module('webappApp')
     $scope.$on('Phased:meta', function(){$scope.$apply()});
     $scope.$on('Phased:setup', function(){$scope.$apply()});
 
-    // $scope.teamList = [];
-    // $scope.activeTeam = '';
-    //
-    // $scope.switchTeams = function(team){
-    // 	var ref = new Firebase(FURL);
-    // 	ref.child('profile').child(Auth.user.uid).child('curTeam').set(team);
-    // }
-    //
-    // $scope.getCurrentTeam = function(){
-    // 	var ref = new Firebase(FURL);
-    // 	ref.child('profile').child(Auth.user.uid).child('curTeam').on('value', function(data){
-    // 		data = data.val();
-    // 		$scope.activeTeam = data;
-    // 		$scope.$apply();
-    // 	})
-    // }
-    //
-    // $scope.getTeams = function(){
-    // 	var ref = new Firebase(FURL);
-    // 	ref.child('profile').child(Auth.user.uid).child('teams').once("value",function(data){
-    // 		data = data.val();
-    // 		console.log(data);
-    // 		var holder = []
-    // 		var keys = Object.keys(data);
-    // 		for(var i = 0 ; i < keys.length; i++){
-    // 			$scope.teamList.push(data[keys[i]]);
-    // 		}
-    // 		console.log($scope.teamList);
-    //
-    // 		$scope.$apply();
-    // 	});
-    // }
-    // $scope.getTeams();
-    // $scope.getCurrentTeam();
+
 
   });

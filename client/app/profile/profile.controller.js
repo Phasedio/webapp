@@ -44,22 +44,7 @@ angular.module('webappApp')
     var tomorrow = midnight + 86400000;
     var weekOffSet = midnight - ((new Date(midnight).getDay()) * 86400000 * 7);
 
-    // bounce users if team has problems
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
-      var teamCheck = Phased.viewType;
-      if (teamCheck == 'problem'){
-        $location.path('/team-expired');
-      }else if (teamCheck == 'canceled') {
-        $location.path('/switchteam');
-      }
-
-    }
-    checkTeam();
+    
 
     return function(input, since) {
       var out = {};

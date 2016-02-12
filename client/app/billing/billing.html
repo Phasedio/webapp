@@ -1,7 +1,18 @@
 <div ng-include="'components/navbar/navbar.html'"></div>
 
 <div class="container" >
-
+  <div class="row">
+    <div class="col-xs-12" ng-class="tasklistSize">
+      <div class="ph-card ">
+        <h1>ADMIN</h1>
+        <ul class="nav nav-pills">
+          <li role="presentation"><a href="/admin">Member Roles</a></li>
+          <li role="presentation"><a href="/admin/export">Export Data</a></li>
+          <li role="presentation" class="active"><a href="#">Billing</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
   <div class="row">
     <div class="col-xs-6">
       <div class="ph-card">

@@ -1,6 +1,9 @@
 .toggleNotifBtn {
 	padding: 16px;
+	padding-top:10px;
 	display: inline-block;
+	color:transparent;
+	cursor: pointer;
   &.hasUnread {
     background-color : orange;
   }
