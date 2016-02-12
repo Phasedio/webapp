@@ -14,9 +14,9 @@
           </div>
 
           <div class="member-background">
-            <div 
-              class="member-item presence-{{Phased.PRESENCE[member.presence]}}" 
-              ng-repeat="member in team.members | orderBy: 'name'" 
+            <div
+              class="member-item presence-{{Phased.PRESENCE[member.presence]}}"
+              ng-repeat="member in team.members | orderBy: 'name'"
               ng-click="goToUser(member.uid)"
               >
               <img src="{{member.pic}}">
@@ -41,6 +41,24 @@
             <h1 align="center">{{stats.todaysTasks}}</h1>
           </div>
         </div>
+        <div class="col-xs-6">
+          <div class="ph-card" style="margin-top:40px">
+            <h5 align="center" >
+              <a href="team/addcategory">Add / Change a Category</a>
+            </h5>
+          </div>
+        </div>
+        <div class="col-xs-6">
+          <div class="ph-card"  style="margin-top:40px;">
+            <h5 align="center" >Category Breakdown</h5>
+            <canvas id="pie" class="chart chart-pie"
+              chart-data="dataPie" chart-labels="labelsPie">
+            </canvas>
+          </div>
+        </div>
+
+
+
         <br>
         <div class="col-xs-12">
           <div class="ph-card" style="margin-top:40px; min-height:5rem;">
@@ -53,17 +71,6 @@
 
         </div>
         <div class="col-xs-6">
-          <div class="ph-card"  style="margin-top:40px;">
-            <h5 align="center" >Category Breakdown</h5>
-            <canvas id="pie" class="chart chart-pie"
-  chart-data="dataPie" chart-labels="labelsPie">
-</canvas>
-          </div>
-          <div class="ph-card" style="margin-top:40px">
-            <h5 align="center" >
-              <a href="team/addcategory">Add / Change a Category</a>
-            </h5>
-          </div>
           <div class="ph-card" style="margin-top:40px">
             <h5 align="center">
               Switch to team...

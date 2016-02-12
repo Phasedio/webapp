@@ -26,6 +26,11 @@
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li>
+            <p ng-if="isTrial" style="padding-top:17px;">
+              trial version
+            </p>
+          </li>
+          <li>
             <div ng-include="'components/notifications/notifications.html'"></div>
           </li>
         </ul>

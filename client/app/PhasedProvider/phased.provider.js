@@ -613,9 +613,14 @@ angular.module('webappApp')
               // handle error
             }
             console.log(data.status);
-            if (data.status == "active" || data.status == "trialing"){
+            if (data.status == "active" ){
               //Show thing for active
               PhasedProvider.viewType = 'active';
+
+            }else if (data.status == "trialing"){
+              //Show thing for problem with account
+              PhasedProvider.viewType = 'trialing';
+
 
             } else if (data.status == 'past_due' || data.status == 'unpaid'){
               //Show thing for problem with account
