@@ -46,20 +46,7 @@ angular.module('webappApp')
       $location.path('/profile/' + uid);
     }
 
-    /**
-    *
-    * Add members modal
-    *
-    */
-    $scope.addMembers = function(newMember) {
-      $('#myModal').modal('toggle');
-      Phased.addMember(newMember);
-    };
 
-    $scope.addMemberModal = function() {
-      ga('send', 'event', 'Modal', 'Member add');
-      $('#myModal').modal('toggle');
-    }
 
     /**
     *

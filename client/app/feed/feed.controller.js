@@ -220,7 +220,7 @@ angular.module('webappApp')
     // get number of active tasks assigned to userID
     function countActiveTasks(){
       var count = 0;
-      _.forEach(Phased.assignments.to_me, function(value, key){
+      _.forEach(Phased.get.tasks, function(value, key){
         if(value.status == 0 || value.status == 2){
           count++;
         }

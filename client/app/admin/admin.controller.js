@@ -6,7 +6,9 @@ angular.module('webappApp')
 
     $scope.viewType = Phased.viewType;
     $scope.team = Phased.team;
+    console.log(Phased.team);
     $scope.Phased = Phased;
+    $scope.numMembers =0;
 
     // bounce users without Admin or Owner permissions
     var checkRole = function(){
@@ -15,6 +17,16 @@ angular.module('webappApp')
         $scope.$on('Phased:setup', checkRole);
         return;
       }
+      $scope.canAddMembers = function(){
+        var k = Object.keys(Phased.team.members);
+        console.log(k);
+        $scope.numMembers = k.length;
+        if(k.length <= 10){
+          return true;
+        }else{
+          return false;
+        }
+      };
 
       var myRole = Phased.team.members[Auth.user.uid].role;
       if (myRole != Phased.ROLE_ID.ADMIN && myRole != Phased.ROLE_ID.OWNER)
@@ -45,5 +57,34 @@ angular.module('webappApp')
       Phased.changeMemberRole(member.uid, member.role, parseInt(oldRole), function failure(code, message){
         toaster.pop('error', 'Error', message);
       });
+    }
+
+
+    /**
+    *
+    * Add members modal
+    *
+    */
+    $scope.canAddMembers = function(){
+      var k = Object.keys(Phased.team.members);
+      console.log(k);
+      $scope.numMembers = k.length;
+      if(k.length <= 10){
+        return true;
+      }else{
+        return false;
+      }
+    };
+    $scope.addMembers = function(newMember) {
+      $('#myModal').modal('toggle');
+      Phased.addMember(newMember);
+    };
+
+    $scope.addMemberModal = function() {
+      var k = Object.keys(Phased.team.members);
+      console.log(k);
+      $scope.numMembers = k.length;
+      ga('send', 'event', 'Modal', 'Member add');
+      $('#myModal').modal('toggle');
     }
   });

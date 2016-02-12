@@ -27,10 +27,40 @@
 					</tr>
 				</tbody>
 			</table>
+      <button type="button" name="button" class="btn btn-phased-blue btn-block" ng-click="addMemberModal()">Add Member</button>
  		</div>
 	</div>
   </div>
 </section>
 
+<!-- add member -->
+<div class="modal fade addmember" id="myModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 style="color:#000;" class="modal-title no-shadow">Add member</h4>
+      </div>
+      <div class="modal-body ">
+
+        <p>{{team.name}} has <b>{{numMembers}} / 10 </b>  members.</p>
+        <p>Your team can only hold <b>10 members</b>. For more information on what your plan provides check out <a href="http://www.phased.io/pricing" target="_blank">this page</a></p>
+
+        <p>If you need to remove members please contact <a href="mailto:support@phased.io">support@phased.io</a></p>
+        <form name="addmember" ng-submit="addMembers(user)" novalidation ng-if="canAddMembers">
+          <div class="form-group">
+            <label ffor="addEmail">Email address</label>
+            <input type="email" class="form-control" iid="addEmail" ng-model="user.email" placeholder="email" required>
+          </div>
+          <div class="addMember-btnHolder">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <input type="submit" class="btn btn-primary" value="Add member">
+          </div>
+        </form>
+
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
   <toaster-container toaster-options="{'time-out': 2000, 'close-button':true, 'animation-class': 'toast-top-right'}"></toaster-container>
