@@ -1,17 +1,51 @@
-<div ng-include="'components/navbar/navbar.html'"></div>
 
 <div class="container">
   <div class="row">
 
-  	<div class="col-xs-4 col-xs-offset-4">
-  		<div class="panel panel-default" ng-repeat="item in teamList track by $index" ng-click="switchTeams(item)" ng-class="{active : item == $parent.activeTeam}">
-	      <div class="panel-body teamDirectory-member">
-	        <div class="row">
-	         <div class="col-xs-12">
-	         	<p align="center">{{item}}</p>
-	         </div>
-	        </div>
-	      </div>
-	    </div>
+  	<div class="col-xs-6 col-xs-offset-3">
+      <div class="ph-card">
+        <div>
+          <a href="#" ng-click="logout()" class="pull-right">Log out</a>
+        </div>
+        <h1>Welcome to Phased!</h1>
+
+        <div ng-if="Phased.user.teams">
+          <h3>Please select a team to join</h3>
+          <li ng-repeat="otherTeam in Phased.user.teams">
+            <a href="#" ng-click="Phased.switchTeam(otherTeam.id)">{{otherTeam.name}}</a>
+          </li>
+        </div>
+        <div ng-if="!Phased.user.teams">
+          <h3>No-Fluff Updates on Projects</h3>
+          <p>Staff send their updates to Phased. Our app posts them in a newsfeed so project managers can quickly glance at what’s on the go.</p>
+
+          <form name="addteam" ng-submit="addTeam(teamName)" novalidation>
+
+            <div class="form-group">
+              <label for="teamName">Team name</label>
+              <input type="text" class="form-control"  ng-model="teamName" placeholder="Zeppco" style="color:#000;"required>
+            </div>
+            <button class="btn btn-block btn-primary" type="submit">Start 30 day trial</button>
+            <!-- <label style="color:#000;" for="teamName">Team name</label>
+            <input type="text" id="teamName" ng-model="teamName" placeholder="Zeppco" style="color:#000;"required> -->
+            <!-- <div class="addMember-btnHolder">
+              <input type="submit" class="btn btn-primary" value="Start 30 day trial">
+            </div> -->
+        </div>
+      </div>
+
+
+
   	</div>
+</div>
+<div class="preLoader" ng-show="creatingTeam">
+  <div class="container">
+    <div class="row">
+
+    	<div class="col-xs-6 col-xs-offset-3">
+        <h4 align="center">Creating your team, please prepare for awesome.</h4>
+        <h5 align="center"><i class="fa fa-circle-o-notch fa-spin fa-lg"></i></h5>
+      </div>
+    </div>
+  </div>
 </div>

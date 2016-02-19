@@ -1,0 +1,20 @@
+<div ng-controller="NotifCtrl">
+	<a
+		ng-click="togglePane()"
+		class="toggleNotifBtn"
+		ng-class="{ hasUnread : hasUnread() }"
+		>
+			<span class="fa-stack fa-lg">
+			  <i class="fa fa-square fa-stack-2x"></i>
+			  <i class="fa fa-bell-o fa-stack-1x fa-inverse"></i>
+			</span>
+	</a>
+	<div ng-show="showNotifs" class="notifPane">
+		<ul>
+			<li ng-repeat="notif in notifications.stream | orderObjectBy : 'time' : true | limitTo : 10" ng-class="{unread : !notif.read}" class="notif {{notif.type}}">
+				<h5>{{notif.title}} <small>{{notif.time | date : 'short'}}</small></h5>
+				<p>{{notif.body}}</p>
+			</li>
+		</ul>
+	</div>
+</div>

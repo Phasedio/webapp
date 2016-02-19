@@ -1,43 +1,95 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('BillingCtrl', function ($scope, $http, stripe, Auth, FURL) {
+  .controller('BillingCtrl', function ($scope, $http, stripe, Auth, FURL,Phased,$location) {
+
+
+
     ga('send', 'pageview', '/billing');
     var ref = new Firebase(FURL);
-    $scope.user = '';
-    $scope.currentTeam = {};
-    $scope.viewType = '';
-    $scope.billinInfo = {};
-  	$scope.payment = {
-  		card: {}
-  	};
+    $scope.Phased = Phased;
+    $scope.ccSubmited = false;
+    console.log(Phased);
+    // $scope.currentTeam = {};
+    // $scope.viewType = '';
+    // $scope.billinInfo = {};
+  	// $scope.payment = {
+  	// 	card: {}d
+  	// };
 
+    // bounce users without Admin or Owner permissions
+    var checkRole = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkRole);
+        return;
+      }
+
+      var myRole = Phased.team.members[Auth.user.uid].role;
+      if (myRole != Phased.ROLE_ID.ADMIN && myRole != Phased.ROLE_ID.OWNER)
+        $location.path('/');
+    }
+    checkRole();
+
+    $scope.$on('Phased:memberChanged', checkRole);
+
+
+    // bounce users if team has problems
+    var checkTeam = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkTeam);
+        return;
+      }
+      var teamCheck = Phased.viewType;
+      console.log(teamCheck);
+      if (teamCheck == 'problem'){
+        $location.path('/team-expired');
+      }else if (teamCheck == 'canceled') {
+        $location.path('/switchteam');
+      }
+
+    }
+    $scope.$on('Phased:PaymentInfo', checkTeam);
+    checkTeam();
+
+
+    $scope.removeTeam = function () {
+      //ref.child('deletedTeams').push({team:"hi"});
+      var p = {
+        team : Phased.team.uid,
+        user : Phased.user.uid
+      };
+      console.log( 'sending');
+      $http.post('./api/pays/cancel', p).then(function(data){
+        console.log( data);
+      });
+    };
     /**
     * charge
     */
     $scope.charge = function (card) {
     	console.log(card);
-     	$scope.payment.card = card;
-    return stripe.card.createToken($scope.payment.card)
+     	var c = card;
+    return stripe.card.createToken(c)
       .then(function (token) {
         console.log('token created for card ending in ', token.card.last4);
-        var payment = angular.copy($scope.payment);
+        var payment = {};
         payment.card = void 0;
         payment.token = token.id;
-        payment.email = $scope.email;
-        payment.team = $scope.team;
-        payment.amount = $scope.currentTeam.length;
+        payment.email = Phased.user.email;
+        payment.team = Phased.team.uid;
         return $http.post('./api/pays', payment);
       })
       .then(function (payment) {
       	console.log(payment.data);
-        var obj = {
-          stripeid : payment.data.customer,
-          email : $scope.email,
-          plan : 'basic'
-        }
-        ref.child('team').child($scope.team).child('billing').set(obj);
-        ref.child('team').child($scope.team).child('plan').set('basic');
+        // var obj = {
+        //   stripeid : payment.data.customer,
+        //   email : $scope.email,
+        //   plan : 'basic'
+        // }
+        // ref.child('team').child($scope.team).child('billing').set(obj);
+        // ref.child('team').child($scope.team).child('plan').set('basic');
         //console.log('successfully submitted payment for $', payment.amount);
       })
       .catch(function (err) {
@@ -83,28 +135,28 @@ angular.module('webappApp')
     }
   }
 
-  $scope.init = function(){
-    ref.child('profile').child(Auth.user.uid).once('value',function(data){
-      data = data.val()
-      $scope.user = data.name;
-      $scope.email = data.email;
-      $scope.team = data.curTeam;
-      ref.child('team').child(data.curTeam).once('value',function(data){
-        data = data.val();
-        console.log(data);
+  // $scope.init = function(){
+  //   ref.child('profile').child(Auth.user.uid).once('value',function(data){
+  //     data = data.val()
+  //     $scope.user = data.name;
+  //     $scope.email = data.email;
+  //     $scope.team = data.curTeam;
+  //     ref.child('team').child(data.curTeam).once('value',function(data){
+  //       data = data.val();
+  //       console.log(data);
+  //
+  //       $scope.currentTeam = Object.keys(data.task);
+  //       console.log($scope.currentTeam);
+  //
+  //       $scope.checkPlanStatus(data);
+  //     });
+  //
+  //   });
+  //
+  //
+  // }
 
-        $scope.currentTeam = Object.keys(data.task);
-        console.log($scope.currentTeam);
 
-        $scope.checkPlanStatus(data);
-      });
-
-    });
-
-
-  }
-
-
-  $scope.init();
+  //$scope.init();
 
   });

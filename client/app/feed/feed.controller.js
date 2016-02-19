@@ -120,6 +120,27 @@ angular.module('webappApp')
     $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
 
+    $scope.countActiveTasks = countActiveTasks();
+
+
+    // bounce users if team has problems
+    var checkTeam = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkTeam);
+        return;
+      }
+      var teamCheck = Phased.viewType;
+      console.log(teamCheck);
+      if (teamCheck == 'problem'){
+        $location.path('/team-expired');
+      }else if (teamCheck == 'canceled') {
+        $location.path('/switchteam');
+      }
+
+    }
+    $scope.$on('Phased:PaymentInfo', checkTeam);
+    checkTeam();
 
     //Print blank lines in for task area
     $scope.taskTable = [1,2,3,4,5];
@@ -157,7 +178,7 @@ angular.module('webappApp')
 
       console.log('status:', status);
       // push to db
-      Phased.addTask(status);
+      Phased.addStatus(status);
 
       // reset interface
       $scope.selectedCategory = undefined;
@@ -193,6 +214,19 @@ angular.module('webappApp')
 
     $scope.setTaskCompleted = function(assignmentID) {
       Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
+    }
+
+
+    // get number of active tasks assigned to userID
+    function countActiveTasks(){
+      var count = 0;
+      _.forEach(Phased.get.tasks, function(value, key){
+        if(value.status == 0 || value.status == 2){
+          count++;
+        }
+      });
+      console.log('this did things');
+      return count
     }
 
   });

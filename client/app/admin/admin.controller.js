@@ -1,22 +1,90 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('AdminCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location) {
+  .controller('AdminCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location, toaster) {
     ga('send', 'pageview', '/admin');
 
     $scope.viewType = Phased.viewType;
-    $scope.myID = Auth.user.uid;
     $scope.team = Phased.team;
+    console.log(Phased.team);
     $scope.Phased = Phased;
+    $scope.numMembers =0;
 
     // bounce users without Admin or Owner permissions
-    $scope.$on('Phased:currentUserProfile', function(){
-      if (Auth.user.role != 'admin' || Auth.user.role != 'owner')
-        $location.path('/feed');
-    });
+    var checkRole = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkRole);
+        return;
+      }
+      $scope.canAddMembers = function(){
+        var k = Object.keys(Phased.team.members);
+        console.log(k);
+        $scope.numMembers = k.length;
+        if(k.length <= 10){
+          return true;
+        }else{
+          return false;
+        }
+      };
 
-  $scope.changeRole = function(member) {
-    Phased.changeMemberRole(member.uid, member.role);
-  }
+      var myRole = Phased.team.members[Auth.user.uid].role;
+      if (myRole != Phased.ROLE_ID.ADMIN && myRole != Phased.ROLE_ID.OWNER)
+        $location.path('/');
+    }
+    checkRole();
 
+    // bounce users if team has problems
+    var checkTeam = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkTeam);
+        return;
+      }
+      var teamCheck = Phased.viewType;
+      if (teamCheck == 'problem'){
+        $location.path('/team-expired');
+      }else if (teamCheck == 'canceled') {
+        $location.path('/switchteam');
+      }
+
+    }
+    checkTeam();
+
+    $scope.$on('Phased:memberChanged', checkRole);
+
+    $scope.changeRole = function(member, oldRole) {
+      Phased.changeMemberRole(member.uid, member.role, parseInt(oldRole), function failure(code, message){
+        toaster.pop('error', 'Error', message);
+      });
+    }
+
+
+    /**
+    *
+    * Add members modal
+    *
+    */
+    $scope.canAddMembers = function(){
+      var k = Object.keys(Phased.team.members);
+      console.log(k);
+      $scope.numMembers = k.length;
+      if(k.length <= 10){
+        return true;
+      }else{
+        return false;
+      }
+    };
+    $scope.addMembers = function(newMember) {
+      $('#myModal').modal('toggle');
+      Phased.addMember(newMember);
+    };
+
+    $scope.addMemberModal = function() {
+      var k = Object.keys(Phased.team.members);
+      console.log(k);
+      $scope.numMembers = k.length;
+      ga('send', 'event', 'Modal', 'Member add');
+      $('#myModal').modal('toggle');
+    }
   });

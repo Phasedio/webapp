@@ -53,7 +53,7 @@ $fa-font-path: "/bower_components/font-awesome/fonts";
 // Colors
 
 $darkBlack :#1e1e24;
-$liteBlack : #292b33;
+$liteBlack : #313848;
 $accColor : #fac994;
 $textColor : #8a8a8a;
 $boldText : #444A59;
@@ -241,6 +241,7 @@ body{
 // Component styles are injected through grunt
 // injector
 @import 'addcategory/addcategory.scss';
+@import 'admin-csvDwl/admin-csvDwl.scss';
 @import 'admin/admin.scss';
 @import 'billing/billing.scss';
 @import 'editcategory/editcategory.scss';
@@ -250,8 +251,11 @@ body{
 @import 'main/main.scss';
 @import 'profile/profile.scss';
 @import 'switchteam/switchteam.scss';
+@import 'taskPage/taskPage.scss';
 @import 'tasks/tasks.scss';
+@import 'team-expired/team-expired.scss';
 @import 'modal/modal.scss';
+@import 'notifications/notifications.scss';
 // endinjector
 @import 'addcategory/addcategory.scss';
 @import 'billing/billing.scss';

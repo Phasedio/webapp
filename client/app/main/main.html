@@ -14,10 +14,15 @@
           </div>
 
           <div class="member-background">
-            <div class="member-item" ng-repeat="member in team.members | orderBy: 'name'" ng-click="goToUser(member.uid)">
+            <div
+              class="member-item presence-{{Phased.PRESENCE[member.presence]}}"
+              ng-repeat="member in team.members | orderBy: 'name'"
+              ng-click="goToUser(member.uid)"
+              >
               <img src="{{member.pic}}">
               <div class="member-names">
                 <h4>{{member.name}}</h4>
+                <p ng-if="member.presence == 'offline' && member.lastOnline"><small>Last seen <span am-time-ago="member.lastOnline"></span></small></p>
               </div>
             </div>
           </div>
@@ -36,6 +41,24 @@
             <h1 align="center">{{stats.todaysTasks}}</h1>
           </div>
         </div>
+        <div class="col-xs-6">
+          <div class="ph-card" style="margin-top:40px">
+            <h5 align="center" >
+              <a href="team/addcategory">Add / Change a Category</a>
+            </h5>
+          </div>
+        </div>
+        <div class="col-xs-6">
+          <div class="ph-card"  style="margin-top:40px;">
+            <h5 align="center" >Category Breakdown</h5>
+            <canvas id="pie" class="chart chart-pie"
+              chart-data="dataPie" chart-labels="labelsPie">
+            </canvas>
+          </div>
+        </div>
+
+
+
         <br>
         <div class="col-xs-12">
           <div class="ph-card" style="margin-top:40px; min-height:5rem;">
@@ -48,11 +71,15 @@
 
         </div>
         <div class="col-xs-6">
-          <div class="ph-card"  style="margin-top:40px;">
-            <h5 align="center" >Category Breakdown</h5>
-            <canvas id="pie" class="chart chart-pie"
-  chart-data="dataPie" chart-labels="labelsPie">
-</canvas>
+          <div class="ph-card" style="margin-top:40px">
+            <h5 align="center">
+              Switch to team...
+            </h5>
+            <ul>
+              <li ng-repeat="otherTeam in Phased.user.teams">
+                <a href="#" ng-click="Phased.switchTeam(otherTeam.id)">{{otherTeam.name}}</a>
+              </li>
+            </ul>
           </div>
         </div>
         <div class="col-xs-6">
@@ -94,9 +121,30 @@
           </form>
         </div>
       </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
-
-
+<!-- add team -->
+<div class="modal fade addteam" id="addTeamModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body row">
+        <div class="col-xs-6">
+          <h4>Create a Team</h4>
+          <p>It looks like you're not a member of any teams.</p>
+          <p><small>Phased is project management software and works best with groups of people. Let's gather your coworkers under one banner and get started.</small></p>
+        </div>
+        <div class="col-xs-6">
+          <form name="addteam" ng-submit="addTeam(teamName)" novalidation>
+            <label style="color:#000;" for="teamName">Team name</label>
+            <input type="text" id="teamName" ng-model="teamName" placeholder="Zeppco" style="color:#000;"required>
+            <div class="addMember-btnHolder">
+              <input type="submit" class="btn btn-primary" value="Create team">
+            </div>
+          </form>
+        </div>
+      </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->

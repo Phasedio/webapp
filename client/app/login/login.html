@@ -13,20 +13,20 @@
 	<div class="row">
       <div class="col-xs-12">
       	<h1 align="center">Phased.io</h1>
-      	<h5 align="center">Your team at a glance</h5>
+      	<h5 align="center">Project Communication</h5>
 	      <form name="userForm" ng-submit="loginUser(user)" novalidate ng-show="forms == 'login'">
 	        <div class="">
 	          <div class="item item-input item-stacked-label">
 	            <label class="input-label" for="email">email</label>
-	            <input class="loginInput" type="email" id="email" ng-model="user.email" placeholder="">
+	            <input class="loginInput" type="email" id="email" name="email" ng-model="user.email" placeholder="" ng-class="{'red-border' : userForm.$submitted && userForm.email.$error.required}" required>
 	          </div>
 	          <div class="item item-input item-stacked-label">
 	            <label class="input-label" for="password">password</label>
-	            <input class="loginInput" type="password" id='password' ng-model="user.password" placeholder=""></br>
+	            <input class="loginInput" type="password" id='password' name="password" ng-model="user.password" placeholder="" ng-class="{'red-border' : userForm.$submitted && userForm.password.$error.required}" required></br>
 
             </div>
 	          <div class="item">
-	            <input type="submit" class="btn btn-primary btn-lg btn-block button-phased" value="Sign In">
+							<button type="submit" class="btn btn-primary btn-lg btn-block button-phased" name="button"><span>Sign In</span> <span ng-show="signInSubmited"><i class="fa fa-circle-o-notch fa-spin"></i></span></button>
 	            <input type="button" class="btn btn-primary btn-lg btn-block button-phased" ng-click="forgotPassword(user.email)" value="Forgot Password?">
 	          </div>
 
@@ -37,18 +37,19 @@
 	        <div class="">
 	        <div class="item item-input item-stacked-label">
 	            <label class="input-label" for="name">name</label>
-	            <input class="loginInput" type="text" id="name" ng-model="reg.name" placeholder="">
+	            <input class="loginInput" type="text" id="name" name="name" ng-model="reg.name" placeholder="" ng-class="{'red-border' : regForm.$submitted && regForm.name.$error.required}" required>
 	          </div>
 	          <div class="item item-input item-stacked-label">
 	            <label class="input-label" for="email">email</label>
-	            <input class="loginInput" type="email" id="email" ng-model="reg.email" placeholder="">
+	            <input class="loginInput" type="email" id="email" name="email" ng-model="reg.email" placeholder="" ng-class="{'red-border' : regForm.$submitted && regForm.email.$error.required}" required>
 	          </div>
 	          <div class="item item-input item-stacked-label">
 	            <label class="input-label" for="password">password</label>
-	            <input class="loginInput" type="password" id='password' ng-model="reg.password" placeholder="">
+	            <input class="loginInput" type="password" id='password' name="password" ng-model="reg.password" ng-class="{'red-border' : regForm.$submitted && regForm.password.$error.required}" placeholder="" required>
 	          </div>
 	          <div class="item">
-	            <input type="submit" class="btn btn-primary btn-lg btn-block button-phased" value="Create Account">
+
+							<button type="submit" class="btn btn-primary btn-lg btn-block button-phased" name="button"><span>Create Account</span> <span ng-show="regSubmited"><i class="fa fa-circle-o-notch fa-spin"></i></span></button>
 	          </div>
 	        </div>
 	      </form>
@@ -56,9 +57,10 @@
 	</div>
     <div class="row">
       <div class="col">
-        <h4 align="center" ng-show="forms == 'login'">Don't have an account? <a href="" ng-click="makeAccount()"><strong>Register now</strong></a></h4>
-        <h4 align="center" ng-show="forms == 'reg'">Already have an have an account? <a href="" ng-click="loginAccount()"><strong>Login now</strong></a></h4>
+        <h4 align="center" ng-show="forms == 'login'">Don't have an account? <a href="" ng-click="showRegisterForm()"><strong>Register now</strong></a></h4>
+        <h4 align="center" ng-show="forms == 'reg'">Already have an have an account? <a href="" ng-click="showLoginForm()"><strong>Login now</strong></a></h4>
       </div>
     </div>
 </div>
 
+<toaster-container toaster-options="{'time-out': 2000, 'close-button':true, 'animation-class': 'toast-top-right'}"></toaster-container>

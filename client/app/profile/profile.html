@@ -17,7 +17,7 @@
         </div>
         <div class="col-xs-6 profile-user">
           <ul>
-            <li><span>updates</span><span>{{currentUser.history.length}}</span></li>
+            <li><span>updates</span><span>{{team.statuses | updatesFor : currentUserID | length}}</span></li>
             <li><span>email</span><span>{{currentUser.email}}</span></li>
             <li><span>tel</span><span>{{currentUser.tel | tel}}</span></li>
             <!-- <li><span>slack</span><span>@brian</span></li> -->
@@ -57,7 +57,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr ng-repeat="item in currentUser.history | orderBy : 'time':true">
+                  <tr ng-repeat="item in team.statuses | updatesFor : currentUserID | updatesForTime : 'today' | orderBy : 'time':true">
                     <td>
                       {{item.name}}
                     </td>
@@ -95,19 +95,19 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr ng-repeat="item in currentUser.assignments.to_me " ng-if="item.status != 1">
+                  <tr ng-repeat="item in phased.get.tasks | backlogFor : currentUserID | orderObjectBy : 'time'">
                     <td>
                       {{item.name}}
                     </td>
                     <td>
-                      {{taskPriorities[item.priority].name}}
+                      {{phased.task.PRIORITY[item.priority]}}
                     </td>
                     <td>
                        <span ng-if="item.deadline">{{item.deadline | amDateFormat:'MMM d '}}</span>
                        <span ng-if="!item.deadline">Not Set</span>
                     </td>
                     <td>
-                      {{taskStatuses[item.status].name}}
+                      {{phased.task.STATUS[item.status]}}
                     </td>
                   </tr>
                 </tbody>
@@ -120,13 +120,13 @@
 			        <div class="col-xs-6">
 								<div>
 									<h5>Total Updates</h5>
-									<h1>{{currentUser.history.length}}</h1>
+									<h1>{{team.statuses | updatesFor : currentUserID | length}}</h1>
 								</div>
 							</div>
 							<div class="col-xs-6">
 								<div>
 									<h5>Total Tasks completed</h5>
-									<h1>{{stats.totalTasks}}</h1>
+									<h1>{{phased.get.tasks | tasksFor : currentUserID | tasksCompletedForTime : 'ever' | length}}</h1>
 								</div>
 							</div>
 						</div>
@@ -134,13 +134,13 @@
 			        <div class="col-xs-6">
 								<div>
 									<h5>Total Updates this week</h5>
-									<h1>{{stats.weekUpdates}}</h1>
+									<h1>{{phased.team.statuses | updatesFor : currentUserID | updatesForTime : 'week' | length}}</h1>
 								</div>
 							</div>
 							<div class="col-xs-6">
 								<div>
 									<h5>Total Tasks completed this week</h5>
-									<h1>{{stats.weekTasks}}</h1>
+									<h1>{{phased.get.tasks | tasksFor : currentUserID | tasksCompletedForTime : 'week' | length}}</h1>
 								</div>
 							</div>
 						</div>
@@ -148,13 +148,13 @@
 			        <div class="col-xs-6">
 								<div>
 									<h5>Total Updates today</h5>
-									<h1>{{stats.todaysUpdates}}</h1>
+									<h1>{{team.statuses | updatesFor : currentUserID | updatesForTime : 'today' | length}}</h1>
 								</div>
 							</div>
 							<div class="col-xs-6">
 								<div>
 									<h5>Total Tasks completed today</h5>
-									<h1>{{stats.todaysTasks}}</h1>
+									<h1>{{phased.get.tasks | tasksFor : currentUserID | tasksCompletedForTime : 'today' | length}}</h1>
 								</div>
 							</div>
 						</div>

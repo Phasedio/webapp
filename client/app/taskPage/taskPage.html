@@ -1,0 +1,128 @@
+<div ng-include="'components/navbar/navbar.html'"></div>
+<section class="hero-img">
+</section>
+
+<section class="container">
+  <div class="row">
+
+    <!-- TASK STREAM -->
+    <div class="col-xs-8 col-xs-offset-2" >
+			<div class="task ph-card">
+        <div class="task-header">
+          <ul class="task-meta-bar">
+            <li class="task-meta-bar-item ">
+              <p ng-if="taskInfo.assignee">Assigned </p>
+              <p ng-if="!taskInfo.assignee">Assign task to </p>
+              <div class="dropdown">
+                <button id="dLabel" type="button" class="btn btn-transparent" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <img ng-if="taskInfo.assignee" src="{{team.members[taskInfo.assignee].pic}}" width="35px" height="35px">
+
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dLabel">
+                  <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo,member.uid)"><img src="{{member.pic}}" width="35px" height="35px"> <p>
+                    {{member.name}}
+                  </p></a></li>
+
+
+                </ul>
+              </div>
+
+
+
+            </li>
+            <li class="task-meta-bar-item added-padding">
+              <p align="center" ng-if="taskInfo.deadline" ng-click="open($event)">Due date: <i class="fa fa-calendar-o"></i>&nbsp; {{taskInfo.deadline | date : 'MMM dd'}}</p>
+              <p align="center" ng-if="!taskInfo.deadline" ng-click="open($event)">Due date: <i class="fa fa-calendar-o"></i></p>
+              <p class="input-group">
+                <input type="text" class="form-control hidden"  uib-datepicker-popup="{{format}}" ng-model="taskInfo.deadline" ng-change="taskEditDate(taskInfo.key,taskInfo.deadline)" init-date="dt" is-open="status.opened" min-date="minDate" max-date="maxDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" ng-required="true" close-text="Close" />
+              </p>
+            </li>
+            <li class="task-meta-bar-item ">
+
+            </li>
+          </ul>
+
+        </div>
+				<textarea class="task-title h3" ng-model="taskInfo.name" ng-blur="taskEditName(taskInfo.key,taskInfo.name)"></textarea>
+
+        <textarea class="task-title" ng-model="taskInfo.desc" ng-blur="taskEditDesc(taskInfo.key,taskInfo.desc)" placeholder="Enter description..."></textarea>
+
+        <p>Assigned by: {{team.members[taskInfo.assigned_by].name}}</p>
+
+        <div class="dropdown">
+          <p id="dLabel1" class="clickable" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Category: {{team.categoryObj[taskInfo.cat].name}} <span class="caret"></span>
+
+          </p>
+          <ul class="dropdown-menu" aria-labelledby="dLabel1">
+            <li ng-repeat="(key, category) in team.categoryObj">
+              <a href="#" ng-click="changeCategory(taskInfo.key, key)">
+                <p>
+                 {{category.name }}
+                </p>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="dropdown">
+          <p id="dLabel2" class="clickable"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Priority : {{taskPriorities[taskInfo.priority].name}} <span class="caret"></span>
+
+          </p>
+          <ul class="dropdown-menu" aria-labelledby="dLabel2">
+            <li ng-repeat="(key, priority) in taskPriorities">
+              <a href="#" ng-click="changePriority(taskInfo.key, key)">
+                <p>
+                 {{priority.name }}
+                </p>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <p>
+          Status: {{taskStatuses[taskInfo.status].name}}
+        </p>
+
+        <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
+          <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != taskStatusID.ASSIGNED" ng-click="broadcastTask(taskInfo)">  post as status  <i class="fa fa-lg fa-share"></i></button>
+          <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status == taskStatusID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
+          <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != taskStatusID.COMPLETE" ng-click="setTaskCompleted(taskInfo.key)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
+          <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive.all' && activeStreamName != 'archive.to_me'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button>
+          <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName == 'archive.all' || activeStreamName == 'archive.to_me'" ng-click="moveFromArchive(taskInfo.key);">unarchive</button>
+        </div>
+
+
+
+
+			</div>
+
+      <!-- TASK HISTORY -->
+      <div class="ph-card" ng-if="taskInfo.history">
+        <h4>Task History</h4>
+        <div ng-repeat="moment in taskInfo.history | orderObjectBy : 'time' : true">
+          <h5>{{moment.type | historyType}} <small>{{moment.time | date : 'short'}}</small></h5>
+
+          <!-- assigned -->
+          <p ng-if="moment.type == taskHistType.ASSIGNEE">Assigned by {{team.members[moment.taskSnapshot.assigned_by].name}}</p>
+          <p ng-if="moment.type == taskHistType.ASSIGNEE">Assigned to {{team.members[moment.taskSnapshot.assignee].name}}</p>
+
+          <!-- priority -->
+          <p ng-if="moment.type == taskHistType.PRIORITY">
+            to {{taskPriorities[moment.taskSnapshot.priority].name}}
+          </p>
+
+          <!-- status -->
+          <p ng-if="moment.type == taskHistType.STATUS">
+            to {{taskStatuses[moment.taskSnapshot.status].name}}
+          </p>
+
+          <!-- category -->
+          <p ng-if="moment.type == taskHistType.CATEGORY">
+            to {{team.categoryObj[moment.taskSnapshot.cat].name}}
+          </p>
+        </div>
+      </div>
+		</div>
+  </div>
+</section>

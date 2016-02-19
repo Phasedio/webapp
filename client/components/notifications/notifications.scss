@@ -1,0 +1,62 @@
+.toggleNotifBtn {
+	padding: 16px;
+	padding-top:10px;
+	display: inline-block;
+	color:transparent;
+	cursor: pointer;
+  &.hasUnread {
+    background-color : orange;
+  }
+}
+
+div.notifPane {
+	display: block;
+  position: absolute;
+  top: 60px;
+  right: 0;
+  width: 30rem;
+
+  z-index: 10;
+  background: #1e1e24;
+  ul {
+  	list-style: none;
+  	padding: 0 1rem;
+  }
+}
+
+.notifPane .notif {
+  // unread notifications
+  &.unread {
+    background-color: #aaa;
+  }
+
+  // notification types
+  &.history {
+  	border-right : 1rem solid yellow;
+  }
+
+  &.assignment_created {
+    border-right : 1rem solid green;
+  }
+
+  &.assignment_assigned {
+    border-right : 1rem solid orange;
+  }
+
+  &.assignment_assigned_to_me {
+  	border-right : 1rem solid red;
+  }
+
+  &.assignment_status {
+    border-right : 1rem solid lightblue;
+  }
+
+  &.assignment_archived, .assignment_unarchived {
+    border-right : 1rem solid white;
+  }
+
+  // default / generic
+  &.assignment_updated {
+    border-right : 1rem solid grey;
+  }
+}

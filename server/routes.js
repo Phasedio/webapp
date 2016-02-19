@@ -8,12 +8,19 @@ var errors = require('./components/errors');
 var path = require('path');
 
 module.exports = function(app) {
-
   // Insert routes below
   app.use('/api/downloads', require('./api/download'));
   app.use('/api/pays', require('./api/pay'));
   app.use('/api/things', require('./api/thing'));
-  app.use('/api/auth', require('./api/auth'));
+  app.use('/api/registration', require('./api/registration'));
+
+  // generous api endpoint spellings
+  app.use('/api/notification', require('./api/notification'));
+  app.use('/api/notifications', require('./api/notification'));
+  app.use('/api/notif', require('./api/notification'));
+  app.use('/api/notifs', require('./api/notification'));
+
+  app.use('/api/setup', require('./api/setup'));
   
   // All undefined asset or api routes should return a 404
   app.route('/:url(api|auth|components|app|bower_components|assets)/*')

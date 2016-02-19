@@ -6,6 +6,7 @@ angular.module('webappApp')
     $scope.showMember = false;
     $scope.team = Phased.team;
     $scope.viewType = Phased.viewType;
+    $scope.Phased = Phased;
     var FBRef = new Firebase(FURL);
 
     //stats vars
@@ -16,28 +17,25 @@ angular.module('webappApp')
 
     }
 
-    var itRan = 0;
-    // ensure view updates when new members are added
-    $scope.$on('Phased:member', function() {
-      $scope.$apply();
-      itRan = 1;
-      getTodaysUpdates();
-      getTodaysCompleteTasks();
-      getTasksCompletedOverTime();
-      getTodaysCatBreakdown();
-    });
 
-    setTimeout(function(){
-      if(!itRan){
-        getTodaysUpdates();
-        getTodaysCompleteTasks();
-        getTasksCompletedOverTime();
-        getTodaysCatBreakdown();
+    // bounce users if team has problems
+    var checkTeam = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkTeam);
+        return;
+      }
+      var teamCheck = Phased.viewType;
+      console.log(teamCheck);
+      if (teamCheck == 'problem'){
+        $location.path('/team-expired');
+      }else if (teamCheck == 'canceled') {
+        $location.path('/switchteam');
       }
 
-    }, 3000);
-
-
+    }
+    $scope.$on('Phased:PaymentInfo', checkTeam);
+    checkTeam();
 
     /**
     *
@@ -48,55 +46,67 @@ angular.module('webappApp')
       $location.path('/profile/' + uid);
     }
 
-    $scope.addMembers = function(newMember) {
-      $('#myModal').modal('toggle');
-      Phased.addMember(newMember, $scope.team.members[Auth.user.uid]);
 
-    };
 
-    $scope.addMemberModal = function() {
-      ga('send', 'event', 'Modal', 'Member add');
-      $('#myModal').modal('toggle');
-    }
+    /**
+    *
+    * Add team modal
+    *
+    */
+    $scope.$on('Phased:meta', function(){
+      if (!Phased.team.uid) {
+        $location.path('/switchteam');
+        //$('#addTeamModal').modal('show');
+      }
+    });
 
-    function getTodaysUpdates(){
-      //return var init
-      $scope.stats.todaysTasks = 0;
-
-      //get todays date at midnight... in Unix
-      var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
-      var midnight = new Date(today[2],today[1],today[0]).getTime();
-
-      _.forEach($scope.team.members, function(n, key) {
-        FBRef.child('team').child(Auth.currentTeam).child('all').child(n.uid).orderByChild("time").startAt(midnight).once('value',function(snap){
-          $scope.stats.todaysUpdates = $scope.stats.todaysUpdates + snap.numChildren();
-        });
+    $scope.addTeam = function(teamName) {
+      Phased.addTeam(teamName, function success() {
+        $('#addTeamModal').modal('hide');
+        toaster.pop('success', 'Success', 'Welcome to Phased, ' + teamName);
+      }, function error(teamName) {
+        toaster.pop('error', 'Error', teamName + ' already exists. Please ask the team administrator for an invitation to join.');
       });
-
-      // return the total number of updates today
     }
 
 
-    //Check number of completed tasks today.
-    function getTodaysCompleteTasks(){
-      $scope.stats.todaysTasks = 0;
-      //get todays date at midnight... in Unix
+    // returns unix timecode for last night at midnight
+    var getMidnight = function() {
       var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
       var midnight = new Date(today[2],today[1],today[0]).getTime();
-      FBRef.child('team').child(Auth.currentTeam).child('assignments').child('all').orderByChild("completeTime").startAt(midnight).once('value',function(snap){
-        $scope.stats.todaysTasks = $scope.stats.todaysTasks + snap.numChildren();
 
+      return midnight;
+    }
+
+    // get number of status updates for today
+    var getTodaysUpdates = function(){
+      $scope.stats.todaysTasks = 0;
+      var midnight = getMidnight();
+
+      FBRef.child('team/' + Phased.team.uid + '/statuses').orderByChild("time").startAt(midnight).once('value',function(snap){
+        $scope.stats.todaysUpdates = snap.numChildren();
       });
+    }
 
+    //Check number of completed tasks today
+    var getTodaysCompleteTasks = function() {
+      $scope.stats.todaysTasks = 0;
+      var midnight = getMidnight();
+
+      // loop through tasks
+      for (var i in Phased.get.tasks) {
+        var thisTask = Phased.get.tasks[i];
+        // if this task is complete and completed after midnight today
+        if (thisTask.status == Phased.task.STATUS_ID.COMPLETE && thisTask.completeTime >= midnight) {
+          $scope.stats.todaysTasks++;
+        }
+      }
     }
 
     //Create datapoints for velocity chart
-    function getTasksCompletedOverTime(){
+    var getTasksCompletedOverTime = function() {
       $scope.labels = [];
-      //$scope.data = [];
-      // get todays date at midnight
-      var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
-      var midnight = new Date(today[2],today[1],today[0]).getTime();
+      var midnight = getMidnight();
       //For 30 days ask fb how many tasks we're completed
       for (var i = 0; i < 30; i++) {
         var thisDay = midnight - (i * 86400000); // get the next day
@@ -104,26 +114,27 @@ angular.module('webappApp')
 
         var l = new Date(thisDay).getDate();
         $scope.labels.push(l);
-        FBRef.child('team').child(Auth.currentTeam).child('assignments').child('all').orderByChild("completeTime").startAt(thisDay).endAt(endDay).once('value',function(snap){
-          if(snap){
-            var k = snap.numChildren();
-            $scope.data[0].push(k);
-          }else{
-            $scope.data[0].push(0);
+
+        var thisDaysVelocity = 0;
+
+        // loop through all tasks; if a task was completed on thisDay, increment velocity
+        for (var j in Phased.get.tasks) {
+          var thisTask = Phased.get.tasks[j];
+          // if this task is complete and completed on this day
+          if (thisTask.status == Phased.task.STATUS_ID.COMPLETE && thisTask.completeTime >= thisDay && thisTask.completeTime < endDay) {
+            thisDaysVelocity++;
           }
+        }
 
-
-        });
-
+        // add velocity to data array
+        $scope.data[0].push(thisDaysVelocity);
       }
       $scope.labels.reverse();
       $scope.data[0].reverse();
-
     }
 
-    //show category usage in a pie chart
-    function getTodaysCatBreakdown(){
-
+    //show category usage in statuses in a pie chart
+    var getTodaysCatBreakdown = function(){
       //init break down categories in to labels
       var cLabels = [];
       var cConnector = []; // needed for this array lookup idea
@@ -132,55 +143,58 @@ angular.module('webappApp')
         cLabels.push(n.name);
         cConnector.push(key);
         cValues.push(0);
-
       });
-
 
       //get todays date at midnight... in Unix
-      var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
-      var midnight = new Date(today[2],today[1],today[0]).getTime();
-      // for every member find all the updates they have made today
-      _.forEach($scope.team.members, function(n, key) {
-        FBRef.child('team').child(Auth.currentTeam).child('all').child(n.uid).orderByChild("time").startAt(midnight).once('value',function(snap){
-          //if there is data open up snap and
-          var c = snap.numChildren()
-          if(c){
-            snap = snap.val();
-            console.log(snap);
-            var keys = Object.keys(snap);
-            //if there is more then one snap
-            for (var i = 0; i < keys.length; i++) {
-              if (snap[keys[i]].cat) {
-                //find index of the label in cConnector
-                var a = cConnector.indexOf(snap[keys[i]].cat);
-                //place a value at that index in cValues
-                cValues[a]++;
+      var midnight = getMidnight();
 
-              }
+      // loop through all statuses
+      for (var i in Phased.team.statuses) {
+        var thisStatus = Phased.team.statuses[i];
+        // if the status is from today and has a category
+        if (thisStatus.time >= midnight && 'cat' in thisStatus) {
+          //find index of the label in cConnector
+          var a = cConnector.indexOf(thisStatus.cat);
+          //place a value at that index in cValues
+          cValues[a]++;
+        }
+      }
 
-            }
-          }
-
-        });
-      });
       $scope.labelsPie = cLabels;
       $scope.dataPie = cValues;
-      console.log(cValues);
-
     }
 
+    // do all of the above (resetting their data beforehand)
+    var sortData = function() {
+      if (!Phased.SET_UP) return;
 
+      // reset data
+      $scope.labelsPie = ["Download Sales"];
+      $scope.data = [[],[0]];
+      $scope.dataPie = [0];
+
+      // gather data
+      getTodaysUpdates();
+      getTodaysCompleteTasks();
+      getTasksCompletedOverTime();
+      getTodaysCatBreakdown();
+    }
 
     // Chart information -- Clean this up
     $scope.labels = ["January", "February", "March", "April", "May", "June", "July"];
-  $scope.series = ['Tasks Completed', 'Series B'];
-  $scope.data = [[],[0]];
-  $scope.onClick = function (points, evt) {
-    console.log(points, evt);
-  };
+    $scope.series = ['Tasks Completed', 'Series B'];
+    $scope.onClick = function (points, evt) {
+      console.log(points, evt);
+    };
 
-  $scope.labelsPie = ["Download Sales"];
-$scope.dataPie = [0];
 
+    // when switching to page, sort the data
+    sortData();
+
+    // other reasons we might want to refresh the analytics
+    $scope.$on('Phased:setup', sortData);
+    $scope.$on('Phased:taskAdded', sortData);
+    $scope.$on('Phased:taskDeleted', sortData);
+    $scope.$on('Phased:newStatus', sortData);
 
 });

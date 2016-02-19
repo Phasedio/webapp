@@ -9,6 +9,8 @@ router.get('/', controller.index);
 
 router.post('/', controller.create);
 router.post('/create', controller.create);
+router.post('/expired', controller.expired);
+router.post('/cancel', controller.cancel);
 router.post('/find', controller.find);
 
 module.exports = router;
