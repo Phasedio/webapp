@@ -5,8 +5,8 @@
 var Firebase = require("firebase");
 var FirebaseTokenGenerator = require("firebase-token-generator");
 
-var FBRef = new Firebase("https://phased-dev2.firebaseio.com/");
-var tokenGenerator = new FirebaseTokenGenerator("A50wFi5OxaLYNzb4jnEyFMQWmE8mjRyWJCKW723g");
+var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
+var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
 var token = tokenGenerator.createToken({ uid: "notif-server"});
 
 exports.index = function(req, res) {
@@ -17,7 +17,7 @@ exports.index = function(req, res) {
 /**
 *
 *	issues a notification to all members of a team except issuer (user)
-*	
+*
 *	1. clean notification
 *	2. get list of members
 *	3. push to each /notif/$team/$member list

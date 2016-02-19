@@ -12,8 +12,8 @@
 var Firebase = require("firebase");
 var FirebaseTokenGenerator = require("firebase-token-generator");
 
-var FBRef = new Firebase("https://phased-dev2.firebaseio.com/");
-var tokenGenerator = new FirebaseTokenGenerator("A50wFi5OxaLYNzb4jnEyFMQWmE8mjRyWJCKW723g");
+var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
+var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
 var token = tokenGenerator.createToken({uid: "modServer" , origin : "auth.controller.js" });
 FBRef.authWithCustomToken(token, function(error, authData) {});
 
@@ -36,7 +36,7 @@ var setUpFirebase = function() {
 			task : {
 				/*
 					As an example, Phased.meta.task.PRIORITY and Phased.meta.task.PRIORITY_ID
-					can work together. On app load, these values will be exposed on the 
+					can work together. On app load, these values will be exposed on the
 					Phased provider in Phased.TASK_PRIORITY and Phased.TASK_PRIORITY_ID.
 					Then, set a task's priority to one of the const ID values
 						myTask.priority = Phased.TASK_PRIORITY_ID.HIGH;
@@ -162,7 +162,7 @@ var setUpFirebase = function() {
 				AWAY : 2,
 				BUSY : 3
 			},
-	    NOTIF_TYPE : { 
+	    NOTIF_TYPE : {
 				0 : "Status",
 				1 : "Assignment created",
 				2 : "Assignment archived",

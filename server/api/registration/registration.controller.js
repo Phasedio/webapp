@@ -5,10 +5,10 @@
 var Firebase = require("firebase");
 var FirebaseTokenGenerator = require("firebase-token-generator");
 
-var FBRef = new Firebase("https://phased-dev2.firebaseio.com/");
-var tokenGenerator = new FirebaseTokenGenerator("igwdoQvGJzn0LXBPKWmn5RllwVZSFqIOo3JLeBm0");
+var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
+var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
 var token = tokenGenerator.createToken({uid: "registration-server",isReg: true });
-var stripe = require('stripe')('sk_test_XCwuQhHhSTCGrbXl12ubBE8Y');
+var stripe = require('stripe')('sk_live_nKZ1ouWkI3WuiVGK2hIvZUH1');
 
 exports.index = function(req, res) {
 	res.json([]);

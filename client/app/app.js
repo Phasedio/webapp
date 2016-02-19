@@ -16,9 +16,9 @@ angular.module('webappApp', [
   'toaster'
 ])
 .config(function (stripeProvider) {
-    stripeProvider.setPublishableKey('pk_test_WFDUVuvY0pcVHTnquFTLvTSX');
+    stripeProvider.setPublishableKey('pk_live_FPvARdIWeOzOfW8TGqtFd9QN');
   })
-.constant('FURL', 'https://phased-dev2.firebaseio.com/')
+.constant('FURL', 'https://phaseddev.firebaseio.com/')
 .run(['$rootScope', '$location', function ($rootScope, $location) {
       $rootScope.$on("$routeChangeError", function(event, next, previous, error) {
         // We can catch the error thrown when the $requireAuth promise is rejected
