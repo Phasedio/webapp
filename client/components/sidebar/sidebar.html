@@ -9,5 +9,8 @@
     <li ng-repeat="item in menu"  ng-class="{ active: isActive(item.link) }">
       <a ng-href="{{item.link}}" ng-click="item.function"><i class="fa fa-{{item.icon}}"></i>{{item.title}}</a>
     </li>
+    <li ng-if="showAdmin">
+      <a ng-href="/admin" ><i class="fa fa-cog"></i>Admin</a>
+    </li>
   </ul>
 </nav>

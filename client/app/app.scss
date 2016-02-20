@@ -253,15 +253,15 @@ body{
     //padding-right:22px;
   }
   li{
-    font-family: 'open_sanssemibold';
-    cursor: pointer;
-    color: #fff;
-    font-size: 14px;
-    letter-spacing: 0.92px;
-    line-height: 50px;
+    font-family: 'open_sanssemibold' !important;
+    cursor: pointer !important;
+    color: #fff !important;
+    font-size: 14px !important;
+    letter-spacing: 0.92px !important;
+    line-height: 50px !important;
     //border-bottom: 1px solid transparent;
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 15px !important;
+    padding-right: 15px !important; 
     a{
       color:#fff;
     }
@@ -274,7 +274,7 @@ body{
     a{
       color:#2fc2a3;
     }
-    
+
     //border-bottom: 1px solid #2fc2a3;
   }
 }

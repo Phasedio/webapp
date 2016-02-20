@@ -6,7 +6,8 @@
 
 	<div class="container-fluid">
 		<div class="row">
-			<div class="col-xs-12 col-md-9 col-lg-6 col-lg-offset-0 ph-update-area">
+			<div ng-include="'components/sidebar/sidebar.html'"></div>
+			<div class="col-xs-12 col-md-9 col-lg-6 ph-update-area">
 				<div class="ph-card">
 					<form class="ph-form-feed" name="taskForm" ng-submit="addTask(task)" novalidation>
 						<input type="text" ng-model="task.name" ng-trim="false" maxlength="150" placeholder="enter your status here" required>
