@@ -1,9 +1,9 @@
 .member-holder{
   overflow: auto;
-  max-width: 700px;
-  width: 90%;
-  margin:0 auto;
-  margin-top: 50px;
+  //max-width: 700px;
+  //width: 90%;
+  //margin:0 auto;
+  //margin-top: 50px;
   //margin:0 auto;
 
 }
@@ -32,20 +32,23 @@
 }
 .member-item{
   overflow: auto;
+  //float: left;
   padding: 20px;
-  display: block;
+  min-width: 20rem;
+  display: inline-block;
   //margin-right: 20px;
   margin-bottom: 20px;
   img{
     width: 50px;
     border-radius: 1000px;
-    display: inline-block;
-    float: left;
+    display: block;
+    margin: 0 auto;
+    //float: left;
   }
   .member-names{
     margin-left: 20px;
-    display: inline-block;
-    float: left;
+    display: block;
+    //float: left;
     //border-top: 1px solid #f2f2f2;
     //margin-top: 20px;
   }
