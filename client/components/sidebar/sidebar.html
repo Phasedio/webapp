@@ -1,0 +1,13 @@
+<!-- NAVBAR -->
+<nav class="sideMenu" ng-controller="SidebarCtrl">
+  <ul>
+    <!-- <li class="active" ng-click="mixpanel.track('Feed page');"> <a href="#"></a> <i class="fa fa-rss"></i>Feed</li>
+    <li><i class="fa fa-check"></i>Tasks</li>
+    <li><i class="fa fa-users"></i>Team</li>
+    <li><i class="fa fa-user"></i>Profile</li>
+    <li><i class="fa fa-cog"></i>Settings</li> -->
+    <li ng-repeat="item in menu"  ng-class="{ active: isActive(item.link) }">
+      <a ng-href="{{item.link}}" ng-click="item.function"><i class="fa fa-{{item.icon}}"></i>{{item.title}}</a>
+    </li>
+  </ul>
+</nav>

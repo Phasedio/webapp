@@ -13,7 +13,8 @@
     font-family: "open_sanslight",sans-serif;
     text-transform: capitalize;
     color: #fff;
-    padding: 20px;
+    //padding: 20px;
+    margin-top: 0;
     display: inline-block;
     float: left;
   }
@@ -24,6 +25,11 @@
     font-size: 14px;
     text-transform: uppercase;
     margin-top: 4.5rem;
+  }
+  &:last-child{
+    h2{
+      margin-top: 20px;
+    }
   }
 }
 .member-background{
@@ -98,4 +104,8 @@
   .addMember-btnHolder{
     margin-top: 40px;
   }
+}
+.stat__holder {
+    display: inline-block;
+    width: 49%;
 }
