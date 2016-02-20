@@ -191,27 +191,30 @@ body{
 }
 // navbar
 .navbar{
-  height:60px;
-  margin-bottom:30px;
-  background: $darkBlack;
+  height:64px;
+  margin-bottom:15px;
+  background: #2fc2a3;
   padding-top:0;
   padding-bottom:0;
   border-bottom: none;
   border-radius: 0;
   li{
     font-family: 'open_sansregular';
-    text-transform: uppercase;
-    color:#fff;
-    font-size: 1.25rem;
+    //text-transform: uppercase;
+    color:$liteBlack;
+    font-size: 20px;
     letter-spacing: 0.92px;
     line-height: 15px;
   }
   .active{
-    background: #888;
+    background: $liteBlack;
     color: #fff;
   }
 }
 .navbar-brand{
+  color:#fff;
+  font-size: 20px;
+  font-family: 'open_sanssemibold';
   // padding-top: 5px;
   // padding-bottom:5px;
 }
@@ -222,9 +225,60 @@ body{
 
   }
 }
-.nav > li > a:hover{
-  background-color: #000;
+.navbar-nav > li.active > a{
+  color:#2fc2a3;
+  &:hover{
+
+  }
 }
+.nav > li > a:hover{
+  background-color: $liteBlack;
+}
+
+//side navbar-nav
+.sideMenu{
+  //margin-top: 16px;
+  width: 16.66667%;
+  float: left;
+  position: relative;
+  min-height: 1px;
+  ul{
+    list-style: none;
+    margin: 0;
+    padding:0;
+  }
+  .fa{
+    width:35px;
+    font-size: 20px;
+    //padding-right:22px;
+  }
+  li{
+    font-family: 'open_sanssemibold' !important;
+    cursor: pointer !important;
+    color: #fff !important;
+    font-size: 14px !important;
+    letter-spacing: 0.92px !important;
+    line-height: 50px !important;
+    //border-bottom: 1px solid transparent;
+    padding-left: 15px !important;
+    padding-right: 15px !important; 
+    a{
+      color:#fff;
+    }
+    &:hover{
+      background: #232833;
+    }
+  }
+  .active{
+    background: #232833;
+    a{
+      color:#2fc2a3;
+    }
+
+    //border-bottom: 1px solid #2fc2a3;
+  }
+}
+
 // Modal
 .modal-backdrop{
   background: #fff;

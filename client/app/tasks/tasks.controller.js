@@ -225,24 +225,26 @@ angular.module('webappApp')
     //Move me!!
     //=====================
     //When user clicks on task they can see more information about said task
-    $scope.tasklistSize = 'col-xs-12';//set the init size of task list
+    $scope.tasklistSize = 'col-xs-10';//set the init size of task list
     $scope.taskDescript = 'hidden'; //hide the task description till the user does something
     $scope.taskInfo = {}; // Task information for the description area
 
 
     $scope.selectTask = function(task){
+      mixpanel.track("Open Task Details");
       $scope.taskInfo = task; // assign the task information to the scope;
       // if the task list is still 12 cols open up the descriptor for the user
-      if($scope.tasklistSize == 'col-xs-12'){
-        $scope.tasklistSize = 'col-xs-6';
-        $scope.taskDescript = 'col-xs-6';
+      if($scope.tasklistSize == 'col-xs-10'){
+        $scope.tasklistSize = 'col-xs-5';
+        $scope.taskDescript = 'col-xs-5';
       }
 
     }
 
     //closes details sidebar.
     $scope.closeDetails = function(){
-      $scope.tasklistSize = 'col-xs-12';//set the init size of task list
+      mixpanel.track("Close Task Details");
+      $scope.tasklistSize = 'col-xs-10';//set the init size of task list
       $scope.taskDescript = 'hidden'; //hide the task description till the user does something
       $scope.taskInfo = {};
     }
@@ -325,6 +327,7 @@ angular.module('webappApp')
 
     // checks and sets active status filter
     $scope.setStatusFilter = function(statusID) {
+      mixpanel.track("Change Task Filter");
       // check and set filter
       if (statusID === null || typeof statusID == 'undefined') {
         $scope.activeStatusFilter = undefined;
@@ -377,6 +380,7 @@ angular.module('webappApp')
     }
 
     $scope.addAssignment = function(newTask){
+      mixpanel.track("Added Assignment to Self");
       // format object
       var status = {
         name: newTask.name,
@@ -408,6 +412,7 @@ angular.module('webappApp')
 
     // shorthand for a quick self-assigned task
     $scope.addTodo = function () {
+      mixpanel.track("Added Self-assigned task");
 			var newTodo = {
 				name: $scope.newTodo.trim(),
 				completed: false
@@ -429,6 +434,7 @@ angular.module('webappApp')
 
     // then starts it
     $scope.startTask = function(task) {
+      mixpanel.track("Started Task");
       Phased.activateTask(task.key, task);
 
       $scope.activeStream = Phased.assignments.to_me;
@@ -436,6 +442,7 @@ angular.module('webappApp')
     }
 
     $scope.moveToArchive = function(assignmentID) {
+      mixpanel.track("Moved Task to Archive");
       Phased.moveToFromArchive(assignmentID);
       $scope.closeDetails();
     }
@@ -450,40 +457,48 @@ angular.module('webappApp')
     }
 
     $scope.setTaskCompleted = function(assignmentID) {
+      mixpanel.track("Complete Task");
       Phased.setTaskStatus(assignmentID, Phased.task.STATUS_ID.COMPLETE);
     }
 
     // Broadcasts that user is working on Task
     $scope.broadcastTask = function(task) {
+      mixpanel.track("Broadcast Task");
       Phased.activateTask(task.key, task);
       toaster.pop('success', "Success!", "Your task was posted");
     }
 
     // Edit name
     $scope.taskEditName = function(taskID, newName) {
+      mixpanel.track("Edit Task Name");
       Phased.setTaskName(taskID, newName);
     }
 
     // edit description
     $scope.taskEditDesc = function(taskID, desc) {
+      mixpanel.track("Edit Task Description");
       Phased.setTaskDesc(taskID, desc);
     }
 
     // Edit assigned user
     $scope.taskEditAssigned = function(taskID, userID) {
+      mixpanel.track("Edit Assignee on Task");
       Phased.setTaskAssignee(taskID, userID);
     }
     // Edits date of deadline or clears it
     $scope.taskEditDate = function(taskID, date) {
+      mixpanel.track("Edit Deadline");
       Phased.setTaskDeadline(taskID, date);
     }
 
     // change category
     $scope.changeCategory = function(taskID, catKey) {
+      mixpanel.track("Change Task Category");
       Phased.setTaskCategory(taskID, catKey);
     }
     // change priority
     $scope.changePriority = function(taskID, priorityKey) {
+      mixpanel.track("Change Task Priorty");
       Phased.setTaskPriority(taskID, priorityKey);
     }
 

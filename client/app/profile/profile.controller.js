@@ -44,7 +44,7 @@ angular.module('webappApp')
     var tomorrow = midnight + 86400000;
     var weekOffSet = midnight - ((new Date(midnight).getDay()) * 86400000 * 7);
 
-    
+
 
     return function(input, since) {
       var out = {};
@@ -204,6 +204,7 @@ angular.module('webappApp')
 
     // Update Account
     $scope.updateUser = function(update){
+      mixpanel.track("Update user settings");
       var toaster = { pop : function(a) { console.log(a) } }; // patch while the toaster disappeared!
       if (update.email === undefined || update.email === '') {
         update.email = $scope.currentUser.email;

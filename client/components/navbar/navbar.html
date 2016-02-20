@@ -17,12 +17,10 @@
       <!-- Collect the nav links, forms, and other content for toggling -->
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav navbar-left">
-          <li ng-repeat="item in menu" ng-class="{ active: isActive(item.link) }">
+          <li ng-repeat="item in menu"  ng-if="isActive(item.link)">
             <a ng-href="{{item.link}}" ng-click="item.function">{{item.title}}</a>
           </li>
-          <li ng-if="showAdmin" ng-class="{active: isActive('/admin') }">
-            <a href="/admin">Admin</a>
-          </li>
+          
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li>

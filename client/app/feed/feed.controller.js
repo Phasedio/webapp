@@ -151,6 +151,7 @@ angular.module('webappApp')
 
     $scope.addTask = function(update) {
       ga('send', 'event', 'Update', 'submited');
+      mixpanel.track("Updated Status");
 
       // prepare task object
     	var team = Phased.team.name;
@@ -188,6 +189,7 @@ angular.module('webappApp')
     // selects a category, used in addTask
     $scope.categoryChoice = function(key, close){
       ga('send', 'event', 'Update', 'Category selected');
+      mixpanel.track("Selected Category");
       $scope.selectedCategory = key;
       if (close) {
         $('#catModal').modal('toggle');
@@ -195,10 +197,12 @@ angular.module('webappApp')
     }
 
     $scope.moreCat = function(){
+      mixpanel.track("Open Category Modal");
       $('#catModal').modal('toggle');
     }
 
     $scope.addNewCat = function(){
+      mixpanel.track("Closed Category Modal");
       $('#catModal').modal('toggle');
       $location.path('/team/addcategory');
     }

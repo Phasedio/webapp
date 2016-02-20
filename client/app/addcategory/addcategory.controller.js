@@ -15,6 +15,7 @@ angular.module('webappApp')
     $scope.deleteCat = function(key, event) {
     	ga('send', 'event', 'Category', 'Deleted');
     	Phased.deleteCategory(key);
+      $location.path("/");
     }
 
     // check if category exists

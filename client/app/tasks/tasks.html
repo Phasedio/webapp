@@ -17,9 +17,9 @@
 <section class="hero-img">
 </section>
 
-<section class="container">
+<section class="container-fluid">
   <div class="row">
-
+    <div ng-include="'components/sidebar/sidebar.html'"></div>
     <!-- TASK STREAM -->
     <div class="task-stream" ng-class="tasklistSize">
 
@@ -52,9 +52,9 @@
 					<tbody>
             <!-- for this ng-repeat to work, it has to be based on team or possibly Phased; if we start
             with it on projects['0A'], it will watch before it's loaded and will thus be looking just at undefined rather than a property that could change -->
-						<tr class="task" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | 
-            filterTaskByStatus : activeStatusFilter | 
-            filterTaskByCategory : activeCategoryFilter | 
+						<tr class="task" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks |
+            filterTaskByStatus : activeStatusFilter |
+            filterTaskByCategory : activeCategoryFilter |
             filterTaskByAssignment : activeAssignmentDirection : activeAssignmentID |
             orderObjectBy : 'time' : true" >
 							<td ng-click="selectTask(assignment)">

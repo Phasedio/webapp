@@ -11,6 +11,7 @@ angular.module('webappApp')
 
     // attempt to login a user
     $scope.loginUser = function(user) {
+      mixpanel.track("Login");
       if($scope.userForm.$valid){
         $scope.signInSubmited = true;
         ga('send', 'event', 'Login', 'Login User');
@@ -30,6 +31,7 @@ angular.module('webappApp')
 
     // register a new user
     $scope.regUser = function(user){
+      mixpanel.track("Register");
       // console.log('will show new modal here');
       if($scope.regForm.$valid){
         $scope.regSubmited = true;
@@ -56,7 +58,7 @@ angular.module('webappApp')
 
     // attempts to send reset password email
     $scope.forgotPassword = function(email){
-
+      mixpanel.track("Forgot Password");
 
       // console.log("will send email to :", email);
       ref.resetPassword({
