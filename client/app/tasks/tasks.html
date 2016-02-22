@@ -1,15 +1,4 @@
-<style>
-/*.hero-img {
-	background:  linear-gradient(
-		rgba(0, 0, 0, 0.25),
-		rgba(0, 0, 0, 0.25)
-	), url(assets/images/{{dayImage}}) no-repeat center center ;
-	-webkit-background-size: cover;
-	-moz-background-size: cover;
-	-o-background-size: cover;
-	background-size: cover;
-}*/
-</style>
+
 
 
 
@@ -167,7 +156,7 @@
         <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
           <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED">  post as status  <i class="fa fa-lg fa-share"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
-          <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo.key)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
+          <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
           <!-- <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button> -->
           <!-- <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName == 'archive'" ng-click="moveFromArchive(taskInfo.key);">unarchive</button> -->
         </div>

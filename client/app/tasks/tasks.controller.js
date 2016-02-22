@@ -183,17 +183,8 @@ angular.module('webappApp')
       },
       FBRef = new Firebase(FURL);
 
-      // Background image
-    var monImage =  "weekdayPhotos/mon.jpg";
-    var tuesImage =  "weekdayPhotos/tues.jpg";
-    var wedImage =  "weekdayPhotos/wed.jpg";
-    var thursImage =  "weekdayPhotos/thurs.jpg";
-    var friImage = "weekdayPhotos/fri.jpg";
-    var satImage = "weekdayPhotos/sat.jpg";
-    var sunImage = "weekdayPhotos/sun.jpg";
 
-    var d=new Date();
-    console.log(d.getDay());
+    console.log(Phased);
     $('.dropdown-toggle').dropdown();
 
     // bounce users if team has problems
@@ -217,8 +208,7 @@ angular.module('webappApp')
 
 
 
-    var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
-    $scope.dayImage = backgroundImage[d.getDay()];
+
 
 
 
@@ -435,7 +425,7 @@ angular.module('webappApp')
     // then starts it
     $scope.startTask = function(task) {
       mixpanel.track("Started Task");
-      Phased.activateTask(task.key, task);
+      Phased.activateTask(task.key, task, "Has started task : ");
 
       $scope.activeStream = Phased.assignments.to_me;
       $scope.setStatusFilter('!' + Phased.task.STATUS_ID.COMPLETE);
@@ -456,15 +446,23 @@ angular.module('webappApp')
       Phased.getArchiveFor(address);
     }
 
-    $scope.setTaskCompleted = function(assignmentID) {
+    $scope.setTaskCompleted = function(task) {
       mixpanel.track("Complete Task");
-      Phased.setTaskStatus(assignmentID, Phased.task.STATUS_ID.COMPLETE);
+      var nameReset = task.name;
+      var status = task;
+      status.name = "Has completed task : " +status.name;
+      Phased.addStatus(status);
+      task.name = nameReset;
+      Phased.setTaskStatus(task.key, Phased.task.STATUS_ID.COMPLETE);
+
     }
+    /* task.name = prefix + task.name;
+    _addStatus(task);*/
 
     // Broadcasts that user is working on Task
     $scope.broadcastTask = function(task) {
       mixpanel.track("Broadcast Task");
-      Phased.activateTask(task.key, task);
+      Phased.activateTask(task.key, task, "Is working on task: ");
       toaster.pop('success', "Success!", "Your task was posted");
     }
 
