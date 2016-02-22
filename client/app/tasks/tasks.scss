@@ -254,6 +254,7 @@ p{
 }
 
 .task{
+  cursor: pointer;
   td{
     overflow: auto;
     &:first-child{
@@ -360,7 +361,7 @@ p{
 .task-list{
   min-height: 66rem;
   max-width: 850px;
-  
+
   .task-filter{
     overflow: auto;
     margin-bottom: 20px;
