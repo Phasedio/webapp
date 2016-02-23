@@ -183,17 +183,8 @@ angular.module('webappApp')
       },
       FBRef = new Firebase(FURL);
 
-      // Background image
-    var monImage =  "weekdayPhotos/mon.jpg";
-    var tuesImage =  "weekdayPhotos/tues.jpg";
-    var wedImage =  "weekdayPhotos/wed.jpg";
-    var thursImage =  "weekdayPhotos/thurs.jpg";
-    var friImage = "weekdayPhotos/fri.jpg";
-    var satImage = "weekdayPhotos/sat.jpg";
-    var sunImage = "weekdayPhotos/sun.jpg";
 
-    var d=new Date();
-    console.log(d.getDay());
+    console.log(Phased);
     $('.dropdown-toggle').dropdown();
 
     // bounce users if team has problems
@@ -211,14 +202,22 @@ angular.module('webappApp')
         $location.path('/switchteam');
       }
 
+
+
     }
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
 
+    $scope.$on('Phased:setup', function(){
+      $scope.activeAssignmentID = Phased.user.uid;
+      console.log($scope.activeAssignmentDirection);
+      console.log($scope.activeAssignmentID);
+      console.log($scope.activeCategoryFilter);
+      console.log($scope.activeStatusFilter);
+      $scope.$apply();
+    });
 
 
-    var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
-    $scope.dayImage = backgroundImage[d.getDay()];
 
 
 
@@ -256,22 +255,53 @@ angular.module('webappApp')
     $scope.Phased = Phased;
     $scope.team = Phased.team;
     $scope.projects = Phased.team.projects;
+    $scope.filtersToShow = 'me';
+    //$scope.activeAssignmentDirection = 'to';
+
 
     // default active stream is 'to_me'
     $scope.activeStatusFilter = '!' + Phased.task.STATUS_ID.COMPLETE; // not completed tasks
     $scope.activeCategoryFilter = undefined;
-    $scope.filterView = $scope.activeStreamName; //for the select filter
+    $scope.filterView = 'assigned_to_me'; //for the select filter
     $scope.eventSources = []; //needed for the calendar
 
     $scope.$on('Phased:setup', function() {
       $scope.activeProject = Phased.team.projects['0A']; // default project for now
     });
 
+
     /**
     **
     **  event handlers
     **
     */
+
+    //sets filter to the user or to all
+    $scope.setFilter = function(filter){
+      $scope.filtersToShow = filter;
+    }
+    $scope.getFilter = function(assignment){
+
+      if ($scope.filtersToShow == 'me') {
+        if (assignment.assigned_to == Phased.user.uid && assignment.status != Phased.task.STATUS_ID.COMPLETE) {
+
+          return true;
+        }else{
+          return false;
+        }
+
+      }else if ($scope.filtersToShow == 'me_complete') {
+        if (assignment.assigned_to == Phased.user.uid && assignment.status == Phased.task.STATUS_ID.COMPLETE) {
+
+          return true;
+        }else{
+          return false;
+        }
+
+      }else{
+        return true;
+      }
+    }
 
     // validates streamName then sets active task stream
     // optionally gets archive if not present
@@ -366,6 +396,7 @@ angular.module('webappApp')
         $scope.activeAssignmentID = uid;
       }
     }
+    $scope.setAssignmentFilter('to', Phased.user.uid);
 
     // toggles category filter
     $scope.toggleCategoryFilter = function(catID) {
@@ -435,7 +466,7 @@ angular.module('webappApp')
     // then starts it
     $scope.startTask = function(task) {
       mixpanel.track("Started Task");
-      Phased.activateTask(task.key, task);
+      Phased.activateTask(task.key, task, "Has started task : ");
 
       $scope.activeStream = Phased.assignments.to_me;
       $scope.setStatusFilter('!' + Phased.task.STATUS_ID.COMPLETE);
@@ -456,15 +487,23 @@ angular.module('webappApp')
       Phased.getArchiveFor(address);
     }
 
-    $scope.setTaskCompleted = function(assignmentID) {
+    $scope.setTaskCompleted = function(task) {
       mixpanel.track("Complete Task");
-      Phased.setTaskStatus(assignmentID, Phased.task.STATUS_ID.COMPLETE);
+      var nameReset = task.name;
+      var status = task;
+      status.name = "Has completed task : " +status.name;
+      Phased.addStatus(status);
+      task.name = nameReset;
+      Phased.setTaskStatus(task.key, Phased.task.STATUS_ID.COMPLETE);
+
     }
+    /* task.name = prefix + task.name;
+    _addStatus(task);*/
 
     // Broadcasts that user is working on Task
     $scope.broadcastTask = function(task) {
       mixpanel.track("Broadcast Task");
-      Phased.activateTask(task.key, task);
+      Phased.activateTask(task.key, task, "Is working on task: ");
       toaster.pop('success', "Success!", "Your task was posted");
     }
 
@@ -579,5 +618,8 @@ angular.module('webappApp')
       ga('send', 'event', 'Modal', 'Task add');
       $('#myModal').modal('toggle');
     }
+
+
+
 
 });

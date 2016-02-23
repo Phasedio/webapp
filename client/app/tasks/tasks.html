@@ -1,15 +1,4 @@
-<style>
-/*.hero-img {
-	background:  linear-gradient(
-		rgba(0, 0, 0, 0.25),
-		rgba(0, 0, 0, 0.25)
-	), url(assets/images/{{dayImage}}) no-repeat center center ;
-	-webkit-background-size: cover;
-	-moz-background-size: cover;
-	-o-background-size: cover;
-	background-size: cover;
-}*/
-</style>
+
 
 
 
@@ -27,14 +16,17 @@
         <div class="task-filter">
           <button class="btn btn-phased-blue add-new-task" ng-click="addAssignmentModal();">New task</button>
           <div class="styled-select">
-            <select ng-model="filterView" ng-change="setActiveStream(filterView)" ng-init="filterView = 'all'">
-              <option value="assigned_to_me" >assigned to me</option>
+            <select ng-model="filterView" ng-change="setFilter(filterView)" ng-init="filterView = 'me'">
+              <option value="me">My Tasks</option>
+              <option value="all">All Tasks</option>
+              <option value="me_complete">My Completed Tasks</option>
+              <!-- <option value="assigned_to_me" >assigned to me</option>
               <option value="assigned_by_me">tasks I've assigned</option>
               <option value="unassigned">unassigned tasks</option>
               <option value="delegated">delegated to others</option>
               <option value="in_progress">in progress</option>
               <option value="completed">closed tasks</option>
-              <option value="all">all</option>
+              <option value="all">all</option> -->
               <!-- <option value="archive">archived tasks</option> -->
             </select>
           </div>
@@ -52,11 +44,13 @@
 					<tbody>
             <!-- for this ng-repeat to work, it has to be based on team or possibly Phased; if we start
             with it on projects['0A'], it will watch before it's loaded and will thus be looking just at undefined rather than a property that could change -->
-						<tr class="task" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks |
+						<!-- <tr class="task" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks |
             filterTaskByStatus : activeStatusFilter |
             filterTaskByCategory : activeCategoryFilter |
             filterTaskByAssignment : activeAssignmentDirection : activeAssignmentID |
-            orderObjectBy : 'time' : true" >
+            orderObjectBy : 'time' : true" > -->
+            <tr class="task" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks |
+            orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
 							<td ng-click="selectTask(assignment)">
 								{{assignment.name}} <small>{{Phased.task.STATUS[assignment.status]}}</small>
 							</td>
@@ -167,7 +161,7 @@
         <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
           <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED">  post as status  <i class="fa fa-lg fa-share"></i></button>
           <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
-          <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo.key)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
+          <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
           <!-- <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button> -->
           <!-- <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName == 'archive'" ng-click="moveFromArchive(taskInfo.key);">unarchive</button> -->
         </div>
@@ -226,7 +220,9 @@
           <select ng-options="key as category.name for (key, category) in team.categoryObj" ng-model="newTask.category" id="category"></select>
 
           <label for="priority">Priority</label>
-          <select ng-options="priority as Phased.task.PRIORITY[priority] for priority in Phased.task.PRIORITY_ID" ng-model="newTask.priority" id="priority"></select>
+          <select ng-model="newTask.priority" id="priority">
+            <option ng-repeat="priority in Phased.task.PRIORITY_ID" value="{{priority}}">{{Phased.task.PRIORITY[priority]}}</option>
+          </select>
 
           <label for="deadline">Deadline</label>
 

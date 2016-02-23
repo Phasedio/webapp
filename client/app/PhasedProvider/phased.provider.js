@@ -2280,9 +2280,10 @@ angular.module('webappApp')
     * 3. add it as a status update
     *
     */
-    var _activateTask = function (taskID, task) {
+    var _activateTask = function (taskID, task, prefix) {
       var args = {
         task : task,
+        prefix: prefix,
         taskID : taskID
       }
       registerAsync(doActivateTask, args);
@@ -2290,7 +2291,8 @@ angular.module('webappApp')
 
     var doActivateTask = function(args) {
       var task = angular.copy( args.task ),
-        taskID = args.taskID;
+        taskID = args.taskID,
+        prefix = args.prefix;
 
       // update time to now and place to here (feature pending)
       task.time = new Date().getTime();
@@ -2303,6 +2305,7 @@ angular.module('webappApp')
       _setTaskStatus(taskID, PhasedProvider.task.STATUS_ID.IN_PROGRESS);
 
       // publish to stream
+      task.name = prefix + task.name;
       _addStatus(task);
 
       ga('send', 'event', 'Update', 'submitted');
@@ -2343,6 +2346,8 @@ angular.module('webappApp')
       // (we could probably also just check against the history snapshot and time)
       if (newStatus == PhasedProvider.task.STATUS_ID.COMPLETE)
         update.completeTime = new Date().getTime();
+        //update.name = prefix + update.name;
+        //_addStatus(update);
 
       var taskRef = FBRef.child(find(taskID, 'task').FBAddr);
       taskRef.update(update);
