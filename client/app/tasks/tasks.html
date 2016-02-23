@@ -220,7 +220,9 @@
           <select ng-options="key as category.name for (key, category) in team.categoryObj" ng-model="newTask.category" id="category"></select>
 
           <label for="priority">Priority</label>
-          <select ng-options="priority as Phased.task.PRIORITY[priority] for priority in Phased.task.PRIORITY_ID" ng-model="newTask.priority" id="priority"></select>
+          <select ng-model="newTask.priority" id="priority">
+            <option ng-repeat="priority in Phased.task.PRIORITY_ID" value="{{priority}}">{{Phased.task.PRIORITY[priority]}}</option>
+          </select>
 
           <label for="deadline">Deadline</label>
 

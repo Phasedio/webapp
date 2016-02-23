@@ -7,12 +7,14 @@ angular.module('webappApp')
     $scope.team = Phased.team;
 
     $scope.addCat = function(cat){
+      mixpanel.track("Created category");
       ga('send', 'event', 'Category', 'Added new');
     	Phased.addCategory(cat);
     	$location.path('/feed');
     };
 
     $scope.deleteCat = function(key, event) {
+      mixpanel.track("Deleted Category");
     	ga('send', 'event', 'Category', 'Deleted');
     	Phased.deleteCategory(key);
       $location.path("/");
