@@ -77,6 +77,7 @@ angular.module('webappApp')
     };
     $scope.addMembers = function(newMember) {
       $('#myModal').modal('toggle');
+      mixpanel.track("Sent Invite");
       Phased.addMember(newMember);
     };
 

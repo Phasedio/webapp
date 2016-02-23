@@ -202,11 +202,20 @@ angular.module('webappApp')
         $location.path('/switchteam');
       }
 
+
+
     }
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
 
-
+    $scope.$on('Phased:setup', function(){
+      $scope.activeAssignmentID = Phased.user.uid;
+      console.log($scope.activeAssignmentDirection);
+      console.log($scope.activeAssignmentID);
+      console.log($scope.activeCategoryFilter);
+      console.log($scope.activeStatusFilter);
+      $scope.$apply();
+    });
 
 
 
@@ -246,22 +255,53 @@ angular.module('webappApp')
     $scope.Phased = Phased;
     $scope.team = Phased.team;
     $scope.projects = Phased.team.projects;
+    $scope.filtersToShow = 'me';
+    //$scope.activeAssignmentDirection = 'to';
+
 
     // default active stream is 'to_me'
     $scope.activeStatusFilter = '!' + Phased.task.STATUS_ID.COMPLETE; // not completed tasks
     $scope.activeCategoryFilter = undefined;
-    $scope.filterView = $scope.activeStreamName; //for the select filter
+    $scope.filterView = 'assigned_to_me'; //for the select filter
     $scope.eventSources = []; //needed for the calendar
 
     $scope.$on('Phased:setup', function() {
       $scope.activeProject = Phased.team.projects['0A']; // default project for now
     });
 
+
     /**
     **
     **  event handlers
     **
     */
+
+    //sets filter to the user or to all
+    $scope.setFilter = function(filter){
+      $scope.filtersToShow = filter;
+    }
+    $scope.getFilter = function(assignment){
+
+      if ($scope.filtersToShow == 'me') {
+        if (assignment.assigned_to == Phased.user.uid && assignment.status != Phased.task.STATUS_ID.COMPLETE) {
+
+          return true;
+        }else{
+          return false;
+        }
+
+      }else if ($scope.filtersToShow == 'me_complete') {
+        if (assignment.assigned_to == Phased.user.uid && assignment.status == Phased.task.STATUS_ID.COMPLETE) {
+
+          return true;
+        }else{
+          return false;
+        }
+
+      }else{
+        return true;
+      }
+    }
 
     // validates streamName then sets active task stream
     // optionally gets archive if not present
@@ -356,6 +396,7 @@ angular.module('webappApp')
         $scope.activeAssignmentID = uid;
       }
     }
+    $scope.setAssignmentFilter('to', Phased.user.uid);
 
     // toggles category filter
     $scope.toggleCategoryFilter = function(catID) {
@@ -577,5 +618,8 @@ angular.module('webappApp')
       ga('send', 'event', 'Modal', 'Task add');
       $('#myModal').modal('toggle');
     }
+
+
+
 
 });
