@@ -9,17 +9,18 @@
 			<div ng-include="'components/sidebar/sidebar.html'"></div>
 			<div class="col-xs-12 col-md-9 col-lg-6 ph-update-area">
 				<div class="action__container">
-				<form name="taskForm" ng-submit="addTask(taskName)" novalidation>
+				<form name="taskForm" ng-submit="addTask(task)" novalidation>
 					<div class="status__compose">
 						<p class="status__title">Update Status</p>
 							<input
 							type="text"
+							class="inputArea"
 							name="name"
 							ng-focus="submitTip = true"
 							ng-blur="submitTip = false"
 							autocomplete="off"
 							placeholder="What are you up to?"
-							ng-model="taskName"
+							ng-model="task.name"
 							ng-trim="false">
 
 					</div>

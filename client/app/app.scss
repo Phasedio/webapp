@@ -252,7 +252,7 @@ body{
     font-size: 20px;
     //padding-right:22px;
   }
-  li{
+  .navItem{
     font-family: 'open_sanssemibold' !important;
     cursor: pointer !important;
     color: #fff !important;
@@ -261,7 +261,8 @@ body{
     line-height: 50px !important;
     //border-bottom: 1px solid transparent;
     padding-left: 15px !important;
-    padding-right: 15px !important; 
+    padding-right: 15px !important;
+    display: block;
     a{
       color:#fff;
     }
