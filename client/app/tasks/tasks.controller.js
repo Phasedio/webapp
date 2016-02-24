@@ -235,7 +235,7 @@ angular.module('webappApp')
       // if the task list is still 12 cols open up the descriptor for the user
       if($scope.tasklistSize == 'col-xs-10'){
         $scope.tasklistSize = 'col-xs-5';
-        $scope.taskDescript = 'col-xs-5';
+        $scope.taskDescript = 'task__details__item';
       }
 
     }

@@ -54,6 +54,7 @@ $fa-font-path: "/bower_components/font-awesome/fonts";
 
 $darkBlack :#1e1e24;
 $liteBlack : #313848;
+$darkDark : #282D3A;
 $accColor : #fac994;
 $textColor : #8a8a8a;
 $boldText : #444A59;
@@ -111,13 +112,17 @@ $boldText : #444A59;
     padding: 0.2em 0;
 }
 body{
-	background:$liteBlack;
-	color:$darkBlack;
+	//background:$liteBlack;
+  background: #e9eaed;
+  color:$darkBlack;
   -webkit-font-smoothing:antialiased;
 }
 
 .clickable{
   cursor: pointer;
+}
+.no-padding{
+  padding:0!important;
 }
 
 .button-phased{
@@ -238,10 +243,20 @@ body{
 //side navbar-nav
 .sideMenu{
   //margin-top: 16px;
+  background: $liteBlack;
   width: 16.66667%;
   float: left;
   position: relative;
-  min-height: 1px;
+  min-height: 100vh;
+  .brand__area{
+    background: $darkDark;
+    overflow: auto;
+    .brand__title{
+      color:#2fc2a3;
+      text-transform: none;
+      margin-bottom: 20px;
+    }
+  }
   ul{
     list-style: none;
     margin: 0;
@@ -277,6 +292,19 @@ body{
     }
 
     //border-bottom: 1px solid #2fc2a3;
+  }
+}
+.content__nav{
+  background: #e9eaed;
+  overflow: auto;
+  width: 83.33333%;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #dcdee3;
+  padding-left:15px;
+  padding-right:15px;
+  h2{
+    font-weight: bold;
+    text-transform: none;
   }
 }
 
