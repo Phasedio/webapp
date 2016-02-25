@@ -86,7 +86,7 @@ angular.module('webappApp')
 
     }
     isActive();
-    
+
     $scope.isActive = function(route) {
       return route === $location.path();
     };
@@ -94,6 +94,9 @@ angular.module('webappApp')
       console.log('logging you out');
       Auth.logout();
       $location.path('/login');
+    }
+    $scope.switchTeams = function(){
+      $location.path('/switchteam');
     }
 
     //Not a fan of this!!!

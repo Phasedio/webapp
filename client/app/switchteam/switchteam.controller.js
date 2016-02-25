@@ -8,6 +8,7 @@ angular.module('webappApp')
     $scope.creatingTeam = false;
 
 
+
     // logout
     $scope.logout = function(){
       console.log('logging you out');
@@ -27,9 +28,12 @@ angular.module('webappApp')
       });
     }
 
-
-    $scope.$on('Phased:meta', function(){$scope.$apply()});
-    $scope.$on('Phased:setup', function(){$scope.$apply()});
+    $scope.switchTeam = function(id){
+      Phased.switchTeam(id);
+      $location.path("/feed");
+    }
+    $scope.$on('Phased:meta', function(){$scope.Phased = Phased; $scope.$apply();});
+    $scope.$on('Phased:setup', function(){ $scope.Phased = Phased; $scope.$apply();});
 
 
 
