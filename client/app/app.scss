@@ -297,7 +297,7 @@ body{
 .content__nav{
   background: #e9eaed;
   height: 73px;
-  width: 83.33333%;
+  //width: 83.33333%;
   padding-bottom: 9px;
   border-bottom: 1px solid #dcdee3;
   padding-left:15px;
@@ -318,7 +318,26 @@ body{
     padding-left: 15px;
     float: left;
     display: inline-block;
-    //width: 39%;
+    width: 42%;
+  }
+  .user__quick__menu{
+    margin-top: 15px;
+    float: right;
+    .notification__center,.user__drop{
+      display: inline-block;
+    }
+    img{
+      border-radius: 100px;
+    }
+    .caret{
+      margin-right: 5px;
+    }
+  }
+  .notification__center{
+    cursor: pointer;
+    padding-right: 12px;
+    margin-right: 12px;
+    border-right:1px solid #000;
   }
 }
 
