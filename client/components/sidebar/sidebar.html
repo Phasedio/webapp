@@ -2,6 +2,9 @@
 <nav class="sideMenu" ng-controller="SidebarCtrl" style="height:{{sideBarHeight}}px;">
   <div class="brand__area">
     <h2 class="brand__title" align="center">Phased</h2>
+    <p ng-if="isTrial" class="trialing">
+      trial version
+    </p>
   </div>
   <a ng-repeat="item in menu" class="navItem" ng-href="{{item.link}}" ng-class="{ active: isActive(item.link) }" ng-click="item.function"><i class="fa fa-{{item.icon}}"></i>{{item.title}}</a>
   <a ng-href="/admin" class="navItem" ng-if="showAdmin"><i class="fa fa-cog"></i>Admin</a>

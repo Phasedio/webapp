@@ -51,6 +51,26 @@ angular.module('webappApp')
     }
     showAdminLink(); // in case of moving within app and not updating profile
 
+    var checkTeam = function(){
+      // do only after Phased is set up
+      if (!Phased.SET_UP) {
+        $scope.$on('Phased:setup', checkTeam);
+        return;
+      }
+      // var teamCheck = Phased.viewType;
+      // console.log(teamCheck);
+      // if (teamCheck == 'problem'){
+      //   $location.path('/team-expired');
+      // }else if (teamCheck == 'canceled') {
+      //   $location.path('/switchteam');
+      // }
+      if(Phased.viewType == "trialing"){
+        $scope.isTrial = true;
+        //$scope.$apply();
+      }
+    }
+    $scope.$on('Phased:PaymentInfo', checkTeam);
+    checkTeam();
 
 
 
