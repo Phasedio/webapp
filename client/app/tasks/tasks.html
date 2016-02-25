@@ -3,8 +3,28 @@
   <div class="row">
     <div ng-include="'components/sidebar/sidebar.html'"></div>
     <div class="content__area">
-      <div class="content__nav">
-        <h2>Tasks</h2>
+      <div class="content__nav clearfix">
+        <div class="content__nav__section">
+          <h2>Tasks</h2>
+        </div>
+        <div class="content__nav__section">
+          <div class="user__quick__menu">
+
+            <div class="dropdown">
+              <button id="dLabel" type="button" class="btn btn-transparent no-padding" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <img  src="{{Phased.user.gravatar}}" width="35px" height="35px">
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dLabel">
+                <li>Switch team</li>
+                <li>Logout</li>
+
+              </ul>
+            </div>
+          </div>
+        </div>
+
+
       </div>
 
       <div class="task__area">
@@ -15,22 +35,24 @@
               <option value="all">All Tasks</option>
               <option value="me_complete">My Completed Tasks</option>
             </select> -->
-
-            <div class="dropdown">
-              <button class="btn btn-default  dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                My Tasks
-                <span class="caret"></span>
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                <li><a href="#" ng-click="setFilter('me')">My Tasks</a></li>
-                <li><a href="#" ng-click="setFilter('all')">All Tasks</a></li>
-                <li><a href="#" ng-click="setFilter('me_complete')">My Completed Tasks</a></li>
-              </ul>
-            </div>
             <form id="todo-form" ng-submit="addTodo()">
+              <p>Add a task</p>
               <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
             </form>
           </div>
+
+          <div class="dropdown">
+            <button class="btn btn-block btn-default  dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+              My Tasks
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+              <li><a href="#" ng-click="setFilter('me')">My Tasks</a></li>
+              <li><a href="#" ng-click="setFilter('all')">All Tasks</a></li>
+              <li><a href="#" ng-click="setFilter('me_complete')">My Completed Tasks</a></li>
+            </ul>
+          </div>
+
           <ul>
             <li class="task__item" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks |
             orderObjectBy : 'time' : true" ng-if="getFilter(assignment)" ng-click="selectTask(assignment)">

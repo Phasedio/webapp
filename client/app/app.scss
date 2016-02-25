@@ -296,15 +296,29 @@ body{
 }
 .content__nav{
   background: #e9eaed;
-  overflow: auto;
+  height: 73px;
   width: 83.33333%;
   padding-bottom: 9px;
   border-bottom: 1px solid #dcdee3;
   padding-left:15px;
   padding-right:15px;
+  &:after{
+    clear:both;
+
+  }
   h2{
     font-weight: bold;
     text-transform: none;
+  }
+  .content__nav__items{
+    overflow: auto;
+    display: block;
+  }
+  .content__nav__section{
+    padding-left: 15px;
+    float: left;
+    display: inline-block;
+    //width: 39%;
   }
 }
 
