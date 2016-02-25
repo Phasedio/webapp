@@ -36,6 +36,7 @@ angular.module('webappApp')
     };
 
     var showAdminLink = function(){
+      $scope.sideBarHeight = $("body").height();
       // do only after Phased is set up
       if (!Phased.SET_UP) {
         $scope.$on('Phased:setup', showAdminLink);
@@ -49,5 +50,22 @@ angular.module('webappApp')
         $scope.showAdmin = false;
     }
     showAdminLink(); // in case of moving within app and not updating profile
+
+
+
+
+
+  function setHeight(){
+    $scope.sideBarHeight = $("body").height() + 200;
+    //$scope.$apply();
+  }
+  // When anything happens make sure height is ajusted.
+  $scope.$on('Phased:PaymentInfo', setHeight());
+  $scope.$on('Phased:meta', setHeight());
+  $scope.$on('Phased:historyComplete', setHeight());
+  $scope.$on('Phased:setup', setHeight());
+  $scope.$on('Phased:taskAdded', setHeight());
+  $scope.$on('Phased:taskDeleted', setHeight());
+  $scope.$on('Phased:newStatus', setHeight());
 
   });
