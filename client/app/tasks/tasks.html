@@ -4,7 +4,7 @@
     <div ng-include="'components/sidebar/sidebar.html'"></div>
     <div class="content__area">
       <div ng-include="'components/content-nav/content-nav.html'"></div>
-      
+
       <div class="task__area">
         <div class="task__list">
           <div class="task__add">
@@ -21,7 +21,7 @@
 
           <div class="dropdown">
             <button class="btn btn-block btn-default  dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-              My Tasks
+              {{currentFilter}}
               <span class="caret"></span>
             </button>
             <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
@@ -145,7 +145,7 @@
               </p>
 
               <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
-                <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED">  post as status  <i class="fa fa-lg fa-share"></i></button>
+                <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED" ng-click="broadcastTask(taskInfo)">  post as status  <i class="fa fa-lg fa-share"></i></button>
                 <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
                 <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
                 <!-- <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button> -->
