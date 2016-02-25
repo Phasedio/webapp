@@ -22,6 +22,14 @@ angular.module('webappApp')
       'link' : '/profile'
     }
     ];
+    var routes = {
+      '/feed' : "feed",
+      "/tasks" : "Tasks",
+      "/": "Team",
+      "/profile" : "Profile",
+      '/admin' : "Admin"
+    }
+    $scope.pageTitle = '';
 
     $scope.showAdmin = false;
 
@@ -67,6 +75,18 @@ angular.module('webappApp')
 
     $scope.isCollapsed = true;
 
+    function isActive(){
+      var r = $location.path();
+      routes
+      if (routes[r]) {
+        $scope.pageTitle = routes[r];
+      }else{
+        $scope.pageTitle = '';
+      }
+
+    }
+    isActive();
+    
     $scope.isActive = function(route) {
       return route === $location.path();
     };
