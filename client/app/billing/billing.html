@@ -1,103 +1,106 @@
-<div ng-include="'components/navbar/navbar.html'"></div>
 
 <div class="container-fluid" >
   <div class="row">
     <div ng-include="'components/sidebar/sidebar.html'"></div>
-    <div class="col-xs-10" >
-      <div class="ph-card ">
-        <h1>ADMIN</h1>
-        <ul class="nav nav-pills">
-          <li role="presentation"><a href="/admin">Member Roles</a></li>
-          <li role="presentation"><a href="/admin/export">Export Data</a></li>
-          <li role="presentation" class="active"><a href="#">Billing</a></li>
-        </ul>
-      </div>
-      <div class="row">
-        <div class="col-xs-6">
-          <div class="ph-card">
-            <div class="panel panel-default">
-              <!-- Default panel contents -->
-              <div class="panel-heading">Basic Plan</div>
-              <div class="panel-body">
-                <h3 align="center">$100.00 / monthly</h3>
-              </div>
+    <div class="content__area">
+      <div ng-include="'components/content-nav/content-nav.html'"></div>
+      <div class="col-xs-10" >
+        <div class="ph-card ">
+          <h1>ADMIN</h1>
+          <ul class="nav nav-pills">
+            <li role="presentation"><a href="/admin">Member Roles</a></li>
+            <li role="presentation"><a href="/admin/export">Export Data</a></li>
+            <li role="presentation" class="active"><a href="#">Billing</a></li>
+          </ul>
+        </div>
+        <div class="row">
+          <div class="col-xs-6">
+            <div class="ph-card">
+              <div class="panel panel-default">
+                <!-- Default panel contents -->
+                <div class="panel-heading">Basic Plan</div>
+                <div class="panel-body">
+                  <h3 align="center">$100.00 / monthly</h3>
+                </div>
 
-              <!-- List group -->
-              <ul class="list-group">
-                <li class="list-group-item" align="center">1 Team</li>
-                <li class="list-group-item" align="center">10 Users</li>
-                <li class="list-group-item" align="center">8 Project Categories</li>
-                <li class="list-group-item" align="center">Unlimited Tasks</li>
-                <li class="list-group-item" align="center">1,000 Collective Text Messages</li>
-                <li class="list-group-item" align="center">Access to future features</li>
-              </ul>
+                <!-- List group -->
+                <ul class="list-group">
+                  <li class="list-group-item" align="center">1 Team</li>
+                  <li class="list-group-item" align="center">10 Users</li>
+                  <li class="list-group-item" align="center">8 Project Categories</li>
+                  <li class="list-group-item" align="center">Unlimited Tasks</li>
+                  <li class="list-group-item" align="center">1,000 Collective Text Messages</li>
+                  <li class="list-group-item" align="center">Access to future features</li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="ph-card">
-            <h1 class="page-header">Payment:</h1>
-            <p>We accept: Visa, MasterCard, and American Express.</p>
+          <div class="col-lg-6">
+            <div class="ph-card">
+              <h1 class="page-header">Payment:</h1>
+              <p>We accept: Visa, MasterCard, and American Express.</p>
 
-            <form name="ccForm" ng-submit="charge(card)" novalidate>
-              <div class="form-group">
-                <label for="card-number">Card Number</label>
-                <input type="text" class="form-control" id="cardNumber" ng-class="{'red-border' : ccForm.$submitted && ccForm.ccNumber.$error.required}" cc-number cc-format name="ccNumber" ng-model="card.number" required>
-                <div ng-show="ccForm.$submitted || ccForm.ccNumber.$touched">
-                  <div ng-show="ccForm.ccNumber.$error.ccNumber">Please enter a valid payment card</div>
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="cvc">CVC</label>
-                <input type="text" class="form-control" id="cvc" cc-cvc cc-type="ccForm.ccNumber.$ccType" ng-class="{'red-border' : ccForm.$submitted && ccForm.ccCvc.$error.required}" name="ccCvc" ng-model="card.cvc" required>
-              </div>
-              <div class="form-group">
-                <label for="card-number">Expiration</label>
-                <div class="row" cc-exp>
-                  <div class="col-xs-3">
-                    <input
-                    placeholder="MM"
-                    type="text"
-                    class="form-control"
-                    cc-exp-month
-                    name="ccExpMonth"
-                    ng-class="{'red-border' : ccForm.$submitted && ccForm.ccExpMonth.$error.required}"
-                    ng-model="card.exp_month"
-                    required>
-                  </div>
-                  <div class="col-xs-3">
-                    <input
-                    placeholder="YY"
-                    type="text"
-                    class="form-control"
-                    cc-exp-year
-                    ng-class="{'red-border' : ccForm.$submitted && ccForm.ccExpYear.$error.required}"
-                    name="ccExpYear"
-                    ng-model="card.exp_year"
-                    required>
+              <form name="ccForm" ng-submit="charge(card)" novalidate>
+                <div class="form-group">
+                  <label for="card-number">Card Number</label>
+                  <input type="text" class="form-control" id="cardNumber" ng-class="{'red-border' : ccForm.$submitted && ccForm.ccNumber.$error.required}" cc-number cc-format name="ccNumber" ng-model="card.number" required>
+                  <div ng-show="ccForm.$submitted || ccForm.ccNumber.$touched">
+                    <div ng-show="ccForm.ccNumber.$error.ccNumber">Please enter a valid payment card</div>
                   </div>
                 </div>
-              </div>
+                <div class="form-group">
+                  <label for="cvc">CVC</label>
+                  <input type="text" class="form-control" id="cvc" cc-cvc cc-type="ccForm.ccNumber.$ccType" ng-class="{'red-border' : ccForm.$submitted && ccForm.ccCvc.$error.required}" name="ccCvc" ng-model="card.cvc" required>
+                </div>
+                <div class="form-group">
+                  <label for="card-number">Expiration</label>
+                  <div class="row" cc-exp>
+                    <div class="col-xs-3">
+                      <input
+                      placeholder="MM"
+                      type="text"
+                      class="form-control"
+                      cc-exp-month
+                      name="ccExpMonth"
+                      ng-class="{'red-border' : ccForm.$submitted && ccForm.ccExpMonth.$error.required}"
+                      ng-model="card.exp_month"
+                      required>
+                    </div>
+                    <div class="col-xs-3">
+                      <input
+                      placeholder="YY"
+                      type="text"
+                      class="form-control"
+                      cc-exp-year
+                      ng-class="{'red-border' : ccForm.$submitted && ccForm.ccExpYear.$error.required}"
+                      name="ccExpYear"
+                      ng-model="card.exp_year"
+                      required>
+                    </div>
+                  </div>
+                </div>
 
-                <button type="submit" class="btn btn-info" name="button"><span ng-show="!ccSubmited">Submit</span> <span ng-show="ccSubmited"><i class="fa fa-circle-o-notch fa-spin" style="color:#fff;"></i></span></button>
-            </form>
-            <br>
-            <p>
-              Support can be reached by email colin@phased.io, or phone +1 902-704-1575
-            </p>
+                  <button type="submit" class="btn btn-info" name="button"><span ng-show="!ccSubmited">Submit</span> <span ng-show="ccSubmited"><i class="fa fa-circle-o-notch fa-spin" style="color:#fff;"></i></span></button>
+              </form>
+              <br>
+              <p>
+                Support can be reached by email colin@phased.io, or phone +1 902-704-1575
+              </p>
+            </div>
+
           </div>
-
         </div>
-      </div>
-      <div class="row">
-        <div class="col-xs-6">
-          <div class="ph-card">
-            <h4>Account Details</h4>
-            <a href="#" data-toggle="modal" data-target="#cancelAccount">Cancel account</a>
+        <div class="row">
+          <div class="col-xs-6">
+            <div class="ph-card">
+              <h4>Account Details</h4>
+              <a href="#" data-toggle="modal" data-target="#cancelAccount">Cancel account</a>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
     </div>
   </div>
 

@@ -1,104 +1,59 @@
-
-<div ng-include="'components/navbar/navbar.html'"></div>
-
 <section>
 <div class="feedarea">
 
 	<div class="container-fluid">
 		<div class="row">
 			<div ng-include="'components/sidebar/sidebar.html'"></div>
-			<div class="col-xs-12 col-md-9 col-lg-6 ph-update-area">
-				<div class="action__container">
-				<form name="taskForm" ng-submit="addTask(task)" novalidation>
-					<div class="status__compose">
-						<p class="status__title">Update Status</p>
-							<input
-							type="text"
-							class="inputArea"
-							name="name"
-							ng-focus="submitTip = true"
-							ng-blur="submitTip = false"
-							autocomplete="off"
-							placeholder="What are you up to?"
-							ng-model="task.name"
-							ng-trim="false">
+			<div class="content__area">
+	      <div ng-include="'components/content-nav/content-nav.html'"></div>
+				<div class="col-xs-12 col-md-9 col-lg-6 ph-update-area">
+					<div class="action__container">
+						<form name="taskForm" ng-submit="addTask(task)" novalidation>
+							<div class="status__compose">
+								<p class="status__title">Update Status</p>
+									<input
+									type="text"
+									class="inputArea"
+									name="name"
+									ng-focus="submitTip = true"
+									ng-blur="submitTip = false"
+									autocomplete="off"
+									placeholder="What are you up to?"
+									ng-model="task.name"
+									ng-trim="false">
 
-					</div>
-					<div class="status__meta">
-						<div class="meta__left">
-							<button type="button" class="btn" name="button" ng-click="moreCat()" data-toggle="tooltip" data-placement="bottom" data-delay="{'show':500,'hide':100}" title="Add Category"><i class="fa fa-tag"></i></button>
-						</div>
-						<div class="meta__right">
-							<input type="submit" class="button-phasedFB" name="name" value="Post">
-						</div>
-
-					</div>
-
-				</form>
-
-			</div>
-			<div class="feed__container">
-				<div class="member__activity " ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 ">
-					<div class="activity__person">
-						<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
-						<div class="activity__info">
-							<h5 class="">{{$parent.team.members[item.user].name}}</h5>
-							<p class="activity__meta"><span am-time-ago="item.time"></span></p>
-						</div>
-					</div>
-
-					<div class="activity__content">
-						<p class="">{{item.name}}</p>
-					</div>
-
-				</div>
-			</div>
-
-		</div>
-
-				<!-- <div class="ph-card">
-					<form class="ph-form-feed" name="taskForm" ng-submit="addTask(task)" novalidation>
-						<input type="text" ng-model="task.name" ng-trim="false" maxlength="150" placeholder="enter your status here" required>
-						<div class="ph-form-extras">
-							<div class="ph-cat-list">
-								<button type="button"  ng-repeat="(key, category) in team.categoryObj" ng-show="$index<6" class="btn button-phased-wht" ng-class="{active : key === selectedCategory}" style="outline: none; color:#000; font-size:1.2rem;" ng-click="categoryChoice(key)">
-            <div class="feed-cat-color" style="width: 1rem; height: 1rem; margin-right:0.5rem; display: inline-block; background-color:{{category.color}}"></div>
-            {{category.name}}
-          </button>
 							</div>
-							<button type="button" ng-click="moreCat()">+</button>
-							<button type="submit">submit</button>
+							<div class="status__meta">
+								<div class="meta__left">
+									<button type="button" class="btn" name="button" ng-click="moreCat()" data-toggle="tooltip" data-placement="bottom" data-delay="{'show':500,'hide':100}" title="Add Category"><i class="fa fa-tag"></i></button>
+								</div>
+								<div class="meta__right">
+									<input type="submit" class="button-phasedFB" name="name" value="Post">
+								</div>
 
-						</div>
-					</form>
-				</div>
-				<div class="ph-card no-padding">
+							</div>
 
-					<div class="ph-feed-filter">
-						<div class="ph-feed-total">
-							<p class="semi">updates <span>{{team.statuses.length}}</span>
-						</div>
+						</form>
+
 					</div>
-					<div class="ph-feed-roll">
-						<div class="ph-update" ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100">
-							<div class="ph-feed-head">
-								<img src="{{$parent.team.members[item.user].pic}}" width="40px" height="40px">
-							</div>
-							<div class="ph-feed-status">
-								<p><span class="update-name">{{$parent.team.members[item.user].name}}</span> {{item.name}}</p>
-							</div>
-							<div class="ph-feed-meta">
-								<span am-time-ago="item.time"></span>
-								<div class="ph-feed-cat">
-									<div class="ph-cat-box" style="background: {{$parent.team.categoryObj[item.cat].color}}"></div>
-									<span>{{$parent.team.categoryObj[item.cat].name}}</span>
+					<div class="feed__container">
+						<div class="member__activity " ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 ">
+							<div class="activity__person">
+								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
+								<div class="activity__info">
+									<h5 class="">{{$parent.team.members[item.user].name}}</h5>
+									<p class="activity__meta"><span am-time-ago="item.time"></span></p>
 								</div>
 							</div>
+
+							<div class="activity__content">
+								<p class="">{{item.name}}</p>
+							</div>
+
 						</div>
-
-
 					</div>
-				</div> -->
+
+				</div>
 				<div class="hidden-xs hidden-sm col-md-3 col-lg-3  ">
 						<div class="ph-card">
 							<h6>Number of tasks assigned to you</h6>
@@ -106,6 +61,10 @@
 							<a class="btn btn-phased-blue btn-block" href="/tasks">View Tasks</a>
 						</div>
 				</div>
+			</div>
+
+
+
 			</div>
 
 
