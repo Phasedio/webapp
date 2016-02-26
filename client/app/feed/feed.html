@@ -26,6 +26,7 @@
 							<div class="status__meta">
 								<div class="meta__left">
 									<button type="button" class="btn" name="button" ng-click="moreCat()" data-toggle="tooltip" data-placement="bottom" data-delay="{'show':500,'hide':100}" title="Add Category"><i class="fa fa-tag"></i></button>
+									<button type="button" class="btn" ng-class="{btn__active : selectedTask.name}" name="button" ng-click="moreTasks()" data-toggle="tooltip" data-placement="bottom" data-delay="{'show':500,'hide':100}" title="Add Task"><i class="fa fa-tasks"></i> <small>{{selectedTask.name | limitTo:15}}</small></button>
 								</div>
 								<div class="meta__right">
 									<input type="submit" class="button-phasedFB" name="name" value="Post">
@@ -104,6 +105,38 @@
 					</div>
 				</button>
 			</div>
+		</div>
+	</div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!--Tasks Modal-->
+<div class="modal fade" id="taskModal">
+<div class="modal-dialog" style="width:60%">
+	<div class="modal-content">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title no-shadow">Choose a Task </h4>
+		</div>
+		<div class="modal-body " >
+			<ul>
+				<li class="task__item" ng-if="selectedTask.name" ng-click="cleartaskChoice()">
+					<div class="task__item__title">
+						<h4>clear selection</h4>
+					</div> </li>
+				<li class="task__item" ng-repeat="assignment in getUserTasks |
+				orderObjectBy : 'time' : true"  ng-click="taskChoice(assignment)">
+					<div class="task__item__title">
+						<h4>{{assignment.name}}</h4>
+					</div>
+					<div class="">
+						<p>
+							{{Phased.task.STATUS[assignment.status]}} {{assignment.deadline | date : 'd MMM yy'}}
+						</p>
+					</div>
+				</li>
+			</ul>
+
 		</div>
 	</div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
