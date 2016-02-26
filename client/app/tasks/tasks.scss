@@ -292,7 +292,7 @@ p{
   }
   .task-title{
     width: 100%;
-    font-family: "open_sanslight",sans-serif;
+    font-family: "open_sanssemibold",sans-serif;
     text-transform: none;
     line-height: 30px;
     color: #595959;
@@ -303,7 +303,7 @@ p{
     resize: none;
     transition: all 0.3s;
     &:hover{
-      border: 1px solid $textColor;
+      border: 1px solid #2fc2a3;
     }
   }
 
@@ -312,6 +312,9 @@ p{
       margin: 0;
       padding: 0;
       list-style: none;
+      //overflow: auto;
+      height: 40px;
+      margin-bottom: 12px;
     }
     .task-meta-bar-item{
       display: inline-block;
@@ -331,18 +334,37 @@ p{
     cursor: pointer;
     border-radius: 1000px;
     margin-right: 20px;
+    float: left;
+    .cal__btn{
+      -webkit-box-align: center;
+      align-items: center;
+      border: 1px solid #B9BCC0;
+      border-radius: 50%;
+      font-size: 1.33333em;
+      line-height: 2.2em;
+      vertical-align: -15%;
+      //height: 16px;
+      //width: 16px;
+      padding:0px 10px;
+      -webkit-box-sizing: border-box;
+      color: #B9BCC0;
+      transition: border 200ms,box-shadow 200ms,color 200ms;
+    }
     &:hover{
       //border-color:$liteBlack;
-      border-color:transparentize($liteBlack, 0.5);
+      border-color:transparentize(#2fc2a3, 0.1);
     }
     &:last-child{
-      float: right;
+      //float: right;
     }
     p,.dropdown{
       display: inline-block;
     }
     &.added-padding{
-      padding: 6px 12px;
+      //padding: 6px 12px;
+    }
+    p{
+      margin-bottom: 0;
     }
   }
   .task-details{
@@ -408,5 +430,60 @@ p{
 .task-meta-bar{
   .input-group-btn{
     display:inline-block;
+  }
+}
+
+// mo styles mo problems
+
+.task__area{
+  overflow: auto;
+
+}
+.task__details,.task__list{
+  float:left;
+  display: inline-block;
+}
+.task__list{
+  width:33.33333333%;
+  background: #fff;
+  border-right:1px solid rgb(223, 224, 228);
+
+  ul{
+    padding:0;
+    margin: 0;
+    list-style: none;
+  }
+
+}
+.task__details{
+  width:66.66%;
+  background: #fff;
+  border-right:1px solid rgb(223, 224, 228);
+  padding: 12px;
+}
+.task__add{
+  padding-top:12px;
+  padding-left:15px;
+  padding-right:15px;
+}
+.task__item{
+  padding-left:15px;
+  padding-right:15px;
+  border-bottom:1px solid rgb(208, 209, 213);
+  cursor: pointer;
+  .task__item__title{
+    h4{
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.4;
+      text-transform: none;
+      font-family: 'open_sansregular';
+    }
+  }
+  .task__item__meta{
+    font-family: 'open_sanslight';
+    p{
+      font-family: inherit;
+    }
   }
 }

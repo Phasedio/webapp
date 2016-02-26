@@ -120,7 +120,7 @@ angular.module('webappApp')
     $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
 
-    $scope.countActiveTasks = countActiveTasks();
+
 
 
     // bounce users if team has problems
@@ -130,6 +130,7 @@ angular.module('webappApp')
         $scope.$on('Phased:setup', checkTeam);
         return;
       }
+      $scope.countActiveTasks = countActiveTasks();
       var teamCheck = Phased.viewType;
       console.log(teamCheck);
       if (teamCheck == 'problem'){
@@ -146,6 +147,7 @@ angular.module('webappApp')
     $scope.taskTable = [1,2,3,4,5];
 
     $scope.$on('Phased:history', function() {
+      $scope.countActiveTasks = countActiveTasks();
       $scope.$apply();
     });
 
@@ -224,12 +226,15 @@ angular.module('webappApp')
     // get number of active tasks assigned to userID
     function countActiveTasks(){
       var count = 0;
-      _.forEach(Phased.get.tasks, function(value, key){
-        if(value.status == 0 || value.status == 2){
+
+      _.forEach(Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks, function(value, key){
+        if((value.status == 0 || value.status == 2) && value.assigned_to == Phased.user.uid){
           count++;
+          
         }
       });
       console.log('this did things');
+
       return count
     }
 

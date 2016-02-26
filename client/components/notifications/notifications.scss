@@ -1,11 +1,19 @@
 .toggleNotifBtn {
-	padding: 16px;
-	padding-top:10px;
-	display: inline-block;
-	color:transparent;
-	cursor: pointer;
+	// padding: 16px;
+	// padding-top:10px;
+	// display: inline-block;
+	// color:transparent;
+	// cursor: pointer;
   &.hasUnread {
-    background-color : orange;
+
+		&:after{
+			content: "  ";
+			width: 10px;
+			height: 10px;
+			position: absolute;
+			border-radius: 100px;
+			color:red;
+		}
   }
 }
 

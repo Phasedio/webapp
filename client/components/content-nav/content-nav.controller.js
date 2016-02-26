@@ -1,42 +1,41 @@
-'use strict';
-
 angular.module('webappApp')
-  .controller('SidebarCtrl', function ($scope, $location, Auth, Phased, FURL) {
-    $scope.showAdmin = false;
+  .controller('ContentNavCtrl', function ($scope, $location, Auth, Phased, FURL) {
+    $scope.user = Phased.user;
+    $scope.team = Auth.currentTeam;
+    $scope.isTrial = false;
+
     $scope.menu = [
     {
       'title': 'Feed',
-      'icon': 'rss',
       'link': '/feed'
     },
     {
       'title': 'Tasks',
-      'icon': 'check',
       'link' : '/tasks'
     },
     {
       'title': 'Team',
-      'icon': 'users',
       'link': '/'
     },
     {
       'title': 'Profile',
-      'icon': 'user',
-      'link' : '/profile'
-    },
-    {
-      'title': 'Settings',
-      'icon': 'cog',
       'link' : '/profile'
     }
     ];
+    var routes = {
+      '/feed' : "Feed",
+      "/tasks" : "Tasks",
+      "/": "Team",
+      "/profile" : "Profile",
+      '/admin' : "Admin"
+    }
+    $scope.pageTitle = '';
 
-    $scope.isActive = function(route) {
-      return route === $location.path();
-    };
+    $scope.showAdmin = false;
 
+    // show Admin link if user has permissions
     var showAdminLink = function(){
-      $scope.sideBarHeight = $("body").height();
+      $scope.user = Phased.user;
       // do only after Phased is set up
       if (!Phased.SET_UP) {
         $scope.$on('Phased:setup', showAdminLink);
@@ -50,7 +49,9 @@ angular.module('webappApp')
         $scope.showAdmin = false;
     }
     showAdminLink(); // in case of moving within app and not updating profile
+    $scope.$on('Phased:memberChanged', showAdminLink);
 
+    // bounce users if team has problems
     var checkTeam = function(){
       // do only after Phased is set up
       if (!Phased.SET_UP) {
@@ -72,20 +73,37 @@ angular.module('webappApp')
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
 
+    $scope.isCollapsed = true;
 
+    function isActive(){
+      var r = $location.path();
+      routes
+      if (routes[r]) {
+        $scope.pageTitle = routes[r];
+      }else{
+        $scope.pageTitle = '';
+      }
 
+    }
+    isActive();
 
-  function setHeight(){
-    $scope.sideBarHeight = $("body").height() + 200;
-    //$scope.$apply();
-  }
-  // When anything happens make sure height is ajusted.
-  $scope.$on('Phased:PaymentInfo', setHeight());
-  $scope.$on('Phased:meta', setHeight());
-  $scope.$on('Phased:historyComplete', setHeight());
-  $scope.$on('Phased:setup', setHeight());
-  $scope.$on('Phased:taskAdded', setHeight());
-  $scope.$on('Phased:taskDeleted', setHeight());
-  $scope.$on('Phased:newStatus', setHeight());
+    $scope.isActive = function(route) {
+      return route === $location.path();
+    };
+    $scope.logout = function(){
+      console.log('logging you out');
+      Auth.logout();
+      $location.path('/login');
+    }
+    $scope.switchTeams = function(){
+      $location.path('/switchteam');
+    }
+
+    //Not a fan of this!!!
+    window.setInterval(function () {
+    $scope.team = Auth.currentTeam;
+    $scope.$apply();
+    //console.log('yo');
+    }, 500);
 
   });

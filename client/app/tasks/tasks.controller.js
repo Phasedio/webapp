@@ -169,6 +169,7 @@ angular.module('webappApp')
 
     $scope.viewType = Phased.viewType;
     $scope.myID = Auth.user.uid;
+    $scope.currentFilter = 'My Tasks';
 
     $scope.today = new Date().getTime();
     var StatusID = {
@@ -235,7 +236,7 @@ angular.module('webappApp')
       // if the task list is still 12 cols open up the descriptor for the user
       if($scope.tasklistSize == 'col-xs-10'){
         $scope.tasklistSize = 'col-xs-5';
-        $scope.taskDescript = 'col-xs-5';
+        $scope.taskDescript = 'task__details__item';
       }
 
     }
@@ -283,6 +284,7 @@ angular.module('webappApp')
     $scope.getFilter = function(assignment){
 
       if ($scope.filtersToShow == 'me') {
+        $scope.currentFilter = 'My Tasks';
         if (assignment.assigned_to == Phased.user.uid && assignment.status != Phased.task.STATUS_ID.COMPLETE) {
 
           return true;
@@ -291,6 +293,7 @@ angular.module('webappApp')
         }
 
       }else if ($scope.filtersToShow == 'me_complete') {
+        $scope.currentFilter = "My Completed Tasks";
         if (assignment.assigned_to == Phased.user.uid && assignment.status == Phased.task.STATUS_ID.COMPLETE) {
 
           return true;
@@ -299,6 +302,7 @@ angular.module('webappApp')
         }
 
       }else{
+        $scope.currentFilter ="All Tasks";
         return true;
       }
     }
