@@ -262,6 +262,10 @@ body{
       text-transform: none;
       margin-bottom: 20px;
     }
+
+  }
+  .brand__img{
+    display: none;
   }
   ul{
     list-style: none;
@@ -391,3 +395,51 @@ body{
 @import 'tasks/tasks.scss';
 @import 'modal/modal.scss';
 // endinjector
+
+
+//Media Q
+
+/* Large devices (large desktops, 1200px and up) */
+@media (min-width: 1500px) {
+  .content__nav{
+    .content__nav__section{
+      width: 41.5%;
+    }
+    .navItem{
+      text-align: center;
+    }
+  }
+
+}
+
+@media (max-width: 969px) {
+  //side navbar-nav
+  .sideMenu{
+    width: 75px;
+    .brand__area{
+      height:73px;
+      .brand__title{
+        display: none;
+      }
+      .brand__img{
+        margin-top:12px;
+        margin-left: 10px;
+        display: block;
+      }
+    }
+    .navItem{
+      text-align: center;
+      span{
+        display: none;
+      }
+    }
+  }
+
+  .trialing{
+    text-align: center;
+      position: absolute;
+      top: 50rem;
+      left: 4px;
+      color: #fff;
+  }
+}
