@@ -1,12 +1,12 @@
 <section>
-<div class="feedarea">
+<div class="">
 
 	<div class="container-fluid">
 		<div class="row">
 			<div ng-include="'components/sidebar/sidebar.html'"></div>
 			<div class="content__area">
 	      <div ng-include="'components/content-nav/content-nav.html'"></div>
-				<div class="col-xs-12 col-md-9 col-lg-6 ph-update-area">
+				<div class="col-xs-12 col-md-5 col-lg-6 ph-update-area">
 					<div class="action__container">
 						<form name="taskForm" ng-submit="addTask(task)" novalidation>
 							<div class="status__compose">
@@ -54,7 +54,7 @@
 					</div>
 
 				</div>
-				<div class="hidden-xs hidden-sm col-md-3 col-lg-3  ">
+				<div class="hidden-xs hidden-sm   col-md-3  ">
 						<div class="ph-card">
 							<h6>Number of tasks assigned to you</h6>
 							<h2>{{countActiveTasks}}</h2>

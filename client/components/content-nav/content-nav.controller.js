@@ -23,7 +23,7 @@ angular.module('webappApp')
     }
     ];
     var routes = {
-      '/feed' : "feed",
+      '/feed' : "Feed",
       "/tasks" : "Tasks",
       "/": "Team",
       "/profile" : "Profile",

@@ -397,6 +397,18 @@ body{
 // endinjector
 
 
+.ph-update-area{
+  width: 82%;
+  max-width: 519px;
+  display: inline-block;
+  padding-right: 12px;
+  padding-left: 12px;
+  float: left;
+  .ph-card{
+    margin-bottom: 20px;
+  }
+}
+ 
 //Media Q
 
 /* Large devices (large desktops, 1200px and up) */
