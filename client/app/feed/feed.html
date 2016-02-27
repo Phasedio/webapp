@@ -42,8 +42,25 @@
 							<div class="activity__person">
 								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
 								<div class="activity__info">
-									<h5 class="">{{$parent.team.members[item.user].name}}</h5>
-									<p class="activity__meta"><span am-time-ago="item.time"></span></p>
+									<h5 class="">
+										{{$parent.team.members[item.user].name}}
+										<span class="" ng-if="item.task.name">
+											<small>
+												<i class="fa fa-tasks"></i>
+												<!-- <span role="presentation" aria-hidden="true"> · </span> -->
+												{{item.task.name | limitTo:50}}
+											</small>
+
+										</span>
+								</h5>
+									<p class="activity__meta">
+										<span am-time-ago="item.time"></span>
+										<!-- <span class="" ng-if="item.task.name">
+											<span role="presentation" aria-hidden="true"> · </span>
+											{{item.task.name}}
+										</span> -->
+
+									</p>
 								</div>
 							</div>
 
