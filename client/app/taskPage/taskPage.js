@@ -3,7 +3,7 @@
 angular.module('webappApp')
   .config(function ($routeProvider) {
     $routeProvider
-      .when('/tasks/:taskID', {
+      .when('/tasks/:project/:column/:card/:taskID', {
         templateUrl: 'app/taskPage/taskPage.html',
         controller: 'TaskPageCtrl'
       });

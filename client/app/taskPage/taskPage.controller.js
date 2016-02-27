@@ -57,16 +57,20 @@ angular.module('webappApp')
       // get route peram and try to assign it
       console.log($scope.assignments);
       //check if phased is set up
-      if(Phased.assignments){
-        if($routeParams.taskID && Phased.assignments.all[$routeParams.taskID]){
-          $scope.taskInfo = Phased.assignments.all[$routeParams.taskID];
-          console.log($scope.taskInfo);
-
-        }else{
-          //fail - send user to tasks page
-          //alert("failed")
-          //$location.path("/tasks")
-        }
+      // if(Phased.assignments){
+      //   if($routeParams.taskID && Phased.assignments.all[$routeParams.taskID]){
+      //     $scope.taskInfo = Phased.assignments.all[$routeParams.taskID];
+      //     console.log($scope.taskInfo);
+      //
+      //   }else{
+      //     //fail - send user to tasks page
+      //     //alert("failed")
+      //     //$location.path("/tasks")
+      //   }
+      // }
+      if(Phased.SET_UP){
+        $scope.taskInfo = Phased.team.projects[$routeParams.project].columns[$routeParams.column].cards[$routeParams.card].tasks[$routeParams.taskID];
+        getStatuses($scope.taskInfo);
       }
 
     }
@@ -74,16 +78,16 @@ angular.module('webappApp')
     // If this was deep linked to then wait for the provider to get set up
     $scope.$on('Phased:setup', function() {
 
-      if($routeParams.taskID && Phased.assignments.all[$routeParams.taskID]){
-        $scope.taskInfo = Phased.assignments.all[$routeParams.taskID];
-        console.log($scope.taskInfo);
-
-      }else{
-        //fail - send user to tasks page
-        alert("failed")
-        //$location.path("/tasks")
-      }
-
+      // if($routeParams.taskID && Phased.assignments.all[$routeParams.taskID]){
+      //   $scope.taskInfo = Phased.assignments.all[$routeParams.taskID];
+      //   console.log($scope.taskInfo);
+      //
+      // }else{
+      //   //fail - send user to tasks page
+      //   alert("failed")
+      //   //$location.path("/tasks")
+      // }
+      init();
       $scope.$apply();
     });
 
@@ -91,6 +95,20 @@ angular.module('webappApp')
     init();
 
 
+    //grabs any statues that are on the task
+    function getStatuses(task){
+      $scope.taskInfo.statues = [];
+      for (var i in task.statuses) {
+        if (task.statuses.hasOwnProperty(i)) {
+          console.log(i);
+          var item = task.statuses[i];
+          FBRef.child('team').child(Phased.user.curTeam).child('statuses').child(item).once('value',function(snap){
+            console.log(snap.val());
+            $scope.taskInfo.statues.push(snap.val());
+          });
+        }
+      }
+    }
 
     // moves task into my to_me if unassigned,
     // then starts it

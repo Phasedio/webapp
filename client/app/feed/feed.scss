@@ -661,7 +661,7 @@ select{
 .activity__info{
   max-width: 90%;
   overflow: auto;
-  h5{
+  h5,a{
 		font-weight: bold;
     color: #2fc3b5;
     margin-top: 0;
@@ -767,7 +767,11 @@ select{
   }
 
 }
-
+.activity__tag{
+	a:hover{
+		color: #999999;
+	}
+}
 
 .action__container .meta__left .btn__active{
 	color: #2fc2a3;

@@ -43,13 +43,16 @@
 								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
 								<div class="activity__info">
 									<h5 class="">
-										{{$parent.team.members[item.user].name}}
-										<span class="" ng-if="item.task.name">
-											<small>
-												<i class="fa fa-tasks"></i>
-												<!-- <span role="presentation" aria-hidden="true"> · </span> -->
-												{{item.task.name | limitTo:50}}
-											</small>
+										<a href="/profile/{{item.user}}">{{$parent.team.members[item.user].name}}</a>
+										<span class="activity__tag" ng-if="item.task.name">
+											<a href="/tasks/{{item.task.project}}/{{item.task.column}}/{{item.task.card}}/{{item.task.id}}">
+												<small>
+													<i class="fa fa-tasks"></i>
+													<!-- <span role="presentation" aria-hidden="true"> · </span> -->
+													{{item.task.name | limitTo:50}}
+												</small>
+											</a>
+
 
 										</span>
 								</h5>

@@ -167,7 +167,7 @@
   								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
   								<div class="activity__info">
                     <h5 class="">
-  										{{$parent.team.members[item.user].name}}
+  										<a href="/profile/{{item.user}}">{{$parent.team.members[item.user].name}}</a>
   										<span class="" ng-if="item.task.name">
   											<small>
   												<i class="fa fa-tasks"></i>
