@@ -516,6 +516,13 @@ angular.module('webappApp')
       var nameReset = task.name;
       var status = task;
       status.name = "Has completed task : " +status.name;
+      status.task = {
+        project : '0A',
+        column : '0A',
+        card : '0A',
+        id : task.key,
+        name : nameReset
+      }
       Phased.addStatus(status);
       task.name = nameReset;
       Phased.setTaskStatus(task.key, Phased.task.STATUS_ID.COMPLETE);

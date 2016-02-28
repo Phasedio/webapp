@@ -2310,6 +2310,13 @@ angular.module('webappApp')
         taskID = args.taskID,
         prefix = args.prefix;
 
+      task.task = {
+          project : '0A',
+          column : '0A',
+          card : '0A',
+          id : taskID,
+          name : task.name
+        }  
       // update time to now and place to here (feature pending)
       task.time = new Date().getTime();
 
