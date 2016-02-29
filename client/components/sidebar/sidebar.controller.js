@@ -23,11 +23,6 @@ angular.module('webappApp')
       'title': 'Profile',
       'icon': 'user',
       'link' : '/profile'
-    },
-    {
-      'title': 'Settings',
-      'icon': 'cog',
-      'link' : '/profile'
     }
     ];
 
