@@ -38,6 +38,7 @@
 
 					</div>
 					<div class="feed__container">
+						<p align="center">Recent updates</p>
 						<div class="member__activity " ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 ">
 							<div class="activity__person">
 								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />

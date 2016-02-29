@@ -10,7 +10,7 @@ angular.module('webappApp')
       'link': '/feed'
     },
     {
-      'title': 'Tasks',
+      'title': 'To-Do',
       'icon': 'check',
       'link' : '/tasks'
     },
