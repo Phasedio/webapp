@@ -238,10 +238,12 @@ angular.module('webappApp')
       $('#taskModal').modal('toggle');
     }
     $scope.taskChoice = function(task){
+      mixpanel.track("Add Task to status");
       $scope.selectedTask = task;
       $('#taskModal').modal('toggle');
     }
     $scope.cleartaskChoice = function(){
+      mixpanel.track("Cleared Task from status");
       $scope.selectedTask = {};
       $('#taskModal').modal('toggle');
     }
