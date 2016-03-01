@@ -233,10 +233,15 @@ angular.module('webappApp')
     $scope.selectTask = function(task){
       mixpanel.track("Open Task Details");
       $scope.taskInfo = task; // assign the task information to the scope;
+
       // if the task list is still 12 cols open up the descriptor for the user
       if($scope.tasklistSize == 'col-xs-10'){
         $scope.tasklistSize = 'col-xs-5';
         $scope.taskDescript = 'task__details__item';
+      }
+      console.log(task);
+      if(typeof task.statuses === 'object'){
+        getStatuses(task);
       }
 
     }
@@ -247,6 +252,21 @@ angular.module('webappApp')
       $scope.tasklistSize = 'col-xs-10';//set the init size of task list
       $scope.taskDescript = 'hidden'; //hide the task description till the user does something
       $scope.taskInfo = {};
+    }
+
+    //grabs any statues that are on the task
+    function getStatuses(task){
+      $scope.taskInfo.statues = [];
+      for (var i in task.statuses) {
+        if (task.statuses.hasOwnProperty(i)) {
+          console.log(i);
+          var item = task.statuses[i];
+          FBRef.child('team').child(Phased.user.curTeam).child('statuses').child(item).once('value',function(snap){
+            console.log(snap.val());
+            $scope.taskInfo.statues.push(snap.val());
+          });
+        }
+      }
     }
 
     //=====================
@@ -496,6 +516,13 @@ angular.module('webappApp')
       var nameReset = task.name;
       var status = task;
       status.name = "Has completed task : " +status.name;
+      status.task = {
+        project : '0A',
+        column : '0A',
+        card : '0A',
+        id : task.key,
+        name : nameReset
+      }
       Phased.addStatus(status);
       task.name = nameReset;
       Phased.setTaskStatus(task.key, Phased.task.STATUS_ID.COMPLETE);

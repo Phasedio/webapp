@@ -36,7 +36,7 @@
 	      <form name="regForm" ng-submit="regUser(reg)" novalidate ng-show="forms == 'reg'">
 	        <div class="">
 	        <div class="item item-input item-stacked-label">
-	            <label class="input-label" for="name">name</label>
+	            <label class="input-label" for="name">display name</label>
 	            <input class="loginInput" type="text" id="name" name="name" ng-model="reg.name" placeholder="" ng-class="{'red-border' : regForm.$submitted && regForm.name.$error.required}" required>
 	          </div>
 	          <div class="item item-input item-stacked-label">

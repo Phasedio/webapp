@@ -52,7 +52,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr ng-repeat="item in team.statuses | updatesFor : currentUserID | updatesForTime : 'today' | orderBy : 'time':true">
+                    <tr ng-repeat="item in team.statuses | orderObjectBy : 'time':true " ng-if="item.user == currentUser.uid">
                       <td>
                         {{item.name}}
                       </td>

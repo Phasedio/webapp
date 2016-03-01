@@ -156,6 +156,37 @@
 
 
       			</div>
+            <!-- STATUS HISTORY -->
+            <div class="" ng-if="taskInfo.statues">
+              <h4>Status History</h4>
+              <!-- <div class="" ng-repeat="item in taskInfo.statues">
+                {{item.name}}
+              </div> -->
+              <div class="member__activity " ng-repeat="item in taskInfo.statues | orderBy: 'time'">
+  							<div class="activity__person">
+  								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
+  								<div class="activity__info">
+                    <h5 class="">
+  										<a href="/profile/{{item.user}}">{{$parent.team.members[item.user].name}}</a>
+  										<span class="" ng-if="item.task.name">
+  											<small>
+  												<i class="fa fa-tasks"></i>
+  												<!-- <span role="presentation" aria-hidden="true"> · </span> -->
+  												{{item.task.name | limitTo:50}}
+  											</small>
+
+  										</span>
+  								</h5>
+  									<p class="activity__meta"><span am-time-ago="item.time"></span></p>
+  								</div>
+  							</div>
+
+  							<div class="activity__content">
+  								<p class="">{{item.name}}</p>
+  							</div>
+
+  						</div>
+            </div>
 
             <!-- TASK HISTORY -->
             <div class="ph-card" ng-if="taskInfo.history">

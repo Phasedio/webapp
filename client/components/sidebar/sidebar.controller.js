@@ -10,7 +10,7 @@ angular.module('webappApp')
       'link': '/feed'
     },
     {
-      'title': 'Tasks',
+      'title': 'To-Do',
       'icon': 'check',
       'link' : '/tasks'
     },
@@ -22,11 +22,6 @@ angular.module('webappApp')
     {
       'title': 'Profile',
       'icon': 'user',
-      'link' : '/profile'
-    },
-    {
-      'title': 'Settings',
-      'icon': 'cog',
       'link' : '/profile'
     }
     ];

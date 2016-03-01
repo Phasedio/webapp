@@ -178,6 +178,16 @@ angular.module('webappApp')
 	        long : $scope.long || 0
 	      }
 	    };
+      if($scope.selectedTask.name){
+        status.task = {
+          project : '0A',
+          column : '0A',
+          card : '0A',
+          id : $scope.selectedTask.id,
+          name : $scope.selectedTask.name
+        }
+        $scope.selectedTask = {};
+      }
 
       console.log('status:', status);
       // push to db
@@ -222,18 +232,38 @@ angular.module('webappApp')
       Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
     }
 
+    $scope.selectedTask = {};
+    $scope.moreTasks = function(){
+      mixpanel.track("Open Task Modal");
+      $('#taskModal').modal('toggle');
+    }
+    $scope.taskChoice = function(task){
+      mixpanel.track("Add Task to status");
+      $scope.selectedTask = task;
+      $('#taskModal').modal('toggle');
+    }
+    $scope.cleartaskChoice = function(){
+      mixpanel.track("Cleared Task from status");
+      $scope.selectedTask = {};
+      $('#taskModal').modal('toggle');
+    }
+
+
 
     // get number of active tasks assigned to userID
     function countActiveTasks(){
       var count = 0;
-
+      var thing = [];
       _.forEach(Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks, function(value, key){
         if((value.status == 0 || value.status == 2) && value.assigned_to == Phased.user.uid){
           count++;
-          
+          value.id = key;
+          thing.push(value);
         }
       });
       console.log('this did things');
+      $scope.getUserTasks = thing;
+      console.log(thing);
 
       return count
     }

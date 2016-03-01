@@ -1674,6 +1674,12 @@ angular.module('webappApp')
             cleanObj[optional.booleans[i]] = dirtyObj[optional.booleans[i]];
           }
         }
+        // objects
+        for (var i in optional.objects) {
+          if (typeof dirtyObj[optional.objects[i]] === 'object') {
+            cleanObj[optional.objects[i]] = dirtyObj[optional.objects[i]];
+          }
+        }
       }
 
       return cleanObj;
@@ -1726,7 +1732,8 @@ angular.module('webappApp')
           strings : ['name', 'user']
         },
         optional : {
-          strings : ['cat', 'taskPrefix']
+          strings : ['cat', 'taskPrefix'],
+          objects : ['task']
         }
       };
 
@@ -1789,6 +1796,7 @@ angular.module('webappApp')
     */
 
     var _addMember = function(newMember) {
+      console.log(newMember);
       var args = {
         newMember : newMember
       }
@@ -1797,6 +1805,7 @@ angular.module('webappApp')
     }
 
     var doAddMember = function(args) {
+      console.log(args);
       ga('send', 'event', 'Team', 'Member invited');
       $.post('./api/registration/invite', {
         invitedEmail: args.newMember.email,
@@ -2226,6 +2235,15 @@ angular.module('webappApp')
           });
         }
       });
+
+      // if the status had a task attached to it then submit the status id to the task
+      if(newStatus.task){
+        console.log('I have a task');
+        var postID = newStatusRef.key();
+        teamRef.child('projects/' + newStatus.task.project +'/columns/'+newStatus.task.column +'/cards/'+ newStatus.task.card +'/tasks/'+newStatus.task.id+'/statuses').push(postID);
+
+      }
+
     }
 
 
@@ -2294,6 +2312,13 @@ angular.module('webappApp')
         taskID = args.taskID,
         prefix = args.prefix;
 
+      task.task = {
+          project : '0A',
+          column : '0A',
+          card : '0A',
+          id : taskID,
+          name : task.name
+        }
       // update time to now and place to here (feature pending)
       task.time = new Date().getTime();
 
