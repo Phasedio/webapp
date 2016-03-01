@@ -150,11 +150,17 @@ section{
 
 
 // DESIGNSS
-h1,h2,h3,h4,h5,h6,.semi{
+h1,h2,h3,.semi__lower{
+  font-family: 'open_sanssemibold';
+  color:$boldText;
+}
+
+h4,h5,h6,.semi{
   font-family: 'open_sanssemibold';
   color:$boldText;
   text-transform: uppercase;
 }
+
 
 p{
   font-family: 'open_sansregular';

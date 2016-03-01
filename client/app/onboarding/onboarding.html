@@ -1,8 +1,13 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-xs-12">
-      <div class="member__activity" ng-show="showThis == 'addteam' ">
-        <h3>Team name</h3>
+      <div class="onboarding__brand onboarding__card">
+        <img src="assets/images/phased-logo.svg" height="75px" width="75px" alt="" />
+        <h1 align="center">Phased</h1>
+        <p class="semi__lower" align="center">Project Status Updating</p>
+      </div>
+      <div class="member__activity onboarding__card" ng-show="showThis == 'addteam' ">
+        <h3 align="center">Create Team name</h3>
         <p>Staff send their updates to Phased. Our app posts them in a newsfeed so project managers can quickly glance at what’s on the go.</p>
         <form name="addteam" ng-submit="addTeam(teamName)" novalidation>
           <div class="form-group">
@@ -12,31 +17,30 @@
           <button class="btn btn-block btn-primary" type="submit">Start 30 day trial</button>
         </form>
       </div>
-      <div class="member__activity" ng-show="showThis == 'addMembers' ">
-        <h3>Send Invitations</h3>
+      <div class="member__activity onboarding__card" ng-show="showThis == 'addMembers' ">
+        <h3 align="center">Send Invitations</h3>
 
         <form name="addMembers" ng-submit="inviteMembers(email1,email2,email3)" novalidation>
           <div class="form-group">
-            <label for="teamName">Team name</label>
+            <label for="teamName">Email</label>
             <input type="email" class="form-control"  ng-model="email1" placeholder="sharon@example.com" style="color:#000;">
           </div>
           <div class="form-group">
-            <label for="teamName">Team name</label>
+
             <input type="email" class="form-control"  ng-model="email2" placeholder="lois@example.com" style="color:#000;">
           </div>
           <div class="form-group">
-            <label for="teamName">Team name</label>
+
             <input type="email" class="form-control"  ng-model="email3" placeholder="bram@example.com" style="color:#000;">
           </div>
           <button class="btn btn-block btn-primary" type="submit">Send Invites</button>
         </form>
+        <p align="center"><small> <a href="#" ng-click="skipInvite()">Skip this step</a> </small></p>
 
       </div>
-      <div class="member__activity" ng-show="showThis == 'addUpdate' ">
-        <h3>Update</h3>
-        <p>
-          create your first post
-        </p>
+      <div class="member__activity onboarding__card" ng-show="showThis == 'addUpdate' ">
+        <h3 align="center">Create your first post</h3>
+
         <form name="addteam" ng-submit="addUpdate(update)" novalidation>
           <div class="form-group">
             <label for="teamName">Update status</label>
