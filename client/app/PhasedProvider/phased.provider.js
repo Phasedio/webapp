@@ -1796,6 +1796,7 @@ angular.module('webappApp')
     */
 
     var _addMember = function(newMember) {
+      console.log(newMember);
       var args = {
         newMember : newMember
       }
@@ -1804,6 +1805,7 @@ angular.module('webappApp')
     }
 
     var doAddMember = function(args) {
+      console.log(args);
       ga('send', 'event', 'Team', 'Member invited');
       $.post('./api/registration/invite', {
         invitedEmail: args.newMember.email,
@@ -2316,7 +2318,7 @@ angular.module('webappApp')
           card : '0A',
           id : taskID,
           name : task.name
-        }  
+        }
       // update time to now and place to here (feature pending)
       task.time = new Date().getTime();
 

@@ -1,0 +1,62 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="member__activity" ng-show="showThis == 'addteam' ">
+        <h3>Team name</h3>
+        <p>Staff send their updates to Phased. Our app posts them in a newsfeed so project managers can quickly glance at what’s on the go.</p>
+        <form name="addteam" ng-submit="addTeam(teamName)" novalidation>
+          <div class="form-group">
+            <label for="teamName">Team name</label>
+            <input type="text" class="form-control"  ng-model="teamName" placeholder="Zeppco" style="color:#000;">
+          </div>
+          <button class="btn btn-block btn-primary" type="submit">Start 30 day trial</button>
+        </form>
+      </div>
+      <div class="member__activity" ng-show="showThis == 'addMembers' ">
+        <h3>Send Invitations</h3>
+
+        <form name="addMembers" ng-submit="inviteMembers(email1,email2,email3)" novalidation>
+          <div class="form-group">
+            <label for="teamName">Team name</label>
+            <input type="email" class="form-control"  ng-model="email1" placeholder="sharon@example.com" style="color:#000;">
+          </div>
+          <div class="form-group">
+            <label for="teamName">Team name</label>
+            <input type="email" class="form-control"  ng-model="email2" placeholder="lois@example.com" style="color:#000;">
+          </div>
+          <div class="form-group">
+            <label for="teamName">Team name</label>
+            <input type="email" class="form-control"  ng-model="email3" placeholder="bram@example.com" style="color:#000;">
+          </div>
+          <button class="btn btn-block btn-primary" type="submit">Send Invites</button>
+        </form>
+
+      </div>
+      <div class="member__activity" ng-show="showThis == 'addUpdate' ">
+        <h3>Update</h3>
+        <p>
+          create your first post
+        </p>
+        <form name="addteam" ng-submit="addUpdate(update)" novalidation>
+          <div class="form-group">
+            <label for="teamName">Update status</label>
+            <input type="text" class="form-control"  ng-model="update.name" placeholder="What are you up to?" style="color:#000;"required>
+          </div>
+          <button class="btn btn-block btn-primary" type="submit">Post your first update</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="preLoader" ng-show="creatingTeam">
+  <div class="container">
+    <div class="row">
+
+    	<div class="col-xs-6 col-xs-offset-3">
+        <h4 align="center">Creating your team, please prepare for awesome.</h4>
+        <h5 align="center"><i class="fa fa-circle-o-notch fa-spin fa-lg"></i></h5>
+      </div>
+    </div>
+  </div>
+</div>
