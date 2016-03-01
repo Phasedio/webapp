@@ -55,7 +55,7 @@ angular.module('webappApp')
     */
     $scope.$on('Phased:meta', function(){
       if (!Phased.team.uid) {
-        $location.path('/switchteam');
+        $location.path('/onboarding');
         //$('#addTeamModal').modal('show');
       }
     });

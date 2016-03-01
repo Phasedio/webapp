@@ -1,0 +1,66 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="onboarding__brand onboarding__card">
+        <img src="assets/images/phased-logo.svg" height="75px" width="75px" alt="" />
+        <h1 align="center">Phased</h1>
+        <p class="semi__lower" align="center">Project Status Updating</p>
+      </div>
+      <div class="member__activity onboarding__card" ng-show="showThis == 'addteam' ">
+        <h3 align="center">Create Team name</h3>
+        <p>Staff send their updates to Phased. Our app posts them in a newsfeed so project managers can quickly glance at what’s on the go.</p>
+        <form name="addteam" ng-submit="addTeam(teamName)" novalidation>
+          <div class="form-group">
+            <label for="teamName">Team name</label>
+            <input type="text" class="form-control"  ng-model="teamName" placeholder="Zeppco" style="color:#000;">
+          </div>
+          <button class="btn btn-block btn-primary" type="submit">Start 30 day trial</button>
+        </form>
+      </div>
+      <div class="member__activity onboarding__card" ng-show="showThis == 'addMembers' ">
+        <h3 align="center">Send Invitations</h3>
+
+        <form name="addMembers" ng-submit="inviteMembers(email1,email2,email3)" novalidation>
+          <div class="form-group">
+            <label for="teamName">Email</label>
+            <input type="email" class="form-control" name="email1" ng-model="email1" ng-class="{'red-border' : addMembers.$submitted && addMembers.email1.$error.email}" placeholder="sharon@example.com" style="color:#000;" required>
+          </div>
+          <div class="form-group">
+
+            <input type="email" class="form-control"  name="email2" ng-model="email2" ng-class="{'red-border' : addMembers.$submitted && addMembers.email2.$error.email}" placeholder="lois@example.com" style="color:#000;">
+          </div>
+          <div class="form-group">
+
+            <input type="email" class="form-control"  name="email3" ng-model="email3" ng-class="{'red-border' : addMembers.$submitted && addMembers.email3.$error.email}" placeholder="bram@example.com" style="color:#000;">
+          </div>
+          <button class="btn btn-block btn-primary" type="submit">Send Invites</button>
+        </form>
+        <p align="center"><small> <a href="#" ng-click="skipInvite()">Skip this step</a> </small></p>
+
+      </div>
+      <div class="member__activity onboarding__card" ng-show="showThis == 'addUpdate' ">
+        <h3 align="center">Create your first post</h3>
+
+        <form name="addteam" ng-submit="addUpdate(update)" novalidation>
+          <div class="form-group">
+            <label for="teamName">Update status</label>
+            <input type="text" class="form-control"  ng-model="update.name" placeholder="What are you up to?" style="color:#000;"required>
+          </div>
+          <button class="btn btn-block btn-primary" type="submit">Post your first update</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="preLoader" ng-show="creatingTeam">
+  <div class="container">
+    <div class="row">
+
+    	<div class="col-xs-6 col-xs-offset-3">
+        <h4 align="center">Creating your team, please prepare for awesome.</h4>
+        <h5 align="center"><i class="fa fa-circle-o-notch fa-spin fa-lg"></i></h5>
+      </div>
+    </div>
+  </div>
+</div>
