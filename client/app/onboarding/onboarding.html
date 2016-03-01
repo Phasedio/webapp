@@ -23,15 +23,15 @@
         <form name="addMembers" ng-submit="inviteMembers(email1,email2,email3)" novalidation>
           <div class="form-group">
             <label for="teamName">Email</label>
-            <input type="email" class="form-control"  ng-model="email1" placeholder="sharon@example.com" style="color:#000;">
+            <input type="email" class="form-control" name="email1" ng-model="email1" ng-class="{'red-border' : addMembers.$submitted && addMembers.email1.$error.email}" placeholder="sharon@example.com" style="color:#000;" required>
           </div>
           <div class="form-group">
 
-            <input type="email" class="form-control"  ng-model="email2" placeholder="lois@example.com" style="color:#000;">
+            <input type="email" class="form-control"  name="email2" ng-model="email2" ng-class="{'red-border' : addMembers.$submitted && addMembers.email2.$error.email}" placeholder="lois@example.com" style="color:#000;">
           </div>
           <div class="form-group">
 
-            <input type="email" class="form-control"  ng-model="email3" placeholder="bram@example.com" style="color:#000;">
+            <input type="email" class="form-control"  name="email3" ng-model="email3" ng-class="{'red-border' : addMembers.$submitted && addMembers.email3.$error.email}" placeholder="bram@example.com" style="color:#000;">
           </div>
           <button class="btn btn-block btn-primary" type="submit">Send Invites</button>
         </form>

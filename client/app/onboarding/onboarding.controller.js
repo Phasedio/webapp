@@ -19,45 +19,47 @@ angular.module('webappApp')
 
     // First form
     $scope.addTeam = function(teamName) {
-      $scope.showThis = 'addMembers';
-      // $scope.creatingTeam = true;
-      // console.log($scope.Phased.user.email);
-      // Phased.addTeam(teamName,$scope.Phased.user.email, function success() {
-      //
-      //   $scope.showThis = 'addMembers';
-      //   $scope.creatingTeam = false;
-      //   $scope.$apply();
-      //   // $('#addTeamModal').modal('hide');
-      //   // toaster.pop('success', 'Success', 'Welcome to Phased, ' + teamName);
-      // }, function error(teamName) {
-      //   toaster.pop('error', 'Error', teamName + ' already exists. Please ask the team administrator for an invitation to join.');
-      // });
+      $scope.creatingTeam = true;
+      console.log($scope.Phased.user.email);
+      Phased.addTeam(teamName,$scope.Phased.user.email, function success() {
+
+        $scope.showThis = 'addMembers';
+        $scope.creatingTeam = false;
+        $scope.$apply();
+        // $('#addTeamModal').modal('hide');
+        // toaster.pop('success', 'Success', 'Welcome to Phased, ' + teamName);
+      }, function error(teamName) {
+        toaster.pop('error', 'Error', teamName + ' already exists. Please ask the team administrator for an invitation to join.');
+      });
     }
 
     //Second form
 
     $scope.inviteMembers = function(invite1,invite2,invite3) {
-      // //console.log(invite);
-      // console.log(Phased.user.email);
-      // console.log(Phased.user.name);
-      // console.log(Phased.team.uid);
-      // // $('#myModal').modal('toggle');
-      // // mixpanel.track("Sent Invite");
-      // if(invite1){
-      //   console.log(invite1);
-      //   var k = { email: invite1};
-      //   Phased.addMember(k);
-      // }
-      // if(invite2){
-      //   var j = { email: invite2};
-      //   Phased.addMember(j);
-      // }
-      // if(invite3){
-      //   var f = { email: invite3};
-      //   Phased.addMember(f);
-      // }
-      $scope.showThis = 'addUpdate';
-      // Phased.addMember(newMember);
+      if($scope.addMembers.$valid){
+        // mixpanel.track("Sent Invite");
+        if(invite1){
+          console.log(invite1);
+          var k = { email: invite1};
+          Phased.addMember(k);
+        }
+        if(invite2){
+          var j = { email: invite2};
+          Phased.addMember(j);
+        }
+        if(invite3){
+          var f = { email: invite3};
+          Phased.addMember(f);
+        }
+        $scope.showThis = 'addUpdate';
+      }else{
+        if($scope.addMembers.$error.email){
+          alert("Please enter valid emails");
+        }else if ($scope.addMembers.$error.required) {
+          alert("Please fill in the highlighted inputs");
+        }
+      }
+
     };
 
     // Third form
