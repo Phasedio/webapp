@@ -166,8 +166,11 @@
   			        <div class="col-xs-12">
 
                   <div class="" style=" width: 120px; margin: 0 auto; display:block;">
-                    <input class="" type="file" accept="image/*" capture="camera" id="file-upload"><br>
+                    <input class="" type="file" accept="image/*" capture="camera" id="file-upload" ng-model="fileUp" ng-change="handleFileSelect(fileUp)"><br>
     			          <button ng-click="changeImage()" class="btn btn-phased-blue btn-block ">Change Image</button>
+                    <p>
+                      <small>Photos under 2 MBs please!</small>
+                    </p>
                   </div>
 
 

@@ -167,6 +167,7 @@ return function(items, field, reverse) {
     $scope.team = Phased.team;
     $scope.viewType = Phased.viewType;
     console.log(Phased.team);
+    var ref = new Firebase(FURL);
 
     // bounce users if team has problems
     var checkTeam = function(){
@@ -218,6 +219,68 @@ return function(items, field, reverse) {
       Auth.logout();
       $location.path('/login');
     }
+
+    //Photo stuff
+    //console.log(Auth.user);
+ //document.getElementById("file-upload").addEventListener('change', handleFileSelect, false);
+ $scope.handleFileSelect = function(evt) {
+   console.log(evt);
+  //  var f = evt.target.files[0];
+  //  var reader = new FileReader();
+   //
+  //  console.log('the reader is ', reader);
+  //  reader.onload = (function(theFile) {
+  //    return function(e) {
+  //      var gravatar = e.target.result;
+  //      // Generate a location that can't be guessed using the file's contents and a random number
+  //      //var hash = CryptoJS.SHA256(Math.random() + CryptoJS.SHA256(gravatar));
+  //      var f = ref.child('profile').child(Phased.user.uid).child('gravatar');
+  //      f.set(gravatar, function() {
+  //        //document.getElementById("pano").src = e.target.result;
+  //        $('#file-upload').hide();
+   //
+  //        // Update the location bar so the URL can be shared with others
+  //        //window.location.hash = hash;
+   //
+  //      });
+  //    };
+  //  })(f);
+  //  reader.readAsDataURL(f);
+ }
+
+ $scope.changeImage = function(){
+    var f = $("#file-upload")[0].files[0];
+    console.log(f);
+    if(f.size < 2097152){
+      //var f = document.getElementById("file-upload").value;
+      var reader = new FileReader();
+      reader.onload = (function(theFile) {
+        return function(e) {
+
+          var gravatar = e.target.result;
+          console.log(gravatar);
+          // Generate a location that can't be guessed using the file's contents and a random number
+          //var hash = CryptoJS.SHA256(Math.random() + CryptoJS.SHA256(gravatar));
+          var f = ref.child('profile').child(Phased.user.uid).child('gravatar');
+          f.set(gravatar, function() {
+            mixpanel.track("Changed Profile Image");
+            //document.getElementById("pano").src = e.target.result;
+            $('#file-upload').hide();
+
+            // Update the location bar so the URL can be shared with others
+            //window.location.hash = hash;
+
+          });
+
+
+        };
+      })(f);
+      reader.readAsDataURL(f);
+    }
+
+
+ }
+
 
     // Update Account
     $scope.updateUser = function(update){

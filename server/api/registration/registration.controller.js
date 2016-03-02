@@ -278,6 +278,44 @@ exports.register = function(req, res) {
 }
 
 
+exports.removeMember = function(req, res) {
+
+	var teamID = req.body.team;
+	var memberID = req.body.member.uid;
+
+
+	//remove member id from members in team
+	FBRef.child('team').child(teamID).child('members').child(memberID).set(null);
+	console.log('Removed from team');
+	//go in to member and check if team is curTeam, and switch to null if so
+	FBRef.child('profile').child(memberID).once('value',function(snap){
+	 snap = snap.val();
+	 console.log('got snap');
+	 if(snap){
+		 console.log('Removed from cur team');
+		 if(snap.curTeam == teamID){
+			 FBRef.child('profile').child(memberID).child('curTeam').set(null);
+		 }
+		 //go in to member and remove the entree equal to team name
+		 for (var i in snap.teams) {
+		 	if (object.hasOwnProperty(i)) {
+		 		if(i == teamID){
+					console.log('Removed from teams');
+					FBRef.child('profile').child(memberID).child('teams').child(i).set(null);
+					res.send('done');
+				}
+		 	}
+		 }
+
+	 }else{
+		 res.send('done');
+	 }
+	});
+	//go in to member and remove the entree equal to team name
+
+
+};
+
 /**
 *
 *	Regsiters a new team

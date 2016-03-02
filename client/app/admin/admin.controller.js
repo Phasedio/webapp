@@ -60,6 +60,19 @@ angular.module('webappApp')
     }
 
 
+    $scope.removeMemberModal = function(member){
+      console.log(member);
+      $scope.removeThisMember = member;
+      //toggle Modal removeMemberModal
+      $('#removeMemberModal').modal('toggle');
+    }
+
+    $scope.removeMember= function(member){
+      $http.post('api/registration/remove-member',{'team':Phased.team.uid,'member':member}).success(function(data){
+        console.log('yay');
+      })
+    }
+
     /**
     *
     * Add members modal
