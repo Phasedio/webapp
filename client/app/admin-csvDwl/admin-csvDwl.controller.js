@@ -120,13 +120,13 @@ angular.module('webappApp')
       var e = new Date($scope.time.end).getTime();//end time
       if(cat){
         //With category
-        FBRef.child('team').child(Auth.currentTeam).child('all').child(x).orderByChild("cat").equalTo(cat).once('value',function(snap){
+        FBRef.child('team').child(Phased.team.uid).child('statuses').orderByChild("cat").equalTo(cat).once('value',function(snap){
           var y = snap.val();
           var a = []
 
           //Remove all results out of scope of the time selected
           _.forOwn(y, function(value, key) {
-            if(value.time > s && value.time < e){
+            if((value.time > s && value.time < e) && value.user == x){
               a.push(value);
             }
           } );
@@ -137,13 +137,13 @@ angular.module('webappApp')
         });
       }else{
         //With out category
-        FBRef.child('team').child(Auth.currentTeam).child('all').child(x).once('value',function(snap){
+        FBRef.child('team').child(Phased.team.uid).child('statuses').once('value',function(snap){
           var y = snap.val();
           var a = []
 
           //Remove all results out of scope of the time selected
           _.forOwn(y, function(value, key) {
-            if(value.time > s && value.time < e){
+            if((value.time > s && value.time < e) && value.user == x){
               a.push(value);
             }
           } );
