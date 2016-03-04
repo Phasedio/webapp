@@ -91,6 +91,16 @@
       border-radius: 0.5rem;
     }
   }
+  transition:all 0.3s;
+  &:hover{
+    background: $liteBlack;
+    h4,p{
+      color:#fff;
+    }
+    .member__add__member{
+      border-color: #fff!important;
+    }
+  }
 }
 
 .addmember{
@@ -108,4 +118,18 @@
 .stat__holder {
     display: inline-block;
     width: 49%;
+}
+
+.member__add__member{
+  height: 50px;
+  width: 50px;
+  margin:0 auto;
+  border: 1px solid #000;
+  border-radius: 50px;
+  p{
+    margin-top:3px;
+    margin-left: -1px;
+    font-size: 3rem;
+    text-align: center;
+  }
 }
