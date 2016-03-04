@@ -568,10 +568,16 @@ angular.module('webappApp')
     }
     // change priority
     $scope.changePriority = function(taskID, priorityKey) {
+      console.log(taskID, priorityKey);
+      console.log();
       mixpanel.track("Change Task Priorty");
       Phased.setTaskPriority(taskID, priorityKey);
     }
 
+    $scope.getPriority = function(id){
+      console.log(Phased.task.PRIORITY[id]);
+      return Phased.task.PRIORITY[id];
+    }
 
 
 
