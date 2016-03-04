@@ -1965,7 +1965,7 @@ angular.module('webappApp')
         oldRole : oldRole,
         failure : failure
       }
-
+      console.log(args);
       registerAsync(doChangeMemberRole, args);
     }
 

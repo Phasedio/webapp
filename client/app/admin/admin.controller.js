@@ -54,6 +54,7 @@ angular.module('webappApp')
     $scope.$on('Phased:memberChanged', checkRole);
 
     $scope.changeRole = function(member, oldRole) {
+      console.log(member,oldRole);
       Phased.changeMemberRole(member.uid, member.role, parseInt(oldRole), function failure(code, message){
         toaster.pop('error', 'Error', message);
       });

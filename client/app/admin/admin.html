@@ -12,7 +12,23 @@
           <li role="presentation"><a href="/billing">Billing</a></li>
         </ul>
    		 	<table class="table table-hover">
-  				<tbody>
+          <thead>
+            <tr>
+              <td>
+                Name
+              </td>
+              <td>
+                Current Role
+              </td>
+              <td>
+                Change Role
+              </td>
+              <td>
+                Remove
+              </td>
+            </tr>
+          </thead>
+          <tbody>
   					<tr class="task" ng-repeat="member in team.members" >
   						<td>
   							{{member.name}}
@@ -25,11 +41,12 @@
   							<select
   								ng-change="changeRole(member, '{{member.role}}')"
   								ng-model="member.role">
-                  <option ng-repeat="role in Phased.ROLE_ID" value="role">{{Phased.ROLE[role]}}</option>
+                  <option  value="0"></option>
+                  <option ng-repeat="role in Phased.ROLE_ID" value="{{role}}">{{Phased.ROLE[role]}}</option>
   							</select>
   						</td>
               <td>
-                <!-- <a href="" style="color:red" ng-click="removeMemberModal(member)">remove member</a> -->
+                <a href="" style="color:red" ng-click="removeMemberModal(member)">remove</a>
               </td>
   					</tr>
   				</tbody>
