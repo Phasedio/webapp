@@ -13,6 +13,7 @@ module.exports = function(app) {
   app.use('/api/pays', require('./api/pay'));
   app.use('/api/things', require('./api/thing'));
   app.use('/api/registration', require('./api/registration'));
+  app.use('/api/gh', require('./api/github'));
 
   // generous api endpoint spellings
   app.use('/api/notification', require('./api/notification'));
