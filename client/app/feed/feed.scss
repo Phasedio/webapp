@@ -625,7 +625,7 @@ select{
   border-radius: 2px;
 }
 .member__activity{
-  overflow: auto;
+  //overflow: auto;
   display: block;
   padding: 12px;
 	max-width: 496px;
@@ -642,7 +642,7 @@ select{
   }
   .activity__content,.activity__person{
     display: block;
-    overflow: auto;
+    //overflow: auto;
   }
   .activity__person{
     margin-bottom: 11px;
@@ -673,6 +673,10 @@ select{
     font-size: 12px;
     color: #9197a3;
   }
+}
+.activity__options{
+	display: inline-block;
+  float: right;
 }
 .feed__container{
   padding-top: 20px;

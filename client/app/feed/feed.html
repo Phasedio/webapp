@@ -40,7 +40,7 @@
 					<div class="feed__container">
 						<p align="center">Recent updates</p>
 						<div class="member__activity " ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 ">
-							<div class="activity__person">
+							<div class="activity__person clearfix">
 								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
 								<div class="activity__info">
 									<h5 class="">
@@ -65,6 +65,20 @@
 										</span> -->
 
 									</p>
+								</div>
+								<div class="activity__options">
+									<div class="btn-group">
+									  <button type="button" class="btn btn-drop-chevron dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									    <i class="fa fa-angle-down"></i>
+									  </button>
+									  <ul class="dropdown-menu">
+									    <li><a href="#">Action</a></li>
+									    <li><a href="#">Another action</a></li>
+									    <li><a href="#">Something else here</a></li>
+									    <li role="separator" class="divider"></li>
+									    <li><a href="#">Separated link</a></li>
+									  </ul>
+									</div>
 								</div>
 							</div>
 
