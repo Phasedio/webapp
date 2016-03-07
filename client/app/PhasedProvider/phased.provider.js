@@ -612,7 +612,6 @@ angular.module('webappApp')
               console.log(data.err);
               // handle error
             }
-            console.log(data.status);
             if (data.status == "active" ){
               //Show thing for active
               PhasedProvider.viewType = 'active';
