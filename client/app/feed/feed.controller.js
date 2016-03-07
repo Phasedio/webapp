@@ -119,7 +119,8 @@ angular.module('webappApp')
     $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
     $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
-
+    $scope.user = Phased.user;
+    $scope.deleteHolder = '';
 
 
 
@@ -246,6 +247,40 @@ angular.module('webappApp')
       mixpanel.track("Cleared Task from status");
       $scope.selectedTask = {};
       $('#taskModal').modal('toggle');
+    }
+
+    $scope.deleteSelected = function(item){
+      $scope.deleteHolder = item;
+    }
+    $scope.deleteTask = function(item){
+      console.log(item)
+
+      //move this to the PhasedProvider
+      var ref = new Firebase(FURL);
+
+      //check if update has task
+      if (item.task) {
+        //remove task from task statuses history
+        // ref.child('team')
+        // .child(Phased.team.uid)
+        // .child('projects')
+        // .child(item.task.project)
+        // .child('columns')
+        // .child(item.task.column)
+        // .child('cards')
+        // .child(item.task.card)
+        // .child('statuses')
+        // .child(item.task.id)
+        // .equalTo(item.key)
+        // .once('value',function(snap){
+        //
+        // })
+      }
+      ref.child('team')
+      .child(Phased.team.uid)
+      .child('statuses')
+      .child(item.key)
+      .set(null);
     }
 
 
