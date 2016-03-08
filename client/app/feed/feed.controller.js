@@ -121,6 +121,7 @@ angular.module('webappApp')
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
     $scope.user = Phased.user;
     $scope.deleteHolder = '';
+    $scope.editHolder = '';
 
 
 
@@ -248,16 +249,14 @@ angular.module('webappApp')
       $scope.selectedTask = {};
       $('#taskModal').modal('toggle');
     }
-
+    //Delete status flow
     $scope.deleteSelected = function(item){
       $scope.deleteHolder = item;
     }
     $scope.deleteTask = function(item){
       console.log(item)
-
       //move this to the PhasedProvider
       var ref = new Firebase(FURL);
-
       //check if update has task
       if (item.task) {
         //remove task from task statuses history
@@ -285,13 +284,69 @@ angular.module('webappApp')
       .child(item.key)
       .set(null);
       //rm from local
-      console.log($scope.team.statuses);
       delete $scope.team.statuses[item.key];
-
-      //$scope.team.statuses[item.key] = undefined;
-      //$('#deleteModal').modal('toggle');
       toaster.pop('success', "Success!", "Your status was deleted!");
-      //$route.reload();
+    }
+
+    //edit status flow
+    $scope.editStatusSelected = function(item){
+      $scope.editHolder = angular.copy(item);
+      $scope.origItem = item;
+    }
+
+    $scope.editStatus = function(){
+      console.log($scope.editHolder);
+      console.log($scope.origItem);
+      var ref = new Firebase(FURL);
+      var editedStatus = $scope.editHolder;
+      var origStatus = $scope.origItem;
+      //check if tasks exists on
+      if(editedStatus.task){
+        //are the tasks the same?
+        if (origStatus.task != editedStatus.task) {
+          //task was changed or added to status
+
+          // was there a task on the status in the first place?
+          if(origStatus.task){
+            //yes, we should delete the status from the task
+            var locate = "team/"+Phased.team.uid+"/projects/"+origStatus.task.project+"/columns/"+origStatus.task.column+"/cards/"+origStatus.task.card+"/tasks/"+origStatus.task.id+"/statuses";
+            console.log(locate);
+            console.log(origStatus.key);
+            ref.child(locate)
+            .orderByValue()
+            .equalTo(origStatus.key)
+            .once('value',function(snap){
+              var s = snap.val();
+              if(s){
+                s = Object.keys(s);
+                console.log(s);
+                console.log(snap.key());
+                ref.child(locate+"/"+s[0]).remove();
+              }
+
+            });
+          }
+
+          if(editedStatus.task.id != ""){
+            //Is there a new task?
+            editedStatus.task = {
+              project : '0A',
+              column : '0A',
+              card : '0A',
+              id : editedStatus.task.id,
+              name : Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks[editedStatus.task.id].name
+            }
+            ref.child('team').child(Phased.team.uid).child('projects/' + editedStatus.task.project +'/columns/'+editedStatus.task.column +'/cards/'+ editedStatus.task.card +'/tasks/'+editedStatus.task.id+'/statuses').push(origStatus.key);
+            //no, lets move on and add it to the new task
+          }else{
+            editedStatus.task = "";
+          }
+        }
+      }
+
+      ref.child('team').child(Phased.team.uid).child('statuses').child(editedStatus.key).update(editedStatus);
+      $scope.team.statuses[$scope.editHolder.key] = editedStatus;
+      $('#editModal').modal('toggle');
     }
 
 
