@@ -301,13 +301,13 @@ angular.module('webappApp')
       var editedStatus = $scope.editHolder;
       var origStatus = $scope.origItem;
       //check if tasks exists on
-      if(editedStatus.task.id){
+      if(editedStatus.task){
         //are the tasks the same?
         if (origStatus.task != editedStatus.task) {
           //task was changed or added to status
 
           // was there a task on the status in the first place?
-          if(origStatus.task.id){
+          if(origStatus.task){
             //yes, we should delete the status from the task
             var locate = "team/"+Phased.team.uid+"/projects/"+origStatus.task.project+"/columns/"+origStatus.task.column+"/cards/"+origStatus.task.card+"/tasks/"+origStatus.task.id+"/statuses";
             console.log(locate);
