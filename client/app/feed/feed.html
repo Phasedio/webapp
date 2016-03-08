@@ -201,7 +201,7 @@
 <div class="modal fade" id="editModal">
 <div class="modal-dialog modal-sm" >
 	<div class="modal-content">
-		<form>
+		<form ng-submit="editStatus()">
 		<div class="modal-header">
 			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			<h4 class="modal-title no-shadow">Edit Status Post</h4>
@@ -210,7 +210,7 @@
 
 			  <div class="form-group">
 			    <label for="exampleInputEmail1">What are you up to?</label>
-			    <textarea class="form-control" rows="3">{{editHolder.name}}</textarea>
+			    <textarea class="form-control" rows="3" ng-model="editHolder.name">{{editHolder.name}}</textarea>
 			  </div>
 			  <div class="form-group">
 			    <label for="exampleInputFile">Category</label>
@@ -221,7 +221,7 @@
 			  </div>
 				<div class="form-group">
 			    <label for="exampleInputFile">Task</label>
-					<select class="form-control" ng-model="editHolder.task.id">
+					<select class="form-control" ng-model="editHolder.task.id" >
 					  <option>None</option>
 					  <option ng-repeat="assignment in getUserTasks | orderObjectBy : 'time' : true" value="{{assignment.id}}">{{assignment.name}}</option>
 
@@ -234,7 +234,7 @@
 		</div>
 		<div class="modal-footer">
       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      <button type="submit" class="btn btn-primary">Submit</button>
+      <button type="submit" class="btn btn-primary" >Submit</button>
     </div>
 		</form>
 	</div><!-- /.modal-content -->

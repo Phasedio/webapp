@@ -290,7 +290,31 @@ angular.module('webappApp')
 
     //edit status flow
     $scope.editStatusSelected = function(item){
-      $scope.editHolder = item;
+      $scope.editHolder = angular.copy(item);
+      $scope.origItem = item;
+    }
+
+    $scope.editStatus = function(){
+      console.log($scope.editHolder);
+      console.log($scope.origItem);
+      var editedStatus = $scope.editHolder;
+      var origStatus = $scope.origItem;
+      //check if tasks exists on
+      if(editedStatus.task.id){
+        //are the tasks the same?
+        if (origStatus.task.id != editedStatus.task.id) {
+          //task was changed or added to status
+
+          // was there a task on the status in the first place?
+          if(origStatus.task.id){
+            //yes, we should delete the status from the task
+          }else{
+            //no, lets move on and add it to the new task
+          }
+        }
+      }
+      var ref = new Firebase(FURL);
+      ref.child('team').child(Phased.team.uid).child('statuses').child($scope.editHolder.key).update($scope.editHolder);
     }
 
 
