@@ -40,7 +40,7 @@
 					<div class="feed__container">
 						<p align="center">Recent updates</p>
 						<div class="member__activity " ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 ">
-							<div class="activity__person">
+							<div class="activity__person clearfix">
 								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
 								<div class="activity__info">
 									<h5 class="">
@@ -65,6 +65,19 @@
 										</span> -->
 
 									</p>
+								</div>
+								<div class="activity__options" ng-if="item.user == myID">
+									<div class="btn-group">
+									  <button type="button" class="btn btn-drop-chevron dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									    <i class="fa fa-angle-down"></i>
+									  </button>
+									  <ul class="dropdown-menu">
+									    <!-- <li><a href="#">Action</a></li>
+									    <li><a href="#">Another action</a></li>
+									    <li ng-if="item.user == myID" role="separator" class="divider"></li> -->
+									    <li ng-if="item.user == myID"><a href="#" data-toggle="modal" data-target="#deleteModal" ng-click="deleteSelected(item)">Delete Status</a></li>
+									  </ul>
+									</div>
 								</div>
 							</div>
 
@@ -162,3 +175,26 @@
 	</div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+<!--Tasks Modal-->
+<div class="modal fade" id="deleteModal">
+<div class="modal-dialog" style="width:60%">
+	<div class="modal-content">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title no-shadow">Delete Post</h4>
+		</div>
+		<div class="modal-body " >
+			<p>
+				Are you sure you want to delete this?
+			</p>
+
+		</div>
+		<div class="modal-footer">
+      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="deleteTask(deleteHolder)">Delete Post</button>
+    </div>
+	</div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<toaster-container toaster-options="{'time-out': 2000, 'close-button':true, 'animation-class': 'toast-top-right'}"></toaster-container>
