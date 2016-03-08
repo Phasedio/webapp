@@ -68,7 +68,9 @@ exports.auth2 = function(req, res) {
 
 				// first check incoming scopes to ensure user has allowed us to use the data we want
 				// maybe save the auth token to the session
-				// then register our webhook with GH
+				// then save repos to user FB key. 
+					// (these will be the user's personal repos as well as the organization ones)
+
 			});
 		});
 		_req.write(req_data);
@@ -78,4 +80,10 @@ exports.auth2 = function(req, res) {
 		// TODO : set error message here
 		res.redirect('localhost:9000/integrations');
 	}
+}
+
+
+// webhook for repo push updates
+exports.repoPush = function(req, res) {
+	
 }
