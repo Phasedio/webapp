@@ -297,24 +297,56 @@ angular.module('webappApp')
     $scope.editStatus = function(){
       console.log($scope.editHolder);
       console.log($scope.origItem);
+      var ref = new Firebase(FURL);
       var editedStatus = $scope.editHolder;
       var origStatus = $scope.origItem;
       //check if tasks exists on
       if(editedStatus.task.id){
         //are the tasks the same?
-        if (origStatus.task.id != editedStatus.task.id) {
+        if (origStatus.task != editedStatus.task) {
           //task was changed or added to status
 
           // was there a task on the status in the first place?
           if(origStatus.task.id){
             //yes, we should delete the status from the task
-          }else{
+            var locate = "team/"+Phased.team.uid+"/projects/"+origStatus.task.project+"/columns/"+origStatus.task.column+"/cards/"+origStatus.task.card+"/tasks/"+origStatus.task.id+"/statuses";
+            console.log(locate);
+            console.log(origStatus.key);
+            ref.child(locate)
+            .orderByValue()
+            .equalTo(origStatus.key)
+            .once('value',function(snap){
+              var s = snap.val();
+              if(s){
+                s = Object.keys(s);
+                console.log(s);
+                console.log(snap.key());
+                ref.child(locate+"/"+s[0]).remove();
+              }
+
+            });
+          }
+
+          if(editedStatus.task.id != ""){
+            //Is there a new task?
+            editedStatus.task = {
+              project : '0A',
+              column : '0A',
+              card : '0A',
+              id : editedStatus.task.id,
+              name : Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks[editedStatus.task.id].name
+            }
+            ref.child('team').child(Phased.team.uid).child('projects/' + editedStatus.task.project +'/columns/'+editedStatus.task.column +'/cards/'+ editedStatus.task.card +'/tasks/'+editedStatus.task.id+'/statuses').push(origStatus.key);
             //no, lets move on and add it to the new task
+          }else{
+            editedStatus.task = "";
           }
         }
       }
-      var ref = new Firebase(FURL);
-      ref.child('team').child(Phased.team.uid).child('statuses').child($scope.editHolder.key).update($scope.editHolder);
+
+      ref.child('team').child(Phased.team.uid).child('statuses').child(editedStatus.key).update(editedStatus);
+      $scope.team.statuses[$scope.editHolder.key] = editedStatus;
+      $('#editModal').modal('toggle');
     }
 
 
