@@ -91,7 +91,7 @@ angular.module('webappApp')
       return filtered;
     };
   })
-  .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location) {
+  .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location,toaster,$route) {
     ga('send', 'pageview', '/feed');
 
     // Background image
@@ -261,26 +261,34 @@ angular.module('webappApp')
       //check if update has task
       if (item.task) {
         //remove task from task statuses history
-        // ref.child('team')
-        // .child(Phased.team.uid)
-        // .child('projects')
-        // .child(item.task.project)
-        // .child('columns')
-        // .child(item.task.column)
-        // .child('cards')
-        // .child(item.task.card)
-        // .child('statuses')
-        // .child(item.task.id)
-        // .equalTo(item.key)
-        // .once('value',function(snap){
-        //
-        // })
+        var locate = "team/"+Phased.team.uid+"/projects/"+item.task.project+"/columns/"+item.task.column+"/cards/"+item.task.card+"/tasks/"+item.task.id+"/statuses";
+        console.log(locate);
+        console.log(item.key);
+        ref.child(locate)
+        .orderByValue()
+        .equalTo(item.key)
+        .once('value',function(snap){
+          var s = snap.val();
+          s = Object.keys(s);
+          console.log(s);
+          console.log(snap.key());
+          //var ref = new Firebase(s).set(null);
+          ref.child(locate+"/"+s[0]).remove();
+        });
       }
+      //rm from FB
       ref.child('team')
       .child(Phased.team.uid)
       .child('statuses')
       .child(item.key)
       .set(null);
+      //rm from local
+      //delete $scope.team.status[item.key];
+      console.log($scope.team.statuses[item.key]);
+      $scope.team.statuses[item.key] = undefined;
+      //$('#deleteModal').modal('toggle');
+      //toaster.pop('success', "Success!", "Your status was deleted!");
+      //$route.reload();
     }
 
 

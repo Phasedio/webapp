@@ -66,15 +66,15 @@
 
 									</p>
 								</div>
-								<div class="activity__options">
+								<div class="activity__options" ng-if="item.user == myID">
 									<div class="btn-group">
 									  <button type="button" class="btn btn-drop-chevron dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 									    <i class="fa fa-angle-down"></i>
 									  </button>
 									  <ul class="dropdown-menu">
-									    <li><a href="#">Action</a></li>
+									    <!-- <li><a href="#">Action</a></li>
 									    <li><a href="#">Another action</a></li>
-									    <li ng-if="item.user == myID" role="separator" class="divider"></li>
+									    <li ng-if="item.user == myID" role="separator" class="divider"></li> -->
 									    <li ng-if="item.user == myID"><a href="#" data-toggle="modal" data-target="#deleteModal" ng-click="deleteSelected(item)">Delete Status</a></li>
 									  </ul>
 									</div>
@@ -192,8 +192,9 @@
 		</div>
 		<div class="modal-footer">
       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      <button type="button" class="btn btn-primary" ng-click="deleteTask(deleteHolder)">Delete Post</button>
+      <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="deleteTask(deleteHolder)">Delete Post</button>
     </div>
 	</div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+<toaster-container toaster-options="{'time-out': 2000, 'close-button':true, 'animation-class': 'toast-top-right'}"></toaster-container>
