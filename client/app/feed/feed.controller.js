@@ -121,6 +121,7 @@ angular.module('webappApp')
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
     $scope.user = Phased.user;
     $scope.deleteHolder = '';
+    $scope.editHolder = '';
 
 
 
@@ -248,16 +249,14 @@ angular.module('webappApp')
       $scope.selectedTask = {};
       $('#taskModal').modal('toggle');
     }
-
+    //Delete status flow
     $scope.deleteSelected = function(item){
       $scope.deleteHolder = item;
     }
     $scope.deleteTask = function(item){
       console.log(item)
-
       //move this to the PhasedProvider
       var ref = new Firebase(FURL);
-
       //check if update has task
       if (item.task) {
         //remove task from task statuses history
@@ -285,13 +284,13 @@ angular.module('webappApp')
       .child(item.key)
       .set(null);
       //rm from local
-      console.log($scope.team.statuses);
       delete $scope.team.statuses[item.key];
-
-      //$scope.team.statuses[item.key] = undefined;
-      //$('#deleteModal').modal('toggle');
       toaster.pop('success', "Success!", "Your status was deleted!");
-      //$route.reload();
+    }
+
+    //edit status flow
+    $scope.editStatusSelected = function(item){
+      $scope.editHolder = item;
     }
 
 

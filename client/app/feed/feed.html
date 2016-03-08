@@ -72,9 +72,8 @@
 									    <i class="fa fa-angle-down"></i>
 									  </button>
 									  <ul class="dropdown-menu">
-									    <!-- <li><a href="#">Action</a></li>
-									    <li><a href="#">Another action</a></li>
-									    <li ng-if="item.user == myID" role="separator" class="divider"></li> -->
+									    <li><a href="#" data-toggle="modal" data-target="#editModal" ng-click="editStatusSelected(item)">Edit status</a></li>
+									    <li ng-if="item.user == myID" role="separator" class="divider"></li>
 									    <li ng-if="item.user == myID"><a href="#" data-toggle="modal" data-target="#deleteModal" ng-click="deleteSelected(item)">Delete Status</a></li>
 									  </ul>
 									</div>
@@ -194,6 +193,50 @@
       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
       <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="deleteTask(deleteHolder)">Delete Post</button>
     </div>
+	</div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!--Tasks Modal-->
+<div class="modal fade" id="editModal">
+<div class="modal-dialog modal-sm" >
+	<div class="modal-content">
+		<form>
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title no-shadow">Edit Status Post</h4>
+		</div>
+		<div class="modal-body " >
+
+			  <div class="form-group">
+			    <label for="exampleInputEmail1">What are you up to?</label>
+			    <textarea class="form-control" rows="3">{{editHolder.name}}</textarea>
+			  </div>
+			  <div class="form-group">
+			    <label for="exampleInputFile">Category</label>
+					<select class="form-control" ng-model="editHolder.cat">
+					  <option>None</option>
+						<option ng-repeat="(key, category) in team.categoryObj" value="{{key}}">{{category.name}} </option>
+					</select>
+			  </div>
+				<div class="form-group">
+			    <label for="exampleInputFile">Task</label>
+					<select class="form-control" ng-model="editHolder.task.id">
+					  <option>None</option>
+					  <option ng-repeat="assignment in getUserTasks | orderObjectBy : 'time' : true" value="{{assignment.id}}">{{assignment.name}}</option>
+
+					</select>
+			  </div>
+
+
+
+
+		</div>
+		<div class="modal-footer">
+      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </div>
+		</form>
 	</div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
