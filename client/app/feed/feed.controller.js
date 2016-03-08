@@ -274,6 +274,8 @@ angular.module('webappApp')
           console.log(snap.key());
           //var ref = new Firebase(s).set(null);
           ref.child(locate+"/"+s[0]).remove();
+
+          $scope.$apply();
         });
       }
       //rm from FB
@@ -283,9 +285,10 @@ angular.module('webappApp')
       .child(item.key)
       .set(null);
       //rm from local
-      //delete $scope.team.status[item.key];
-      console.log($scope.team.statuses[item.key]);
-      $scope.team.statuses[item.key] = undefined;
+      console.log($scope.team.statuses);
+      delete $scope.team.statuses[item.key];
+
+      //$scope.team.statuses[item.key] = undefined;
       //$('#deleteModal').modal('toggle');
       //toaster.pop('success', "Success!", "Your status was deleted!");
       //$route.reload();
