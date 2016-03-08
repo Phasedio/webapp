@@ -290,7 +290,7 @@ angular.module('webappApp')
 
       //$scope.team.statuses[item.key] = undefined;
       //$('#deleteModal').modal('toggle');
-      //toaster.pop('success', "Success!", "Your status was deleted!");
+      toaster.pop('success', "Success!", "Your status was deleted!");
       //$route.reload();
     }
 
