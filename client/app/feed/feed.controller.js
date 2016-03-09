@@ -91,6 +91,21 @@ angular.module('webappApp')
       return filtered;
     };
   })
+  .filter('orderMembers', function() {
+    return function(items, field, reverse) {
+      var filtered = [];
+      for (var i in items) {
+      items[i].key = i;
+      items[i].lastUpdated = items[i].currentStatus.time;
+      filtered.push(items[i]);
+    }
+      filtered.sort(function (a, b) {
+        return (a[field] > b[field] ? 1 : -1);
+      });
+      if(reverse) filtered.reverse();
+      return filtered;
+    };
+  })
   .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location,toaster,$route) {
     ga('send', 'pageview', '/feed');
 
@@ -271,7 +286,7 @@ angular.module('webappApp')
       if (item.task) {
         //remove task from task statuses history
         var locate = "team/"+Phased.team.uid+"/projects/"+item.task.project+"/columns/"+item.task.column+"/cards/"+item.task.card+"/tasks/"+item.task.id+"/statuses";
-        
+
         ref.child(locate)
         .orderByValue()
         .equalTo(item.key)
@@ -423,10 +438,20 @@ angular.module('webappApp')
         $scope.comment ="";
 
       }
-
-
-
     }
+
+
+
+    //change feed filter
+    $scope.filterFeed = 'recent';
+    $scope.changeFilter = function(string){
+      if(string == 'recent'){
+        $scope.filterFeed = 'recent';
+      }else if(string == 'members'){
+        $scope.filterFeed = 'members';
+      }
+    }
+
 
 
 
