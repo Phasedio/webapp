@@ -780,3 +780,26 @@ select{
 .action__container .meta__left .btn__active{
 	color: #2fc2a3;
 }
+
+.activity__int{
+	border-top: 1px solid #e5e5e5;
+	padding-top: 4px;
+	margin-top: 12px;
+}
+.activity__int__btn{
+	color: #7f7f7f;
+	font-size: 12px;
+	font-weight: bold;
+	line-height: 14px;
+	margin-right: 20px;
+	padding: 4px 4px 4px 0;
+	background: transparent;
+	&.active{
+		color:#2fc3b5;
+		box-shadow: none;
+	}
+
+}
+.activity__int__like{
+
+}

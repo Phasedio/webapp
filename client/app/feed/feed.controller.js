@@ -123,6 +123,9 @@ angular.module('webappApp')
     $scope.deleteHolder = '';
     $scope.editHolder = '';
 
+    //bootstrap opt-in func;
+
+    //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
 
     // bounce users if team has problems
@@ -347,6 +350,52 @@ angular.module('webappApp')
       ref.child('team').child(Phased.team.uid).child('statuses').child(editedStatus.key).update(editedStatus);
       $scope.team.statuses[$scope.editHolder.key] = editedStatus;
       $('#editModal').modal('toggle');
+    }
+
+
+    $scope.likeStatus = function(item){
+      console.log(item);
+      var ref = new Firebase(FURL);
+      //check if user has liked status
+      if (item.likes) {
+        if (item.likes[Phased.user.uid]) {
+          //remove like;
+          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(null);
+          delete item.likes[Phased.user.uid]; //add to front end
+        }else{
+          //push like to status
+          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+          item.likes[Phased.user.uid] = Phased.user.uid; //add to front end
+        }
+      }else{
+        //push like to status
+        ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+        item.likes = {}; //add to front end
+        item.likes[Phased.user.uid] = Phased.user.uid;
+      }
+
+
+    }
+
+    $scope.countLikes = function(likes){
+      if(likes){
+        return Object.keys(likes).length;
+      }else{
+        return "";
+      }
+
+    }
+    $scope.showLikers = function(likes){
+      if(likes){
+        var keys = Object.keys(likes);
+        var str = "";
+        for (var i = 0; i < keys.length; i++) {
+           str += Phased.team.members[keys[i]].name + "\n";
+        }
+        return str;
+      }
+
+
     }
 
 
