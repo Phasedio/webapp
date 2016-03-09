@@ -68,6 +68,7 @@ angular.module('webappApp')
     var _Auth, FBRef; // tacked on to PhasedProvider
     var ga = ga || function(){}; // in case ga isn't defined (as in chromeapp)
     var $rootScope = { $broadcast : function(a){} }; // set in $get, default for if PhasedProvider isn't injected into any scope. not available in .config();
+    var $http = {}; // ditto
 
     /**
     *
@@ -210,8 +211,9 @@ angular.module('webappApp')
     * exposes data, methods, and a FireBase reference
     *
     */
-    this.$get = ['$rootScope', function(_rootScope) {
+    this.$get = ['$rootScope', '$http', function(_rootScope, _http) {
       $rootScope = _rootScope;
+      $http = _http;
       // register functions listed after this in the script...
 
       // add member and team
@@ -244,6 +246,10 @@ angular.module('webappApp')
       // NOTIFS
       PhasedProvider.markNotifAsRead = _markNotifAsRead;
       PhasedProvider.markAllNotifsAsRead = _markAllNotifsAsRead;
+
+      // INTEGRATIONS
+      // GITHUB
+      PhasedProvider.getGHRepos = _getGHRepos;
 
       return PhasedProvider;
     }];
@@ -319,7 +325,7 @@ angular.module('webappApp')
     */
     var registerAsync = function(callback, args) {
       if (PHASED_SET_UP)
-        callback(args);
+        return callback(args);
       else
         req_callbacks.push({callback : callback, args : args });
     }
@@ -2561,6 +2567,44 @@ angular.module('webappApp')
       });
     }
 
+    /*
+    **
+    ** INTEGRATIONS
+    **
+    */
+
+    /**
+    *	
+    *	Little wrapper for $http get
+    * Returns a list of repos for the authenticated GH user;
+    *	returns false if the user isn't authenticated
+    *	returns HTTP error if exists
+    */
+    var _getGHRepos = function(callback) {
+    	registerAsync(doGetGHRepos, callback);
+    }
+
+    var doGetGHRepos = function(callback) {
+    	if (!('github' in _Auth.user)) {
+    		callback(false)
+    	} else {
+    		$http.get('https://api.github.com/user/repos', {
+    			params : {
+    				// type: 'owner',
+    				access_token : _Auth.user.github.accessToken
+    			}
+    		}).then(
+    			function success(res){
+	    			// console.trace(res);
+	    			callback(res.data);
+    			},
+    			function error(res){
+	    			console.trace('Error with GH request', res);
+	    			callback(res);
+    			}
+    		);
+    	}
+    }
 
   })
   .config(['PhasedProvider', 'FURL', 'AuthProvider', function(PhasedProvider, FURL, AuthProvider) {

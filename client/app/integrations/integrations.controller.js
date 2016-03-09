@@ -5,7 +5,7 @@ angular.module('webappApp')
 	ga('send', 'pageview', '/integrations');
 	var ref = new Firebase(FURL);
 	$scope.Phased = Phased;
-	// console.log('integrations', Phased);
+	$scope.github = Auth.user.github;
 
 	// bounce users without Admin or Owner permissions
 	var checkRole = function(){
@@ -40,16 +40,22 @@ angular.module('webappApp')
 	$scope.$on('Phased:PaymentInfo', checkTeam);
 
 
-	// 1. auth user to get token
+	// auth user to get token
 	$scope.startGHAuth = function(e) {
 		e.preventDefault();
 		// $window.location.href = '/api/gh/auth';
 		Auth.githubLogin(function(gh) {
 			console.log('Phased', Phased);
+			$scope.github = Auth.user.github;
 		});
 	}
 
-	// 2. save token to member profile
-
-	// 3. use token to register/deregister webhooks on behalf of team
+	// list repos user owns
+	$scope.showRepos = function(e) {
+		e.preventDefault();
+		Phased.getGHRepos(function(res) {
+			console.log('ghr', res);
+			$scope.github.repos = res;
+		});
+	}
 });
