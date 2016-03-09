@@ -796,6 +796,7 @@ select{
 	background: transparent;
 	&.active{
 		color:#2fc3b5;
+		box-shadow: none;
 	}
 
 }
