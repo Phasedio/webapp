@@ -399,6 +399,32 @@ angular.module('webappApp')
     }
 
 
+    //Comments
+
+    $scope.getCommentStatus = function(status){
+      $scope.statusComment = status;
+    }
+    $scope.postComment = function(comment){
+      console.log(comment);
+      console.log($scope.statusComment);
+      if (comment) {
+        var status = $scope.statusComment;
+        var ref = new Firebase(FURL);
+
+        var comment = {
+  	      name: comment,
+  	      time: new Date().getTime(),
+  	      user: Auth.user.uid,
+
+  	    };
+        ref.child('team').child(Phased.team.uid).child('statuses').child(status.key).child('comments').push(comment);
+      }
+
+
+
+    }
+
+
 
     // get number of active tasks assigned to userID
     function countActiveTasks(){

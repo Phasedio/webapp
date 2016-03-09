@@ -86,7 +86,7 @@
 
 							<div class="activity__int">
 								<button type="button" class="btn activity__int__btn activity__int__like" ng-class="{active : item.likes[myID]}" name="button" ng-click="likeStatus(item)" data-toggle="tooltip" data-placement="bottom" title="{{showLikers(item.likes)}}"><i class="fa fa-thumbs-o-up"></i> Like <span class="badge" ng-if="countLikes(item.likes) > 0">{{countLikes(item.likes)}}</span></button>
-								<button type="button" class="btn activity__int__btn activity__int__comment" name="button"><i class="fa fa-comment-o"></i> Comment <span class="badge">4</span></button>
+								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(item)"><i class="fa fa-comment-o"></i> Comment <span class="badge">4</span></button>
 							</div>
 						</div>
 					</div>
@@ -108,6 +108,62 @@
 
 		</div>
 </div>
+
+<!--Comment Modal-->
+<div class="modal fade" id="commentModal">
+<div class="modal-dialog modal-sm" style="width: 496px;">
+	<div class="modal-content">
+
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title no-shadow">Comments</h4>
+		</div>
+		<div class="modal-body" >
+
+
+			<div class="comment__holder">
+				
+				<div class="comment__message clearfix" ng-repeat="item in statusComment.comments">
+					<div class="comment__id">
+						<img src="{{team.members[item.user].pic}}"  alt="" />
+					</div>
+					<div class="comment__msg">
+						<p class="comment__name">
+							<strong>{{team.members[item.user].name}}</strong>
+						</p>
+						<p>
+							{{item.name}}
+						</p>
+					</div>
+					<div class="comment__time">
+						<p class="comment__name">
+							<span am-time-ago="item.time"></span>
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="comment__int">
+				<form ng-submit="postComment(comment)" novalidate>
+					<div class="form-group">
+
+				    <input type="text" class="form-control" id="exampleInputEmail1" autocomplete="off"  ng-model="comment" placeholder="Write a comment...">
+				  </div>
+
+					<button type="submit" class="btn btn-block btn-primary" >Submit</button>
+				</form>
+			</div>
+
+
+
+		</div>
+		<div class="modal-footer">
+
+    </div>
+
+	</div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 
 <!--Categories Modal-->
 <div class="modal fade" id="catModal">
@@ -244,4 +300,7 @@
 	</div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+
+
 <toaster-container toaster-options="{'time-out': 2000, 'close-button':true, 'animation-class': 'toast-top-right'}"></toaster-container>
