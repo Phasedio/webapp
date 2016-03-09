@@ -350,6 +350,24 @@ angular.module('webappApp')
     }
 
 
+    $scope.likeStatus = function(item){
+      console.log(item);
+      var ref = new Firebase(FURL);
+      //push like to status
+      ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+
+    }
+
+    $scope.countLikes = function(likes){
+      if(likes){
+        return Object.keys(likes).length;
+      }else{
+        return "";
+      }
+
+    }
+
+
 
     // get number of active tasks assigned to userID
     function countActiveTasks(){
