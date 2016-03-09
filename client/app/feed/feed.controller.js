@@ -148,6 +148,13 @@ angular.module('webappApp')
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
 
+    $scope.$on('Phased:changedStatus', function(){
+      if ($scope.statusComment) {
+        console.log($scope.statusComment);
+        $scope.statusComment = Phased.team.statuses[$scope.statusComment.key];
+      }
+    });
+
     //Print blank lines in for task area
     $scope.taskTable = [1,2,3,4,5];
 
@@ -361,23 +368,22 @@ angular.module('webappApp')
         if (item.likes[Phased.user.uid]) {
           //remove like;
           ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(null);
-          delete item.likes[Phased.user.uid]; //add to front end
+          
         }else{
           //push like to status
           ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
-          item.likes[Phased.user.uid] = Phased.user.uid; //add to front end
+
         }
       }else{
         //push like to status
         ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
-        item.likes = {}; //add to front end
-        item.likes[Phased.user.uid] = Phased.user.uid;
+
       }
 
 
     }
 
-    $scope.countLikes = function(likes){
+    $scope.countInts = function(likes){
       if(likes){
         return Object.keys(likes).length;
       }else{

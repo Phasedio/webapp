@@ -690,6 +690,22 @@ angular.module('webappApp')
         callback : cb
       });
 
+      // update status on change
+      cb = FBRef.child(teamKey + '/statuses').on('child_changed', function(snap){
+        console.log('things changed');
+        var key = snap.key();
+        console.log('things updated');
+        console.log(snap.val());
+        PhasedProvider.team.statuses[key] = snap.val();
+        $rootScope.$broadcast('Phased:changedStatus');
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/statuses',
+        eventType : 'child_changed',
+        callback : cb
+      });
+
 
       // category (doesn't need memory references)
       cb = FBRef.child(teamKey + '/category').on('value', function(snap) {

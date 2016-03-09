@@ -85,8 +85,8 @@
 							</div>
 
 							<div class="activity__int">
-								<button type="button" class="btn activity__int__btn activity__int__like" ng-class="{active : item.likes[myID]}" name="button" ng-click="likeStatus(item)" data-toggle="tooltip" data-placement="bottom" title="{{showLikers(item.likes)}}"><i class="fa fa-thumbs-o-up"></i> Like <span class="badge" ng-if="countLikes(item.likes) > 0">{{countLikes(item.likes)}}</span></button>
-								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(item)"><i class="fa fa-comment-o"></i> Comment <span class="badge">4</span></button>
+								<button type="button" class="btn activity__int__btn activity__int__like" ng-class="{active : item.likes[myID]}" name="button" ng-click="likeStatus(item)" data-toggle="tooltip" data-placement="bottom" title="{{showLikers(item.likes)}}"><i class="fa fa-thumbs-o-up"></i> Like <span class="badge" ng-if="countInts(item.likes) > 0">{{countInts(item.likes)}}</span></button>
+								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(item)"><i class="fa fa-comment-o"></i> Comment <span class="badge" ng-if="countInts(item.comments) > 0">{{countInts(item.comments)}}</span></button>
 							</div>
 						</div>
 					</div>
@@ -122,7 +122,7 @@
 
 
 			<div class="comment__holder">
-				
+
 				<div class="comment__message clearfix" ng-repeat="item in statusComment.comments">
 					<div class="comment__id">
 						<img src="{{team.members[item.user].pic}}"  alt="" />
