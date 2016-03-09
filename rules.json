@@ -4,27 +4,53 @@
       ".read" : "auth.uid != null",
       ".write" : false
     },
+    /*
+			used when authenticating a non-password provider. process:
+			0. user must begin authenticated with password.
+			1. profile/$pwUID/mappings/$newProvider set to 'authenticating'
+			2. usermappings/$providerUID set to $pwUID
+			3. profile/$pwUID/mappings/$newProvider set to $providerUID
+
+			read: any authenticated user
+			write: if "authenticating" set OR provider previously set
+			validate: can only set own providers
+
+			NB: users can now use the service with auth.uid being a provider ID.
+			The way to securely allow this is to map through the new userMappings key,
+			adding an additional rule but replacing auth.uid with root.child('userMappings/' + auth.uid).val()
+    */
+    "userMappings" : {
+      ".read" : "auth.uid !== null",
+      ".write" : "auth.uid !== null && (
+          root.child('profile/' + newData.child(auth.uid).val() + '/mappings/' + auth.provider).val() == 'authenticating' ||
+          root.child('profile/' + newData.child(auth.uid).val() + '/mappings/' + auth.provider).val() == auth.uid
+          )",
+      "$providerID" : {
+        ".validate" : "auth.uid == $providerID"
+      }
+    },
     "profile": {
       ".read" : "auth.uid == 'registration-server'",
       ".indexOn" : "email",
-      "$uid": {
-        /*
-          - anyone can read their own profile
-          - servers can read any profile
-          - members on the same team can read a profile
-        */
-        ".read" : "auth.uid == $uid || auth.uid == 'notif-server' || auth.uid == 'modServer' || auth.uid == 'registration-server' ||
-          root.child('team/' + root.child('profile/' + auth.uid + '/curTeam').val() + '/members/' + $uid).exists()",
+			"$uid": {
+			  /*
+			    - anyone can read their own profile
+			    - servers can read any profile
+			    - members on the same team can read a profile
+			  */
+		    ".read" : "auth.uid == $uid || root.child('userMappings/' + auth.uid).val() === $uid || auth.uid == 'notif-server' || auth.uid == 'modServer' || auth.uid == 'registration-server' ||
+          (auth.provider == 'password' && root.child('team/' + root.child('profile/' + auth.uid + '/curTeam').val() + '/members/' + $uid).exists()) || 
+          root.child('team/' + root.child('profile/' + root.child('userMappings/' + auth.uid).val() + '/curTeam').val() + '/members/' + $uid).exists()",
         ".write" : "auth.uid == 'registration-server'",
         "$default" : {
-          ".write" : "auth.uid == $uid" // in general, only the user can write to their own profile
+          ".write" : "auth.uid == $uid || root.child('userMappings/' + auth.uid).val() === $uid" // in general, only the user can write to their own profile
         },
         "teams" : {
           // team admins/owners can add or remove a user's teams
-          ".write" : "$uid == auth.uid || 
+          ".write" : "$uid == auth.uid || root.child('userMappings/' + auth.uid).val() === $uid || 
             (
               root.child('team/' + data.val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/ADMIN').val() 
-              || root.child('team/' + data.val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/OWNER').val()
+            	|| root.child('team/' + data.val() + '/members/' + auth.uid + '/role').val() == root.child('meta/ROLE_ID/OWNER').val()
             )
             ||  auth.uid == 'registration-server'",
           "$default" : {
@@ -32,10 +58,10 @@
           }
         },
         "curTeam" : {
-          ".write" : "auth.uid === $uid ||  auth.uid == 'registration-server'",
+          ".write" : "auth.uid === $uid || root.child('userMappings/' + auth.uid).val() === $uid ||  auth.uid == 'registration-server'",
           ".validate" : "root.child('team/' + newData.val()).exists()"
         }
-      }
+			}
     },
     "profile-in-waiting": {
       /*
@@ -68,25 +94,25 @@
             read: only user and server
             write: only user and server can write
           */
-          ".read" : "auth.uid === $userID || auth.uid === 'notif-server'",
-          ".write" : "auth.uid === $userID || auth.uid === 'notif-server'",
+          ".read" : "auth.uid === $userID || root.child('userMappings/' + auth.uid).val() === $userID || auth.uid === 'notif-server'",
+          ".write" : "auth.uid === $userID || root.child('userMappings/' + auth.uid).val() === $userID || auth.uid === 'notif-server'",
           ".indexOn" : "time"
         }
       }
     },
     "team": {
-      ".read" : "auth.uid == 'registration-server'",
+      ".read" : "auth.uid == 'registration-server' || auth.uid == 'notif-server'",
       ".write" : "auth.uid == 'registration-server'",
       ".indexOn" : "name",
       "$teamID" : {
         // anyone on the team can read the data; so can the server
-        ".read" : "data.child('members/' + auth.uid).exists() || auth.uid == 'notif-server' || auth.uid == 'registration-server'",
+        ".read" : "data.child('members/' + auth.uid).exists() || data.child('members/' + root.child('userMappings/' + auth.uid).val()).exists() || auth.uid == 'notif-server' || auth.uid == 'registration-server'",
         "statuses" : {
           /*
             read: only users on this team
             write: only users on this team
           */
-          ".write" :  "data.parent().child('members/' + auth.uid).exists()",
+          ".write" :  "data.parent().child('members/' + auth.uid).exists() || data.parent().child('members/' + root.child('userMappings/' + auth.uid).val()).exists()",
           ".indexOn" : "time"
         },
         "projects": {
@@ -94,7 +120,8 @@
             /*
               all aspects of a project can be modified by anyone on the team
             */
-            ".write" :  "root.child('team/' + $teamID + '/members/' + auth.uid).exists()",
+            ".write" :  "root.child('team/' + $teamID + '/members/' + auth.uid).exists() ||
+                        root.child('team/' + $teamID + '/members/' + root.child('userMappings/' + auth.uid).val()).exists()",
             "name" : {},
             "description" : {},
             "created" : {},
@@ -178,14 +205,15 @@
           }
         },
         "members" : {
+          
           "$memberID" : {
-            ".write" : "auth.uid === 'registration-server'",
+            ".write" : "auth.uid == 'registration-server'",
             "lastOnline" : {
               /*
                 write: only current user
                 validate: number
               */
-              ".write" : "auth.uid == $memberID",
+              ".write" : "auth.uid == $memberID || root.child('userMappings/' + auth.uid).val() == $memberID || auth.uid === 'registration-server'",
               ".validate" : "newData.isNumber()"
             },
             "presence" : {
@@ -193,7 +221,7 @@
                 write : only current user
                 validate: meta/PRESENCE
               */
-              ".write" : "auth.uid == $memberID",
+              ".write" : "auth.uid == $memberID || root.child('userMappings/' + auth.uid).val() == $memberID || auth.uid === 'registration-server'",
               ".validate" : "root.child('meta/PRESENCE/' + newData.val()).exists()"
             },
             "role" : {
@@ -202,14 +230,17 @@
                 validate: must be one of the keys of meta/ROLE
               */
               ".write" : "data.parent().parent().child(auth.uid + '/role').val() === root.child('meta/ROLE_ID/ADMIN').val() || 
-                          data.parent().parent().child(auth.uid + '/role').val() === root.child('meta/ROLE_ID/OWNER').val()",
+                          data.parent().parent().child( root.child('userMappings/' + auth.uid).val() + '/role').val() === root.child('meta/ROLE_ID/ADMIN').val() || 
+                          data.parent().parent().child(auth.uid + '/role').val() === root.child('meta/ROLE_ID/OWNER').val() ||
+                          data.parent().parent().child( root.child('userMappings/' + auth.uid).val() + '/role').val() === root.child('meta/ROLE_ID/OWNER').val() ||
+                          auth.uid === 'registration-server'",
               ".validate" : "root.child('meta/ROLE/' + newData.val()).exists()"
             },
             "currentStatus" : {
               /*
                 write: only current user
               */
-              ".write" : "auth.uid == $memberID" 
+              ".write" : "auth.uid == $memberID || root.child('userMappings/' + auth.uid).val() == $memberID || auth.uid === 'registration-server'" 
             }
           }
         },
@@ -218,23 +249,34 @@
             write: only users on this team
             (could be modified to only allow admin)
           */
-          ".write" :  "data.parent().child('members/' + auth.uid).exists()"
+          ".write" :  "data.parent().child('members/' + auth.uid).exists() || data.parent().child('members/' + root.child('userMappings/' + auth.uid).val()).exists()"
         },
         "billing" : {
           /*
             (should be changed to only server or only admin/owner,
             but would need to be outside of team key)
-            read: user on current team
-            write: user on current team
+            read: user on current team || server
+            write: user on current team || serve
           */
-          ".read" : "data.parent().child('members/' + auth.uid).exists()",
-          ".write" : "data.parent().child('members/' + auth.uid).exists()"
+          ".read" : "auth.uid == 'registration-server'",//"data.parent().child('members/' + auth.uid).exists() || auth.uid === 'registration-server'",
+          ".write" : "auth.uid == 'registration-server'"//"data.parent().child('members/' + auth.uid).exists() || auth.uid === 'registration-server'"
         },
         "$default" : {
           // only members of this team can write
-          ".write" : "data.child('members/' + auth.uid).exists() || auth.uid == 'notif-server'" 
+          ".write" : "data.child('members/' + auth.uid).exists() ||
+                      data.child('members/' + root.child('userMappings/' + auth.uid).val()).exists() ||
+                      auth.uid == 'notif-server' || auth.uid == 'registration-server'" 
         }
       }
+    },
+    "deletedTeams" :{
+      /*
+        For manual removal of teams
+        read : reg server
+        write : reg server
+      */
+      ".read" : true,
+      ".write" : "auth.uid == 'registration-server'" 
     }
   }
 }

@@ -43,7 +43,10 @@ angular.module('webappApp')
 	// 1. auth user to get token
 	$scope.startGHAuth = function(e) {
 		e.preventDefault();
-		$window.location.href = '/api/gh/auth';
+		// $window.location.href = '/api/gh/auth';
+		Auth.githubLogin(function(gh) {
+			console.log('Phased', Phased);
+		});
 	}
 
 	// 2. save token to member profile

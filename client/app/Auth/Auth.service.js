@@ -3,9 +3,9 @@
 angular.module('webappApp')
   .provider('Auth', function() {
 
-    this.$get = ['FURL', '$firebaseAuth', '$firebase', '$firebaseObject', '$location', '$rootScope', 'toaster',
-        function (FURL, $firebaseAuth, $firebase,$firebaseObject,$location,$rootScope, toaster) {
-            return new AuthProvider(FURL, $firebaseAuth, $firebase,$firebaseObject,$location,$rootScope, toaster);
+    this.$get = ['FURL', '$firebaseAuth', '$firebase', '$firebaseObject', '$location', '$window', '$rootScope', 'toaster',
+        function (FURL, $firebaseAuth, $firebase, $firebaseObject, $location, $window, $rootScope, toaster) {
+            return new AuthProvider(FURL, $firebaseAuth, $firebase, $firebaseObject, $location, $window, $rootScope, toaster);
         }];
 
     // array of callbacks to execute after auth is finished
@@ -31,7 +31,7 @@ angular.module('webappApp')
     }
 
     // AngularJS will instantiate a singleton by calling "new" on this function
-    var AuthProvider = function(FURL, $firebaseAuth, $firebase,$firebaseObject,$location,$rootScope, toaster) {
+    var AuthProvider = function(FURL, $firebaseAuth, $firebase,$firebaseObject, $location, $window, $rootScope, toaster) {
         var ref = new Firebase(FURL);
         var auth = $firebaseAuth(ref);
 
@@ -62,6 +62,63 @@ angular.module('webappApp')
                         failure(err);
                     }
                 );
+            },
+            /*
+            	Authenticate with GitHub provider
+
+							This presents some difficulties with FireBase, since it overwrites the FB session
+							This function sets up some mappings which allow users authenticated with GH to access
+								their previously authenticated account.
+
+							NB: the user's Auth data STAYS THE SAME locally
+
+            	1 stash profile/oldUID/mappings[newProvider] = 'authenticating'
+            	2 auth with github
+            	3 stash userMapping[newUID] = oldUID (only works if 'authenticating' == profile/oldUID/mappings[newProvider])
+            	4 stash profile/oldUID/mappings[newProvider] = newUID
+            */
+            githubLogin : function(success, failure) {
+            	var fail = function(err){
+            		console.trace(err);
+            		if (typeof failure == "function")
+            			failure(error);
+            	}
+
+            	// 3 & 4
+            	var authSuccess = function(authData) {
+            		console.log("Authenticated successfully with payload:", authData);
+            		var newUID = authData.uid,
+            		oldUID = Auth.user.uid;
+            		Auth.github = authData.github;
+        				// 3.
+        				ref.child('userMappings/' + newUID).set(oldUID, function(err){
+        					if (err) return fail(err);
+        					// 4.
+        					ref.child('profile/' + oldUID + '/mappings/github/').set(newUID, function(err){
+        						if (err) return fail(err);
+        						if (typeof success == "function") return success(authData.github);
+        					})
+        				})
+            	}
+
+            	// 1
+            	ref.child('profile/' + Auth.user.uid + '/mappings/github').set('authenticating', function(err){ if (err) return fail(err); });
+            	
+            	// 2.
+            	ref.authWithOAuthPopup("github", function(error, authData) {
+            		if (error) {
+            			console.log("popup failed, trying redirect");
+            			ref.authWithOAuthRedirect('github', function(error, authData) {
+            				if (error) return fail(error);
+            				else authSuccess(authData);
+            			});
+            		} else {
+            			authSuccess(authData);
+            		}
+            	}, {
+            		scope: 'user,repo'
+            	});
+            	
             },
             register : function(user) {
                 user.email = user.email.toLowerCase();
@@ -129,7 +186,7 @@ angular.module('webappApp')
         *   then calls its own callbacks (set in a pseudo-Promise)
         *
         */
-        var getProfileDetails = function(uid) {
+        var getProfileDetails = function(uid, provider) {
             // where pseudo-promise is kept
             getProfileDetails.then = function() {};
             getProfileDetails.args = {};
@@ -144,37 +201,53 @@ angular.module('webappApp')
             }
 
             // get account data
-            ref.child('profile/' + uid).once('value', function (snapshot) {
-                var user = snapshot.val();
-                if (user) {
-                    Auth.user.profile = user;
-                    Auth.currentTeam = user.curTeam;
-                    mixpanel.identify(uid);
-                    mixpanel.people.set({
-                        "$email": user.email,    // only special properties need the $
-                        "$last_login": new Date(),         // properties can be dates...
-                        "team" : user.curTeam
+            var fillProfile = function (snapshot) {
+            	var user = snapshot.val();
+            	if (user) {
+            		Auth.user.profile = user;
+            		Auth.currentTeam = user.curTeam;
+            		mixpanel.identify(Auth.user.uid);
+            		mixpanel.people.set({
+	                "$email": user.email,    // only special properties need the $
+	                "$last_login": new Date(),         // properties can be dates...
+	                "team" : user.curTeam
+	              });
+		            // if user isn't currently on a team
+		            if (!user.curTeam) {
+	                // if the user has teams, set the first one to active
+	                if ( user.teams ) {
+	                  Auth.currentTeam = user.teams[Object.keys(user.teams)[0]]; // first of the user's teams
+	                  ref.child('profile/' + Auth.user.uid + '/curTeam').set(Auth.currentTeam);
+	                } else {
+	                  // if the user doesn't have teams, main.controller will prompt to add one
+	                  Auth.currentTeam = false;
+	                }
+	              }
+                doAllAfterAuth(Auth);
+                getProfileDetails.then(getProfileDetails.args);
+              } else {
+              	console.trace('Grave error, user ' + Auth.user.uid + ' does not exist');
+              	$location.path('/login');
+              }
+            }
 
-                    });
-                    // if user isn't currently on a team
-                    if (!user.curTeam) {
-                        // if the user has teams, set the first one to active
-                        if ( user.teams ) {
-                            Auth.currentTeam = user.teams[Object.keys(user.teams)[0]]; // first of the user's teams
-                            ref.child('profile/' + uid + '/curTeam').set(Auth.currentTeam);
-                        } else {
-                            // if the user doesn't have teams, main.controller will prompt to add one
-                            Auth.currentTeam = false;
-                        }
-                    }
-
-                    doAllAfterAuth(Auth);
-                    getProfileDetails.then(getProfileDetails.args);
-                } else {
-                    console.warn('Grave error, user ' + uid + ' does not exist');
-                    $location.path('/login');
-                }
-            });
+            // if the account is a normal account, get the profile right away
+            if (authData.provider == 'password')
+            	ref.child('profile/' + uid).once('value', fillProfile);
+            else {
+            	// otherwise we have to get the user's proper ID first
+            	ref.child('userMappings/' + uid).once('value', function(snap){
+            		var properID = snap.val();
+            		if (properID) {
+            			Auth.user.providerUID = Auth.user.uid + ''; // back it up just in case
+            			Auth.user.uid = properID;
+            			// now that we have the proper ID, we can continue with filling out the profile datas
+            			ref.child('profile/' + properID).once('value', fillProfile);
+            		} else {
+            			console.trace('Grave error: user has not registered with password or could not be found; login abort');
+            		}
+            	});
+            }
 
             // return the pseudo-promise
             return pseudoPromise;
@@ -263,8 +336,10 @@ angular.module('webappApp')
         // get user account metadata if already logged in
         var authData = auth.$getAuth();
         if (authData) {
-            angular.copy(authData, Auth.user);
-            getProfileDetails(Auth.user.uid); // go to app after getting details
+        	console.log('$getAuth', authData);
+          angular.copy(authData, Auth.user);
+          getProfileDetails(Auth.user.uid, authData.provider); // go to app after getting details
+        
         }
 
         return Auth;
