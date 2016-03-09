@@ -37,18 +37,31 @@ exports.index = function(req, res) {
 *
 */
 exports.repoPush = function(req, res) {
+	if ('zen' in req.body) { // gh ping event whenever hook is registered
+		console.log(req.body.zen);
+		res.status(202).end();
+		return;
+	}
+
+	if (!('repository' in req.body)) { // no repo!
+		console.log('no repo, bad request');
+		res.status(400).end();
+		return;
+	}
+
 	// do after authenticated
 	FBRef.authWithCustomToken(token, function(error, authData) {
 		// fail if error
 		if (error) {
 			console.log(error);
-			res.end();
+			res.status(202).end();
 			return;
 		}
 
 		var teamID = req.params.team;
-		var pushEvent = req.data;
-		console.log('repopush', teamID);
+		var pushEvent = req.body;
+		// console.log('repopush', teamID);
+		console.log('pushEvent', req.data);
 
 		// 0. try to get team
 		FBRef.child('team/' + teamID).once('value', function(snap) {
@@ -63,7 +76,7 @@ exports.repoPush = function(req, res) {
 				) {
 				var name = pushEvent && 'repository' in pushEvent ? pushEvent.repository.name : 'repository';
 				console.log(name + ' not registered, end');
-				res.end();
+				res.status(202).end();
 				return;
 			}
 
@@ -98,7 +111,7 @@ exports.repoPush = function(req, res) {
 			// 4. issue notification — TODO
 
 			// END
-			res.end();
+			res.status(202).end();
 		}, function(err) {
 			console.log(err);
 		});
