@@ -271,8 +271,7 @@ angular.module('webappApp')
       if (item.task) {
         //remove task from task statuses history
         var locate = "team/"+Phased.team.uid+"/projects/"+item.task.project+"/columns/"+item.task.column+"/cards/"+item.task.card+"/tasks/"+item.task.id+"/statuses";
-        console.log(locate);
-        console.log(item.key);
+        
         ref.child(locate)
         .orderByValue()
         .equalTo(item.key)
@@ -305,8 +304,7 @@ angular.module('webappApp')
     }
 
     $scope.editStatus = function(){
-      console.log($scope.editHolder);
-      console.log($scope.origItem);
+
       var ref = new Firebase(FURL);
       var editedStatus = $scope.editHolder;
       var origStatus = $scope.origItem;
@@ -320,8 +318,7 @@ angular.module('webappApp')
           if(origStatus.task){
             //yes, we should delete the status from the task
             var locate = "team/"+Phased.team.uid+"/projects/"+origStatus.task.project+"/columns/"+origStatus.task.column+"/cards/"+origStatus.task.card+"/tasks/"+origStatus.task.id+"/statuses";
-            console.log(locate);
-            console.log(origStatus.key);
+
             ref.child(locate)
             .orderByValue()
             .equalTo(origStatus.key)
@@ -361,14 +358,14 @@ angular.module('webappApp')
 
 
     $scope.likeStatus = function(item){
-      console.log(item);
+
       var ref = new Firebase(FURL);
       //check if user has liked status
       if (item.likes) {
         if (item.likes[Phased.user.uid]) {
           //remove like;
           ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(null);
-          
+
         }else{
           //push like to status
           ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
@@ -411,8 +408,7 @@ angular.module('webappApp')
       $scope.statusComment = status;
     }
     $scope.postComment = function(comment){
-      console.log(comment);
-      console.log($scope.statusComment);
+
       if (comment) {
         var status = $scope.statusComment;
         var ref = new Firebase(FURL);
@@ -424,6 +420,8 @@ angular.module('webappApp')
 
   	    };
         ref.child('team').child(Phased.team.uid).child('statuses').child(status.key).child('comments').push(comment);
+        $scope.comment ="";
+
       }
 
 

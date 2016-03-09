@@ -143,13 +143,13 @@
 				</div>
 			</div>
 			<div class="comment__int">
-				<form ng-submit="postComment(comment)" novalidate>
+				<form name="commentForm" ng-submit="postComment(comment)" novalidate>
 					<div class="form-group">
 
-				    <input type="text" class="form-control" id="exampleInputEmail1" autocomplete="off"  ng-model="comment" placeholder="Write a comment...">
+				    <input type="text" class="form-control" name="comment" autocomplete="off"  ng-model="comment" placeholder="Write a comment...">
 				  </div>
 
-					<button type="submit" class="btn btn-block btn-primary" >Submit</button>
+					<button type="submit" class="btn btn-block btn-primary" >Comment</button>
 				</form>
 			</div>
 
