@@ -5,6 +5,6 @@ var router = express.Router();
 var controller = require('./gh.controller');
 
 router.get('/', controller.index);
-router.get('/repo/:team', controller.repoPush);
+router.post('/repo/:team', controller.repoPush);
 
 module.exports = router;
