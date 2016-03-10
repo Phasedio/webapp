@@ -101,12 +101,12 @@
       }
     },
     "team": {
-      ".read" : "auth.uid == 'registration-server' || auth.uid == 'notif-server'",
-      ".write" : "auth.uid == 'registration-server'",
+      ".read" : "auth.uid == 'registration-server' || auth.uid == 'notif-server' || auth.uid == 'hook-server'",
+      ".write" : "auth.uid == 'registration-server' || auth.uid == 'hook-server'",
       ".indexOn" : "name",
       "$teamID" : {
         // anyone on the team can read the data; so can the server
-        ".read" : "data.child('members/' + auth.uid).exists() || data.child('members/' + root.child('userMappings/' + auth.uid).val()).exists() || auth.uid == 'notif-server' || auth.uid == 'registration-server'",
+        ".read" : "data.child('members/' + auth.uid).exists() || data.child('members/' + root.child('userMappings/' + auth.uid).val()).exists() || auth.uid == 'notif-server' || auth.uid == 'registration-server' || auth.uid == 'hook-server'",
         "statuses" : {
           /*
             read: only users on this team
