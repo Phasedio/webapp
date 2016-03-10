@@ -2807,7 +2807,6 @@ angular.module('webappApp')
     							PhasedProvider.team.repos[i].hooks.push(res.data);
     						}
     					}
-    					console.log('hook registered successfully');
     					callback(true);
     				}
     			});
