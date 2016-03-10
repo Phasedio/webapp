@@ -2777,7 +2777,7 @@ angular.module('webappApp')
   		}).then(
   			function success(res) {
   				if (res.status != 201) {
-  					_deregisterWebhook(repo.hooks_url, phasedAPIEndpoint);
+  					doDeleteWebhook(res.data, repo.id); // res.data is the new hook
   					callback(false);
   					return;
   				}
@@ -2800,6 +2800,13 @@ angular.module('webappApp')
     					console.log(err);
     					callback(false);
     				} else {
+    					// add hook to repo in model
+    					for (var i in PhasedProvider.team.repos) {
+    						if (PhasedProvider.team.repos[i].id == repo.id) {
+    							PhasedProvider.team.repos[i].hooks = PhasedProvider.team.repos[i].hooks || [];
+    							PhasedProvider.team.repos[i].hooks.push(res.data);
+    						}
+    					}
     					console.log('hook registered successfully');
     					callback(true);
     				}
