@@ -61,12 +61,11 @@ exports.repoPush = function(req, res) {
 		var teamID = req.params.team;
 		var pushEvent = req.body;
 		// console.log('repopush', teamID);
-		console.log('pushEvent', req.data);
+		console.log('pushEvent', req.body);
 
 		// 0. try to get team
 		FBRef.child('team/' + teamID).once('value', function(snap) {
 			var team = snap.val();
-			console.log('team data:', team);
 
 			// 1. a) b) & c)
 			if (
@@ -95,17 +94,17 @@ exports.repoPush = function(req, res) {
 			}
 
 			// 3.
-			var statusText = pushEvent.pusher.name + ' pushed ' + pushEvent.size + ' commits to ' + pushEvent.repository.name;
+			var statusText = pushEvent.pusher.name + ' pushed ' + pushEvent.commits.length + ' commits to ' + pushEvent.repository.name;
 			var newStatus = {
 				name: statusText,
-				time: pushEvent.pushed_at,
+				time: pushEvent.pushed_at || new Date().getTime(),
 				user: thePusher // ID or false
 			};
 
 			console.log('updating status: ' + statusText);
-			FBRef.child('team/' + team + '/statuses').push(newStatus);
+			FBRef.child('team/' + teamID + '/statuses').push(newStatus);
 			if (thePusher)
-				FBRef.child('team/' + team + '/members/' + thePusher + '/currentStatus').set(newStatus);
+				FBRef.child('team/' + teamID + '/members/' + thePusher + '/currentStatus').set(newStatus);
 			console.log('status updated');
 
 			// 4. issue notification — TODO
