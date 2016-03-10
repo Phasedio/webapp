@@ -35,13 +35,13 @@
 							</div>
 
 						</form>
-
+						<div class="feed__fiter clearfix">
+							<button type="button" class="btn" ng-class="{active:filterFeed == 'recent'}" name="button" ng-click="changeFilter('recent')"><i class="fa fa-clock-o"></i> Most recent</button>
+							<button type="button" class="btn" ng-class="{active:filterFeed == 'members'}" name="button" ng-click="changeFilter('members')"><i class="fa fa-users"></i> By members</button>
+						</div>
 					</div>
 					<div class="feed__container">
-						<div class="feed__fiter">
-							<button type="button" name="button" ng-click="changeFilter('recent')"><i class="fa fa-clock-o"></i></button>
-							<button type="button" name="button" ng-click="changeFilter('members')"><i class="fa fa-users"></i></button>
-						</div>
+
 						<div class="member__activity " ng-show="filterFeed == 'recent'" ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 ">
 							<div class="activity__person clearfix">
 								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
