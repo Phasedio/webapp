@@ -97,7 +97,7 @@ exports.repoPush = function(req, res) {
 
 			// 3.
 			var statusText = pushEvent.pusher.name + ' pushed ' + pushEvent.commits.length + ' commits to ' + pushEvent.repository.name;
-			statusText += '("' + head_commit.message + '")';
+			statusText += '("' + pushEvent.head_commit.message + '")';
 			var newStatus = {
 				name: statusText,
 				time: pushEvent.pushed_at || new Date().getTime(),
