@@ -719,7 +719,14 @@ angular.module('webappApp')
 
       // repos
       cb = FBRef.child(teamKey + '/repos').on('value', function(snap){
-        PhasedProvider.team.repos = snap.val();
+      	var newRepos = snap.val();
+      	// persist hooks data not in FB db
+      	for (var repoID in PhasedProvider.team.repos) {
+      		if (repoID in newRepos) {
+      			newRepos[repoID].hooks = PhasedProvider.team.repos[repoID].hooks;
+      		}
+      	}
+      	PhasedProvider.team.repos = newRepos;
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -2912,17 +2919,19 @@ angular.module('webappApp')
   		});
 
 			// 2. delete hook in team
-			for (var i in PhasedProvider.team.repos) {
-				var thisRepo = PhasedProvider.team.repos[i];
-				if (thisRepo.id == repoID) {
-					for (var j in thisRepo.hooks) {
-						if (thisRepo.hooks[j].id == hook.id) {
-							PhasedProvider.team.repos[i].hooks.splice(j, 1);
-							return;
-						}
-					}
+			var thisRepo = PhasedProvider.team.repos[repoID];
+			for (var i in thisRepo.hooks) {
+				if (thisRepo.hooks[i].id == hook.id) {
+					PhasedProvider.team.repos[repoID].hooks.splice(i, 1);
+					break;
 				}
 			}
+
+			// 3. delete repo from FB if no more webhooks
+			if (PhasedProvider.team.repos[repoID].hooks.length < 1) {
+				FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + repoID).set(null);
+			}
+
     }
 
   })
