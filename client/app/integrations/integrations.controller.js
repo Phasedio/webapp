@@ -91,4 +91,11 @@ angular.module('webappApp')
 	$scope.toggleHookActive = function(hook, repoID) {
 		Phased.toggleWebhookActive(hook, repoID);
 	}
+
+	$scope.deleteHook = function(hook, repoID) {
+		if (confirm("Are you sure you want to delete this? This can't be undone."))
+			Phased.deleteWebhook(hook, repoID, function() {
+				console.log('Deleted');
+			});
+	}
 });

@@ -256,6 +256,7 @@ angular.module('webappApp')
       PhasedProvider.getAllRepoHooks = _getAllRepoHooks;
       PhasedProvider.registerWebhookForRepo = _registerWebhookForRepo;
       PhasedProvider.toggleWebhookActive = _toggleWebhookActive;
+      PhasedProvider.deleteWebhook = _deleteWebhook;
 
       return PhasedProvider;
     }];
@@ -2875,7 +2876,50 @@ angular.module('webappApp')
   		});
     }
 
-    // delete
+    /**
+    *
+    *	Deletes a webhook
+    *	THIS ACTION CANNOT BE UNDONE!
+    * DELETE /repos/:owner/:repo/hooks/:id
+    *
+    *	1. sends the request to GH
+    *	2. deletes the local (client) data for the hook
+    *	
+    *	no callback, GH doesn't send a response
+    *
+    */
+    var _deleteWebhook = function(hook, repoID) {
+    	var args = {
+    		hook : hook,
+    		repoID : repoID
+    	}
+    	registerAsync(doDeleteWebhook, args);
+    }
+
+    var doDeleteWebhook = function(args) {
+    	var hook = args.hook,
+    		repoID = args.repoID;
+
+    	// 1. send PATCH request to github
+    	$http.delete(hook.url, {
+				headers : {
+					"Authorization" : "token " + _Auth.user.github.accessToken
+				}
+  		});
+
+			// 2. delete hook in team
+			for (var i in PhasedProvider.team.repos) {
+				var thisRepo = PhasedProvider.team.repos[i];
+				if (thisRepo.id == repoID) {
+					for (var j in thisRepo.hooks) {
+						if (thisRepo.hooks[j].id == hook.id) {
+							PhasedProvider.team.repos[i].hooks.splice(j, 1);
+							return;
+						}
+					}
+				}
+			}
+    }
 
   })
   .config(['PhasedProvider', 'FURL', 'AuthProvider', function(PhasedProvider, FURL, AuthProvider) {
