@@ -71,7 +71,7 @@ exports.repoPush = function(req, res) {
 			if (
 				!team // team doesn't exist
 				|| !( pushEvent.repository.id in team.repos ) // repo not registered to team
-				|| !('push' in team.repos[pushEvent.repository.id].hooks) // 'push' hook not registered on repo for team
+				|| !('push' in team.repos[pushEvent.repository.id].acceptedHooks) // 'push' hook not registered on repo for team
 				) {
 				var name = pushEvent && 'repository' in pushEvent ? pushEvent.repository.name : 'repository';
 				console.log(name + ' not registered, end');

@@ -2792,7 +2792,8 @@ angular.module('webappApp')
     					name : repo.owner.name || repo.owner.login // name if individual or login for org
     				},
     				url : repo.html_url,
-    				apiUrl : repo.url
+    				apiUrl : repo.url,
+    				acceptedHooks : ["push"]
     			}, function(err){
     				if (err) {
     					console.log(err);
