@@ -7,6 +7,10 @@ angular.module('webappApp')
 	$scope.Phased = Phased;
 	$scope.github = Auth.user.github;
 
+	/**
+	*	INIT
+	*/
+
 	// bounce users without Admin or Owner permissions
 	var checkRole = function(){
 		// do only after Phased is set up
@@ -39,6 +43,13 @@ angular.module('webappApp')
 	checkTeam();
 	$scope.$on('Phased:PaymentInfo', checkTeam);
 
+	// get repo hooks from github on load if user is authenticated
+	Phased.getAllRepoHooks();
+
+
+	/**
+	*	FUNCTIONS
+	*/
 
 	// auth user to get token
 	$scope.startGHAuth = function(e) {

@@ -252,6 +252,8 @@ angular.module('webappApp')
       // INTEGRATIONS
       // GITHUB
       PhasedProvider.getGHRepos = _getGHRepos;
+      PhasedProvider.getGHRepoHooks = _getGHRepoHooks;
+      PhasedProvider.getAllRepoHooks = _getAllRepoHooks;
       PhasedProvider.registerWebhookForRepo = _registerWebhookForRepo;
 
       return PhasedProvider;
@@ -2622,6 +2624,82 @@ angular.module('webappApp')
     	}
     }
 
+
+    /**
+    *	
+    * GET /repos/:owner/:repo/hooks
+    *
+    * Returns a list of hooks for repos for the authenticated GH user;
+    *	returns false if the user isn't authenticated
+    *	returns HTTP error if error
+    *
+    *	expects repo to be of the same structure that GH returns
+    *	OR that we store in our DB
+    */
+
+    var _getGHRepoHooks = function(repo, callback) {
+    	var args = {
+    		repo : repo,
+    		callback : (typeof callback == 'function') ? callback : function() {}
+    	}
+    	registerAsync(doGetGHRepoHooks, args);
+    }
+
+    var doGetGHRepoHooks = function(args) {
+    	var repo = args.repo,
+    		callback = args.callback;
+
+    	if (!('github' in _Auth.user)) {
+    		callback(false)
+    	} else {
+    		var ghAPIEndpoint = repo.hooks_url || repo.apiUrl + '/hooks';
+    		$http.get(ghAPIEndpoint, {
+    			params : {
+    				access_token : _Auth.user.github.accessToken
+    			}
+    		}).then(
+    			function success(res){
+	    			console.log('hooks', res.data);
+	    			callback(res.data);
+	    		},
+	    		function error(res){
+	    			console.trace('Error with GH request', res);
+	    			callback(res);
+	    		}
+	    	);
+    	}
+    }
+
+
+    /**
+    *
+    * wrapper for the above to add all hook data from the GH server
+    *	for all of team's currently registered repos
+    *
+    *
+    */
+    var _getAllRepoHooks = function(callback) {
+    	callback = (typeof callback == 'function') ? callback : function() {};
+    	registerAsync(doGetAllRepoHooks, callback);
+    }
+
+    var doGetAllRepoHooks = function(callback) {
+    	if ( !('github' in _Auth.user) ) return;
+
+    	for (var i in PhasedProvider.team.repos) {
+    		(function(_i) {
+    			doGetGHRepoHooks({
+    				repo : PhasedProvider.team.repos[_i], 
+    				callback : function(hooks) {
+	    				PhasedProvider.team.repos[_i].hooks = hooks;
+	    				if (i == _i) // if this is the last one
+	    					callback();
+	    			}
+	    		});
+    		})(i);
+    	}
+    }
+
     /**
     *
     *	Registers a webhook for a repo for a team
@@ -2703,8 +2781,7 @@ angular.module('webappApp')
     					name : repo.owner.name || repo.owner.login // name if individual or login for org
     				},
     				url : repo.html_url,
-    				apiUrl : repo.url,
-    				hooks : ['push']
+    				apiUrl : repo.url
     			}, function(err){
     				if (err) {
     					console.log(err);
