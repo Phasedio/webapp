@@ -255,6 +255,7 @@ angular.module('webappApp')
       PhasedProvider.getGHRepoHooks = _getGHRepoHooks;
       PhasedProvider.getAllRepoHooks = _getAllRepoHooks;
       PhasedProvider.registerWebhookForRepo = _registerWebhookForRepo;
+      PhasedProvider.toggleWebhookActive = _toggleWebhookActive;
 
       return PhasedProvider;
     }];
@@ -2687,7 +2688,6 @@ angular.module('webappApp')
     * wrapper for the above to add all hook data from the GH server
     *	for all of team's currently registered repos
     *
-    *
     */
     var _getAllRepoHooks = function(callback) {
     	callback = (typeof callback == 'function') ? callback : function() {};
@@ -2809,6 +2809,72 @@ angular.module('webappApp')
     		}
   		);
     }
+
+    /**
+    *
+    *	Toggles the active state for a webhook
+    * PATCH /repos/:owner/:repo/hooks/:id
+    *
+    *	1. sends the request to GH
+    *	2. updates the local (client) data for the hook
+    *	3. callback
+    *
+    */
+    var _toggleWebhookActive = function(hook, repoID, callback, active) {
+    	var args = {
+    		hook : hook,
+    		repoID : repoID,
+    		callback : (typeof callback == 'function') ? callback : function() {},
+    		active : active
+    	}
+    	registerAsync(doToggleWebhookActive, args);
+    }
+
+    var doToggleWebhookActive = function(args) {
+    	var hook = args.hook,
+    		callback = args.callback,
+    		repoID = args.repoID,
+    		// use the supplied state or the opposite of the current state
+    		active = (typeof args.active == 'boolean') ? args.active : !hook.active;
+
+    	// 1. send PATCH request to github
+    	$http.patch(hook.url, {
+				active : active,
+  		}, {
+				headers : {
+					"Authorization" : "token " + _Auth.user.github.accessToken
+				}
+  		}).then(function(res){
+  			if (!res.status == 200) {
+  				callback(false);
+  				return;
+  			};
+  			var updatedHook = res.data;
+
+  			// 2. update hook in team
+  			for (var i in PhasedProvider.team.repos) {
+  				var thisRepo = PhasedProvider.team.repos[i];
+  				if (thisRepo.id == repoID) {
+  					for (var j in thisRepo.hooks) {
+  						if (thisRepo.hooks[j].id == updatedHook.id) {
+  							PhasedProvider.team.repos[i].hooks[j] = updatedHook;
+  							
+  							// 3. callback
+  							callback(updatedHook);
+  							return;
+  						}
+  					}
+  				}
+  			}
+  		}, function(err) {
+  			// if there are too many hooks registered to the repo,
+  			// the GH response goes here (response is 422: Unprocessable Entity)
+  			console.log(err);
+  			callback(false);
+  		});
+    }
+
+    // delete
 
   })
   .config(['PhasedProvider', 'FURL', 'AuthProvider', function(PhasedProvider, FURL, AuthProvider) {

@@ -85,6 +85,10 @@ angular.module('webappApp')
 		console.log('registering webhook for ', $scope.selectedRepo);
 		Phased.registerWebhookForRepo($scope.selectedRepo, function(result) {
 			console.log('repo registered?', result);
-		})
+		});
+	}
+
+	$scope.toggleHookActive = function(hook, repoID) {
+		Phased.toggleWebhookActive(hook, repoID);
 	}
 });

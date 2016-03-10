@@ -31,7 +31,8 @@
 										<li ng-repeat="repo in Phased.team.repos">
 											<a ng-href="{{repo.url}}">{{repo.fullName}}</a>
 											<ul ng-if="repo.hooks">
-												<li ng-repeat="hook in repo.hooks">{{hook.name}} to {{hook.config.url | hostname}} registered at {{hook.created_at | date : 'short'}}</li>
+												<li ng-repeat="hook in repo.hooks">{{hook.name}} to {{hook.config.url | hostname}} registered at {{hook.created_at | date : 'short'}}<br/>
+												<a href="#" ng-click="toggleHookActive(hook, repo.id)"><span ng-if="hook.active">Deactivate</span><span ng-if="!hook.active">Activate</span></a></li>
 											</ul>
 										</li>
 									</ul>
