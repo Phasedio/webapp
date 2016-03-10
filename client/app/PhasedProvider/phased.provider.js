@@ -470,6 +470,7 @@ angular.module('webappApp')
         PhasedProvider.team.project_archive = data.project_archive;
         PhasedProvider.team.categoryObj = data.category;
         PhasedProvider.team.categorySelect = objToArray(data.category); // adds key prop
+        PhasedProvider.team.repos = data.repos;
 
         // set up references in .get[objectName] to their respective objects
         // this allows us to have an unordered collection of, eg, all tasks, to gather data
@@ -708,6 +709,17 @@ angular.module('webappApp')
 
       PhasedProvider.team._FBHandlers.push({
         address : teamKey + '/category',
+        eventType : 'value',
+        callback : cb
+      });
+
+      // repos
+      cb = FBRef.child(teamKey + '/repos').on('value', function(snap){
+        PhasedProvider.team.repos = snap.val();
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/repos',
         eventType : 'value',
         callback : cb
       });
@@ -2581,9 +2593,11 @@ angular.module('webappApp')
     *	Little wrapper for $http get
     * Returns a list of repos for the authenticated GH user;
     *	returns false if the user isn't authenticated
-    *	returns HTTP error if exists
+    *	returns HTTP error if error
     */
     var _getGHRepos = function(callback) {
+    	callback = (typeof callback == 'function') ?
+    		callback : function() {};
     	registerAsync(doGetGHRepos, callback);
     }
 
@@ -2593,7 +2607,6 @@ angular.module('webappApp')
     	} else {
     		$http.get('https://api.github.com/user/repos', {
     			params : {
-    				// type: 'owner',
     				access_token : _Auth.user.github.accessToken
     			}
     		}).then(
@@ -2625,7 +2638,7 @@ angular.module('webappApp')
     var _registerWebhookForRepo = function(repo, callback) {
     	var args = {
     		repo : repo,
-    		callback : typeof callback == 'function' ? callback : function(){}
+    		callback : (typeof callback == 'function') ? callback : function(){}
     	}
     	registerAsync(doRegisterWebhookForRepo, args);
     }
@@ -2651,7 +2664,7 @@ angular.module('webappApp')
     var doRegisterWebhookForRepo = function(args) {
     	var repo = args.repo,
     		callback = args.callback,
-    		phasedAPIEndpoint = 'http://86a5d8e6.ngrok.io/api/hooks/github/repo/'; // + ':team';
+    		phasedAPIEndpoint = 'http://acb710e8.ngrok.io/api/hooks/github/repo/'; // + ':team';
 
     	// 0. construct endpoint strings
     	phasedAPIEndpoint += PhasedProvider.team.uid;
@@ -2685,11 +2698,12 @@ angular.module('webappApp')
     			FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + repo.id).set({
     				id : repo.id,
     				name : repo.name,
-    				full_name : repo.full_name,
+    				fullName : repo.full_name,
     				owner : {
     					name : repo.owner.name || repo.owner.login // name if individual or login for org
     				},
-    				url : repo.url,
+    				url : repo.html_url,
+    				apiUrl : repo.url,
     				hooks : ['push']
     			}, function(err){
     				if (err) {

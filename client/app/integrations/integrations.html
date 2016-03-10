@@ -25,8 +25,12 @@
 									<a href="#" ng-click="startGHAuth($event)">Click to authenticate with GitHub</a>
 								</div>
 								<div ng-if="github">
-									<h3>No Associated Repositories</h3>
-									<a href="#" data-toggle="modal" data-target="#choose-repo" ng-click="showRepos($event)">Choose a repo</a>
+									<h3 ng-if="!Phased.team.repos">No Linked Repositories</h3>
+									<h3 ng-if="Phased.team.repos">Linked Repositories:</h3>
+									<ul>
+										<li ng-repeat="repo in Phased.team.repos"><a ng-href="{{repo.url}}" target="_blank">{{repo.fullName}}</a></li>
+									</ul>
+									<a href="#" data-toggle="modal" data-target="#choose-repo" ng-click="showRepos($event)">Add a repo</a>
 								</div>
 							</div>
 						</div>
