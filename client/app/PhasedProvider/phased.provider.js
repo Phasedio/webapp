@@ -69,6 +69,7 @@ angular.module('webappApp')
     var ga = ga || function(){}; // in case ga isn't defined (as in chromeapp)
     var $rootScope = { $broadcast : function(a){} }; // set in $get, default for if PhasedProvider isn't injected into any scope. not available in .config();
     var $http = {}; // ditto
+    var $location = {}; // me too
 
     /**
     *
@@ -211,9 +212,10 @@ angular.module('webappApp')
     * exposes data, methods, and a FireBase reference
     *
     */
-    this.$get = ['$rootScope', '$http', function(_rootScope, _http) {
+    this.$get = ['$rootScope', '$http', '$location', function(_rootScope, _http, _location) {
       $rootScope = _rootScope;
       $http = _http;
+      $location = _location;
       // register functions listed after this in the script...
 
       // add member and team
@@ -2628,6 +2630,24 @@ angular.module('webappApp')
     	registerAsync(doRegisterWebhookForRepo, args);
     }
 
+    var _deregisterWebhook = function(ghAPIEndpoint, phasedAPIEndpoint) {
+  		$http.post(ghAPIEndpoint, {
+				name : 'web',
+				events : ['push'],
+				active : false,
+				config : {
+					url : phasedAPIEndpoint,
+					content_type : 'json', // either 'json' or 'form'
+					secret : '81c4e9c6e9fa5a7b77ba19d94f99f4b9974e58ae',
+					insecure_ssl : ($location.host().indexOf('localhost') >= 0) // only while in dev!!!!
+				}
+  		}, {
+				headers : {
+					"Authorization" : "token " + _Auth.user.github.accessToken
+				}
+  		})
+    }
+
     var doRegisterWebhookForRepo = function(args) {
     	var repo = args.repo,
     		callback = args.callback,
@@ -2645,7 +2665,7 @@ angular.module('webappApp')
 					url : phasedAPIEndpoint,
 					content_type : 'json', // either 'json' or 'form'
 					secret : '81c4e9c6e9fa5a7b77ba19d94f99f4b9974e58ae',
-					insecure_ssl : true // only while in dev!!!!
+					insecure_ssl : ($location.host().indexOf('localhost') >= 0) // only while in dev!!!!
 				}
   		}, {
 				headers : {
@@ -2654,6 +2674,7 @@ angular.module('webappApp')
   		}).then(
   			function success(res) {
   				if (res.status != 201) {
+  					_deregisterWebhook(repo.hooks_url, phasedAPIEndpoint);
   					callback(false);
   					return;
   				}
