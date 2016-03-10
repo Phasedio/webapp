@@ -2630,6 +2630,7 @@ angular.module('webappApp')
     * GET /repos/:owner/:repo/hooks
     *
     * Returns a list of hooks for repos for the authenticated GH user;
+    *	(filters out hooks that don't relate to Phased)
     *	returns false if the user isn't authenticated
     *	returns HTTP error if error
     *
@@ -2658,9 +2659,19 @@ angular.module('webappApp')
     				access_token : _Auth.user.github.accessToken
     			}
     		}).then(
-    			function success(res){
-	    			console.log('hooks', res.data);
-	    			callback(res.data);
+    			function success(res) {
+    				var hooks = res.data;
+    				// rm all hooks with non-phased URL
+    				for (var i = 0; i < hooks.length; i++) {
+    					var hookUrl = hooks[i].config.url.toLowerCase();
+    					if (hookUrl.indexOf('phased') < 0 &&
+    						hookUrl.indexOf('ngrok') < 0 ) {
+    						hooks.splice(i, 1);
+    						i--; // to account for newly lost element
+    					}
+    				}
+
+	    			callback(hooks);
 	    		},
 	    		function error(res){
 	    			console.trace('Error with GH request', res);
