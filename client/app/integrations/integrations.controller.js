@@ -61,9 +61,7 @@ angular.module('webappApp')
 	// auth user to get token
 	$scope.startGHAuth = function(e) {
 		e.preventDefault();
-		// $window.location.href = '/api/gh/auth';
 		Auth.githubLogin(function(gh) {
-			console.log('Phased', Phased);
 			$scope.github = Auth.user.github;
 		});
 	}
@@ -72,7 +70,6 @@ angular.module('webappApp')
 	$scope.showRepos = function(e) {
 		e.preventDefault();
 		Phased.getGHRepos(function(repos) {
-			console.log('ghr', repos);
 			$scope.github.repos = repos;
 		});
 	}
@@ -84,7 +81,8 @@ angular.module('webappApp')
 	$scope.registerSelectedRepo = function(){
 		console.log('registering webhook for ', $scope.selectedRepo);
 		Phased.registerWebhookForRepo($scope.selectedRepo, function(result) {
-			console.log('repo registered?', result);
+			if (result)
+				$('#choose-repo').modal('hide');
 		});
 	}
 
