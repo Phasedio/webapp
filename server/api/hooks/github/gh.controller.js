@@ -49,6 +49,8 @@ exports.repoPush = function(req, res) {
 		return;
 	}
 
+	console.log('repoPush');
+
 	// do after authenticated
 	FBRef.authWithCustomToken(token, function(error, authData) {
 		// fail if error
@@ -95,6 +97,7 @@ exports.repoPush = function(req, res) {
 
 			// 3.
 			var statusText = pushEvent.pusher.name + ' pushed ' + pushEvent.commits.length + ' commits to ' + pushEvent.repository.name;
+			statusText += '("' + head_commit.message + '")';
 			var newStatus = {
 				name: statusText,
 				time: pushEvent.pushed_at || new Date().getTime(),
