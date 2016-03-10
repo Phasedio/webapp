@@ -1,6 +1,13 @@
 'use strict';
 
 angular.module('webappApp')
+.filter('hostname', function ($document) {
+	return function (input) {
+		var parser = document.createElement('a');
+		parser.href = input;
+		return parser.hostname;
+	};
+})
 .controller('IntegrationsCtrl', function ($scope, $http, Auth, FURL, Phased, $location, $window) {
 	ga('send', 'pageview', '/integrations');
 	var ref = new Firebase(FURL);
