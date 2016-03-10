@@ -453,6 +453,25 @@ angular.module('webappApp')
     }
 
 
+    //Add members to team
+
+    $scope.canAddMembers = function(){
+      var k = Object.keys(Phased.team.members);
+      console.log(k);
+      $scope.numMembers = k.length;
+      if(k.length <= 10){
+        return true;
+      }else{
+        return false;
+      }
+    };
+    $scope.addMembers = function(newMember) {
+      $('#addMemberModal').modal('toggle');
+      mixpanel.track("Sent Invite");
+      Phased.addMember(newMember);
+    };
+
+
 
 
     // get number of active tasks assigned to userID
