@@ -747,6 +747,30 @@ select{
     visibility: hidden;
     }
   }
+
+	.feed__fiter{
+		background-color: #fff;
+    //border-top:1px solid #dcdee3;
+		border: 1px solid;
+    border-color: #e5e6e9 #dfe0e4 #d0d1d5;
+		border-top: none;
+		//border-bottom: none;
+		button{
+			float: left;
+			height: 40px;
+			position: relative;
+			display: inline-block;
+			cursor: pointer;
+			text-decoration: none;
+			background: transparent;
+			color: #afb3b9;
+			&.active{
+				color:#2fc2a3;
+				box-shadow:none;
+			}
+		}
+	}
+
   .meta__right{
     float:right;
     padding: 8px;

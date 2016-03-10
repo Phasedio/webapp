@@ -35,11 +35,14 @@
 							</div>
 
 						</form>
-
+						<div class="feed__fiter clearfix">
+							<button type="button" class="btn" ng-class="{active:filterFeed == 'recent'}" name="button" ng-click="changeFilter('recent')"><i class="fa fa-clock-o"></i> Most recent</button>
+							<button type="button" class="btn" ng-class="{active:filterFeed == 'members'}" name="button" ng-click="changeFilter('members')"><i class="fa fa-users"></i> By members</button>
+						</div>
 					</div>
 					<div class="feed__container">
-						<p align="center">Recent updates</p>
-						<div class="member__activity " ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 ">
+
+						<div class="member__activity " ng-show="filterFeed == 'recent'" ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 ">
 							<div class="activity__person clearfix">
 								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
 								<div class="activity__info">
@@ -88,6 +91,63 @@
 								<button type="button" class="btn activity__int__btn activity__int__like" ng-class="{active : item.likes[myID]}" name="button" ng-click="likeStatus(item)" data-toggle="tooltip" data-placement="bottom" title="{{showLikers(item.likes)}}"><i class="fa fa-thumbs-o-up"></i> Like <span class="badge" ng-if="countInts(item.likes) > 0">{{countInts(item.likes)}}</span></button>
 								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(item)"><i class="fa fa-comment-o"></i> Comment <span class="badge" ng-if="countInts(item.comments) > 0">{{countInts(item.comments)}}</span></button>
 							</div>
+						</div>
+
+						<!-- members -->
+						<div class="member__activity " ng-show="filterFeed == 'members'" ng-repeat="item in team.members | orderMembers : 'lastUpdated' : true  ">
+							<div class="activity__person clearfix">
+								<img src="{{$parent.team.members[item.key].pic}}" alt="{{$parent.team.members[item.key].name}}" />
+								<div class="activity__info">
+									<h5 class="">
+										<a href="/profile/{{item.key}}">{{$parent.team.members[item.key].name}}</a>
+										<span class="activity__tag" ng-if="item.task.name">
+											<a href="/tasks/{{item.currentStatus.task.project}}/{{item.currentStatus.task.column}}/{{item.currentStatus.task.card}}/{{item.currentStatus.task.id}}">
+												<small>
+													<i class="fa fa-tasks"></i>
+													<!-- <span role="presentation" aria-hidden="true"> · </span> -->
+													{{item.currentStatus.task.name | limitTo:50}}
+												</small>
+											</a>
+
+
+										</span>
+								</h5>
+									<p class="activity__meta">
+										<span am-time-ago="item.lastUpdated"></span>
+										<!-- <span class="" ng-if="item.task.name">
+											<span role="presentation" aria-hidden="true"> · </span>
+											{{item.task.name}}
+										</span> -->
+
+									</p>
+								</div>
+								<!-- <div class="activity__options" ng-if="item.user == myID">
+									<div class="btn-group">
+									  <button type="button" class="btn btn-drop-chevron dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									    <i class="fa fa-angle-down"></i>
+									  </button>
+									  <ul class="dropdown-menu">
+									    <li><a href="#" data-toggle="modal" data-target="#editModal" ng-click="editStatusSelected(item)">Edit status</a></li>
+									    <li ng-if="item.user == myID" role="separator" class="divider"></li>
+									    <li ng-if="item.user == myID"><a href="#" data-toggle="modal" data-target="#deleteModal" ng-click="deleteSelected(item)">Delete Status</a></li>
+									  </ul>
+									</div>
+								</div> -->
+							</div>
+
+							<div class="activity__content">
+								<p class="">{{item.currentStatus.name}}</p>
+							</div>
+
+							<!-- <div class="activity__int">
+								<button type="button" class="btn activity__int__btn activity__int__like" ng-class="{active : item.likes[myID]}" name="button" ng-click="likeStatus(item)" data-toggle="tooltip" data-placement="bottom" title="{{showLikers(item.likes)}}"><i class="fa fa-thumbs-o-up"></i> Like <span class="badge" ng-if="countInts(item.likes) > 0">{{countInts(item.likes)}}</span></button>
+								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(item)"><i class="fa fa-comment-o"></i> Comment <span class="badge" ng-if="countInts(item.comments) > 0">{{countInts(item.comments)}}</span></button>
+							</div> -->
+						</div>
+						<!-- add member -->
+						<div class="member__activity " ng-show="filterFeed == 'members'" >
+							<button class="btn btn-block btn-success" data-toggle="modal" data-target="#addMemberModal">Add Member</button>
+
 						</div>
 					</div>
 
@@ -299,6 +359,36 @@
 		</form>
 	</div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- add member -->
+<div class="modal fade addmember" id="addMemberModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 style="color:#000;" class="modal-title no-shadow">Add member</h4>
+      </div>
+      <div class="modal-body ">
+
+        <p>{{team.name}} has <b>{{numMembers}} / 10 </b>  members.</p>
+        <p>Your team can only hold <b>10 members</b>. For more information on what your plan provides check out <a href="http://www.phased.io/pricing" target="_blank">this page</a></p>
+
+        <p>If you need to remove members please contact <a href="mailto:support@phased.io">support@phased.io</a></p>
+        <form name="addmember" ng-submit="addMembers(user)" novalidation ng-if="canAddMembers">
+          <div class="form-group">
+            <label ffor="addEmail">Email address</label>
+            <input type="email" class="form-control" iid="addEmail" ng-model="user.email" placeholder="email" required>
+          </div>
+          <div class="addMember-btnHolder">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <input type="submit" class="btn btn-primary" value="Add member">
+          </div>
+        </form>
+
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
 
