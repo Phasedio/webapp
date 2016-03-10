@@ -2801,12 +2801,10 @@ angular.module('webappApp')
     					callback(false);
     				} else {
     					// add hook to repo in model
-    					for (var i in PhasedProvider.team.repos) {
-    						if (PhasedProvider.team.repos[i].id == repo.id) {
-    							PhasedProvider.team.repos[i].hooks = PhasedProvider.team.repos[i].hooks || [];
-    							PhasedProvider.team.repos[i].hooks.push(res.data);
-    						}
-    					}
+    					if (typeof PhasedProvider.team.repos[repo.id].hooks == 'object')
+    						PhasedProvider.team.repos[repo.id].hooks.push(res.data);
+    					else
+    						PhasedProvider.team.repos[repo.id].hooks = [res.data];
     					callback(true);
     				}
     			});
