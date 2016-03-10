@@ -53,9 +53,20 @@ angular.module('webappApp')
 	// list repos user owns
 	$scope.showRepos = function(e) {
 		e.preventDefault();
-		Phased.getGHRepos(function(res) {
-			console.log('ghr', res);
-			$scope.github.repos = res;
+		Phased.getGHRepos(function(repos) {
+			console.log('ghr', repos);
+			$scope.github.repos = repos;
 		});
+	}
+
+	$scope.stageRepo = function(repo) {
+		$scope.selectedRepo = repo;
+	}
+
+	$scope.registerSelectedRepo = function(){
+		console.log('registering webhook for ', $scope.selectedRepo);
+		Phased.registerWebhookForRepo($scope.selectedRepo, function(result) {
+			console.log('repo registered?', result);
+		})
 	}
 });

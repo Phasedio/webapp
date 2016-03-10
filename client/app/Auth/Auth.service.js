@@ -225,6 +225,7 @@ angular.module('webappApp')
 	              }
                 doAllAfterAuth(Auth);
                 getProfileDetails.then(getProfileDetails.args);
+                $rootScope.$broadcast('Auth:authenticated');
               } else {
               	console.trace('Grave error, user ' + Auth.user.uid + ' does not exist');
               	$location.path('/login');

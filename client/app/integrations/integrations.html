@@ -1,32 +1,55 @@
 
 <div class="container-fluid" >
-  <div class="row">
-    <div ng-include="'components/sidebar/sidebar.html'"></div>
-	    <div class="content__area">
-	      <div ng-include="'components/content-nav/content-nav.html'"></div>
-	      <div class="col-xs-10" >
-	        <div class="ph-card ">
-	          <h1>ADMIN</h1>
-	          <ul class="nav nav-pills">
-	            <li role="presentation"><a href="/admin">Member Roles</a></li>
-	            <li role="presentation"><a href="/admin/export">Export Data</a></li>
-	            <li role="presentation"><a href="/billing">Billing</a></li>
-	            <li role="presentation" class="active"><a href="#">Integrations</a></li>
-	          </ul>
-	        </div>
-	        <div class="row">
-	          <div class="col-xs-6">
-	            <div class="ph-card">
-	              <div class="panel panel-default">
-	                <!-- Default panel contents -->
-	                <div class="panel-heading">Github</div>
-	                <h3>No Associated Repositories</h3>
-	                <a href="/api/gh/auth" ng-click="startGHAuth($event)">Click to associate a github repository</a>
-	              </div>
-	            </div>
-	          </div>
-	        </div>
-	      </div>
-	    </div>
-    </div>
-  </div>
+	<div class="row">
+		<div ng-include="'components/sidebar/sidebar.html'"></div>
+		<div class="content__area">
+			<div ng-include="'components/content-nav/content-nav.html'"></div>
+			<div class="col-xs-10" >
+				<div class="ph-card ">
+					<h1>ADMIN</h1>
+					<ul class="nav nav-pills">
+						<li role="presentation"><a href="/admin">Member Roles</a></li>
+						<li role="presentation"><a href="/admin/export">Export Data</a></li>
+						<li role="presentation"><a href="/billing">Billing</a></li>
+						<li role="presentation" class="active"><a href="#">Integrations</a></li>
+					</ul>
+				</div>
+				<div class="row">
+					<div class="col-xs-6">
+						<div class="ph-card">
+							<div class="panel panel-default">
+								<!-- Default panel contents -->
+								<div class="panel-heading">Github</div>
+								<div ng-if="!github">
+									<h3>Not authenticated with GitHub</h3>
+									<a href="#" ng-click="startGHAuth($event)">Click to authenticate with GitHub</a>
+								</div>
+								<div ng-if="github">
+									<h3>No Associated Repositories</h3>
+									<a href="#" data-toggle="modal" data-target="#choose-repo" ng-click="showRepos($event)">Choose a repo</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="choose-repo">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-body ">
+				<h4>Repos</h4>
+				<ul>
+					<li ng-repeat="repo in github.repos" ng-click="stageRepo(repo)"><span>{{repo.name}}</span></li>
+				</ul>
+			</div>
+			<div class="modal-footer ">
+				<button type="button" class="btn btn-default" data-dismiss="modal">cancel</button>
+				<button type="button" class="btn btn-default" ng-disabled="!selectedRepo" ng-click="registerSelectedRepo()">Register {{selectedRepo.name}}</button>
+			</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

@@ -250,6 +250,7 @@ angular.module('webappApp')
       // INTEGRATIONS
       // GITHUB
       PhasedProvider.getGHRepos = _getGHRepos;
+      PhasedProvider.registerWebhookForRepo = _registerWebhookForRepo;
 
       return PhasedProvider;
     }];
@@ -2604,6 +2605,86 @@ angular.module('webappApp')
     			}
     		);
     	}
+    }
+
+    /**
+    *
+    *	Registers a webhook for a repo for a team
+    *	allowing GitHub to push status updates to this team
+    *	whenever a commit is made to the repo
+    *
+    *	1. post request to GH API to set webhook
+    *	2. if successful, add repos key to team
+    *
+    *	returns success status (bool) to callback
+    *
+    */
+
+    var _registerWebhookForRepo = function(repo, callback) {
+    	var args = {
+    		repo : repo,
+    		callback : typeof callback == 'function' ? callback : function(){}
+    	}
+    	registerAsync(doRegisterWebhookForRepo, args);
+    }
+
+    var doRegisterWebhookForRepo = function(args) {
+    	var repo = args.repo,
+    		callback = args.callback,
+    		phasedAPIEndpoint = 'http://86a5d8e6.ngrok.io/api/hooks/github/repo/'; // + ':team';
+
+    	// 0. construct endpoint strings
+    	phasedAPIEndpoint += PhasedProvider.team.uid;
+
+    	// 1.
+  		$http.post(repo.hooks_url, {
+				name : 'web',
+				events : ['push'],
+				active : true,
+				config : {
+					url : phasedAPIEndpoint,
+					content_type : 'json', // either 'json' or 'form'
+					secret : '81c4e9c6e9fa5a7b77ba19d94f99f4b9974e58ae',
+					insecure_ssl : true // only while in dev!!!!
+				}
+  		}, {
+				headers : {
+					"Authorization" : "token " + _Auth.user.github.accessToken
+				}
+  		}).then(
+  			function success(res) {
+  				if (res.status != 201) {
+  					callback(false);
+  					return;
+  				}
+
+  				// posted to github okay, but still need to to FB transaction
+  				// so that our server knows its okay to accept data from GH
+    			console.trace('GH transaction completed', res);
+    			FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + repo.id).set({
+    				id : repo.id,
+    				name : repo.name,
+    				full_name : repo.full_name,
+    				owner : {
+    					name : repo.owner.name || repo.owner.login // name if individual or login for org
+    				},
+    				url : repo.url,
+    				hooks : ['push']
+    			}, function(err){
+    				if (err) {
+    					console.log(err);
+    					callback(false);
+    				} else {
+    					console.log('hook registered successfully');
+    					callback(true);
+    				}
+    			});
+    		},
+    		function error(res){
+    			console.trace('Error with GH request', res);
+    			callback(false);
+    		}
+  		);
     }
 
   })
