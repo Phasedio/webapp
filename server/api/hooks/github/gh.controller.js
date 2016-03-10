@@ -61,7 +61,7 @@ exports.repoPush = function(req, res) {
 		var teamID = req.params.team;
 		var pushEvent = req.body;
 		// console.log('repopush', teamID);
-		console.log('pushEvent', req.body);
+		console.log('pushEvent', req.body.repository.name);
 
 		// 0. try to get team
 		FBRef.child('team/' + teamID).once('value', function(snap) {
