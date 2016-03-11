@@ -2303,6 +2303,7 @@ angular.module('webappApp')
           var statusRef = newStatusRef.key();
           console.log(data);
           if(data.url){
+            mixpanel.track("URL in status");
             var teamRef = FBRef.child('team/' + PhasedProvider.team.uid);
             teamRef.child('statuses').child(statusRef).child('attachment').set(data);
           }
@@ -2660,7 +2661,7 @@ angular.module('webappApp')
     }
 
     /**
-    *	
+    *
     *	Little wrapper for $http get
     * Returns a list of repos for the authenticated GH user;
     *	returns false if the user isn't authenticated
@@ -2694,7 +2695,7 @@ angular.module('webappApp')
 
 
     /**
-    *	
+    *
     * GET /repos/:owner/:repo/hooks
     *
     * Returns a list of hooks for repos for the authenticated GH user;
@@ -2772,7 +2773,7 @@ angular.module('webappApp')
     	for (var i in PhasedProvider.team.repos) {
     		(function(_i) {
     			doGetGHRepoHooks({
-    				repo : PhasedProvider.team.repos[_i], 
+    				repo : PhasedProvider.team.repos[_i],
     				onlyPhased : true,
     				callback : function(hooks) {
     					var _callback = (i==_i) ? callback : function(){}; // use callback if this is the last one
@@ -2943,7 +2944,7 @@ angular.module('webappApp')
     *
     *	1. sends the request to GH
     *	2. deletes the repo on FB
-    *	
+    *
     *	no callback, GH doesn't send a response
     *
     */
