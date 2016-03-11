@@ -20,7 +20,7 @@
           </div>
 
           <div class="dropdown">
-            <button class="btn btn-block btn-default  dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+            <button class="btn btn-block btn-default  dropdown-toggle no__boarder__radius no__border__side" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
               {{currentFilter}}
               <span class="caret"></span>
             </button>
@@ -70,7 +70,7 @@
           </ul>
         </div>
 
-        <div class="task__details">
+        <div class="task__details"  ng-show="taskInfo.assigned_by">
           <div class="" ng-class="taskDescript">
       			<div class="task ">
 
@@ -126,14 +126,14 @@
               </div>
               <div class="dropdown">
                 <p id="dLabel2" class="clickable"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  Priority : {{Phased.task.PRIORITY[taskInfo.priority]}} <span class="caret"></span>
-
+                  Priority : {{ getPriority(taskInfo.priority)}} <span class="caret"></span>
+ 
                 </p>
                 <ul class="dropdown-menu" aria-labelledby="dLabel2">
                   <li ng-repeat="priority in Phased.task.PRIORITY_ID | orderBy">
                     <a href="#" ng-click="changePriority(taskInfo.key, priority)">
                       <p>
-                       {{ Phased.task.PRIORITY[priority] }}
+                       {{ Phased.task.PRIORITY[priority] }} {{Phased.task.PRIORITY[0]}}
                       </p>
                     </a>
                   </li>

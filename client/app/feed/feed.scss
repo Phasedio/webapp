@@ -625,7 +625,7 @@ select{
   border-radius: 2px;
 }
 .member__activity{
-  overflow: auto;
+  //overflow: auto;
   display: block;
   padding: 12px;
 	max-width: 496px;
@@ -642,7 +642,7 @@ select{
   }
   .activity__content,.activity__person{
     display: block;
-    overflow: auto;
+    //overflow: auto;
   }
   .activity__person{
     margin-bottom: 11px;
@@ -673,6 +673,14 @@ select{
     font-size: 12px;
     color: #9197a3;
   }
+}
+.activity__attachment{
+	border-left: 5px solid #000;
+	padding-left: 10px;
+}
+.activity__options{
+	display: inline-block;
+  float: right;
 }
 .feed__container{
   padding-top: 20px;
@@ -743,6 +751,30 @@ select{
     visibility: hidden;
     }
   }
+
+	.feed__fiter{
+		background-color: #fff;
+    //border-top:1px solid #dcdee3;
+		border: 1px solid;
+    border-color: #e5e6e9 #dfe0e4 #d0d1d5;
+		border-top: none;
+		//border-bottom: none;
+		button{
+			float: left;
+			height: 40px;
+			position: relative;
+			display: inline-block;
+			cursor: pointer;
+			text-decoration: none;
+			background: transparent;
+			color: #afb3b9;
+			&.active{
+				color:#2fc2a3;
+				box-shadow:none;
+			}
+		}
+	}
+
   .meta__right{
     float:right;
     padding: 8px;
@@ -775,4 +807,73 @@ select{
 
 .action__container .meta__left .btn__active{
 	color: #2fc2a3;
+}
+
+.activity__int{
+	border-top: 1px solid #e5e5e5;
+	padding-top: 4px;
+	margin-top: 12px;
+}
+.activity__int__btn{
+	color: #7f7f7f;
+	font-size: 12px;
+	font-weight: bold;
+	line-height: 14px;
+	margin-right: 20px;
+	padding: 4px 4px 4px 0;
+	background: transparent;
+	&.active{
+		color:#2fc3b5;
+		box-shadow: none;
+	}
+
+}
+.activity__int__like{
+
+}
+
+
+.comment__holder{
+	height: 400px;
+}
+
+
+.comment__message{
+	border-bottom:1px solid #9a9a9a;
+	padding: 16px 0;
+	.comment__id,.comment__msg,.comment__time{
+		float: left;
+		display: inline-block;
+	}
+
+}
+.comment__id{
+	padding-right:8px;
+	img{
+		border-radius: 100px;
+		width: 32px;
+		height: 32px;
+	}
+}
+.comment__msg{
+	padding-right:8px;
+	padding-left:8px;
+	width: 275px;
+
+}
+.comment__name{
+	margin:0;
+	font-size: 10px;
+	font-weight: bold;
+	-webkit-font-smoothing: antialiased;
+	color:#9a9a9a;
+}
+.comment__time{
+	padding-left:8px;
+	p{
+		margin:0;
+		font-size: 10px;
+		font-weight: bold;
+		color:#9a9a9a;
+	}
 }

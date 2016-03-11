@@ -17,6 +17,17 @@ angular.module('webappApp')
 
     }
 
+    $scope.canAddMembers = function(){
+      var k = Object.keys(Phased.team.members);
+      console.log(k);
+      $scope.numMembers = k.length;
+      if(k.length <= 10){
+        return true;
+      }else{
+        return false;
+      }
+    };
+
 
     // bounce users if team has problems
     var checkTeam = function(){
@@ -32,6 +43,7 @@ angular.module('webappApp')
       }else if (teamCheck == 'canceled') {
         $location.path('/switchteam');
       }
+      $scope.canAddMembers();
 
     }
     $scope.$on('Phased:PaymentInfo', checkTeam);
@@ -68,6 +80,12 @@ angular.module('webappApp')
         toaster.pop('error', 'Error', teamName + ' already exists. Please ask the team administrator for an invitation to join.');
       });
     }
+
+    $scope.addMembers = function(newMember) {
+      $('#addMemberModal').modal('toggle');
+      mixpanel.track("Sent Invite");
+      Phased.addMember(newMember);
+    };
 
 
     // returns unix timecode for last night at midnight

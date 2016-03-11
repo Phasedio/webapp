@@ -54,11 +54,25 @@ angular.module('webappApp')
     $scope.$on('Phased:memberChanged', checkRole);
 
     $scope.changeRole = function(member, oldRole) {
+      console.log(member,oldRole);
       Phased.changeMemberRole(member.uid, member.role, parseInt(oldRole), function failure(code, message){
         toaster.pop('error', 'Error', message);
       });
     }
 
+
+    $scope.removeMemberModal = function(member){
+      console.log(member);
+      $scope.removeThisMember = member;
+      //toggle Modal removeMemberModal
+      $('#removeMemberModal').modal('toggle');
+    }
+
+    $scope.removeMember= function(member){
+      $http.post('api/registration/remove-member',{'team':Phased.team.uid,'member':member}).success(function(data){
+        console.log('yay');
+      })
+    }
 
     /**
     *
