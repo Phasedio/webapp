@@ -20,13 +20,13 @@
 							<div class="panel panel-default">
 								<!-- Default panel contents -->
 								<div class="panel-heading">Github</div>
-								<div>
+								<div class="panel-body">
 									<h3 ng-if="!Phased.team.repos">No Linked Repositories</h3>
 									<h3 ng-if="Phased.team.repos">Linked Repositories:</h3>
 									<ul>
 										<li ng-repeat="repo in Phased.team.repos">
 											<p><a ng-href="{{repo.url}}">{{repo.fullName}}</a> registered at {{repo.hook.created_at | date : 'short'}} <br/>
-											<a href="#" ng-click="toggleGHHookActive(repo.hook, repo.id)"><span ng-if="repo.hook.active">Deactivate</span><span ng-if="!repo.hook.active">Activate</span></a> &middot; <a href="#" ng-click="deleteGHHook(repo.hook, repo.id)">Delete</a></p>
+											<a href="#" ng-click="toggleGHHookActive(repo.hook, repo.id)"><span ng-if="repo.hook.active">Deactivate</span><span ng-if="!repo.hook.active">Activate</span></a> &middot; <a href="#" ng-click="deleteGHHook(repo.hook, repo.id)">Unlink</a></p>
 										</li>
 									</ul>
 									<a
@@ -63,8 +63,11 @@
 				</ul>
 			</div>
 			<div class="modal-footer ">
-				<button type="button" class="btn btn-default" data-dismiss="modal">cancel</button>
-				<button type="button" class="btn btn-default" ng-disabled="!selectedRepo" ng-click="registerSelectedGHRepo()">Register {{selectedRepo.name}}</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-default" ng-disabled="!selectedRepo" ng-click="registerSelectedGHRepo()">
+					<span ng-if="!selectedRepo">Select a repository</span>
+					<span ng-if="selectedRepo">Link {{selectedRepo.name}}</span>
+				</button>
 			</div>
 		</div><!-- /.modal-content -->
 	</div><!-- /.modal-dialog -->
