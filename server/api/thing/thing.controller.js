@@ -33,7 +33,11 @@ exports.index = function(req, res) {
               var json = { title : "", discript : "",url:url};
 
               // We'll use the unique header class as a starting point.
-              json.title = $('title').text();
+
+              json.title = $('meta[property="og:site_name"]').attr('content');
+              if(!json.title){
+                json.title = $('title').text();
+              }
               json.discript = $('meta[property="og:description"]').attr('content');
             //   $('.header').filter(function(){
              //

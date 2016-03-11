@@ -17,7 +17,7 @@
 									name="name"
 									ng-focus="submitTip = true"
 									ng-blur="submitTip = false"
-									
+
 									autocomplete="off"
 									placeholder="What are you up to?"
 									ng-model="task.name"
@@ -86,6 +86,14 @@
 
 							<div class="activity__content">
 								<p class="">{{item.name}}</p>
+							</div>
+							<div class="activity__attachment" ng-if="item.attachment">
+								<a class="" href="{{item.attachment.url}}" target="_blank">
+									<h5>{{item.attachment.title | limitTo:50 }}</h5>
+									<p>
+									{{item.attachment.discript}}
+								</p>
+							</a>
 							</div>
 
 							<div class="activity__int">
