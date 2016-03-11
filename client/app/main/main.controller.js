@@ -3,23 +3,12 @@
 angular.module('webappApp')
   .controller('MainCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster, $location) {
     ga('send', 'pageview', '/team');
-    $scope.showMember = false;
     $scope.team = Phased.team;
-    $scope.viewType = Phased.viewType;
     $scope.Phased = Phased;
     var FBRef = new Firebase(FURL);
 
-    //stats vars
-    $scope.numUpdates = 0;
-    $scope.stats = {
-      todaysUpdates : 0,
-      todaysTasks : 0
-
-    }
-
     $scope.canAddMembers = function(){
       var k = Object.keys(Phased.team.members);
-      console.log(k);
       $scope.numMembers = k.length;
       if(k.length <= 10){
         return true;
@@ -28,7 +17,6 @@ angular.module('webappApp')
       }
     };
 
-
     // bounce users if team has problems
     var checkTeam = function(){
       // do only after Phased is set up
@@ -36,15 +24,13 @@ angular.module('webappApp')
         $scope.$on('Phased:setup', checkTeam);
         return;
       }
-      var teamCheck = Phased.viewType;
-      console.log(teamCheck);
-      if (teamCheck == 'problem'){
+
+      if (Phased.viewType == 'problem') {
         $location.path('/team-expired');
-      }else if (teamCheck == 'canceled') {
+      } else if (Phased.viewType == 'canceled') {
         $location.path('/switchteam');
       }
       $scope.canAddMembers();
-
     }
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
@@ -58,8 +44,6 @@ angular.module('webappApp')
       $location.path('/profile/' + uid);
     }
 
-
-
     /**
     *
     * Add team modal
@@ -68,7 +52,6 @@ angular.module('webappApp')
     $scope.$on('Phased:meta', function(){
       if (!Phased.team.uid) {
         $location.path('/onboarding');
-        //$('#addTeamModal').modal('show');
       }
     });
 
