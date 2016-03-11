@@ -1,4 +1,4 @@
-'use strict';
+/*'use strict';
 
 angular.module('webappApp')
   .config(function ($routeProvider) {
@@ -8,3 +8,4 @@ angular.module('webappApp')
         controller: 'IntegrationsCtrl'
       });
   });
+*/
