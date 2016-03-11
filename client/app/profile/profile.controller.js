@@ -188,19 +188,30 @@ return function(items, field, reverse) {
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
 
-    // Check to see if there are route perams for this page if so load up that user
-    var profileUser;
-    if ($routeParams.userid) profileUser = $routeParams.userid;
-    else profileUser = Auth.user.uid;
+    // fills profile for the selected user
+    // must be done AFTER Auth and Phased are set up
+    // in case the user is logged in with another service
+    // (Auth replaces the user's OAuth provider id with their 
+    // "proper" id)
+		var initProfileUser = function() {
+			// do only after Phased is set up
+			if (!Phased.SET_UP) {
+				$scope.$on('Phased:setup', initProfileUser);
+				return;
+			}
+			// Check to see if there are route perams for this page if so load up that user
+			if ($routeParams.userid)
+				$scope.currentUserID = $routeParams.userid;
+			else {
+				$scope.currentUserID = Auth.user.uid;
+			}
 
-    $scope.currentUser = Phased.team.members[profileUser];
-    $scope.currentUserID = profileUser;
+			$scope.currentUser = Phased.team.members[$scope.currentUserID];
 
-    $scope.$on('Phased:setup', function(){
-      $scope.currentUser = Phased.team.members[profileUser];
-    });
-
-    var FBRef = new Firebase(FURL);
+			// prevent Update
+			$scope.isSelf = ($scope.currentUserID == Auth.user.uid);
+		}
+		initProfileUser();
 
     // bootstrap enable tabs
     $('#myTabs a').click(function (e) {
@@ -208,10 +219,6 @@ return function(items, field, reverse) {
       $(this).tab('show')
     });
 
-    // prevent Update
-    $scope.person = false;
-    if (profileUser == Auth.user.uid) $scope.person = true;
-    else $scope.person = false;
 
     // logout
     $scope.logout = function(){
