@@ -118,6 +118,10 @@ angular.module('webappApp')
     */
     var PhasedProvider = {
         SET_UP : false, // exposed duplicate of PHASED_SET_UP
+        META_SET_UP : false,
+        MEMBERS_SET_UP : false,
+        PROJECTS_SET_UP : false,
+        STATUSES_SET_UP : false,
         FBRef : FBRef, // set in setFBRef()
         user : {}, // set in this.init() to Auth.user.profile
         team : { // set in initializeTeam()
@@ -372,6 +376,7 @@ angular.module('webappApp')
       }
       PHASED_SET_UP = true;
       PhasedProvider.SET_UP = true;
+			$rootScope.$broadcast('Phased:setup');
     }
 
     /**
@@ -387,9 +392,7 @@ angular.module('webappApp')
 	    		&& PHASED_PROJECTS_SET_UP
 	    		&& PHASED_STATUSES_SET_UP
     		) {
-    		console.log('all set up');
 				doAsync();
-				$rootScope.$broadcast('Phased:setup');
     	}
     }
 
@@ -411,6 +414,8 @@ angular.module('webappApp')
         req_after_meta[i].callback(req_after_meta[i].args || undefined);
       }
       PHASED_META_SET_UP = true;
+      PhasedProvider.META_SET_UP = true;
+			$rootScope.$broadcast('Phased:meta');
       maybeFinalizeSetUp();
     }
 
@@ -431,6 +436,8 @@ angular.module('webappApp')
         req_after_members[i].callback(req_after_members[i].args || undefined);
       }
       PHASED_MEMBERS_SET_UP = true;
+      PhasedProvider.MEMBERS_SET_UP = true;
+      $rootScope.$broadcast('Phased:membersComplete');
       maybeFinalizeSetUp();
     }
 
@@ -453,6 +460,7 @@ angular.module('webappApp')
       }
 
 			PHASED_PROJECTS_SET_UP = true;
+      PhasedProvider.PROJECTS_SET_UP = true;
 			$rootScope.$broadcast('Phased:projectsComplete');
 			maybeFinalizeSetUp();
     }
@@ -475,6 +483,7 @@ angular.module('webappApp')
       }
 
 			PHASED_STATUSES_SET_UP = true;
+      PhasedProvider.STATUSES_SET_UP = true;
 			$rootScope.$broadcast('Phased:statusesComplete');
 			maybeFinalizeSetUp();
     }
@@ -545,7 +554,6 @@ angular.module('webappApp')
         PhasedProvider.NOTIF_TYPE_ID = data.NOTIF_TYPE_ID;
 
         doAfterMeta();
-        $rootScope.$broadcast('Phased:meta');
       });
     }
 
@@ -687,7 +695,6 @@ angular.module('webappApp')
         membersRetrieved++;
         if (membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
           doAfterMembers();
-          $rootScope.$broadcast('Phased:membersComplete');
         }
       });
 
