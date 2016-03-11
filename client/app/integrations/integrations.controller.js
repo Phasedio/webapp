@@ -51,7 +51,7 @@ angular.module('webappApp')
 	$scope.$on('Phased:PaymentInfo', checkTeam);
 
 	// get repo hooks from github on load if user is authenticated
-	Phased.getAllRepoHooks();
+	Phased.getAllGHRepoHooks();
 
 
 	/**
@@ -67,33 +67,32 @@ angular.module('webappApp')
 	}
 
 	// list repos user owns
-	$scope.showRepos = function(e) {
+	$scope.showGHRepos = function(e) {
 		e.preventDefault();
 		Phased.getGHRepos(function(repos) {
-			$scope.github.repos = repos;
+			$scope.github.repos = repos; // GitHub repo data, not FB repo data
 		});
 	}
 	
 	// stages a repo if it's not already registered
-	$scope.stageRepo = function(repo) {
+	$scope.stageGHRepo = function(repo) {
 		if (!(repo.id in Phased.team.repos)) 
 			$scope.selectedRepo = repo;
 	}
 
-	$scope.registerSelectedRepo = function(){
-		Phased.registerWebhookForRepo($scope.selectedRepo, function(result) {
+	$scope.registerSelectedGHRepo = function(){
+		Phased.registerGHWebhookForRepo($scope.selectedRepo, function(result) {
 			if (result)
 				$('#choose-repo').modal('hide');
 			$scope.selectedRepo = "";
 		});
 	}
 
-	$scope.toggleHookActive = function(hook, repoID) {
-		Phased.toggleWebhookActive(hook, repoID);
+	$scope.toggleGHHookActive = function(hook, repoID) {
+		Phased.toggleGHWebhookActive(hook, repoID);
 	}
 
-	$scope.deleteHook = function(hook, repoID) {
-		if (confirm("Are you sure you want to delete this? This can't be undone."))
-			Phased.deleteWebhook(hook, repoID);
+	$scope.deleteGHHook = function(hook, repoID) {
+		Phased.deleteGHWebhook(hook, repoID);
 	}
 });

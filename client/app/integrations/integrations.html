@@ -30,10 +30,10 @@
 									<ul>
 										<li ng-repeat="repo in Phased.team.repos">
 											<p><a ng-href="{{repo.url}}">{{repo.fullName}}</a> registered at {{repo.hook.created_at | date : 'short'}} <br/>
-											<a href="#" ng-click="toggleHookActive(repo.hook, repo.id)"><span ng-if="repo.hook.active">Deactivate</span><span ng-if="!repo.hook.active">Activate</span></a> &middot; <a href="#" ng-click="deleteHook(repo.hook, repo.id)">Delete</a></p>
+											<a href="#" ng-click="toggleGHHookActive(repo.hook, repo.id)"><span ng-if="repo.hook.active">Deactivate</span><span ng-if="!repo.hook.active">Activate</span></a> &middot; <a href="#" ng-click="deleteGHHook(repo.hook, repo.id)">Delete</a></p>
 										</li>
 									</ul>
-									<a href="#" data-toggle="modal" data-target="#choose-repo" ng-click="showRepos($event)">Add a repo</a>
+									<a href="#" data-toggle="modal" data-target="#choose-repo" ng-click="showGHRepos($event)">Add a repo</a>
 								</div>
 							</div>
 						</div>
@@ -50,14 +50,14 @@
 			<div class="modal-body ">
 				<h4>Repos</h4>
 				<ul>
-					<li ng-repeat="repo in github.repos" ng-click="stageRepo(repo)" ng-class="{disabled: Phased.team.repos[repo.id]}">
+					<li ng-repeat="repo in github.repos" ng-click="stageGHRepo(repo)" ng-class="{disabled: Phased.team.repos[repo.id]}">
 						<span>{{repo.name}}</span>
 					</li>
 				</ul>
 			</div>
 			<div class="modal-footer ">
 				<button type="button" class="btn btn-default" data-dismiss="modal">cancel</button>
-				<button type="button" class="btn btn-default" ng-disabled="!selectedRepo" ng-click="registerSelectedRepo()">Register {{selectedRepo.name}}</button>
+				<button type="button" class="btn btn-default" ng-disabled="!selectedRepo" ng-click="registerSelectedGHRepo()">Register {{selectedRepo.name}}</button>
 			</div>
 		</div><!-- /.modal-content -->
 	</div><!-- /.modal-dialog -->

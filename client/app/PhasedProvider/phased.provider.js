@@ -253,10 +253,10 @@ angular.module('webappApp')
       // GITHUB
       PhasedProvider.getGHRepos = _getGHRepos;
       PhasedProvider.getGHRepoHooks = _getGHRepoHooks;
-      PhasedProvider.getAllRepoHooks = _getAllRepoHooks;
-      PhasedProvider.registerWebhookForRepo = _registerWebhookForRepo;
-      PhasedProvider.toggleWebhookActive = _toggleWebhookActive;
-      PhasedProvider.deleteWebhook = _deleteWebhook;
+      PhasedProvider.getAllGHRepoHooks = _getAllGHRepoHooks;
+      PhasedProvider.registerGHWebhookForRepo = _registerGHWebhookForRepo;
+      PhasedProvider.toggleGHWebhookActive = _toggleGHWebhookActive;
+      PhasedProvider.deleteGHWebhook = _deleteGHWebhook;
 
       return PhasedProvider;
     }];
@@ -2599,6 +2599,12 @@ angular.module('webappApp')
     **
     */
 
+    /*
+    *
+    * GITHUB
+    *
+    */
+
     /**
     *	
     *	Little wrapper for $http get
@@ -2622,7 +2628,6 @@ angular.module('webappApp')
     			}
     		}).then(
     			function success(res){
-	    			// console.trace(res);
 	    			callback(res.data);
     			},
     			function error(res){
@@ -2699,12 +2704,12 @@ angular.module('webappApp')
     *	for all of team's currently registered repos
     *
     */
-    var _getAllRepoHooks = function(callback) {
+    var _getAllGHRepoHooks = function(callback) {
     	callback = (typeof callback == 'function') ? callback : function() {};
-    	registerAsync(doGetAllRepoHooks, callback);
+    	registerAsync(doGetAllGHRepoHooks, callback);
     }
 
-    var doGetAllRepoHooks = function(callback) {
+    var doGetAllGHRepoHooks = function(callback) {
     	if ( !('github' in _Auth.user) ) return;
 
     	for (var i in PhasedProvider.team.repos) {
@@ -2735,15 +2740,15 @@ angular.module('webappApp')
     *
     */
 
-    var _registerWebhookForRepo = function(repo, callback) {
+    var _registerGHWebhookForRepo = function(repo, callback) {
     	var args = {
     		repo : repo,
     		callback : (typeof callback == 'function') ? callback : function(){}
     	}
-    	registerAsync(doRegisterWebhookForRepo, args);
+    	registerAsync(doRegisterGHWebhookForRepo, args);
     }
 
-    var doRegisterWebhookForRepo = function(args) {
+    var doRegisterGHWebhookForRepo = function(args) {
     	var repo = args.repo,
     		callback = args.callback,
     		phasedAPIEndpoint = 'http://acb710e8.ngrok.io/api/hooks/github/repo/' + PhasedProvider.team.uid;
@@ -2780,7 +2785,6 @@ angular.module('webappApp')
 
   				// posted to github okay, but still need to to FB transaction
   				// so that our server knows its okay to accept data from GH
-    			console.trace('GH transaction completed', res);
     			FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + repo.id).set({
     				id : repo.id,
     				name : repo.name,
@@ -2819,17 +2823,17 @@ angular.module('webappApp')
     *	3. callback
     *
     */
-    var _toggleWebhookActive = function(hook, repoID, callback, active) {
+    var _toggleGHWebhookActive = function(hook, repoID, callback, active) {
     	var args = {
     		hook : hook,
     		repoID : repoID,
     		callback : (typeof callback == 'function') ? callback : function() {},
     		active : active
     	}
-    	registerAsync(doToggleWebhookActive, args);
+    	registerAsync(doToggleGHWebhookActive, args);
     }
 
-    var doToggleWebhookActive = function(args) {
+    var doToggleGHWebhookActive = function(args) {
     	var hook = args.hook,
     		callback = args.callback,
     		repoID = args.repoID,
@@ -2872,7 +2876,6 @@ angular.module('webappApp')
     /**
     *
     *	Deletes a webhook
-    *	THIS ACTION CANNOT BE UNDONE!
     * DELETE /repos/:owner/:repo/hooks/:id
     *
     *	1. sends the request to GH
@@ -2881,15 +2884,15 @@ angular.module('webappApp')
     *	no callback, GH doesn't send a response
     *
     */
-    var _deleteWebhook = function(hook, repoID) {
+    var _deleteGHWebhook = function(hook, repoID) {
     	var args = {
     		hook : hook,
     		repoID : repoID
     	}
-    	registerAsync(doDeleteWebhook, args);
+    	registerAsync(doDeleteGHWebhook, args);
     }
 
-    var doDeleteWebhook = function(args) {
+    var doDeleteGHWebhook = function(args) {
     	var hook = args.hook,
     		repoID = args.repoID;
 
