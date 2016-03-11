@@ -58,12 +58,22 @@ angular.module('webappApp')
       WATCH_PROJECTS = false, // set in setWatchProjects in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
+      WEBHOOKS_LIVE = { // switches for individual webhooks, so that eg Github hooks can be live while Google is in dev
+      	GITHUB : false,
+      	GOOGLE : false
+      },
 
       // ASYNC CALLBACKS
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
       req_after_members = [], // filled with operations to complete after members are in
       req_after_meta = [], // filled with operations to complete after meta are in
-      membersRetrieved = 0; // incremented with each member's profile gathered
+      membersRetrieved = 0, // incremented with each member's profile gathered
+
+      // INTERNAL "CONSTANTS"
+      WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints
+      	LIVE : 'https://app.phased.io/',
+      	DEV : 'http://03034ab8.ngrok.io/'
+      };
 
     var _Auth, FBRef; // tacked on to PhasedProvider
     var ga = ga || function(){}; // in case ga isn't defined (as in chromeapp)
@@ -2773,7 +2783,13 @@ angular.module('webappApp')
     var doRegisterGHWebhookForRepo = function(args) {
     	var repo = args.repo,
     		callback = args.callback,
-    		phasedAPIEndpoint = 'http://acb710e8.ngrok.io/api/hooks/github/repo/' + PhasedProvider.team.uid;
+    		phasedAPIEndpoint = 'api/hooks/github/repo/' + PhasedProvider.team.uid;
+
+    	// live/dev switch
+    	if (WEBHOOKS_LIVE.GITHUB)
+    		phasedAPIEndpoint = WEBHOOK_HOSTNAME.LIVE + phasedAPIEndpoint;
+    	else
+    		phasedAPIEndpoint = WEBHOOK_HOSTNAME.DEV + phasedAPIEndpoint;
 
     	// 0. if repo already registered, disallow re-registering
     	if (PhasedProvider.team.repos && PhasedProvider.team.repos[repo.id]) {
@@ -2791,7 +2807,7 @@ angular.module('webappApp')
 					url : phasedAPIEndpoint,
 					content_type : 'json', // either 'json' or 'form'
 					secret : '81c4e9c6e9fa5a7b77ba19d94f99f4b9974e58ae',
-					insecure_ssl : ($location.host().indexOf('localhost') >= 0) // only while in dev!!!!
+					insecure_ssl : !WEBHOOKS_LIVE.GITHUB // only while in dev
 				}
   		}, {
 				headers : {
