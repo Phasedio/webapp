@@ -157,7 +157,7 @@
 
   					</div>
             <!-- EDIT -->
-            <div role="tabpanel" class="tab-pane" id="settings" ng-if="person">
+            <div role="tabpanel" class="tab-pane" id="settings" ng-if="isSelf">
   						<div class = "row">
   			        <div class="col-xs-12">
   			          <img style="height: 120px; width: 120px; border-radius: 50%;margin: 0 auto; display:block;" src="{{currentUser.gravatar}}">
@@ -191,6 +191,7 @@
                   <label class="input-label" for="email">email</label>
                   <input class="loginInput" type="email" id="email" ng-model="update.email" placeholder="{{currentUser.email}}">
                 </div>
+
                 <div class="item item-input item-stacked-label">
                   <label class="input-label" for="oldpassword">old password</label>
                   <input class="loginInput" type="password" id='oldpassword' ng-model="update.oldPass" placeholder="">
