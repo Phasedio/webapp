@@ -1,11 +1,10 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('MainCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster, $location) {
+  .controller('MainCtrl', function ($scope, Auth, Phased, toaster, $location) {
     ga('send', 'pageview', '/team');
     $scope.team = Phased.team;
     $scope.Phased = Phased;
-    var FBRef = new Firebase(FURL);
 
     $scope.canAddMembers = function(){
       var k = Object.keys(Phased.team.members);
