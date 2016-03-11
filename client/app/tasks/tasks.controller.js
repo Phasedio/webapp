@@ -172,20 +172,8 @@ angular.module('webappApp')
     $scope.currentFilter = 'My Tasks';
 
     $scope.today = new Date().getTime();
-    var StatusID = {
-        IN_PROGRESS : 0,
-        COMPLETE : 1,
-        ASSIGNED : 2
-      },
-      PriorityID = {
-        HIGH : 0,
-        MEDIUM : 1,
-        LOW : 2
-      },
-      FBRef = new Firebase(FURL);
+    var FBRef = new Firebase(FURL);
 
-
-    console.log(Phased);
     $('.dropdown-toggle').dropdown();
 
     // bounce users if team has problems
@@ -196,27 +184,16 @@ angular.module('webappApp')
         return;
       }
       var teamCheck = Phased.viewType;
-      console.log(teamCheck);
       if (teamCheck == 'problem'){
         $location.path('/team-expired');
       }else if (teamCheck == 'canceled') {
         $location.path('/switchteam');
       }
-
-
-
     }
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
 
-    $scope.$on('Phased:setup', function(){
-      $scope.activeAssignmentID = Phased.user.uid;
-      console.log($scope.activeAssignmentDirection);
-      console.log($scope.activeAssignmentID);
-      console.log($scope.activeCategoryFilter);
-      console.log($scope.activeStatusFilter);
-      $scope.$apply();
-    });
+    $scope.activeAssignmentID = Phased.user.uid;
 
 
 
@@ -239,7 +216,6 @@ angular.module('webappApp')
         $scope.tasklistSize = 'col-xs-5';
         $scope.taskDescript = 'task__details__item';
       }
-      console.log(task);
       if(typeof task.statuses === 'object'){
         getStatuses(task);
       }
@@ -259,10 +235,8 @@ angular.module('webappApp')
       $scope.taskInfo.statues = [];
       for (var i in task.statuses) {
         if (task.statuses.hasOwnProperty(i)) {
-          console.log(i);
           var item = task.statuses[i];
           FBRef.child('team').child(Phased.user.curTeam).child('statuses').child(item).once('value',function(snap){
-            console.log(snap.val());
             $scope.taskInfo.statues.push(snap.val());
           });
         }
@@ -568,18 +542,9 @@ angular.module('webappApp')
     }
     // change priority
     $scope.changePriority = function(taskID, priorityKey) {
-      console.log(taskID, priorityKey);
-      console.log();
       mixpanel.track("Change Task Priorty");
       Phased.setTaskPriority(taskID, priorityKey);
     }
-
-    $scope.getPriority = function(id){
-      console.log(Phased.task.PRIORITY[id]);
-      return Phased.task.PRIORITY[id];
-    }
-
-
 
 
 

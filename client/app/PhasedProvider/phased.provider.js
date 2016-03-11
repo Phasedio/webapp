@@ -2694,7 +2694,7 @@ angular.module('webappApp')
     var _setTaskPriority = function(taskID, newPriority) {
       var args = {
         taskID : taskID,
-        newPriority : newPriority || ''
+        newPriority : newPriority
       }
       registerAsync(doSetTaskPriority, args);
     }
