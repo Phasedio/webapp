@@ -312,7 +312,7 @@ return function(items, field, reverse) {
       }
 
       // only update github alias if different
-      if (update.aliases.github[0] != $scope.currentUser.aliases.github[0]) {
+      if (update.aliases.github && update.aliases.github[0] != $scope.currentUser.aliases.github[0]) {
       	Phased.updateGHAlias(update.aliases.github[0], 0);
       }
 
