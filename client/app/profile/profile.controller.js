@@ -295,6 +295,8 @@ return function(items, field, reverse) {
     // Update Account
     $scope.updateUser = function(update){
       mixpanel.track("Update user settings");
+      if (update == undefined) return; // update nothing? do nothing.
+
       var toaster = { pop : function(a) { console.log(a) } }; // patch while the toaster disappeared!
       if (update.email === undefined || update.email === '') {
         update.email = $scope.currentUser.email;
