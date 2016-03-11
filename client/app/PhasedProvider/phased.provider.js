@@ -16,7 +16,8 @@ angular.module('webappApp')
       circumvent this, methods that need this data are registered as callbacks (via registerAsync) which
       are either fired immediately if doAfterAuth is complete (ie, PHASED_SET_UP == true) or at the end of
       this.init() if not (via doAsync).
-        Because of this, all methods exposed by PhasedProvider must be registered with registerAsync.
+        Because of this, all methods exposed by PhasedProvider must be registered with an async callback
+        (callbacks are listed below)
 
       Class organization:
 
@@ -38,14 +39,15 @@ angular.module('webappApp')
         - General account things
         - "Data functions" (adding statuses or tasks, modifying projects, etc)
 
-
 			Events:
 
-			- Phased:setup -- all meta, user, team, team member, status, and task data has been loaded
+			- Phased:setup -- all meta, user, team, team member, status, and project/task data has been loaded
 			- Phased:meta -- all metadata has been loaded
 			- Phased:member -- a single member has been loaded
 			- Phased:memberChanged -- a single member has changed
 			- Phased:membersComplete -- all team members have been loaded
+			- Phased:projectsComplete -- all projects are fully loaded (including col/card/task data)
+			- Phased:statusesComplete -- all statuses are loaded
 			- Phased:changedStatus -- a status has changed
 
 			- Phased:PaymentInfo -- team payment info (and Phased.viewType) has changed
@@ -56,7 +58,7 @@ angular.module('webappApp')
 				 This means that on setup, these events are broadcast
 				 for EVERY 'thing' in the team's database!
 				 To get only NEW 'things', register event handlers in a callback
-				 to Phased:setup
+				 to, eg, Phased:setup or Phased:projectsComplete
 
 			- Phased:columnAdded
 			- Phased:columnDeleted
@@ -66,6 +68,14 @@ angular.module('webappApp')
 			- Phased:taskDeleted
 			- Phased:projectAdded
 			- Phased:projectDeleted
+
+			Callbacks:
+
+			registerAsync					PHASED_SET_UP 
+			registerAfterMeta			PHASED_META_SET_UP
+			registerAfterMembers	PHASED_MEMBERS_SET_UP
+			registerAfterProjects	PHASED_PROJECTS_SET_UP
+			registerAfterStatuses	PHASED_STATUSES_SET_UP
 
     **/
 
@@ -83,6 +93,8 @@ angular.module('webappApp')
       PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       PHASED_META_SET_UP = false, // set to true after static meta values are loaded
+      PHASED_PROJECTS_SET_UP = false, // set to true after the initial data has been loaded (incl col/card/task)
+      PHASED_STATUSES_SET_UP = false,
       WATCH_PROJECTS = false, // set in setWatchProjects in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
@@ -91,6 +103,8 @@ angular.module('webappApp')
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
       req_after_members = [], // filled with operations to complete after members are in
       req_after_meta = [], // filled with operations to complete after meta are in
+      req_after_projects = [], // "" for after projects
+      req_after_statuses = [], // "" for after statuses
       membersRetrieved = 0; // incremented with each member's profile gathered
 
     var _Auth, FBRef; // tacked on to PhasedProvider
@@ -341,7 +355,7 @@ angular.module('webappApp')
     /**
     *
     * registerAsync
-    * if Phased has team and member data, do the thing
+    * if Phased has team, member, status, and task data, do the thing
     * otherwise, add it to the list of things to do
     *
     */
@@ -362,6 +376,25 @@ angular.module('webappApp')
 
     /**
     *
+    *	maybeFinalizeSetUp
+    *	checks if the Provider is totally set up, then calls doAsync
+    *
+    */
+    var maybeFinalizeSetUp = function() {
+    	if (  !PHASED_SET_UP
+	    		&& PHASED_META_SET_UP
+	    		&& PHASED_MEMBERS_SET_UP
+	    		&& PHASED_PROJECTS_SET_UP
+	    		&& PHASED_STATUSES_SET_UP
+    		) {
+    		console.log('all set up');
+				doAsync();
+				$rootScope.$broadcast('Phased:setup');
+    	}
+    }
+
+    /**
+    *
     * registerAfterMeta
     * called after meta is in from server
     *
@@ -378,6 +411,7 @@ angular.module('webappApp')
         req_after_meta[i].callback(req_after_meta[i].args || undefined);
       }
       PHASED_META_SET_UP = true;
+      maybeFinalizeSetUp();
     }
 
     /**
@@ -397,8 +431,54 @@ angular.module('webappApp')
         req_after_members[i].callback(req_after_members[i].args || undefined);
       }
       PHASED_MEMBERS_SET_UP = true;
+      maybeFinalizeSetUp();
     }
 
+    /**
+    *
+    * registerAfterProjects
+    * called after all project data is in from server
+    * implied that col/card/task data is also ALL in
+    */
+    var registerAfterProjects = function(callback, args) {
+      if (PHASED_PROJECTS_SET_UP)
+        callback(args);
+      else
+        req_after_projects.push({callback : callback, args : args });
+    }
+
+    var doAfterProjects = function() {
+      for (var i in req_after_projects) {
+        req_after_projects[i].callback(req_after_projects[i].args || undefined);
+      }
+
+			PHASED_PROJECTS_SET_UP = true;
+			$rootScope.$broadcast('Phased:projectsComplete');
+			maybeFinalizeSetUp();
+    }
+
+    /**
+    *
+    * registerAfterStatuses
+    * called after all status (timeline) data is in from server
+    */
+    var registerAfterStatuses = function(callback, args) {
+      if (PHASED_STATUSES_SET_UP)
+        callback(args);
+      else
+        req_after_statuses.push({callback : callback, args : args });
+    }
+
+    var doAfterStatuses = function() {
+      for (var i in req_after_statuses) {
+        req_after_statuses[i].callback(req_after_statuses[i].args || undefined);
+      }
+
+			PHASED_STATUSES_SET_UP = true;
+			$rootScope.$broadcast('Phased:statusesComplete');
+			maybeFinalizeSetUp();
+    }
+    
 
 
 
@@ -506,6 +586,14 @@ angular.module('webappApp')
             PhasedProvider.get.tasks[j] = PhasedProvider.get.cards[i].tasks[j];
         }
 
+        // statuses are all in
+        doAfterStatuses();
+
+        // if we're only gathering the project data once, broadcast that it's in
+        if (!WATCH_PROJECTS) {
+        	doAfterProjects();
+        }
+
         // get profile details for team members
         for (var id in PhasedProvider.team.members) {
           initializeMember(id);
@@ -600,8 +688,6 @@ angular.module('webappApp')
         if (membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
           doAfterMembers();
           $rootScope.$broadcast('Phased:membersComplete');
-          doAsync();
-          $rootScope.$broadcast('Phased:setup');
         }
       });
 
@@ -1154,6 +1240,7 @@ angular.module('webappApp')
           PhasedProvider.get.tasks[taskID] = PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID];
           watchOneTask(taskID, cardID, colID, projID);
           $rootScope.$broadcast('Phased:taskAdded');
+          maybeDoAfterProjects();
         });
         PhasedProvider.team._FBHandlers.push({
           address : cardRef.child('tasks').key(),
@@ -1205,6 +1292,24 @@ angular.module('webappApp')
           callback : cb
         });
       }
+
+      // we have all the tasks, but we need to tell when all tasks have been 
+      // loaded with child_added so that Phased:setup is broadcast after their own Phased:taskAdded
+      var maybeDoAfterProjects = function() {
+      	// PhasedProvider.get.tasks is filled as the initial child_added callback is called
+      	// this condition will be true when the very last of them has been called
+      	if (Object.keys(PhasedProvider.get.tasks).length = _totalTasks) {
+      		doAfterProjects();
+      	}
+      }
+
+      var _totalTasks = 0; // this will be the same as the length of PhasedProvider.get.tasks, which is not loaded in yet
+      
+      // count all tasks
+      for (var projID in PhasedProvider.team.projects) 
+      	for (var colID in PhasedProvider.team.projects[projID].columns)
+      		for (var cardID in PhasedProvider.team.projects[projID].columns[colID].cards)
+      			_totalTasks += Object.keys(PhasedProvider.team.projects[projID].columns[colID].cards[cardID]).length;
 
       // watch projects
       var cb = '';
