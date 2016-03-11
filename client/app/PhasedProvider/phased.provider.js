@@ -730,14 +730,7 @@ angular.module('webappApp')
 
       // repos
       cb = FBRef.child(teamKey + '/repos').on('value', function(snap){
-      	var newRepos = snap.val();
-      	// persist hook data not in FB db
-      	for (var repoID in PhasedProvider.team.repos) {
-      		if (repoID in newRepos) {
-      			newRepos[repoID].hook = PhasedProvider.team.repos[repoID].hook;
-      		}
-      	}
-      	PhasedProvider.team.repos = newRepos;
+      	PhasedProvider.team.repos = snap.val();
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -2735,6 +2728,9 @@ angular.module('webappApp')
     * wrapper for the above to add all hook data from the GH server
     *	for all of team's currently registered repos
     *
+    *	we store the hook data in our own server but calling this ensures that the
+    *	data is in synch with the effective data on GH.
+    *
     */
     var _getAllGHRepoHooks = function(callback) {
     	callback = (typeof callback == 'function') ? callback : function() {};
@@ -2750,9 +2746,8 @@ angular.module('webappApp')
     				repo : PhasedProvider.team.repos[_i], 
     				onlyPhased : true,
     				callback : function(hooks) {
-	    				PhasedProvider.team.repos[_i].hook = hooks[0];
-	    				if (i == _i) // if this is the last one
-	    					callback();
+    					var _callback = (i==_i) ? callback : function(){}; // use callback if this is the last one
+    					FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + _i + '/hook').set(hooks[0], _callback);
 	    			}
 	    		});
     		})(i);
@@ -2832,7 +2827,8 @@ angular.module('webappApp')
     				},
     				url : repo.html_url,
     				apiUrl : repo.url,
-    				acceptedHooks : ["push"]
+    				acceptedHooks : ["push"],
+    				hook : res.data
     			}, function(err){
     				if (err) {
     					console.log(err);
