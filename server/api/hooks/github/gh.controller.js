@@ -95,6 +95,12 @@ exports.repoPush = function(req, res) {
 				}
 			}
 
+			if (!thePusher) {
+				console.log('GH user ' + pushEvent.head_commit.committer.username + ' not found in team; aborting.');
+				res.status(202).end();
+				return;
+			}
+
 			// 3.
 			var statusText = pushEvent.pusher.name + ' pushed ' + pushEvent.commits.length + ' commits to ' + pushEvent.repository.name;
 			statusText += ' ("' + pushEvent.head_commit.message + '")';
