@@ -2295,6 +2295,19 @@ angular.module('webappApp')
 
       }
 
+      //Send status to server for URL parsing.
+      var postID = newStatusRef.key();
+      $.post('./api/things', {text: newStatus.name,id:postID})
+        .success(function(data){
+
+          var statusRef = newStatusRef.key();
+          console.log(data);
+          if(data.url){
+            var teamRef = FBRef.child('team/' + PhasedProvider.team.uid);
+            teamRef.child('statuses').child(statusRef).child('attachment').set(data);
+          }
+        });
+
     }
 
 

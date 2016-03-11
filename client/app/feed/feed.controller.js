@@ -216,9 +216,11 @@ angular.module('webappApp')
         $scope.selectedTask = {};
       }
 
-      console.log('status:', status);
+      //console.log('status:', status);
       // push to db
       Phased.addStatus(status);
+
+
 
       // reset interface
       $scope.selectedCategory = undefined;
@@ -470,6 +472,29 @@ angular.module('webappApp')
       mixpanel.track("Sent Invite");
       Phased.addMember(newMember);
     };
+
+
+    //attachments
+
+    $scope.attchmentListener = function(text){
+      //console.log(text);
+      // var urlPattern = new RegExp();
+      // var test = urlPattern.test(text);
+      // var res = text.match(urlPattern);
+      // console.log(test);
+      // console.log(res);
+      // var patterns = {
+      //   // FUCK THESE 3 w's! >:(
+      //   protocol: '^(http(s)?(:\/\/))?(www\.)?',
+      //   domain: '[a-zA-Z0-9-_\.]+',
+      //   tld: '(\.[a-zA-Z0-9]{2,})',
+      //   params: '([-a-zA-Z0-9:%_\+.~#?&//=]*)'
+      // } // /([www])?\.?((\w+)\.+)([a-zA-Z]{2,})/gi
+      // var p = patterns;
+      // var pattern = new RegExp(p.protocol + p.domain + p.tld + p.params, 'gi');
+      // var res = pattern.exec(text);
+      //console.log(res);
+    }
 
 
 
