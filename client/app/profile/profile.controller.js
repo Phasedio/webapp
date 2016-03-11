@@ -166,6 +166,9 @@ return function(items, field, reverse) {
     $scope.phased = Phased;
     $scope.team = Phased.team;
     $scope.viewType = Phased.viewType;
+    $scope.update = {
+    	aliases : {}
+    };
     console.log(Phased.team);
     var ref = new Firebase(FURL);
 
@@ -227,33 +230,33 @@ return function(items, field, reverse) {
       $location.path('/login');
     }
 
-    //Photo stuff
-    //console.log(Auth.user);
- //document.getElementById("file-upload").addEventListener('change', handleFileSelect, false);
- $scope.handleFileSelect = function(evt) {
-   console.log(evt);
-  //  var f = evt.target.files[0];
-  //  var reader = new FileReader();
-   //
-  //  console.log('the reader is ', reader);
-  //  reader.onload = (function(theFile) {
-  //    return function(e) {
-  //      var gravatar = e.target.result;
-  //      // Generate a location that can't be guessed using the file's contents and a random number
-  //      //var hash = CryptoJS.SHA256(Math.random() + CryptoJS.SHA256(gravatar));
-  //      var f = ref.child('profile').child(Phased.user.uid).child('gravatar');
-  //      f.set(gravatar, function() {
-  //        //document.getElementById("pano").src = e.target.result;
-  //        $('#file-upload').hide();
-   //
-  //        // Update the location bar so the URL can be shared with others
-  //        //window.location.hash = hash;
-   //
-  //      });
-  //    };
-  //  })(f);
-  //  reader.readAsDataURL(f);
- }
+		//Photo stuff
+		//console.log(Auth.user);
+		//document.getElementById("file-upload").addEventListener('change', handleFileSelect, false);
+		$scope.handleFileSelect = function(evt) {
+			console.log(evt);
+			//  var f = evt.target.files[0];
+			//  var reader = new FileReader();
+			//
+			//  console.log('the reader is ', reader);
+			//  reader.onload = (function(theFile) {
+			//    return function(e) {
+			//      var gravatar = e.target.result;
+			//      // Generate a location that can't be guessed using the file's contents and a random number
+			//      //var hash = CryptoJS.SHA256(Math.random() + CryptoJS.SHA256(gravatar));
+			//      var f = ref.child('profile').child(Phased.user.uid).child('gravatar');
+			//      f.set(gravatar, function() {
+			//        //document.getElementById("pano").src = e.target.result;
+			//        $('#file-upload').hide();
+			//
+			//        // Update the location bar so the URL can be shared with others
+			//        //window.location.hash = hash;
+			//
+			//      });
+			//    };
+			//  })(f);
+			//  reader.readAsDataURL(f);
+		}
 
  $scope.changeImage = function(){
     var f = $("#file-upload")[0].files[0];
@@ -304,6 +307,11 @@ return function(items, field, reverse) {
         } else {
           toaster.pop('error', 'Invalid phone number');
         }
+      }
+
+      // only update github alias if different
+      if (update.aliases.github[0] != $scope.currentUser.aliases.github[0]) {
+      	Phased.updateGHAlias(update.aliases.github[0], 0);
       }
 
       if (update.name === $scope.currentUser.name || update.name === undefined || update.name === ''){

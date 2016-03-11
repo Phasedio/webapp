@@ -251,6 +251,7 @@ angular.module('webappApp')
 
       // INTEGRATIONS
       // GITHUB
+      PhasedProvider.updateGHAlias = _updateGHAlias;
       PhasedProvider.getGHRepos = _getGHRepos;
       PhasedProvider.getGHRepoHooks = _getGHRepoHooks;
       PhasedProvider.getAllGHRepoHooks = _getAllGHRepoHooks;
@@ -2604,6 +2605,27 @@ angular.module('webappApp')
     * GITHUB
     *
     */
+
+    /**
+    *
+    *	Updates a user's GitHub user name (for the team)
+    *	Assumes it will be the name at index = 0 if no index
+    *
+    */
+    var _updateGHAlias = function(newUsername, index) {
+    	var args = {
+    		newUsername : newUsername,
+    		index : index || 0
+    	}
+    	registerAsync(doUpdateGHAlias, args);
+    }
+
+    var doUpdateGHAlias = function(args) {
+    	var newUsername = args.newUsername,
+    		index = args.index;
+
+    	FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid + '/aliases/github/' + index).set(newUsername);
+    }
 
     /**
     *	
