@@ -7,7 +7,6 @@ angular.module('webappApp', [
   'ngRoute',
   'ui.bootstrap',
   'ui.calendar',
-  'chart.js',
   'angular-stripe',
   'credit-cards',
   'firebase',
