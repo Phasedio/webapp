@@ -1300,23 +1300,17 @@ angular.module('webappApp')
         });
       }
 
+      var _loadedTasks = 0,
+      	_totalTasks = Object.keys(PhasedProvider.get.tasks).length;
       // we have all the tasks, but we need to tell when all tasks have been 
       // loaded with child_added so that Phased:setup is broadcast after their own Phased:taskAdded
       var maybeDoAfterProjects = function() {
-      	// PhasedProvider.get.tasks is filled as the initial child_added callback is called
-      	// this condition will be true when the very last of them has been called
-      	if (Object.keys(PhasedProvider.get.tasks).length = _totalTasks) {
+      	_loadedTasks++;
+      	// this condition will be true when the very last task has been called
+      	if (!PHASED_PROJECTS_SET_UP && _loadedTasks == _totalTasks) {
       		doAfterProjects();
       	}
       }
-
-      var _totalTasks = 0; // this will be the same as the length of PhasedProvider.get.tasks, which is not loaded in yet
-      
-      // count all tasks
-      for (var projID in PhasedProvider.team.projects) 
-      	for (var colID in PhasedProvider.team.projects[projID].columns)
-      		for (var cardID in PhasedProvider.team.projects[projID].columns[colID].cards)
-      			_totalTasks += Object.keys(PhasedProvider.team.projects[projID].columns[colID].cards[cardID]).length;
 
       // watch projects
       var cb = '';
