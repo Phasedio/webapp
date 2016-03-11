@@ -281,6 +281,7 @@ angular.module('webappApp')
       $scope.deleteHolder = item;
     }
     $scope.deleteTask = function(item){
+      mixpanel.track("Deleted Status");
       console.log(item)
       //move this to the PhasedProvider
       var ref = new Firebase(FURL);
@@ -321,6 +322,7 @@ angular.module('webappApp')
     }
 
     $scope.editStatus = function(){
+      mixpanel.track("Edited Status");
 
       var ref = new Firebase(FURL);
       var editedStatus = $scope.editHolder;
@@ -375,7 +377,7 @@ angular.module('webappApp')
 
 
     $scope.likeStatus = function(item){
-
+      mixpanel.track("Liked Status");
       var ref = new Firebase(FURL);
       //check if user has liked status
       if (item.likes) {
@@ -425,7 +427,7 @@ angular.module('webappApp')
       $scope.statusComment = status;
     }
     $scope.postComment = function(comment){
-
+      mixpanel.track("Posted Comment");
       if (comment) {
         var status = $scope.statusComment;
         var ref = new Firebase(FURL);
