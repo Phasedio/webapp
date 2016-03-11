@@ -1,6 +1,14 @@
 #choose-repo {
-	li span {
-		cursor: pointer;
-		display: inline-block;
+	li {
+		&:not(.disabled) {
+			cursor: pointer;
+			font-weight: bold;
+		}
+		&.disabled {
+			color: gray;
+		}
+		span {
+			display: inline-block;
+		}
 	}
 }

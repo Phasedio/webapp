@@ -720,10 +720,10 @@ angular.module('webappApp')
       // repos
       cb = FBRef.child(teamKey + '/repos').on('value', function(snap){
       	var newRepos = snap.val();
-      	// persist hooks data not in FB db
+      	// persist hook data not in FB db
       	for (var repoID in PhasedProvider.team.repos) {
       		if (repoID in newRepos) {
-      			newRepos[repoID].hooks = PhasedProvider.team.repos[repoID].hooks;
+      			newRepos[repoID].hook = PhasedProvider.team.repos[repoID].hook;
       		}
       	}
       	PhasedProvider.team.repos = newRepos;
@@ -2639,7 +2639,7 @@ angular.module('webappApp')
     * GET /repos/:owner/:repo/hooks
     *
     * Returns a list of hooks for repos for the authenticated GH user;
-    *	(filters out hooks that don't relate to Phased)
+    *	(optionally filters out hooks that don't relate to Phased)
     *	returns false if the user isn't authenticated
     *	returns HTTP error if error
     *
@@ -2647,17 +2647,19 @@ angular.module('webappApp')
     *	OR that we store in our DB
     */
 
-    var _getGHRepoHooks = function(repo, callback) {
+    var _getGHRepoHooks = function(repo, callback, onlyPhased) {
     	var args = {
     		repo : repo,
-    		callback : (typeof callback == 'function') ? callback : function() {}
+    		callback : (typeof callback == 'function') ? callback : function() {},
+    		onlyPhased : onlyPhased
     	}
     	registerAsync(doGetGHRepoHooks, args);
     }
 
     var doGetGHRepoHooks = function(args) {
     	var repo = args.repo,
-    		callback = args.callback;
+    		callback = args.callback,
+    		onlyPhased = args.onlyPhased;
 
     	if (!('github' in _Auth.user)) {
     		callback(false)
@@ -2671,15 +2673,15 @@ angular.module('webappApp')
     			function success(res) {
     				var hooks = res.data;
     				// rm all hooks with non-phased URL
-    				for (var i = 0; i < hooks.length; i++) {
-    					var hookUrl = hooks[i].config.url.toLowerCase();
-    					if (hookUrl.indexOf('phased') < 0 &&
-    						hookUrl.indexOf('ngrok') < 0 ) {
-    						hooks.splice(i, 1);
-    						i--; // to account for newly lost element
-    					}
-    				}
-
+    				if (onlyPhased)
+							for (var i = 0; i < hooks.length; i++) {
+								var hookUrl = hooks[i].config.url.toLowerCase();
+								if (hookUrl.indexOf('phased') < 0 &&
+									hookUrl.indexOf('ngrok') < 0 ) {
+									hooks.splice(i, 1);
+									i--; // to account for newly lost element
+								}
+							}
 	    			callback(hooks);
 	    		},
 	    		function error(res){
@@ -2709,8 +2711,9 @@ angular.module('webappApp')
     		(function(_i) {
     			doGetGHRepoHooks({
     				repo : PhasedProvider.team.repos[_i], 
+    				onlyPhased : true,
     				callback : function(hooks) {
-	    				PhasedProvider.team.repos[_i].hooks = hooks;
+	    				PhasedProvider.team.repos[_i].hook = hooks[0];
 	    				if (i == _i) // if this is the last one
 	    					callback();
 	    			}
@@ -2743,10 +2746,14 @@ angular.module('webappApp')
     var doRegisterWebhookForRepo = function(args) {
     	var repo = args.repo,
     		callback = args.callback,
-    		phasedAPIEndpoint = 'http://acb710e8.ngrok.io/api/hooks/github/repo/'; // + ':team';
+    		phasedAPIEndpoint = 'http://acb710e8.ngrok.io/api/hooks/github/repo/' + PhasedProvider.team.uid;
 
-    	// 0. construct endpoint strings
-    	phasedAPIEndpoint += PhasedProvider.team.uid;
+    	// 0. if repo already registered, disallow re-registering
+    	if (PhasedProvider.team.repos && PhasedProvider.team.repos[repo.id]) {
+    		console.warn('Hook for GitHub repository ' + repo.name + '  already registered, will not re-register');
+    		callback(false);
+    		return;
+    	}
 
     	// 1.
   		$http.post(repo.hooks_url, {
@@ -2790,10 +2797,7 @@ angular.module('webappApp')
     					callback(false);
     				} else {
     					// add hook to repo in model
-    					if (typeof PhasedProvider.team.repos[repo.id].hooks == 'object')
-    						PhasedProvider.team.repos[repo.id].hooks.push(res.data);
-    					else
-    						PhasedProvider.team.repos[repo.id].hooks = [res.data];
+  						PhasedProvider.team.repos[repo.id].hook = res.data;
     					callback(true);
     				}
     			});
@@ -2850,15 +2854,11 @@ angular.module('webappApp')
   			for (var i in PhasedProvider.team.repos) {
   				var thisRepo = PhasedProvider.team.repos[i];
   				if (thisRepo.id == repoID) {
-  					for (var j in thisRepo.hooks) {
-  						if (thisRepo.hooks[j].id == updatedHook.id) {
-  							PhasedProvider.team.repos[i].hooks[j] = updatedHook;
-  							
-  							// 3. callback
-  							callback(updatedHook);
-  							return;
-  						}
-  					}
+						PhasedProvider.team.repos[i].hook = updatedHook;
+
+						// 3. callback
+						callback(updatedHook);
+						return;
   				}
   			}
   		}, function(err) {
@@ -2876,7 +2876,7 @@ angular.module('webappApp')
     * DELETE /repos/:owner/:repo/hooks/:id
     *
     *	1. sends the request to GH
-    *	2. deletes the local (client) data for the hook
+    *	2. deletes the repo on FB
     *	
     *	no callback, GH doesn't send a response
     *
@@ -2900,20 +2900,8 @@ angular.module('webappApp')
 				}
   		});
 
-			// 2. delete hook in team
-			var thisRepo = PhasedProvider.team.repos[repoID];
-			for (var i in thisRepo.hooks) {
-				if (thisRepo.hooks[i].id == hook.id) {
-					PhasedProvider.team.repos[repoID].hooks.splice(i, 1);
-					break;
-				}
-			}
-
-			// 3. delete repo from FB if no more webhooks
-			if (PhasedProvider.team.repos[repoID].hooks.length < 1) {
-				FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + repoID).set(null);
-			}
-
+			// 2. delete repo from FB
+			FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + repoID).set(null);
     }
 
   })

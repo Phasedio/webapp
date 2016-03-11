@@ -73,16 +73,18 @@ angular.module('webappApp')
 			$scope.github.repos = repos;
 		});
 	}
-
+	
+	// stages a repo if it's not already registered
 	$scope.stageRepo = function(repo) {
-		$scope.selectedRepo = repo;
+		if (!(repo.id in Phased.team.repos)) 
+			$scope.selectedRepo = repo;
 	}
 
 	$scope.registerSelectedRepo = function(){
-		console.log('registering webhook for ', $scope.selectedRepo);
 		Phased.registerWebhookForRepo($scope.selectedRepo, function(result) {
 			if (result)
 				$('#choose-repo').modal('hide');
+			$scope.selectedRepo = "";
 		});
 	}
 
@@ -92,8 +94,6 @@ angular.module('webappApp')
 
 	$scope.deleteHook = function(hook, repoID) {
 		if (confirm("Are you sure you want to delete this? This can't be undone."))
-			Phased.deleteWebhook(hook, repoID, function() {
-				console.log('Deleted');
-			});
+			Phased.deleteWebhook(hook, repoID);
 	}
 });
