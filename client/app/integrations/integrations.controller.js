@@ -76,7 +76,7 @@ angular.module('webappApp')
 	
 	// stages a repo if it's not already registered
 	$scope.stageGHRepo = function(repo) {
-		if (!(repo.id in Phased.team.repos)) 
+		if (!Phased.team.repos || !(repo.id in Phased.team.repos)) 
 			$scope.selectedRepo = repo;
 	}
 
