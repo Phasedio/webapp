@@ -152,7 +152,6 @@ angular.module('webappApp')
       }
       $scope.countActiveTasks = countActiveTasks();
       var teamCheck = Phased.viewType;
-      console.log(teamCheck);
       if (teamCheck == 'problem'){
         $location.path('/team-expired');
       }else if (teamCheck == 'canceled') {
@@ -485,9 +484,7 @@ angular.module('webappApp')
           thing.push(value);
         }
       });
-      console.log('this did things');
       $scope.getUserTasks = thing;
-      console.log(thing);
 
       return count
     }
