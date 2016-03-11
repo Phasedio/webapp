@@ -52,17 +52,7 @@ angular.module('webappApp')
         $scope.$on('Phased:setup', checkTeam);
         return;
       }
-      // var teamCheck = Phased.viewType;
-      // console.log(teamCheck);
-      // if (teamCheck == 'problem'){
-      //   $location.path('/team-expired');
-      // }else if (teamCheck == 'canceled') {
-      //   $location.path('/switchteam');
-      // }
-      if(Phased.viewType == "trialing"){
-        $scope.isTrial = true;
-        //$scope.$apply();
-      }
+      $scope.isTrial = (Phased.viewType == "trialing");
     }
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
