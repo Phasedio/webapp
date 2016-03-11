@@ -39,6 +39,34 @@ angular.module('webappApp')
         - "Data functions" (adding statuses or tasks, modifying projects, etc)
 
 
+			Events:
+
+			- Phased:setup -- all meta, user, team, team member, status, and task data has been loaded
+			- Phased:meta -- all metadata has been loaded
+			- Phased:member -- a single member has been loaded
+			- Phased:memberChanged -- a single member has changed
+			- Phased:membersComplete -- all team members have been loaded
+			- Phased:changedStatus -- a status has changed
+
+			- Phased:PaymentInfo -- team payment info (and Phased.viewType) has changed
+			- Phased:notification -- the current user has received a notification
+			- Phased:switchedTeam -- the current user has switched to a new team
+			
+				 For the following, Phased:[thing]Added is called on FireBase child_added.
+				 This means that on setup, these events are broadcast
+				 for EVERY 'thing' in the team's database!
+				 To get only NEW 'things', register event handlers in a callback
+				 to Phased:setup
+
+			- Phased:columnAdded
+			- Phased:columnDeleted
+			- Phased:cardAdded
+			- Phased:cardDeleted
+			- Phased:taskAdded
+			- Phased:taskDeleted
+			- Phased:projectAdded
+			- Phased:projectDeleted
+
     **/
 
     /**
@@ -612,22 +640,19 @@ angular.module('webappApp')
               console.log(data.err);
               // handle error
             }
-            console.log(data.status);
-            if (data.status == "active" ){
+            if (data.status == "active") {
               //Show thing for active
               PhasedProvider.viewType = 'active';
 
-            }else if (data.status == "trialing"){
+            } else if (data.status == "trialing") {
               //Show thing for problem with account
               PhasedProvider.viewType = 'trialing';
 
-
-            } else if (data.status == 'past_due' || data.status == 'unpaid'){
+            } else if (data.status == 'past_due' || data.status == 'unpaid') {
               //Show thing for problem with account
               PhasedProvider.viewType = 'problem';
 
-
-            } else if (data.status == 'canceled'){
+            } else if (data.status == 'canceled') {
               //Show thing for problem with canceled
               PhasedProvider.viewType = 'canceled';
 
@@ -692,10 +717,7 @@ angular.module('webappApp')
 
       // update status on change
       cb = FBRef.child(teamKey + '/statuses').on('child_changed', function(snap){
-        console.log('things changed');
         var key = snap.key();
-        console.log('things updated');
-        console.log(snap.val());
         PhasedProvider.team.statuses[key] = snap.val();
         $rootScope.$broadcast('Phased:changedStatus');
       });
