@@ -76,6 +76,7 @@ angular.module('webappApp')
             	2 auth with github
             	3 stash userMapping[newUID] = oldUID (only works if 'authenticating' == profile/oldUID/mappings[newProvider])
             	4 stash profile/oldUID/mappings[newProvider] = newUID
+            	5 stash alias to team if Auth.curTeam is set
             */
             githubLogin : function(success, failure) {
             	var fail = function(err){
@@ -86,10 +87,9 @@ angular.module('webappApp')
 
             	// 3 & 4
             	var authSuccess = function(authData) {
-            		console.log("Authenticated successfully with payload:", authData);
             		var newUID = authData.uid,
             		oldUID = Auth.user.uid;
-            		Auth.github = authData.github;
+            		Auth.user.github = authData.github;
         				// 3.
         				ref.child('userMappings/' + newUID).set(oldUID, function(err){
         					if (err) return fail(err);
@@ -98,7 +98,13 @@ angular.module('webappApp')
         						if (err) return fail(err);
         						if (typeof success == "function") return success(authData.github);
         					})
-        				})
+        				});
+
+        				// 5. 
+        				if (Auth.currentTeam) {
+        					ref.child('team/' + Auth.currentTeam + '/members/' + oldUID + '/aliases/github/0')
+        						.set(authData.github.username);
+        				}
             	}
 
             	// 1
@@ -107,7 +113,6 @@ angular.module('webappApp')
             	// 2.
             	ref.authWithOAuthPopup("github", function(error, authData) {
             		if (error) {
-            			console.log("popup failed, trying redirect");
             			ref.authWithOAuthRedirect('github', function(error, authData) {
             				if (error) return fail(error);
             				else authSuccess(authData);

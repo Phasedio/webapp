@@ -20,11 +20,7 @@
 							<div class="panel panel-default">
 								<!-- Default panel contents -->
 								<div class="panel-heading">Github</div>
-								<div ng-if="!github">
-									<h3>Not authenticated with GitHub</h3>
-									<a href="#" ng-click="startGHAuth($event)">Click to authenticate with GitHub</a>
-								</div>
-								<div ng-if="github">
+								<div>
 									<h3 ng-if="!Phased.team.repos">No Linked Repositories</h3>
 									<h3 ng-if="Phased.team.repos">Linked Repositories:</h3>
 									<ul>
@@ -33,7 +29,18 @@
 											<a href="#" ng-click="toggleGHHookActive(repo.hook, repo.id)"><span ng-if="repo.hook.active">Deactivate</span><span ng-if="!repo.hook.active">Activate</span></a> &middot; <a href="#" ng-click="deleteGHHook(repo.hook, repo.id)">Delete</a></p>
 										</li>
 									</ul>
-									<a href="#" data-toggle="modal" data-target="#choose-repo" ng-click="showGHRepos($event)">Add a repo</a>
+									<a
+										ng-if="github"
+										href="#"
+										data-toggle="modal"
+										data-target="#choose-repo"
+										ng-click="showGHRepos($event)">
+										Add a repo</a>
+									<a
+										ng-if="!github"
+										href="#"
+										ng-click="startGHAuth($event)">
+										Click to log in with GitHub</a>
 								</div>
 							</div>
 						</div>
