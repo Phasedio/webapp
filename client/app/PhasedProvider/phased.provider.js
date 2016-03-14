@@ -70,9 +70,9 @@ angular.module('webappApp')
       membersRetrieved = 0, // incremented with each member's profile gathered
 
       // INTERNAL "CONSTANTS"
-      WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints
+      WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints (with trailing slash)
       	LIVE : 'https://app.phased.io/',
-      	DEV : 'http://03034ab8.ngrok.io/'
+      	DEV : 'http://7b9a20f7.ngrok.io/'
       };
 
     var _Auth, FBRef; // tacked on to PhasedProvider
