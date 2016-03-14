@@ -100,3 +100,13 @@
 .profile-history{
 
 }
+
+.calendar-item {
+	.block {
+		position: relative;
+		display: inline-block;
+		width: 0.66rem;
+		height: 0.66rem;
+		margin: 0.33rem;
+	}
+}

@@ -169,7 +169,7 @@ return function(items, field, reverse) {
     $scope.update = {
     	aliases : {}
     };
-    console.log(Phased.team);
+    $scope.google = Auth.user.google;
     var ref = new Firebase(FURL);
 
     // bounce users if team has problems
@@ -258,45 +258,54 @@ return function(items, field, reverse) {
 			//  reader.readAsDataURL(f);
 		}
 
- $scope.changeImage = function(){
-    var f = $("#file-upload")[0].files[0];
-    console.log(f);
-    if(f.size < 2097152){
-      //var f = document.getElementById("file-upload").value;
-      var reader = new FileReader();
-      reader.onload = (function(theFile) {
-        return function(e) {
+		$scope.changeImage = function(){
+		  var f = $("#file-upload")[0].files[0];
+		  console.log(f);
+		  if(f.size < 2097152){
+		    //var f = document.getElementById("file-upload").value;
+		    var reader = new FileReader();
+		    reader.onload = (function(theFile) {
+		      return function(e) {
 
-          var gravatar = e.target.result;
-          console.log(gravatar);
-          // Generate a location that can't be guessed using the file's contents and a random number
-          //var hash = CryptoJS.SHA256(Math.random() + CryptoJS.SHA256(gravatar));
-          var f = ref.child('profile').child(Phased.user.uid).child('gravatar');
-          f.set(gravatar, function() {
-            mixpanel.track("Changed Profile Image");
-            //document.getElementById("pano").src = e.target.result;
-            $('#file-upload').hide();
+		        var gravatar = e.target.result;
+		        console.log(gravatar);
+		        // Generate a location that can't be guessed using the file's contents and a random number
+		        //var hash = CryptoJS.SHA256(Math.random() + CryptoJS.SHA256(gravatar));
+		        var f = ref.child('profile').child(Phased.user.uid).child('gravatar');
+		        f.set(gravatar, function() {
+		          mixpanel.track("Changed Profile Image");
+		          //document.getElementById("pano").src = e.target.result;
+		          $('#file-upload').hide();
 
-            // Update the location bar so the URL can be shared with others
-            //window.location.hash = hash;
+		          // Update the location bar so the URL can be shared with others
+		          //window.location.hash = hash;
 
-          });
-
-
-        };
-      })(f);
-      reader.readAsDataURL(f);
-    }
- }
+		        });
 
 
- $scope.startGoogleAuth = function(e) {
- 	e.preventDefault();
- 	console.log('begin Google OAuth process');
- 	Auth.googleLogin(function(googleAuthData){
- 		console.log('google auth data:', googleAuthData);
- 	});
- }
+		      };
+		    })(f);
+		    reader.readAsDataURL(f);
+		  }
+		}
+
+		// starts google Auth process
+		$scope.startGoogleAuth = function(e) {
+			e.preventDefault();
+			console.log('begin Google OAuth process');
+			Auth.googleLogin(function(googleAuthData){
+				console.log('google auth data:', googleAuthData);
+				$scope.google = Auth.user.google;
+				Phased.getGoogleCalendars();
+			});
+		}
+		Phased.getGoogleCalendars(); // get google calendars if user is authenticated
+
+		$scope.registerCal = function(cal, e) {
+			e.preventDefault();
+			console.log('registering calendar', cal);
+			
+		}
 
     // Update Account
     $scope.updateUser = function(update){

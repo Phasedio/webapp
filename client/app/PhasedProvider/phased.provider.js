@@ -296,6 +296,8 @@ angular.module('webappApp')
       PhasedProvider.registerGHWebhookForRepo = _registerGHWebhookForRepo;
       PhasedProvider.toggleGHWebhookActive = _toggleGHWebhookActive;
       PhasedProvider.deleteGHWebhook = _deleteGHWebhook;
+      // GOOGLE
+      PhasedProvider.getGoogleCalendars = _getGoogleCalendars;
 
       return PhasedProvider;
     }];
@@ -3014,6 +3016,39 @@ angular.module('webappApp')
 
 			// 2. delete repo from FB
 			FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + repoID).set(null);
+    }
+
+    /*
+    *
+    *	GOOGLE
+    *
+    */
+
+    /**
+    *
+    *	get calendar list
+    *
+    *	passes a list of calendars to the callback
+    *	
+    * GET https://www.googleapis.com/calendar/v3/users/me/calendarList
+    *	https://developers.google.com/google-apps/calendar/v3/reference/calendarList/list#http-request
+    */
+    var _getGoogleCalendars = function(callback) {
+    	var callback = (typeof callback == 'function') ? callback : function(){};
+    	registerAsync(doGetGoogleCalendars, callback);
+    }
+
+    var doGetGoogleCalendars = function(callback) {
+    	if (!('google' in _Auth.user))
+    		return console.warn('Cannot perform Google interaction for non-authenticated user.');
+
+    	$http.get('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' + _Auth.user.google.accessToken).then(function(res) {
+    		console.log('google res', res);
+    		_Auth.user.google.calendarList = res.data;
+    		callback(res.data);
+    	}, function(err) {
+    		console.log(err);
+    	});
     }
 
   })
