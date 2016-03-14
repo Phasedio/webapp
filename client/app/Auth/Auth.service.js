@@ -54,7 +54,7 @@ angular.module('webappApp')
                             return;
                         } else {
                             angular.copy(authData, Auth.user);
-                            getProfileDetails(Auth.user.uid)
+                            getProfileDetails(Auth.user.uid, authData.provider)
                                 .then(success, authData);
                         }
                     },
@@ -238,9 +238,9 @@ angular.module('webappApp')
             }
 
             // if the account is a normal account, get the profile right away
-            if (authData.provider == 'password')
+            if (provider == 'password')
             	ref.child('profile/' + uid).once('value', fillProfile);
-            else {
+            else if (provider) {
             	// otherwise we have to get the user's proper ID first
             	ref.child('userMappings/' + uid).once('value', function(snap){
             		var properID = snap.val();
@@ -251,8 +251,12 @@ angular.module('webappApp')
             			ref.child('profile/' + properID).once('value', fillProfile);
             		} else {
             			console.trace('Grave error: user has not registered with password or could not be found; login abort');
+            			$location.path('/login');
             		}
             	});
+            } else {
+            	console.trace('Grave error: no provider');
+        			$location.path('/login');
             }
 
             // return the pseudo-promise
@@ -342,7 +346,7 @@ angular.module('webappApp')
         // get user account metadata if already logged in
         var authData = auth.$getAuth();
         if (authData) {
-        	console.log('$getAuth', authData);
+        	// console.log('$getAuth', authData);
           angular.copy(authData, Auth.user);
           getProfileDetails(Auth.user.uid, authData.provider); // go to app after getting details
         
