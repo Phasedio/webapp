@@ -166,7 +166,11 @@ return function(items, field, reverse) {
     $scope.phased = Phased;
     $scope.team = Phased.team;
     $scope.viewType = Phased.viewType;
+    $scope.update = {
+    	aliases : {}
+    };
     console.log(Phased.team);
+    var ref = new Firebase(FURL);
 
     // bounce users if team has problems
     var checkTeam = function(){
@@ -187,19 +191,30 @@ return function(items, field, reverse) {
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
 
-    // Check to see if there are route perams for this page if so load up that user
-    var profileUser;
-    if ($routeParams.userid) profileUser = $routeParams.userid;
-    else profileUser = Auth.user.uid;
+    // fills profile for the selected user
+    // must be done AFTER Auth and Phased are set up
+    // in case the user is logged in with another service
+    // (Auth replaces the user's OAuth provider id with their 
+    // "proper" id)
+		var initProfileUser = function() {
+			// do only after Phased is set up
+			if (!Phased.SET_UP) {
+				$scope.$on('Phased:setup', initProfileUser);
+				return;
+			}
+			// Check to see if there are route perams for this page if so load up that user
+			if ($routeParams.userid)
+				$scope.currentUserID = $routeParams.userid;
+			else {
+				$scope.currentUserID = Auth.user.uid;
+			}
 
-    $scope.currentUser = Phased.team.members[profileUser];
-    $scope.currentUserID = profileUser;
+			$scope.currentUser = Phased.team.members[$scope.currentUserID];
 
-    $scope.$on('Phased:setup', function(){
-      $scope.currentUser = Phased.team.members[profileUser];
-    });
-
-    var FBRef = new Firebase(FURL);
+			// prevent Update
+			$scope.isSelf = ($scope.currentUserID == Auth.user.uid);
+		}
+		initProfileUser();
 
     // bootstrap enable tabs
     $('#myTabs a').click(function (e) {
@@ -207,10 +222,6 @@ return function(items, field, reverse) {
       $(this).tab('show')
     });
 
-    // prevent Update
-    $scope.person = false;
-    if (profileUser == Auth.user.uid) $scope.person = true;
-    else $scope.person = false;
 
     // logout
     $scope.logout = function(){
@@ -219,9 +230,73 @@ return function(items, field, reverse) {
       $location.path('/login');
     }
 
+		//Photo stuff
+		//console.log(Auth.user);
+		//document.getElementById("file-upload").addEventListener('change', handleFileSelect, false);
+		$scope.handleFileSelect = function(evt) {
+			console.log(evt);
+			//  var f = evt.target.files[0];
+			//  var reader = new FileReader();
+			//
+			//  console.log('the reader is ', reader);
+			//  reader.onload = (function(theFile) {
+			//    return function(e) {
+			//      var gravatar = e.target.result;
+			//      // Generate a location that can't be guessed using the file's contents and a random number
+			//      //var hash = CryptoJS.SHA256(Math.random() + CryptoJS.SHA256(gravatar));
+			//      var f = ref.child('profile').child(Phased.user.uid).child('gravatar');
+			//      f.set(gravatar, function() {
+			//        //document.getElementById("pano").src = e.target.result;
+			//        $('#file-upload').hide();
+			//
+			//        // Update the location bar so the URL can be shared with others
+			//        //window.location.hash = hash;
+			//
+			//      });
+			//    };
+			//  })(f);
+			//  reader.readAsDataURL(f);
+		}
+
+ $scope.changeImage = function(){
+    var f = $("#file-upload")[0].files[0];
+    console.log(f);
+    if(f.size < 2097152){
+      //var f = document.getElementById("file-upload").value;
+      var reader = new FileReader();
+      reader.onload = (function(theFile) {
+        return function(e) {
+
+          var gravatar = e.target.result;
+          console.log(gravatar);
+          // Generate a location that can't be guessed using the file's contents and a random number
+          //var hash = CryptoJS.SHA256(Math.random() + CryptoJS.SHA256(gravatar));
+          var f = ref.child('profile').child(Phased.user.uid).child('gravatar');
+          f.set(gravatar, function() {
+            mixpanel.track("Changed Profile Image");
+            //document.getElementById("pano").src = e.target.result;
+            $('#file-upload').hide();
+
+            // Update the location bar so the URL can be shared with others
+            //window.location.hash = hash;
+
+          });
+
+
+        };
+      })(f);
+      reader.readAsDataURL(f);
+    }
+
+
+ }
+
+
     // Update Account
     $scope.updateUser = function(update){
       mixpanel.track("Update user settings");
+      if (update == undefined) return; // update nothing? do nothing.
+
       var toaster = { pop : function(a) { console.log(a) } }; // patch while the toaster disappeared!
       if (update.email === undefined || update.email === '') {
         update.email = $scope.currentUser.email;
@@ -234,6 +309,11 @@ return function(items, field, reverse) {
         } else {
           toaster.pop('error', 'Invalid phone number');
         }
+      }
+
+      // only update github alias if different
+      if (update.aliases.github && update.aliases.github[0] != $scope.currentUser.aliases.github[0]) {
+      	Phased.updateGHAlias(update.aliases.github[0], 0);
       }
 
       if (update.name === $scope.currentUser.name || update.name === undefined || update.name === ''){

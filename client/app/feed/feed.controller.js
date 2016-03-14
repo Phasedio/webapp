@@ -91,7 +91,22 @@ angular.module('webappApp')
       return filtered;
     };
   })
-  .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location) {
+  .filter('orderMembers', function() {
+    return function(items, field, reverse) {
+      var filtered = [];
+      for (var i in items) {
+      items[i].key = i;
+      items[i].lastUpdated = items[i].currentStatus.time;
+      filtered.push(items[i]);
+    }
+      filtered.sort(function (a, b) {
+        return (a[field] > b[field] ? 1 : -1);
+      });
+      if(reverse) filtered.reverse();
+      return filtered;
+    };
+  })
+  .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location,toaster,$route) {
     ga('send', 'pageview', '/feed');
 
     // Background image
@@ -119,8 +134,13 @@ angular.module('webappApp')
     $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
     $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
+    $scope.user = Phased.user;
+    $scope.deleteHolder = '';
+    $scope.editHolder = '';
 
+    //bootstrap opt-in func;
 
+    //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
 
     // bounce users if team has problems
@@ -142,6 +162,13 @@ angular.module('webappApp')
     }
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
+
+    $scope.$on('Phased:changedStatus', function(){
+      if ($scope.statusComment) {
+        console.log($scope.statusComment);
+        $scope.statusComment = Phased.team.statuses[$scope.statusComment.key];
+      }
+    });
 
     //Print blank lines in for task area
     $scope.taskTable = [1,2,3,4,5];
@@ -189,9 +216,11 @@ angular.module('webappApp')
         $scope.selectedTask = {};
       }
 
-      console.log('status:', status);
+      //console.log('status:', status);
       // push to db
       Phased.addStatus(status);
+
+
 
       // reset interface
       $scope.selectedCategory = undefined;
@@ -247,6 +276,228 @@ angular.module('webappApp')
       $scope.selectedTask = {};
       $('#taskModal').modal('toggle');
     }
+    //Delete status flow
+    $scope.deleteSelected = function(item){
+      $scope.deleteHolder = item;
+    }
+    $scope.deleteTask = function(item){
+      mixpanel.track("Deleted Status");
+      console.log(item)
+      //move this to the PhasedProvider
+      var ref = new Firebase(FURL);
+      //check if update has task
+      if (item.task) {
+        //remove task from task statuses history
+        var locate = "team/"+Phased.team.uid+"/projects/"+item.task.project+"/columns/"+item.task.column+"/cards/"+item.task.card+"/tasks/"+item.task.id+"/statuses";
+
+        ref.child(locate)
+        .orderByValue()
+        .equalTo(item.key)
+        .once('value',function(snap){
+          var s = snap.val();
+          s = Object.keys(s);
+          console.log(s);
+          console.log(snap.key());
+          //var ref = new Firebase(s).set(null);
+          ref.child(locate+"/"+s[0]).remove();
+
+          $scope.$apply();
+        });
+      }
+      //rm from FB
+      ref.child('team')
+      .child(Phased.team.uid)
+      .child('statuses')
+      .child(item.key)
+      .set(null);
+      //rm from local
+      delete $scope.team.statuses[item.key];
+      toaster.pop('success', "Success!", "Your status was deleted!");
+    }
+
+    //edit status flow
+    $scope.editStatusSelected = function(item){
+      $scope.editHolder = angular.copy(item);
+      $scope.origItem = item;
+    }
+
+    $scope.editStatus = function(){
+      mixpanel.track("Edited Status");
+
+      var ref = new Firebase(FURL);
+      var editedStatus = $scope.editHolder;
+      var origStatus = $scope.origItem;
+      //check if tasks exists on
+      if(editedStatus.task){
+        //are the tasks the same?
+        if (origStatus.task != editedStatus.task) {
+          //task was changed or added to status
+
+          // was there a task on the status in the first place?
+          if(origStatus.task){
+            //yes, we should delete the status from the task
+            var locate = "team/"+Phased.team.uid+"/projects/"+origStatus.task.project+"/columns/"+origStatus.task.column+"/cards/"+origStatus.task.card+"/tasks/"+origStatus.task.id+"/statuses";
+
+            ref.child(locate)
+            .orderByValue()
+            .equalTo(origStatus.key)
+            .once('value',function(snap){
+              var s = snap.val();
+              if(s){
+                s = Object.keys(s);
+                console.log(s);
+                console.log(snap.key());
+                ref.child(locate+"/"+s[0]).remove();
+              }
+
+            });
+          }
+
+          if(editedStatus.task.id != ""){
+            //Is there a new task?
+            editedStatus.task = {
+              project : '0A',
+              column : '0A',
+              card : '0A',
+              id : editedStatus.task.id,
+              name : Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks[editedStatus.task.id].name
+            }
+            ref.child('team').child(Phased.team.uid).child('projects/' + editedStatus.task.project +'/columns/'+editedStatus.task.column +'/cards/'+ editedStatus.task.card +'/tasks/'+editedStatus.task.id+'/statuses').push(origStatus.key);
+            //no, lets move on and add it to the new task
+          }else{
+            editedStatus.task = "";
+          }
+        }
+      }
+
+      ref.child('team').child(Phased.team.uid).child('statuses').child(editedStatus.key).update(editedStatus);
+      $scope.team.statuses[$scope.editHolder.key] = editedStatus;
+      $('#editModal').modal('toggle');
+    }
+
+
+    $scope.likeStatus = function(item){
+      mixpanel.track("Liked Status");
+      var ref = new Firebase(FURL);
+      //check if user has liked status
+      if (item.likes) {
+        if (item.likes[Phased.user.uid]) {
+          //remove like;
+          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(null);
+
+        }else{
+          //push like to status
+          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+
+        }
+      }else{
+        //push like to status
+        ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+
+      }
+
+
+    }
+
+    $scope.countInts = function(likes){
+      if(likes){
+        return Object.keys(likes).length;
+      }else{
+        return "";
+      }
+
+    }
+    $scope.showLikers = function(likes){
+      if(likes){
+        var keys = Object.keys(likes);
+        var str = "";
+        for (var i = 0; i < keys.length; i++) {
+           str += Phased.team.members[keys[i]].name + "\n";
+        }
+        return str;
+      }
+
+
+    }
+
+
+    //Comments
+
+    $scope.getCommentStatus = function(status){
+      $scope.statusComment = status;
+    }
+    $scope.postComment = function(comment){
+      mixpanel.track("Posted Comment");
+      if (comment) {
+        var status = $scope.statusComment;
+        var ref = new Firebase(FURL);
+
+        var comment = {
+  	      name: comment,
+  	      time: new Date().getTime(),
+  	      user: Auth.user.uid,
+
+  	    };
+        ref.child('team').child(Phased.team.uid).child('statuses').child(status.key).child('comments').push(comment);
+        $scope.comment ="";
+
+      }
+    }
+
+
+
+    //change feed filter
+    $scope.filterFeed = 'recent';
+    $scope.changeFilter = function(string){
+      if(string == 'recent'){
+        $scope.filterFeed = 'recent';
+      }else if(string == 'members'){
+        $scope.filterFeed = 'members';
+      }
+    }
+
+
+    //Add members to team
+
+    $scope.canAddMembers = function(){
+      var k = Object.keys(Phased.team.members);
+      console.log(k);
+      $scope.numMembers = k.length;
+      if(k.length <= 10){
+        return true;
+      }else{
+        return false;
+      }
+    };
+    $scope.addMembers = function(newMember) {
+      $('#addMemberModal').modal('toggle');
+      mixpanel.track("Sent Invite");
+      Phased.addMember(newMember);
+    };
+
+
+    //attachments
+
+    $scope.attchmentListener = function(text){
+      //console.log(text);
+      // var urlPattern = new RegExp();
+      // var test = urlPattern.test(text);
+      // var res = text.match(urlPattern);
+      // console.log(test);
+      // console.log(res);
+      // var patterns = {
+      //   // FUCK THESE 3 w's! >:(
+      //   protocol: '^(http(s)?(:\/\/))?(www\.)?',
+      //   domain: '[a-zA-Z0-9-_\.]+',
+      //   tld: '(\.[a-zA-Z0-9]{2,})',
+      //   params: '([-a-zA-Z0-9:%_\+.~#?&//=]*)'
+      // } // /([www])?\.?((\w+)\.+)([a-zA-Z]{2,})/gi
+      // var p = patterns;
+      // var pattern = new RegExp(p.protocol + p.domain + p.tld + p.params, 'gi');
+      // var res = pattern.exec(text);
+      //console.log(res);
+    }
+
 
 
 

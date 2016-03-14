@@ -124,6 +124,13 @@ body{
 .no-padding{
   padding:0!important;
 }
+.no__boarder__radius{
+  border-radius: 0px!important;
+}
+.no__border__side{
+  border-left:none;
+  border-right:none;
+}
 .trialing{
   text-align: center;
     position: absolute;
@@ -199,6 +206,12 @@ body{
   &:focus{
     outline: none;
   }
+}
+
+.btn-drop-chevron{
+  padding: 5px; 
+  padding-top: 0;
+  background: transparent;
 }
 // navbar
 .navbar{
@@ -364,6 +377,14 @@ body{
   border-radius: 0;
 }
 
+.addMember-btnHolder{
+  input[type='submit']{
+    width: auto;
+    color:#fff;
+    display: inline-block;
+  }
+}
+
 // Component styles are injected through grunt
 // injector
 @import 'addcategory/addcategory.scss';
@@ -373,6 +394,7 @@ body{
 @import 'editcategory/editcategory.scss';
 @import 'feed/feed.scss';
 @import 'getapp/getapp.scss';
+@import 'integrations/integrations.scss';
 @import 'login/login.scss';
 @import 'main/main.scss';
 @import 'onboarding/onboarding.scss';
@@ -409,7 +431,7 @@ body{
     margin-bottom: 20px;
   }
 }
- 
+
 //Media Q
 
 /* Large devices (large desktops, 1200px and up) */
@@ -424,6 +446,47 @@ body{
   }
 
 }
+
+@media (max-width: 969px) {
+  //side navbar-nav
+  .sideMenu{
+    width: 75px;
+    .brand__area{
+      height:73px;
+      .brand__title{
+        display: none;
+      }
+      .brand__img{
+        margin-top:12px;
+        margin-left: 10px;
+        display: block;
+      }
+    }
+    .navItem{
+      text-align: center;
+      span{
+        display: none;
+      }
+    }
+  }
+
+  .trialing{
+    text-align: center;
+      position: absolute;
+      top: 50rem;
+      left: 4px;
+      color: #fff;
+  }
+}
+// .ion{
+//       width: 41.5%;
+//     }
+//     .navItem{
+//       text-align: center;
+//     }
+//   }
+
+//}
 
 @media (max-width: 969px) {
   //side navbar-nav

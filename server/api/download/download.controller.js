@@ -34,7 +34,7 @@ exports.send = function(req, res) {
       	//console.log('new task');
       	var task = dataJson.data[users[y]][keys[i]];
       	var obj = {}
-        if (task.cat != "" && dataJson.cat[task.cat].name) {
+        if (task.cat && dataJson.cat[task.cat].name) {
           obj.category = dataJson.cat[task.cat].name;
         }
       	obj.time = new Date(task.time).toLocaleTimeString();
@@ -64,6 +64,7 @@ exports.send = function(req, res) {
 
 
   }
+
    fs.writeFile('file.csv', theCSV, function(err) {
       if (err) throw err;
    //    console.log('file saved');
@@ -82,8 +83,12 @@ exports.dwl = function(req, res) {
     console.log('happed');
 	//var file = req.param('file');
   var filestream = fs.createReadStream('file.csv');
-
-    res.set('Content-Type', 'application/octet-stream');
+  filestream.on('end', function() {
+    fs.unlink('file.csv', function() {
+      // file deleted
+    });
+  });
+  res.set('Content-Type', 'application/octet-stream');
 	res.set('Content-Disposition', 'attachment;filename=\"file.csv\"');
   filestream.pipe(res);
 	//res.download('file.csv');

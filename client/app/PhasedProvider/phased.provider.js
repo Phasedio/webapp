@@ -39,6 +39,34 @@ angular.module('webappApp')
         - "Data functions" (adding statuses or tasks, modifying projects, etc)
 
 
+			Events:
+
+			- Phased:setup -- all meta, user, team, team member, status, and task data has been loaded
+			- Phased:meta -- all metadata has been loaded
+			- Phased:member -- a single member has been loaded
+			- Phased:memberChanged -- a single member has changed
+			- Phased:membersComplete -- all team members have been loaded
+			- Phased:changedStatus -- a status has changed
+
+			- Phased:PaymentInfo -- team payment info (and Phased.viewType) has changed
+			- Phased:notification -- the current user has received a notification
+			- Phased:switchedTeam -- the current user has switched to a new team
+
+				 For the following, Phased:[thing]Added is called on FireBase child_added.
+				 This means that on setup, these events are broadcast
+				 for EVERY 'thing' in the team's database!
+				 To get only NEW 'things', register event handlers in a callback
+				 to Phased:setup
+
+			- Phased:columnAdded
+			- Phased:columnDeleted
+			- Phased:cardAdded
+			- Phased:cardDeleted
+			- Phased:taskAdded
+			- Phased:taskDeleted
+			- Phased:projectAdded
+			- Phased:projectDeleted
+
     **/
 
     /**
@@ -58,16 +86,28 @@ angular.module('webappApp')
       WATCH_PROJECTS = false, // set in setWatchProjects in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
+      WEBHOOKS_LIVE = { // switches for individual webhooks, so that eg Github hooks can be live while Google is in dev
+      	GITHUB : false,
+      	GOOGLE : false
+      },
 
       // ASYNC CALLBACKS
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
       req_after_members = [], // filled with operations to complete after members are in
       req_after_meta = [], // filled with operations to complete after meta are in
-      membersRetrieved = 0; // incremented with each member's profile gathered
+      membersRetrieved = 0, // incremented with each member's profile gathered
+
+      // INTERNAL "CONSTANTS"
+      WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints
+      	LIVE : 'https://app.phased.io/',
+      	DEV : 'http://03034ab8.ngrok.io/'
+      };
 
     var _Auth, FBRef; // tacked on to PhasedProvider
     var ga = ga || function(){}; // in case ga isn't defined (as in chromeapp)
     var $rootScope = { $broadcast : function(a){} }; // set in $get, default for if PhasedProvider isn't injected into any scope. not available in .config();
+    var $http = {}; // ditto
+    var $location = {}; // me too
 
     /**
     *
@@ -210,8 +250,10 @@ angular.module('webappApp')
     * exposes data, methods, and a FireBase reference
     *
     */
-    this.$get = ['$rootScope', function(_rootScope) {
+    this.$get = ['$rootScope', '$http', '$location', function(_rootScope, _http, _location) {
       $rootScope = _rootScope;
+      $http = _http;
+      $location = _location;
       // register functions listed after this in the script...
 
       // add member and team
@@ -244,6 +286,16 @@ angular.module('webappApp')
       // NOTIFS
       PhasedProvider.markNotifAsRead = _markNotifAsRead;
       PhasedProvider.markAllNotifsAsRead = _markAllNotifsAsRead;
+
+      // INTEGRATIONS
+      // GITHUB
+      PhasedProvider.updateGHAlias = _updateGHAlias;
+      PhasedProvider.getGHRepos = _getGHRepos;
+      PhasedProvider.getGHRepoHooks = _getGHRepoHooks;
+      PhasedProvider.getAllGHRepoHooks = _getAllGHRepoHooks;
+      PhasedProvider.registerGHWebhookForRepo = _registerGHWebhookForRepo;
+      PhasedProvider.toggleGHWebhookActive = _toggleGHWebhookActive;
+      PhasedProvider.deleteGHWebhook = _deleteGHWebhook;
 
       return PhasedProvider;
     }];
@@ -319,7 +371,7 @@ angular.module('webappApp')
     */
     var registerAsync = function(callback, args) {
       if (PHASED_SET_UP)
-        callback(args);
+        return callback(args);
       else
         req_callbacks.push({callback : callback, args : args });
     }
@@ -461,6 +513,7 @@ angular.module('webappApp')
         PhasedProvider.team.project_archive = data.project_archive;
         PhasedProvider.team.categoryObj = data.category;
         PhasedProvider.team.categorySelect = objToArray(data.category); // adds key prop
+        PhasedProvider.team.repos = data.repos;
 
         // set up references in .get[objectName] to their respective objects
         // this allows us to have an unordered collection of, eg, all tasks, to gather data
@@ -612,22 +665,21 @@ angular.module('webappApp')
               console.log(data.err);
               // handle error
             }
-            console.log(data.status);
-            if (data.status == "active" ){
+
+            if (data.status == "active") {
+
               //Show thing for active
               PhasedProvider.viewType = 'active';
 
-            }else if (data.status == "trialing"){
+            } else if (data.status == "trialing") {
               //Show thing for problem with account
               PhasedProvider.viewType = 'trialing';
 
-
-            } else if (data.status == 'past_due' || data.status == 'unpaid'){
+            } else if (data.status == 'past_due' || data.status == 'unpaid') {
               //Show thing for problem with account
               PhasedProvider.viewType = 'problem';
 
-
-            } else if (data.status == 'canceled'){
+            } else if (data.status == 'canceled') {
               //Show thing for problem with canceled
               PhasedProvider.viewType = 'canceled';
 
@@ -690,6 +742,19 @@ angular.module('webappApp')
         callback : cb
       });
 
+      // update status on change
+      cb = FBRef.child(teamKey + '/statuses').on('child_changed', function(snap){
+        var key = snap.key();
+        PhasedProvider.team.statuses[key] = snap.val();
+        $rootScope.$broadcast('Phased:changedStatus');
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/statuses',
+        eventType : 'child_changed',
+        callback : cb
+      });
+
 
       // category (doesn't need memory references)
       cb = FBRef.child(teamKey + '/category').on('value', function(snap) {
@@ -700,6 +765,17 @@ angular.module('webappApp')
 
       PhasedProvider.team._FBHandlers.push({
         address : teamKey + '/category',
+        eventType : 'value',
+        callback : cb
+      });
+
+      // repos
+      cb = FBRef.child(teamKey + '/repos').on('value', function(snap){
+      	PhasedProvider.team.repos = snap.val();
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/repos',
         eventType : 'value',
         callback : cb
       });
@@ -1965,7 +2041,7 @@ angular.module('webappApp')
         oldRole : oldRole,
         failure : failure
       }
-
+      console.log(args);
       registerAsync(doChangeMemberRole, args);
     }
 
@@ -2243,6 +2319,20 @@ angular.module('webappApp')
         teamRef.child('projects/' + newStatus.task.project +'/columns/'+newStatus.task.column +'/cards/'+ newStatus.task.card +'/tasks/'+newStatus.task.id+'/statuses').push(postID);
 
       }
+
+      //Send status to server for URL parsing.
+      var postID = newStatusRef.key();
+      $.post('./api/things', {text: newStatus.name,id:postID})
+        .success(function(data){
+
+          var statusRef = newStatusRef.key();
+          console.log(data);
+          if(data.url){
+            mixpanel.track("URL in status");
+            var teamRef = FBRef.child('team/' + PhasedProvider.team.uid);
+            teamRef.child('statuses').child(statusRef).child('attachment').set(data);
+          }
+        });
 
     }
 
@@ -2562,6 +2652,349 @@ angular.module('webappApp')
       });
     }
 
+    /*
+    **
+    ** INTEGRATIONS
+    **
+    */
+
+    /*
+    *
+    * GITHUB
+    *
+    */
+
+    /**
+    *
+    *	Updates a user's GitHub user name (for the team)
+    *	Assumes it will be the name at index = 0 if no index
+    *
+    */
+    var _updateGHAlias = function(newUsername, index) {
+    	var args = {
+    		newUsername : newUsername,
+    		index : index || 0
+    	}
+    	registerAsync(doUpdateGHAlias, args);
+    }
+
+    var doUpdateGHAlias = function(args) {
+    	var newUsername = args.newUsername,
+    		index = args.index;
+
+    	FBRef.child('team/' + PhasedProvider.team.uid + '/members/' + PhasedProvider.user.uid + '/aliases/github/' + index).set(newUsername);
+    }
+
+    /**
+    *
+    *	Little wrapper for $http get
+    * Returns a list of repos for the authenticated GH user;
+    *	returns false if the user isn't authenticated
+    *	returns HTTP error if error
+    */
+    var _getGHRepos = function(callback) {
+    	callback = (typeof callback == 'function') ?
+    		callback : function() {};
+    	registerAsync(doGetGHRepos, callback);
+    }
+
+    var doGetGHRepos = function(callback) {
+    	if (!('github' in _Auth.user)) {
+    		callback(false)
+    	} else {
+    		$http.get('https://api.github.com/user/repos', {
+    			params : {
+    				access_token : _Auth.user.github.accessToken
+    			}
+    		}).then(
+    			function success(res){
+	    			callback(res.data);
+    			},
+    			function error(res){
+	    			console.trace('Error with GH request', res);
+	    			callback(res);
+    			}
+    		);
+    	}
+    }
+
+
+    /**
+    *
+    * GET /repos/:owner/:repo/hooks
+    *
+    * Returns a list of hooks for repos for the authenticated GH user;
+    *	(optionally filters out hooks that don't relate to Phased)
+    *	returns false if the user isn't authenticated
+    *	returns HTTP error if error
+    *
+    *	expects repo to be of the same structure that GH returns
+    *	OR that we store in our DB
+    */
+
+    var _getGHRepoHooks = function(repo, callback, onlyPhased) {
+    	var args = {
+    		repo : repo,
+    		callback : (typeof callback == 'function') ? callback : function() {},
+    		onlyPhased : onlyPhased
+    	}
+    	registerAsync(doGetGHRepoHooks, args);
+    }
+
+    var doGetGHRepoHooks = function(args) {
+    	var repo = args.repo,
+    		callback = args.callback,
+    		onlyPhased = args.onlyPhased;
+
+    	if (!('github' in _Auth.user)) {
+    		callback(false)
+    	} else {
+    		var ghAPIEndpoint = repo.hooks_url || repo.apiUrl + '/hooks';
+    		$http.get(ghAPIEndpoint, {
+    			params : {
+    				access_token : _Auth.user.github.accessToken
+    			}
+    		}).then(
+    			function success(res) {
+    				var hooks = res.data;
+    				// rm all hooks with non-phased URL
+    				if (onlyPhased)
+							for (var i = 0; i < hooks.length; i++) {
+								var hookUrl = hooks[i].config.url.toLowerCase();
+								if (hookUrl.indexOf('phased') < 0 &&
+									hookUrl.indexOf('ngrok') < 0 ) {
+									hooks.splice(i, 1);
+									i--; // to account for newly lost element
+								}
+							}
+	    			callback(hooks);
+	    		},
+	    		function error(res){
+	    			console.trace('Error with GH request', res);
+	    			callback(res);
+	    		}
+	    	);
+    	}
+    }
+
+
+    /**
+    *
+    * wrapper for the above to add all hook data from the GH server
+    *	for all of team's currently registered repos
+    *
+    *	we store the hook data in our own server but calling this ensures that the
+    *	data is in synch with the effective data on GH.
+    *
+    */
+    var _getAllGHRepoHooks = function(callback) {
+    	callback = (typeof callback == 'function') ? callback : function() {};
+    	registerAsync(doGetAllGHRepoHooks, callback);
+    }
+
+    var doGetAllGHRepoHooks = function(callback) {
+    	if ( !('github' in _Auth.user) ) return;
+
+    	for (var i in PhasedProvider.team.repos) {
+    		(function(_i) {
+    			doGetGHRepoHooks({
+    				repo : PhasedProvider.team.repos[_i],
+    				onlyPhased : true,
+    				callback : function(hooks) {
+    					var _callback = (i==_i) ? callback : function(){}; // use callback if this is the last one
+    					FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + _i + '/hook').set(hooks[0], _callback);
+	    			}
+	    		});
+    		})(i);
+    	}
+    }
+
+    /**
+    *
+    *	Registers a webhook for a repo for a team
+    *	allowing GitHub to push status updates to this team
+    *	whenever a commit is made to the repo
+    *
+    *	1. post request to GH API to set webhook
+    *	2. if successful, add repos key to team
+    *
+    *	returns success status (bool) to callback
+    *
+    */
+
+    var _registerGHWebhookForRepo = function(repo, callback) {
+    	var args = {
+    		repo : repo,
+    		callback : (typeof callback == 'function') ? callback : function(){}
+    	}
+    	registerAsync(doRegisterGHWebhookForRepo, args);
+    }
+
+    var doRegisterGHWebhookForRepo = function(args) {
+    	var repo = args.repo,
+    		callback = args.callback,
+    		phasedAPIEndpoint = 'api/hooks/github/repo/' + PhasedProvider.team.uid;
+
+    	// live/dev switch
+    	if (WEBHOOKS_LIVE.GITHUB)
+    		phasedAPIEndpoint = WEBHOOK_HOSTNAME.LIVE + phasedAPIEndpoint;
+    	else
+    		phasedAPIEndpoint = WEBHOOK_HOSTNAME.DEV + phasedAPIEndpoint;
+
+    	// 0. if repo already registered, disallow re-registering
+    	if (PhasedProvider.team.repos && PhasedProvider.team.repos[repo.id]) {
+    		console.warn('Hook for GitHub repository ' + repo.name + '  already registered, will not re-register');
+    		callback(false);
+    		return;
+    	}
+
+    	// 1.
+  		$http.post(repo.hooks_url, {
+				name : 'web',
+				events : ['push'],
+				active : true,
+				config : {
+					url : phasedAPIEndpoint,
+					content_type : 'json', // either 'json' or 'form'
+					secret : '81c4e9c6e9fa5a7b77ba19d94f99f4b9974e58ae',
+					insecure_ssl : !WEBHOOKS_LIVE.GITHUB // only while in dev
+				}
+  		}, {
+				headers : {
+					"Authorization" : "token " + _Auth.user.github.accessToken
+				}
+  		}).then(
+  			function success(res) {
+  				if (res.status != 201) {
+  					doDeleteWebhook(res.data, repo.id); // res.data is the new hook
+  					callback(false);
+  					return;
+  				}
+
+  				// posted to github okay, but still need to to FB transaction
+  				// so that our server knows its okay to accept data from GH
+    			FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + repo.id).set({
+    				id : repo.id,
+    				name : repo.name,
+    				fullName : repo.full_name,
+    				owner : {
+    					name : repo.owner.name || repo.owner.login // name if individual or login for org
+    				},
+    				url : repo.html_url,
+    				apiUrl : repo.url,
+    				acceptedHooks : ["push"],
+    				hook : res.data
+    			}, function(err){
+    				if (err) {
+    					console.log(err);
+    					callback(false);
+    				} else {
+    					// add hook to repo in model
+  						PhasedProvider.team.repos[repo.id].hook = res.data;
+    					callback(true);
+    				}
+    			});
+    		},
+    		function error(res){
+    			console.trace('Error with GH request', res);
+    			callback(false);
+    		}
+  		);
+    }
+
+    /**
+    *
+    *	Toggles the active state for a webhook
+    * PATCH /repos/:owner/:repo/hooks/:id
+    *
+    *	1. sends the request to GH
+    *	2. updates the local (client) data for the hook
+    *	3. callback
+    *
+    */
+    var _toggleGHWebhookActive = function(hook, repoID, callback, active) {
+    	var args = {
+    		hook : hook,
+    		repoID : repoID,
+    		callback : (typeof callback == 'function') ? callback : function() {},
+    		active : active
+    	}
+    	registerAsync(doToggleGHWebhookActive, args);
+    }
+
+    var doToggleGHWebhookActive = function(args) {
+    	var hook = args.hook,
+    		callback = args.callback,
+    		repoID = args.repoID,
+    		// use the supplied state or the opposite of the current state
+    		active = (typeof args.active == 'boolean') ? args.active : !hook.active;
+
+    	// 1. send PATCH request to github
+    	$http.patch(hook.url, {
+				active : active,
+  		}, {
+				headers : {
+					"Authorization" : "token " + _Auth.user.github.accessToken
+				}
+  		}).then(function(res){
+  			if (!res.status == 200) {
+  				callback(false);
+  				return;
+  			};
+  			var updatedHook = res.data;
+
+  			// 2. update hook in team
+  			for (var i in PhasedProvider.team.repos) {
+  				var thisRepo = PhasedProvider.team.repos[i];
+  				if (thisRepo.id == repoID) {
+						PhasedProvider.team.repos[i].hook = updatedHook;
+
+						// 3. callback
+						callback(updatedHook);
+						return;
+  				}
+  			}
+  		}, function(err) {
+  			// if there are too many hooks registered to the repo,
+  			// the GH response goes here (response is 422: Unprocessable Entity)
+  			console.log(err);
+  			callback(false);
+  		});
+    }
+
+    /**
+    *
+    *	Deletes a webhook
+    * DELETE /repos/:owner/:repo/hooks/:id
+    *
+    *	1. sends the request to GH
+    *	2. deletes the repo on FB
+    *
+    *	no callback, GH doesn't send a response
+    *
+    */
+    var _deleteGHWebhook = function(hook, repoID) {
+    	var args = {
+    		hook : hook,
+    		repoID : repoID
+    	}
+    	registerAsync(doDeleteGHWebhook, args);
+    }
+
+    var doDeleteGHWebhook = function(args) {
+    	var hook = args.hook,
+    		repoID = args.repoID;
+
+    	// 1. send PATCH request to github
+    	$http.delete(hook.url, {
+				headers : {
+					"Authorization" : "token " + _Auth.user.github.accessToken
+				}
+  		});
+
+			// 2. delete repo from FB
+			FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + repoID).set(null);
+    }
 
   })
   .config(['PhasedProvider', 'FURL', 'AuthProvider', function(PhasedProvider, FURL, AuthProvider) {
