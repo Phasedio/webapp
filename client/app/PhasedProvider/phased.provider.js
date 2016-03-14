@@ -87,7 +87,7 @@ angular.module('webappApp')
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
       WEBHOOKS_LIVE = { // switches for individual webhooks, so that eg Github hooks can be live while Google is in dev
-      	GITHUB : false,
+      	GITHUB : true,
       	GOOGLE : false
       },
 
@@ -98,9 +98,9 @@ angular.module('webappApp')
       membersRetrieved = 0, // incremented with each member's profile gathered
 
       // INTERNAL "CONSTANTS"
-      WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints
+      WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints (with trailing slash)
       	LIVE : 'https://app.phased.io/',
-      	DEV : 'http://03034ab8.ngrok.io/'
+      	DEV : 'http://7b9a20f7.ngrok.io/'
       };
 
     var _Auth, FBRef; // tacked on to PhasedProvider
@@ -2700,22 +2700,24 @@ angular.module('webappApp')
 
     var doGetGHRepos = function(callback) {
     	if (!('github' in _Auth.user)) {
-    		callback(false)
-    	} else {
-    		$http.get('https://api.github.com/user/repos', {
-    			params : {
-    				access_token : _Auth.user.github.accessToken
-    			}
-    		}).then(
-    			function success(res){
-	    			callback(res.data);
-    			},
-    			function error(res){
-	    			console.trace('Error with GH request', res);
-	    			callback(res);
-    			}
-    		);
+    		console.warn('Cannot perform GitHub interaction for non-authenticated user.');
+    		callback(false);
+    		return;
     	}
+
+  		$http.get('https://api.github.com/user/repos', {
+  			params : {
+  				access_token : _Auth.user.github.accessToken
+  			}
+  		}).then(
+  			function success(res){
+    			callback(res.data);
+  			},
+  			function error(res){
+    			console.trace('Error with GH request', res);
+    			callback(res);
+  			}
+  		);
     }
 
 
@@ -2747,34 +2749,36 @@ angular.module('webappApp')
     		onlyPhased = args.onlyPhased;
 
     	if (!('github' in _Auth.user)) {
-    		callback(false)
-    	} else {
-    		var ghAPIEndpoint = repo.hooks_url || repo.apiUrl + '/hooks';
-    		$http.get(ghAPIEndpoint, {
-    			params : {
-    				access_token : _Auth.user.github.accessToken
-    			}
-    		}).then(
-    			function success(res) {
-    				var hooks = res.data;
-    				// rm all hooks with non-phased URL
-    				if (onlyPhased)
-							for (var i = 0; i < hooks.length; i++) {
-								var hookUrl = hooks[i].config.url.toLowerCase();
-								if (hookUrl.indexOf('phased') < 0 &&
-									hookUrl.indexOf('ngrok') < 0 ) {
-									hooks.splice(i, 1);
-									i--; // to account for newly lost element
-								}
-							}
-	    			callback(hooks);
-	    		},
-	    		function error(res){
-	    			console.trace('Error with GH request', res);
-	    			callback(res);
-	    		}
-	    	);
+    		console.warn('Cannot perform GitHub interaction for non-authenticated user.');
+    		callback(false);
+    		return;
     	}
+
+  		var ghAPIEndpoint = repo.hooks_url || repo.apiUrl + '/hooks';
+  		$http.get(ghAPIEndpoint, {
+  			params : {
+  				access_token : _Auth.user.github.accessToken
+  			}
+  		}).then(
+  			function success(res) {
+  				var hooks = res.data;
+  				// rm all hooks with non-phased URL
+  				if (onlyPhased)
+						for (var i = 0; i < hooks.length; i++) {
+							var hookUrl = hooks[i].config.url.toLowerCase();
+							if (hookUrl.indexOf('phased') < 0 &&
+								hookUrl.indexOf('ngrok') < 0 ) {
+								hooks.splice(i, 1);
+								i--; // to account for newly lost element
+							}
+						}
+    			callback(hooks);
+    		},
+    		function error(res){
+    			console.trace('Error with GH request', res);
+    			callback(res);
+    		}
+    	);
     }
 
 
@@ -2793,7 +2797,8 @@ angular.module('webappApp')
     }
 
     var doGetAllGHRepoHooks = function(callback) {
-    	if ( !('github' in _Auth.user) ) return;
+    	if (!('github' in _Auth.user))
+    		return console.warn('Cannot perform GitHub interaction for non-authenticated user.');
 
     	for (var i in PhasedProvider.team.repos) {
     		(function(_i) {
@@ -2834,6 +2839,12 @@ angular.module('webappApp')
     	var repo = args.repo,
     		callback = args.callback,
     		phasedAPIEndpoint = 'api/hooks/github/repo/' + PhasedProvider.team.uid;
+
+    	if (!('github' in _Auth.user)) {
+    		console.warn('Cannot perform GitHub interaction for non-authenticated user.');
+    		callback(false);
+    		return;
+    	}
 
     	// live/dev switch
     	if (WEBHOOKS_LIVE.GITHUB)
@@ -2929,6 +2940,12 @@ angular.module('webappApp')
     		// use the supplied state or the opposite of the current state
     		active = (typeof args.active == 'boolean') ? args.active : !hook.active;
 
+    	if (!('github' in _Auth.user)) {
+    		console.warn('Cannot perform GitHub interaction for non-authenticated user.');
+    		callback(false);
+    		return;
+    	}
+
     	// 1. send PATCH request to github
     	$http.patch(hook.url, {
 				active : active,
@@ -2984,6 +3001,9 @@ angular.module('webappApp')
     var doDeleteGHWebhook = function(args) {
     	var hook = args.hook,
     		repoID = args.repoID;
+
+    	if (!('github' in _Auth.user))
+    		return console.warn('Cannot perform GitHub interaction for non-authenticated user.');
 
     	// 1. send PATCH request to github
     	$http.delete(hook.url, {
