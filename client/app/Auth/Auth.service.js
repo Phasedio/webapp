@@ -30,6 +30,7 @@ angular.module('webappApp')
         }
     }
 
+
     // AngularJS will instantiate a singleton by calling "new" on this function
     var AuthProvider = function(FURL, $firebaseAuth, $firebase,$firebaseObject, $location, $window, $rootScope, toaster) {
         var ref = new Firebase(FURL);
@@ -70,41 +71,17 @@ angular.module('webappApp')
 							This function sets up some mappings which allow users authenticated with GH to access
 								their previously authenticated account.
 
-							NB: the user's Auth data STAYS THE SAME locally
+							NB: the user's Auth data STAYS THE SAME locally, but FB sees the GH auth data
 
             	1 stash profile/oldUID/mappings[newProvider] = 'authenticating'
             	2 auth with github
-            	3 stash userMapping[newUID] = oldUID (only works if 'authenticating' == profile/oldUID/mappings[newProvider])
-            	4 stash profile/oldUID/mappings[newProvider] = newUID
-            	5 stash alias to team if Auth.curTeam is set
+            	3 providerAuthSuccess sets up user mappings etc
             */
             githubLogin : function(success, failure) {
             	var fail = function(err){
             		console.trace(err);
             		if (typeof failure == "function")
             			failure(error);
-            	}
-
-            	// 3 & 4
-            	var authSuccess = function(authData) {
-            		var newUID = authData.uid,
-            		oldUID = Auth.user.uid;
-            		Auth.user.github = authData.github;
-        				// 3.
-        				ref.child('userMappings/' + newUID).set(oldUID, function(err){
-        					if (err) return fail(err);
-        					// 4.
-        					ref.child('profile/' + oldUID + '/mappings/github/').set(newUID, function(err){
-        						if (err) return fail(err);
-        						if (typeof success == "function") return success(authData.github);
-        					})
-        				});
-
-        				// 5. 
-        				if (Auth.currentTeam) {
-        					ref.child('team/' + Auth.currentTeam + '/members/' + oldUID + '/aliases/github/0')
-        						.set(authData.github.username);
-        				}
             	}
 
             	// 1
@@ -115,15 +92,48 @@ angular.module('webappApp')
             		if (error) {
             			ref.authWithOAuthRedirect('github', function(error, authData) {
             				if (error) return fail(error);
-            				else authSuccess(authData);
-            			});
+            				else providerAuthSuccess(authData, success, fail);
+            			}, {scope: 'user,repo'});
             		} else {
-            			authSuccess(authData);
+            			providerAuthSuccess(authData, success, fail);
             		}
-            	}, {
-            		scope: 'user,repo'
-            	});
-            	
+            	}, { scope: 'user,repo' });
+            },
+            /*
+            	Authenticate with Google provider
+
+							Similar to above, this function sets up mappings which allow 
+							users authenticated with Google to access their previously 
+							authenticated account.
+
+            	1 stash profile/oldUID/mappings[newProvider] = 'authenticating'
+            	2 auth with google
+            	3 providerAuthSuccess handles userMappings and alias
+            */
+            googleLogin : function(success, failure) {
+            	console.log('Auth.googleLogin');
+            	var fail = function(err){
+            		console.trace(err);
+            		if (typeof failure == "function")
+            			failure(error);
+            	}
+
+            	// 1 set "authenticating"
+            	ref.child('profile/' + Auth.user.uid + '/mappings/google').set('authenticating', function(err){ if (err) return fail(err); });
+
+            	// Do auth
+            	ref.authWithOAuthPopup("google", function(error, authData) {
+            		if (error) {
+            			console.log(error);
+            			ref.authWithOAuthRedirect("google", function(error, authData) {
+            				if (error) return fail(error);
+            				else providerAuthSuccess(authData, success, fail);
+            			}, { scope: 'https://www.googleapis.com/auth/calendar.readonly' });
+            		} else {
+            			console.log('authenticated with G', authData);
+            			providerAuthSuccess(authData, success, fail);
+            		}
+            	}, { scope: 'https://www.googleapis.com/auth/calendar.readonly' });
             },
             register : function(user) {
                 user.email = user.email.toLowerCase();
@@ -251,6 +261,7 @@ angular.module('webappApp')
             			ref.child('profile/' + properID).once('value', fillProfile);
             		} else {
             			console.trace('Grave error: user has not registered with password or could not be found; login abort');
+            			$location.path('/login');
             		}
             	});
             } else {
@@ -308,6 +319,46 @@ angular.module('webappApp')
                 });
             }
         };
+
+				/**
+				*
+				* Provider Auth Success
+				*
+				*	Called on a successful provider login
+				*	Sets up the appropriate user mappings and team/member[uid] alias
+				* (currently only allows one alias per provider)
+				*
+		    *	1 stash userMapping[newUID] = oldUID (only works if 'authenticating' == profile/oldUID/mappings[newProvider])
+		    *	2 stash profile/oldUID/mappings[newProvider] = newUID
+		    *	3 stash alias to team if Auth.curTeam is set
+		    *
+				*/
+				var providerAuthSuccess = function(authData, success, fail) {
+					var newUID = authData.uid,
+					oldUID = Auth.user.uid;
+					Auth.user[authData.provider] = authData[authData.provider];
+					// 1.
+					ref.child('userMappings/' + newUID).set(oldUID, function(err){
+						if (err) return fail(err);
+						// 2.
+						ref.child('profile/' + oldUID + '/mappings/' + authData.provider + '/').set(newUID, function(err){
+							if (err) return fail(err);
+							if (typeof success == "function") return success(authData);
+						})
+					});
+
+					// 3. 
+					if (Auth.currentTeam) {
+						var aliasKey = '';
+						if (authData.provider == 'github')
+							aliasKey = 'username';
+						else if (authData.provider == 'google')
+							aliasKey = 'id';
+
+						ref.child('team/' + Auth.currentTeam + '/members/' + oldUID + '/aliases/' + authData.provider + '/0')
+							.set(authData[authData.provider][aliasKey]);
+					}
+				}
 
 
         /**

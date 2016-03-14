@@ -287,10 +287,16 @@ return function(items, field, reverse) {
       })(f);
       reader.readAsDataURL(f);
     }
-
-
  }
 
+
+ $scope.startGoogleAuth = function(e) {
+ 	e.preventDefault();
+ 	console.log('begin Google OAuth process');
+ 	Auth.googleLogin(function(googleAuthData){
+ 		console.log('google auth data:', googleAuthData);
+ 	});
+ }
 
     // Update Account
     $scope.updateUser = function(update){
