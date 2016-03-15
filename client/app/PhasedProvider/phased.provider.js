@@ -3074,6 +3074,24 @@ angular.module('webappApp')
     	});
     }
 
+    /**
+    *
+    *	deregisters a calendar
+    *	
+    *	Simply removes the calendar ID from the DB
+    *	HASN'T BEEN TESTED
+    *
+    */
+    var _deregisterGoogleCalendar = function(cal) {
+    	registerAsync(doDeregisterGoogleCalendar, cal);
+    }
+
+    var doDeregisterGoogleCalendar = function(cal) {
+    	// simple removal from FireBase
+    	FBRef.child('calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid)
+    		.orderBy('id').equalTo(cal.id).remove();
+    }
+
   })
   .config(['PhasedProvider', 'FURL', 'AuthProvider', function(PhasedProvider, FURL, AuthProvider) {
     PhasedProvider.setFBRef(FURL);
