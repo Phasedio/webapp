@@ -301,10 +301,11 @@ return function(items, field, reverse) {
 		}
 		Phased.getGoogleCalendars(); // get google calendars if user is authenticated
 
+		// click handler to register a calendar
 		$scope.registerCal = function(cal, e) {
 			e.preventDefault();
 			console.log('registering calendar', cal);
-			
+			Phased.registerGoogleCalendar(cal);
 		}
 
     // Update Account

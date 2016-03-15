@@ -298,6 +298,7 @@ angular.module('webappApp')
       PhasedProvider.deleteGHWebhook = _deleteGHWebhook;
       // GOOGLE
       PhasedProvider.getGoogleCalendars = _getGoogleCalendars;
+      PhasedProvider.registerGoogleCalendar = _registerGoogleCalendar;
 
       return PhasedProvider;
     }];
@@ -3048,6 +3049,28 @@ angular.module('webappApp')
     		callback(res.data);
     	}, function(err) {
     		console.log(err);
+    	});
+    }
+
+    /**
+    *
+    *	registers a calendar for future status updates
+    *	
+    *	Simply saves the calendar ID to the DB and the server does the rest
+    *
+    */
+    var _registerGoogleCalendar = function(cal) {
+    	registerAsync(doRegisterGoogleCalendar, cal);
+    }
+
+    var doRegisterGoogleCalendar = function(cal) {
+    	if (!('google' in _Auth.user))
+    		return console.warn('Cannot perform Google interaction for non-authenticated user.');
+
+    	// 2. add to FireBase
+    	FBRef.child('profile/' + PhasedProvider.user.uid + '/calendars/' + PhasedProvider.team.uid).push({
+    		id : cal.id,
+    		name : cal.summary
     	});
     }
 
