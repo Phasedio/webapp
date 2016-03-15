@@ -3068,7 +3068,7 @@ angular.module('webappApp')
     		return console.warn('Cannot perform Google interaction for non-authenticated user.');
 
     	// 2. add to FireBase
-    	FBRef.child('profile/' + PhasedProvider.user.uid + '/calendars/' + PhasedProvider.team.uid).push({
+    	FBRef.child('calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid).push({
     		id : cal.id,
     		name : cal.summary
     	});

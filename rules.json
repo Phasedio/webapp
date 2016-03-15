@@ -29,8 +29,22 @@
         ".validate" : "auth.uid == $providerID"
       }
     },
+    "calendars" : {
+      ".read" : "auth.uid == 'gcal-server'", // only the gcal-server can get the whole list
+      "$uid" : {
+        "$teamID" : {
+          /*
+            read: only authenticated user
+            write: only authenticated user on that team
+          */
+          ".read" : "auth.uid == $uid || root.child('userMappings/' + auth.uid).val() === $uid",
+          ".write" : "(auth.uid == $uid || root.child('userMappings/' + auth.uid).val() === $uid) &&
+                      root.child('profile/' + $uid + '/curTeam').val() == $teamID"
+        }
+      }
+    },
     "profile": {
-      ".read" : "auth.uid == 'registration-server'",
+      ".read" : "auth.uid == 'registration-server' || auth.uid == 'gcal-server'",
       ".indexOn" : "email",
 			"$uid": {
 			  /*
@@ -241,6 +255,12 @@
                 write: only current user
               */
               ".write" : "auth.uid == $memberID || root.child('userMappings/' + auth.uid).val() == $memberID || auth.uid === 'registration-server'" 
+            },
+            "aliases" : {
+              /*
+                write: only current user
+              */
+              ".write" : "auth.uid == $memberID || root.child('userMappings/' + auth.uid).val() == $memberID || auth.uid === 'registration-server'"
             }
           }
         },
@@ -263,8 +283,8 @@
         },
         "$default" : {
           // only members of this team can write
-          ".write" : "data.child('members/' + auth.uid).exists() ||
-                      data.child('members/' + root.child('userMappings/' + auth.uid).val()).exists() ||
+          ".write" : "data.parent().child('members/' + auth.uid).exists() ||
+                      data.parent().child('members/' + root.child('userMappings/' + auth.uid).val()).exists() ||
                       auth.uid == 'notif-server' || auth.uid == 'registration-server'" 
         }
       }
