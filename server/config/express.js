@@ -14,6 +14,9 @@ var cookieParser = require('cookie-parser');
 var errorHandler = require('errorhandler');
 var path = require('path');
 var config = require('./environment');
+var session = require('express-session');
+var FirebaseStore = require('connect-firebase')(session);
+
 
 module.exports = function(app) {
   var env = app.get('env');
@@ -28,6 +31,22 @@ module.exports = function(app) {
   app.use(methodOverride());
   app.use(cookieParser());
 
+  // configure sessions
+  // see https://github.com/ca98am79/connect-firebase
+  var FBStoreOpts = {
+  	host : 	'phased-dev2.firebaseio.com',
+  	token : 'A50wFi5OxaLYNzb4jnEyFMQWmE8mjRyWJCKW723g'//,
+  	// reapInterval : 21600000 // session cleanup interval in ms (default is 6hrs = 21600000ms)
+  };
+  // see https://github.com/expressjs/session
+  var expressSessionOpts = {
+  	name : 'phased.sid', // name for SID cookie
+  	store: new FirebaseStore(FBStoreOpts),
+  	secret : '331c3b825824c749abc01bf3', // signs session ID cookie
+  	resave : false, // whether to resave if data hasn't changed. could create race condition.
+  	saveUninitialized : true // not sure if this should be false or true.
+  };
+  app.use(session(expressSessionOpts));
 
   if ('production' === env) {
     app.use(favicon(path.join(config.root, 'public', 'favicon.ico')));
