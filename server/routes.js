@@ -21,6 +21,8 @@ module.exports = function(app) {
   app.use('/api/notif', require('./api/notification'));
   app.use('/api/notifs', require('./api/notification'));
 
+  app.use('/api/googleAuth', require('./api/googleAuth'));
+
   app.use('/api/setup', require('./api/setup'));
   
   // All undefined asset or api routes should return a 404
