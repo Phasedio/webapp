@@ -127,7 +127,7 @@ angular.module('webappApp')
             },
             register : function(user) {
                 user.email = user.email.toLowerCase();
-                $post.post('./api/registration/register', {
+                $http.post('./api/registration/register', {
                     user: JSON.stringify(user)
                 })
                 .then(function(data) {
