@@ -379,7 +379,6 @@ angular.module('webappApp')
             var path = '';
             // if not authenticated, go to /login
             if (!authData) {
-            	console.log('logging out');
                 path = '/login';
                 $http.post('/logout'); // cue server to destroy session
             }

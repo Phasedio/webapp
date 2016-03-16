@@ -67,7 +67,7 @@ module.exports = function(app) {
   // see https://github.com/expressjs/session
   var expressSessionOpts = {
   	name : 'phased.sid', // name for SID cookie
-  	store: new FirebaseStore(FBStoreOpts),
+  	// store: new FirebaseStore(FBStoreOpts),
   	secret : '331c3b825824c749abc01bf3', // signs session ID cookie
   	resave : false, // whether to resave if data hasn't changed. could create race condition.
   	saveUninitialized : false // not sure if this should be false or true.
