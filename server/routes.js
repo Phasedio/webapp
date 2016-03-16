@@ -8,6 +8,19 @@ var errors = require('./components/errors');
 var path = require('path');
 
 module.exports = function(app) {
+	// save authenticated user to session if present
+	// use with req.session.user.uid
+	// NB: This is from the FB JWT, and so could be a mapped
+	// 			user from another provider. req.session.user.provider
+	//			will be set to the provider name.
+	app.use(function(req, res, next) {
+		if (req.method == "POST" && req.user) {
+			console.log('User changed from ' + (req.session && req.session.user ? req.session.user.uid : 'none') + ' to ' + req.user.d.uid);
+			req.session.user = req.user.d;
+		}
+		next();
+	});
+
   // Insert routes below
   app.use('/api/downloads', require('./api/download'));
   app.use('/api/pays', require('./api/pay'));
