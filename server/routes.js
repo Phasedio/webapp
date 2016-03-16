@@ -50,6 +50,17 @@ module.exports = function(app) {
       res.sendFile(path.resolve(app.get('appPath') + '/index.html'));
     });
 
+  // special logout routing to destroy session
+  app.route('/logout')
+  	.get(function(req, res){
+  		req.session.destroy();
+  		res.sendFile(path.resolve(app.get('appPath') + '/index.html'));
+  	})
+  	.post(function(req, res){
+  		req.session.destroy();
+  		res.status(200).end();
+  	});
+
   // All other routes should redirect to the index.html
   app.route('/*')
     .get(function(req, res) {

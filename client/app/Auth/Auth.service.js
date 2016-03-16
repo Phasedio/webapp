@@ -371,12 +371,17 @@ angular.module('webappApp')
         // else do nothing
         auth.$onAuth(function(authData) {
 						// attach FB token to Authorization header
-						$http.defaults.headers.post.Authorization = 'Bearer ' + authData.token;
+						if (authData)
+							$http.defaults.headers.post.Authorization = 'Bearer ' + authData.token;
+						else
+							delete $http.defaults.headers.post.Authorization;
 
             var path = '';
             // if not authenticated, go to /login
             if (!authData) {
+            	console.log('logging out');
                 path = '/login';
+                $http.post('/logout'); // cue server to destroy session
             }
             // if authenticated on the login screen, go to /
             else if ($location.path() == '/login') {

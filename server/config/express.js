@@ -49,10 +49,11 @@ module.exports = function(app) {
   }));
 
   app.use(function (err, req, res, next) {
-  	if (err.name === 'UnauthorizedError') {
+  	if (err.name === 'UnauthorizedError' && req.originalUrl.indexOf('logout') == -1) {
   		console.log('Unauthorized POST to ' + req.originalUrl);
   		res.status(401).send(err.name + ': ' + err.message).end();
   	}
+  	next();
   });
 
 
