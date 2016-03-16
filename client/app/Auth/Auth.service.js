@@ -396,7 +396,7 @@ angular.module('webappApp')
         // get user account metadata if already logged in
         var authData = auth.$getAuth();
         if (authData) {
-        	console.log('$getAuth', authData);
+        	// console.log('$getAuth', authData);
           angular.copy(authData, Auth.user);
           getProfileDetails(Auth.user.uid, authData.provider); // go to app after getting details
         
