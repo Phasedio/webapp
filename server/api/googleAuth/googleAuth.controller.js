@@ -21,6 +21,9 @@ var scopes = [
 exports.index = function(req,res) { res.send([]) };
 
 exports.auth1 = function(req, res) {
+	req.session.referer = req.header.referer;
+	console.log(req.session.referer);
+	
 	var url = oauth2Client.generateAuthUrl({
 	  access_type: 'offline', // 'online' (default) or 'offline' (gets refresh_token)
 	  scope: scopes // If you only need one scope you can pass it as string
@@ -34,10 +37,15 @@ exports.auth2 = function(req, res) {
 
 	oauth2Client.getToken(req.query.code, function(err, tokens) {
 		if (!err) {
-			oauth2Client.setCredentials(tokens);
+			console.log(tokens);
+			req.session.tokens = tokens;
 		} else {
 			console.log(err);
 		}
 	});
-	res.status(200).end();
+
+	if (req.session.referer)
+		res.redirect(req.session.referer);
+	else
+		res.status(200).end();
 }

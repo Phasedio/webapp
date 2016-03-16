@@ -118,22 +118,24 @@ angular.module('webappApp')
             			failure(error);
             	}
 
+            	$location.path('/api/googleAuth/auth1');
+
             	// 1 set "authenticating"
-            	ref.child('profile/' + Auth.user.uid + '/mappings/google').set('authenticating', function(err){ if (err) return fail(err); });
+            	// ref.child('profile/' + Auth.user.uid + '/mappings/google').set('authenticating', function(err){ if (err) return fail(err); });
 
             	// Do auth
-            	ref.authWithOAuthPopup("google", function(error, authData) {
-            		if (error) {
-            			console.log(error);
-            			ref.authWithOAuthRedirect("google", function(error, authData) {
-            				if (error) return fail(error);
-            				else providerAuthSuccess(authData, success, fail);
-            			}, { scope: 'https://www.googleapis.com/auth/calendar.readonly' });
-            		} else {
-            			console.log('authenticated with G', authData);
-            			providerAuthSuccess(authData, success, fail);
-            		}
-            	}, { scope: 'https://www.googleapis.com/auth/calendar.readonly' });
+            	// ref.authWithOAuthPopup("google", function(error, authData) {
+            	// 	if (error) {
+            	// 		console.log(error);
+            	// 		ref.authWithOAuthRedirect("google", function(error, authData) {
+            	// 			if (error) return fail(error);
+            	// 			else providerAuthSuccess(authData, success, fail);
+            	// 		}, { scope: 'https://www.googleapis.com/auth/calendar.readonly' });
+            	// 	} else {
+            	// 		console.log('authenticated with G', authData);
+            	// 		providerAuthSuccess(authData, success, fail);
+            	// 	}
+            	// }, { scope: 'https://www.googleapis.com/auth/calendar.readonly' });
             },
             register : function(user) {
                 user.email = user.email.toLowerCase();
@@ -359,7 +361,6 @@ angular.module('webappApp')
 							.set(authData[authData.provider][aliasKey]);
 					}
 				}
-
 
         /**
         *   INIT

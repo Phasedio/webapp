@@ -35,8 +35,8 @@ module.exports = function(app) {
   // see https://github.com/ca98am79/connect-firebase
   var FBStoreOpts = {
   	host : 	'phased-dev2.firebaseio.com',
-  	token : 'A50wFi5OxaLYNzb4jnEyFMQWmE8mjRyWJCKW723g'//,
-  	// reapInterval : 21600000 // session cleanup interval in ms (default is 6hrs = 21600000ms)
+  	token : 'A50wFi5OxaLYNzb4jnEyFMQWmE8mjRyWJCKW723g',
+  	reapInterval : env === 'development' ? 300000 : 21600000 // session cleanup interval in ms (default is 6hrs = 21600000ms, dev is 5min)
   };
   // see https://github.com/expressjs/session
   var expressSessionOpts = {
@@ -44,7 +44,7 @@ module.exports = function(app) {
   	store: new FirebaseStore(FBStoreOpts),
   	secret : '331c3b825824c749abc01bf3', // signs session ID cookie
   	resave : false, // whether to resave if data hasn't changed. could create race condition.
-  	saveUninitialized : true // not sure if this should be false or true.
+  	saveUninitialized : false // not sure if this should be false or true.
   };
   app.use(session(expressSessionOpts));
 
