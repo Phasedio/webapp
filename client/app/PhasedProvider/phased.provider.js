@@ -662,8 +662,9 @@ angular.module('webappApp')
     **/
     var checkPlanStatus = function(stripeid,subid) {
       if (typeof stripeid == 'string' && stripeid.length > 0) {
-        $.post('./api/pays/find', {customer: stripeid,sub:subid})
-          .success(function(data){
+        $http.post('./api/pays/find', {customer: stripeid,sub:subid})
+          .then(function(res){
+        		var data = res.data;
             if (data.err) {
               console.log(data.err);
               // handle error
@@ -688,8 +689,7 @@ angular.module('webappApp')
 
             }
             $rootScope.$broadcast('Phased:PaymentInfo');
-          })
-          .error(function(data){
+          }, function(data){
             console.log(data);
           });
       } else {
@@ -896,18 +896,18 @@ angular.module('webappApp')
 
       registerAfterMembers(function doWatchNotifications(){
         // clean notifications once
-        $.post('./api/notification/clean', {
+        $http.post('./api/notification/clean', {
           user: PhasedProvider.user.uid,
           team : PhasedProvider.team.uid
-        })
-          .success(function(data) {
+        }).then(function(res) {
+        	var data = res.data;
             if (data.success) {
               // console.log('clean notifications success', data);
             } else {
               console.log('clean notifications error', data);
             }
-          })
-          .error(function(data){
+          },
+          function(data){
             console.log('err', data.error());
           });
 
@@ -1308,19 +1308,18 @@ angular.module('webappApp')
     *
     */
     var issueNotification = function(notification) {
-      $.post('./api/notification/issue', {
+      $http.post('./api/notification/issue', {
         user: _Auth.user.uid,
         team : _Auth.currentTeam,
         notification : JSON.stringify(notification)
-      })
-        .success(function(data) {
-            if (data.success) {
+      }).then(function(res) {
+        	var data = res.data;
+            if (res.status == 200 && data.success) {
               // console.log('IssueNotif success', data);
             } else {
               console.log('IssueNotif error', data);
             }
-        })
-        .error(function(data){
+        }, function(data){
           console.log('err', data.error());
         });
     }
@@ -1886,13 +1885,14 @@ angular.module('webappApp')
     var doAddMember = function(args) {
       console.log(args);
       ga('send', 'event', 'Team', 'Member invited');
-      $.post('./api/registration/invite', {
+      $http.post('./api/registration/invite', {
         invitedEmail: args.newMember.email,
         inviterEmail : PhasedProvider.user.email,
         inviterName : PhasedProvider.user.name,
         team : PhasedProvider.team.uid
       })
-      .success(function(data) {
+      .then(function(res) {
+      	var data = res.data;
         if (data.success) {
           console.log('success', data);
           if (data.added) {
@@ -1907,8 +1907,8 @@ angular.module('webappApp')
         } else {
           console.log('err', data);
         }
-      })
-      .error(function(data){
+      },
+      function(data){
         console.log('err', data);
       });
     }
@@ -1935,11 +1935,12 @@ angular.module('webappApp')
 
     var doAddTeam = function(args) {
       // 1.
-      $.post('./api/registration/registerTeam', {
+      $http.post('./api/registration/registerTeam', {
         userID : PhasedProvider.user.uid,
         teamName : args.teamName
       })
-      .success(function(data){
+      .then(function(res){
+        var data = res.data;
         if (data.success) {
           ga('send', 'event', 'Team', 'team added');
           // 2A. switch to that team
@@ -1953,8 +1954,7 @@ angular.module('webappApp')
           if (typeof args.failure == 'function')
             args.failure(args.teamName);
         }
-      })
-      .error(function(error){
+      }, function(error){
         // 2B. fail!
         console.log(error);
         if (typeof args.failure == 'function')
@@ -2325,9 +2325,9 @@ angular.module('webappApp')
 
       //Send status to server for URL parsing.
       var postID = newStatusRef.key();
-      $.post('./api/things', {text: newStatus.name,id:postID})
-        .success(function(data){
-
+      $http.post('./api/things', {text: newStatus.name,id:postID})
+        .then(function(res) {
+        	var data = res.data;
           var statusRef = newStatusRef.key();
           console.log(data);
           if(data.url){

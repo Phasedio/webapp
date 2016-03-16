@@ -16,6 +16,9 @@ var path = require('path');
 var config = require('./environment');
 var session = require('express-session');
 var FirebaseStore = require('connect-firebase')(session);
+var expressJWT = require('express-jwt');
+var unless = require('express-unless');
+expressJWT.unless = unless;
 
 
 module.exports = function(app) {
@@ -31,11 +34,26 @@ module.exports = function(app) {
   app.use(methodOverride());
   app.use(cookieParser());
 
+  // for strategy below, see https://jwt.io/introduction/ and https://github.com/auth0/express-jwt
+  // same except FB makes our JWTs using the secret specified below
+  app.use(expressJWT({
+  	secret : config.FB_SECRET_1 // firebase secret, means we can trust parsed data from JWT
+  }).unless({
+  	method : 'GET' // allow GET requests (this could be refined)
+  }));
+
+  app.use(function (err, req, res, next) {
+  	if (err.name === 'UnauthorizedError') {
+  		req.status(401).send(err.name + ' ' + err.message).end();
+  	}
+  });
+
+
   // configure sessions
   // see https://github.com/ca98am79/connect-firebase
   var FBStoreOpts = {
   	host : 	'phased-dev2.firebaseio.com',
-  	token : 'A50wFi5OxaLYNzb4jnEyFMQWmE8mjRyWJCKW723g'//,
+  	token : config.FB_SECRET_2//,
   	// reapInterval : 21600000 // session cleanup interval in ms (default is 6hrs = 21600000ms)
   };
   // see https://github.com/expressjs/session

@@ -3,9 +3,9 @@
 angular.module('webappApp')
   .provider('Auth', function() {
 
-    this.$get = ['FURL', '$firebaseAuth', '$firebase', '$firebaseObject', '$location', '$window', '$rootScope', 'toaster',
-        function (FURL, $firebaseAuth, $firebase, $firebaseObject, $location, $window, $rootScope, toaster) {
-            return new AuthProvider(FURL, $firebaseAuth, $firebase, $firebaseObject, $location, $window, $rootScope, toaster);
+    this.$get = ['FURL', '$firebaseAuth', '$firebase', '$firebaseObject', '$location', '$window', '$rootScope', 'toaster', '$http',
+        function (FURL, $firebaseAuth, $firebase, $firebaseObject, $location, $window, $rootScope, toaster, $http) {
+            return new AuthProvider(FURL, $firebaseAuth, $firebase, $firebaseObject, $location, $window, $rootScope, toaster, $http);
         }];
 
     // array of callbacks to execute after auth is finished
@@ -32,7 +32,7 @@ angular.module('webappApp')
 
 
     // AngularJS will instantiate a singleton by calling "new" on this function
-    var AuthProvider = function(FURL, $firebaseAuth, $firebase,$firebaseObject, $location, $window, $rootScope, toaster) {
+    var AuthProvider = function(FURL, $firebaseAuth, $firebase,$firebaseObject, $location, $window, $rootScope, toaster, $http) {
         var ref = new Firebase(FURL);
         var auth = $firebaseAuth(ref);
 
@@ -139,18 +139,17 @@ angular.module('webappApp')
             },
             register : function(user) {
                 user.email = user.email.toLowerCase();
-                $.post('./api/registration/register', {
+                $http.post('./api/registration/register', {
                     user: JSON.stringify(user)
                 })
-                .success(function(data) {
+                .then(function(data) {
                     if (data.success) {
                         console.log('success', data);
                         Auth.login(user);
                     } else {
                         console.log('err', data);
                     }
-                })
-                .error(function(data){
+                }, function(data){
                     console.log('err', data);
                 });
             },
@@ -371,6 +370,9 @@ angular.module('webappApp')
         // if logging out (or session timeout!), go to /login
         // else do nothing
         auth.$onAuth(function(authData) {
+						// attach FB token to Authorization header
+						$http.defaults.headers.post.Authorization = 'Bearer ' + authData.token;
+
             var path = '';
             // if not authenticated, go to /login
             if (!authData) {
@@ -396,7 +398,8 @@ angular.module('webappApp')
         // get user account metadata if already logged in
         var authData = auth.$getAuth();
         if (authData) {
-        	// console.log('$getAuth', authData);
+        	// attach FB token to Authorization header
+					$http.defaults.headers.post.Authorization = 'Bearer ' + authData.token;
           angular.copy(authData, Auth.user);
           getProfileDetails(Auth.user.uid, authData.provider); // go to app after getting details
         
