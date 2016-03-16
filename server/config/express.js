@@ -37,14 +37,21 @@ module.exports = function(app) {
   // for strategy below, see https://jwt.io/introduction/ and https://github.com/auth0/express-jwt
   // same except FB makes our JWTs using the secret specified below
   app.use(expressJWT({
-  	secret : config.FB_SECRET_1 // firebase secret, means we can trust parsed data from JWT
+  	secret : config.FB_SECRET_1, // firebase secret, means we can trust parsed data from JWT
+  	getToken: function onlyHeader (req) {
+  		if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+  			return req.headers.authorization.split(' ')[1];
+  		}
+  		return null;
+  	}
   }).unless({
   	method : 'GET' // allow GET requests (this could be refined)
   }));
 
   app.use(function (err, req, res, next) {
   	if (err.name === 'UnauthorizedError') {
-  		req.status(401).send(err.name + ' ' + err.message).end();
+  		console.log('Unauthorized POST to ' + req.originalUrl);
+  		res.status(401).send(err.name + ': ' + err.message).end();
   	}
   });
 
