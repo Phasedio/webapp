@@ -3061,9 +3061,6 @@ angular.module('webappApp')
     }
 
     var doRegisterGoogleCalendar = function(cal) {
-    	if (!('google' in _Auth.user))
-    		return console.warn('Cannot perform Google interaction for non-authenticated user.');
-
     	// 2. add to FireBase
     	FBRef.child('integrations/google/calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid).push({
     		id : cal.id,
