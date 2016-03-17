@@ -100,7 +100,7 @@ angular.module('webappApp')
       // INTERNAL "CONSTANTS"
       WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints (with trailing slash)
       	LIVE : 'https://app.phased.io/',
-      	DEV : 'http://7b9a20f7.ngrok.io/'
+      	DEV : 'http://93aa8d5a.ngrok.io/'
       };
 
     var _Auth, FBRef; // tacked on to PhasedProvider
@@ -3031,8 +3031,6 @@ angular.module('webappApp')
     *
     *	passes a list of calendars to the callback
     *	
-    * GET https://www.googleapis.com/calendar/v3/users/me/calendarList
-    *	https://developers.google.com/google-apps/calendar/v3/reference/calendarList/list#http-request
     */
     var _getGoogleCalendars = function(callback) {
     	var callback = (typeof callback == 'function') ? callback : function(){};
@@ -3040,16 +3038,15 @@ angular.module('webappApp')
     }
 
     var doGetGoogleCalendars = function(callback) {
-    	if (!('google' in _Auth.user))
-    		return console.warn('Cannot perform Google interaction for non-authenticated user.');
-
-    	$http.get('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' + _Auth.user.google.accessToken).then(function(res) {
-    		console.log('google res', res);
-    		_Auth.user.google.calendarList = res.data;
-    		callback(res.data);
-    	}, function(err) {
-    		console.log(err);
-    	});
+    	$http.get('/api/google/cal', {
+    		headers : {
+    			Authorization : 'Bearer ' + _Auth.user.token
+    		}
+    	}).then(function(res) {
+	    		callback(res.data);
+	    	}, function(err) {
+	    		console.log(err);
+	    	});
     }
 
     /**
@@ -3068,7 +3065,7 @@ angular.module('webappApp')
     		return console.warn('Cannot perform Google interaction for non-authenticated user.');
 
     	// 2. add to FireBase
-    	FBRef.child('calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid).push({
+    	FBRef.child('integrations/google/calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid).push({
     		id : cal.id,
     		name : cal.summary
     	});
@@ -3088,7 +3085,7 @@ angular.module('webappApp')
 
     var doDeregisterGoogleCalendar = function(cal) {
     	// simple removal from FireBase
-    	FBRef.child('calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid)
+    	FBRef.child('integrations/google/calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid)
     		.orderBy('id').equalTo(cal.id).remove();
     }
 

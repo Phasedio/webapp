@@ -212,12 +212,18 @@
   					<!-- GOOGLE CAL -->
   					<div role="tabpanel" class="tab-pane" id="google-calendar" ng-if="isSelf">
   						<div class="google-calendar">
-  							<p ng-if="!google"><a href="#" ng-click="startGoogleAuth($event)">Authenticate with Google</a> to automatically post status updates when an event on a calendar begins (for example, for every event on a company "meetings" calendar). <em>This will only take effect for this team; to manage your calendar status updates for another team, switch to that team.</em></p>
-  							<p ng-if="google">
+  							<p ng-if="!google">
+  								<a href="#" ng-click="startGoogleAuth($event)">Authenticate with Google</a> to automatically post status updates when an event on a calendar begins (for example, for every event on a company "meetings" calendar). <em>This will only take effect for this team; to manage your calendar status updates for another team, switch to that team.</em>
+  							</p>
+  							<p ng-if="!calendarList">
+  								<a href="#" ng-click="getCals($event)">Get calendars</a>
+  							</p>
+
+  							<div ng-if="calendarList">
   								<h5>Calendars</h5>
   								<ul>
   									<li
-  										ng-repeat="cal in google.calendarList.items"
+  										ng-repeat="cal in calendarList.items"
   										class="calendar-item">
   										<a 
   											href="#"
@@ -230,10 +236,12 @@
   										</a>
   									</li>
   								</ul>
-  							</p>
-
+  							</div>
   						</div>
   					</div>
+  					<!-- end GOOGLE CAL -->
+
+
           </div>
 
 

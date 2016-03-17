@@ -169,7 +169,7 @@ return function(items, field, reverse) {
     $scope.update = {
     	aliases : {}
     };
-    $scope.google = Auth.user.google;
+    $scope.calendarList = false; // where calendars will be held
     var ref = new Firebase(FURL);
 
     // bounce users if team has problems
@@ -295,7 +295,13 @@ return function(items, field, reverse) {
 			console.log('begin Google OAuth handshake');
 			Auth.googleLogin();
 		}
-		//Phased.getGoogleCalendars(); // get google calendars if user is authenticated
+
+		$scope.getCals = function(e) {
+			e.preventDefault();
+			Phased.getGoogleCalendars(function(res) {
+				$scope.calendarList = res;
+			}); // get google calendars if user is authenticated
+		}
 
 		// click handler to register a calendar
 		$scope.registerCal = function(cal, e) {
