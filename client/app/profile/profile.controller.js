@@ -308,11 +308,16 @@ return function(items, field, reverse) {
 			}); // get google calendars if user is authenticated
 		}
 
-		// click handler to register a calendar
-		$scope.registerCal = function(cal, e) {
+		// click handler to toggle calendar registration
+		$scope.toggleCalRegistered = function(cal, e) {
 			e.preventDefault();
-			console.log('registering calendar', cal);
-			Phased.registerGoogleCalendar(cal);
+			if ( Phased.user.registeredCalendarIDs.indexOf(cal.id) >= 0 ) {
+				console.log('deregistering calendar', cal);
+				Phased.deregisterGoogleCalendar(cal);
+			} else {
+				console.log('registering calendar', cal);
+				Phased.registerGoogleCalendar(cal);
+			}
 		}
 
     // Update Account

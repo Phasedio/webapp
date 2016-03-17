@@ -86,6 +86,7 @@ angular.module('webappApp')
       WATCH_PROJECTS = false, // set in setWatchProjects in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
+      WATCH_INTEGRATIONS = false, // set in setWatchIntegrations in config; whether to monitor integration data
       WEBHOOKS_LIVE = { // switches for individual webhooks, so that eg Github hooks can be live while Google is in dev
       	GITHUB : true,
       	GOOGLE : false
@@ -226,6 +227,9 @@ angular.module('webappApp')
           watchNotifications();
         if (WATCH_PRESENCE)
           registerAfterMeta(watchPresence);
+        if (WATCH_INTEGRATIONS) {
+        	watchGoogleCalendars();
+        }
 
         // if the user is new, welcome them to the world
         // and remove newUser flag
@@ -299,6 +303,7 @@ angular.module('webappApp')
       // GOOGLE
       PhasedProvider.getGoogleCalendars = _getGoogleCalendars;
       PhasedProvider.registerGoogleCalendar = _registerGoogleCalendar;
+      PhasedProvider.deregisterGoogleCalendar = _deregisterGoogleCalendar;
 
       return PhasedProvider;
     }];
@@ -335,6 +340,15 @@ angular.module('webappApp')
     this.setWatchPresence = function(watch) {
       if (watch)
         WATCH_PRESENCE = true;
+    }
+
+    // sets WATCH_INTEGRATIONS
+    // determines whether own user's registered 
+    // integrations metadata are watched (currently only 
+    // Google Calendar)
+    this.setWatchIntegrations = function(watch) {
+      if (watch)
+        WATCH_INTEGRATIONS = true;
     }
 
 
@@ -984,6 +998,30 @@ angular.module('webappApp')
       });
     }
 
+
+    /**
+    *
+    *	Keeps registered google calendars synced
+    *
+    *	Sets PhasedProvider.user.registeredCalendarIDs
+    *		to be a list of IDs for registered calendars.
+    *		The data is there to also have their names,
+    *		but it doesn't make sense for the UI right now.
+    *	
+    *	NB: This does NOT synch google calendars with 
+    *		the Google server; see doGetGoogleCalendars
+    *
+    */
+    var watchGoogleCalendars = function() {
+    	FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + PhasedProvider.team.uid).on('value', function(snap) {
+				var data = snap.val();
+				var list = [];
+				for (var i in data) {
+					list.push(data[i].id);
+				}
+				PhasedProvider.user.registeredCalendarIDs = list;
+  		});
+    }
 
     /**
     *
@@ -3027,9 +3065,8 @@ angular.module('webappApp')
 
     /**
     *
-    *	get calendar list
-    *
     *	passes a list of calendars to the callback
+    *	gets calendars from our server (which gets from google)
     *	
     */
     var _getGoogleCalendars = function(callback) {
@@ -3082,9 +3119,14 @@ angular.module('webappApp')
     }
 
     var doDeregisterGoogleCalendar = function(cal) {
-    	// simple removal from FireBase
-    	FBRef.child('integrations/google/calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid)
-    		.orderBy('id').equalTo(cal.id).remove();
+    	// removal from FireBase requires a 2x round trip
+    	// because for some entirely frustrating reason 
+    	// one can neither remove via a query NOR a .ref().
+    	var calsAddr = 'integrations/google/calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid;
+			FBRef.child(calsAddr).orderByChild('id').equalTo(cal.id).once('value', function(snap) {
+				var key = Object.keys(snap.val())[0];
+  			FBRef.child(calsAddr + '/' + key).remove();
+  		});
     }
 
   })
@@ -3093,6 +3135,7 @@ angular.module('webappApp')
     PhasedProvider.setWatchProjects(true);
     PhasedProvider.setWatchNotifications(true);
     PhasedProvider.setWatchPresence(true);
+    PhasedProvider.setWatchIntegrations(true);
 
     // configure phasedProvider as a callback to AuthProvider
     AuthProvider.setDoAfterAuth(PhasedProvider.init);
