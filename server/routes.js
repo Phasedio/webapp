@@ -38,7 +38,7 @@ module.exports = function(app) {
   app.use('/api/notif', require('./api/notification'));
   app.use('/api/notifs', require('./api/notification'));
 
-  app.use('/api/googleAuth', require('./api/googleAuth'));
+  app.use('/api/google', require('./api/googleAuth'));
 
   app.use('/api/setup', require('./api/setup'));
   

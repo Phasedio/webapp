@@ -104,7 +104,7 @@ angular.module('webappApp')
 							Redirect to server to start OAuth handshake
             */
             googleLogin : function() {
-            	$window.location = '/api/googleAuth/auth1';
+            	$window.location = '/api/google/auth1';
             },
             register : function(user) {
                 user.email = user.email.toLowerCase();
