@@ -46,7 +46,18 @@ module.exports = function(app) {
   	}
   }).unless(function(req) {
   	// allow non-API GET requests
-  	return (req.method == 'GET' && req.path.indexOf('/api/') < 0);
+  	var allow = (req.method == 'GET' && req.path.indexOf('/api/') < 0);
+
+  	// allow a whitelist of otherwise blocked requests
+  	var whiteList = [
+	  	'/api/google/auth1',
+	  	'/api/google/auth2'
+  	];
+  	for (var i in whiteList) {
+  		if (whiteList[i] === req.path)
+  			allow = true;
+  	}
+  	return allow;
   }));
 
   app.use(function (err, req, res, next) {
