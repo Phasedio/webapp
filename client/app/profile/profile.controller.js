@@ -292,14 +292,10 @@ return function(items, field, reverse) {
 		// starts google Auth process
 		$scope.startGoogleAuth = function(e) {
 			e.preventDefault();
-			console.log('begin Google OAuth process');
-			Auth.googleLogin(function(googleAuthData){
-				console.log('google auth data:', googleAuthData);
-				$scope.google = Auth.user.google;
-				Phased.getGoogleCalendars();
-			});
+			console.log('begin Google OAuth handshake');
+			Auth.googleLogin();
 		}
-		Phased.getGoogleCalendars(); // get google calendars if user is authenticated
+		//Phased.getGoogleCalendars(); // get google calendars if user is authenticated
 
 		// click handler to register a calendar
 		$scope.registerCal = function(cal, e) {

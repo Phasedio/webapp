@@ -101,41 +101,10 @@ angular.module('webappApp')
             },
             /*
             	Authenticate with Google provider
-
-							Similar to above, this function sets up mappings which allow 
-							users authenticated with Google to access their previously 
-							authenticated account.
-
-            	1 stash profile/oldUID/mappings[newProvider] = 'authenticating'
-            	2 auth with google
-            	3 providerAuthSuccess handles userMappings and alias
+							Redirect to server to start OAuth handshake
             */
-            googleLogin : function(success, failure) {
-            	console.log('Auth.googleLogin');
-            	var fail = function(err){
-            		console.trace(err);
-            		if (typeof failure == "function")
-            			failure(error);
-            	}
-
-            	$location.path('/api/googleAuth/auth1');
-
-            	// 1 set "authenticating"
-            	// ref.child('profile/' + Auth.user.uid + '/mappings/google').set('authenticating', function(err){ if (err) return fail(err); });
-
-            	// Do auth
-            	// ref.authWithOAuthPopup("google", function(error, authData) {
-            	// 	if (error) {
-            	// 		console.log(error);
-            	// 		ref.authWithOAuthRedirect("google", function(error, authData) {
-            	// 			if (error) return fail(error);
-            	// 			else providerAuthSuccess(authData, success, fail);
-            	// 		}, { scope: 'https://www.googleapis.com/auth/calendar.readonly' });
-            	// 	} else {
-            	// 		console.log('authenticated with G', authData);
-            	// 		providerAuthSuccess(authData, success, fail);
-            	// 	}
-            	// }, { scope: 'https://www.googleapis.com/auth/calendar.readonly' });
+            googleLogin : function() {
+            	$window.location = '/api/googleAuth/auth1';
             },
             register : function(user) {
                 user.email = user.email.toLowerCase();
@@ -385,9 +354,11 @@ angular.module('webappApp')
             // if authenticated on the login screen, go to /
             else if ($location.path() == '/login') {
                 path = '/';
+                $http.post('/ping'); // cue server to start session
             }
             // do nothing if authenticated within the app
             else {
+            		$http.post('/ping'); // cue server to start session
                 return;
             }
 

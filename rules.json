@@ -20,7 +20,7 @@
 			adding an additional rule but replacing auth.uid with root.child('userMappings/' + auth.uid).val()
     */
     "userMappings" : {
-      ".read" : "auth.uid !== null",
+      ".read" : "auth.uid !== null || auth.uid === 'gcal-server'",
       ".write" : "auth.uid !== null && (
           root.child('profile/' + newData.child(auth.uid).val() + '/mappings/' + auth.provider).val() == 'authenticating' ||
           root.child('profile/' + newData.child(auth.uid).val() + '/mappings/' + auth.provider).val() == auth.uid
@@ -29,17 +29,28 @@
         ".validate" : "auth.uid == $providerID"
       }
     },
-    "calendars" : {
-      ".read" : "auth.uid == 'gcal-server'", // only the gcal-server can get the whole list
-      "$uid" : {
-        "$teamID" : {
+    "integrations" : {
+      "google" : {
+        "tokens" : {
           /*
-            read: only authenticated user
-            write: only authenticated user on that team
+            Only the server can see this business
           */
-          ".read" : "auth.uid == $uid || root.child('userMappings/' + auth.uid).val() === $uid",
-          ".write" : "(auth.uid == $uid || root.child('userMappings/' + auth.uid).val() === $uid) &&
-                      root.child('profile/' + $uid + '/curTeam').val() == $teamID"
+          ".read" : "auth.uid == 'gcal-server'",
+          ".write" : "auth.uid == 'gcal-server'"
+        },
+        "calendars" : {
+          ".read" : "auth.uid == 'gcal-server'", // only the gcal-server can get the whole list
+          "$uid" : {
+            "$teamID" : {
+              /*
+                read: only authenticated user
+                write: only authenticated user on that team
+              */
+              ".read" : "auth.uid == $uid || root.child('userMappings/' + auth.uid).val() === $uid",
+              ".write" : "(auth.uid == $uid || root.child('userMappings/' + auth.uid).val() === $uid) &&
+                          root.child('profile/' + $uid + '/curTeam').val() == $teamID"
+            }
+          }
         }
       }
     },

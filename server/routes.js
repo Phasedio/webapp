@@ -15,7 +15,11 @@ module.exports = function(app) {
 	//			will be set to the provider name.
 	app.use(function(req, res, next) {
 		if (req.method == "POST" && req.user) {
-			console.log('User changed from ' + (req.session && req.session.user ? req.session.user.uid : 'none') + ' to ' + req.user.d.uid);
+			if (!('user' in req.session))
+				console.log('session started');
+			else if (req.session.user.uid != req.user.d.uid)
+				console.log('session user changed');
+			
 			req.session.user = req.user.d;
 		}
 		next();
@@ -50,7 +54,12 @@ module.exports = function(app) {
       res.sendFile(path.resolve(app.get('appPath') + '/index.html'));
     });
 
-  // special logout routing to destroy session
+  // special logout routing to start or destroy session
+  // start
+  app.route(/\/(ping|touch)/).post(function(req, res){
+  	res.status(200).end();
+  });
+  // destroy
   app.route('/logout')
   	.get(function(req, res){
   		req.session.destroy();
