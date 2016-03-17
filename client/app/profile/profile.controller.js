@@ -213,6 +213,11 @@ return function(items, field, reverse) {
 
 			// prevent Update
 			$scope.isSelf = ($scope.currentUserID == Auth.user.uid);
+
+			// get calendars if isSelf and self is authed with google
+			Phased.getGoogleCalendars(function(res) {
+				$scope.calendarList = res;
+			});
 		}
 		initProfileUser();
 
