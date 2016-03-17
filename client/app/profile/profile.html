@@ -225,7 +225,7 @@
   									<li
   										ng-repeat="cal in calendarList"
   										class="calendar-item"
-  										ng-class="{ 'registered-calendar' : phased.user.registeredCalendarIDs.indexOf(cal.id) >= 0 }">
+  										ng-class="{ 'registered-calendar' : isCalRegistered(cal) }">
   										<a 
   											href="#"
   											ng-click="toggleCalRegistered(cal, $event)">

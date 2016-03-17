@@ -297,7 +297,6 @@ return function(items, field, reverse) {
 		// starts google Auth process
 		$scope.startGoogleAuth = function(e) {
 			e.preventDefault();
-			console.log('begin Google OAuth handshake');
 			Auth.googleLogin();
 		}
 
@@ -311,13 +310,15 @@ return function(items, field, reverse) {
 		// click handler to toggle calendar registration
 		$scope.toggleCalRegistered = function(cal, e) {
 			e.preventDefault();
-			if ( Phased.user.registeredCalendarIDs.indexOf(cal.id) >= 0 ) {
-				console.log('deregistering calendar', cal);
+			if ( $scope.isCalRegistered(cal) ) {
 				Phased.deregisterGoogleCalendar(cal);
 			} else {
-				console.log('registering calendar', cal);
 				Phased.registerGoogleCalendar(cal);
 			}
+		}
+
+		$scope.isCalRegistered = function(cal){
+			return cal.id in Phased.user.registeredCalendars;
 		}
 
     // Update Account

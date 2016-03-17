@@ -999,27 +999,27 @@ angular.module('webappApp')
     }
 
 
-    /**
-    *
-    *	Keeps registered google calendars synced
-    *
-    *	Sets PhasedProvider.user.registeredCalendarIDs
-    *		to be a list of IDs for registered calendars.
-    *		The data is there to also have their names,
-    *		but it doesn't make sense for the UI right now.
-    *	
-    *	NB: This does NOT synch google calendars with 
-    *		the Google server; see doGetGoogleCalendars
-    *
-    */
+		/**
+		*
+		*	Keeps registered google calendars synced
+		*
+		*	list is indexed by google cal ID, not FB key
+		*	(FB key available at .FBKey)
+		*	
+		*	NB: This does NOT synch google calendars with 
+		*		the Google server; see doGetGoogleCalendars
+		*
+		*/
     var watchGoogleCalendars = function() {
     	FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + PhasedProvider.team.uid).on('value', function(snap) {
 				var data = snap.val();
-				var list = [];
+				var list = {};
+				// reorganize to index by google cal ID
 				for (var i in data) {
-					list.push(data[i].id);
+					data[i].FBKey = i;
+					list[data[i].id] = data[i];
 				}
-				PhasedProvider.user.registeredCalendarIDs = list;
+				PhasedProvider.user.registeredCalendars = list;
   		});
     }
 
@@ -3099,7 +3099,11 @@ angular.module('webappApp')
     }
 
     var doRegisterGoogleCalendar = function(cal) {
-    	// 2. add to FireBase
+    	// don't allow double registrations
+    	if (cal.id in PhasedProvider.user.registeredCalendars) 
+    		return;
+
+    	// add to FireBase
     	FBRef.child('integrations/google/calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid).push({
     		id : cal.id,
     		name : cal.summary
