@@ -14,7 +14,7 @@ module.exports = function(app) {
 	// 			user from another provider. req.session.user.provider
 	//			will be set to the provider name.
 	app.use(function(req, res, next) {
-		if (req.method == "POST" && req.user) {
+		if (req.user) {
 			if (!('user' in req.session))
 				console.log('session started');
 			else if (req.session.user.uid != req.user.d.uid)
