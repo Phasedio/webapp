@@ -25,6 +25,7 @@
     "lodash": "~2.4.1",
     "method-override": "~1.0.0",
     "morgan": "~1.0.0",
+    "promise": "^7.1.1",
     "request": "^2.69.0",
     "serve-favicon": "~2.0.1",
     "stripe": "^4.0.0"
