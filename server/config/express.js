@@ -44,14 +44,16 @@ module.exports = function(app) {
   		}
   		return null;
   	}
-  }).unless({
-  	method : 'GET' // allow GET requests (this could be refined)
+  }).unless(function(req) {
+  	// allow non-API GET requests
+  	return (req.method == 'GET' && req.path.indexOf('/api/') < 0);
   }));
 
   app.use(function (err, req, res, next) {
   	if (err.name === 'UnauthorizedError' && req.originalUrl.indexOf('logout') == -1) {
-  		console.log('Unauthorized POST to ' + req.originalUrl);
+  		console.log('Unauthorized request to ' + req.originalUrl);
   		res.status(401).send(err.name + ': ' + err.message).end();
+  		return;
   	}
   	next();
   });
