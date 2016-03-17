@@ -21,7 +21,7 @@ var token = tokenGenerator.createToken({ uid: "gcal-server"});
 // ====
 var CLIENT_ID = '313573711545-p9bo68ve6d5oih51datnkv1i8vrumipq.apps.googleusercontent.com',
 		CLIENT_SECRET = 'vanRqrxMPnlZ2qNpEp4bwDTW',
-		REDIRECT_URL = 'http://93aa8d5a.ngrok.io/api/googleAuth/auth2';
+		REDIRECT_URL = 'https://a882c26d.ngrok.io/api/google/auth2';
 
 var google = require('googleapis');
 var OAuth2 = google.auth.OAuth2;
@@ -34,6 +34,12 @@ var scopes = ['https://www.googleapis.com/auth/calendar.readonly'];
 // ====
 exports.index = function(req,res) { res.send([]) };
 
+/**
+*
+*	Authentication step one:
+*	generate and redirect to a Google consent URL
+*
+*/
 exports.auth1 = function(req, res) {
 	if (!req.session.user) {
 		console.log('Cannot process Google authorization, no session user');
@@ -49,6 +55,18 @@ exports.auth1 = function(req, res) {
 	res.redirect(url);
 }
 
+/**
+*
+*	Authentication step two:
+*
+*	callback from step one
+*	receive access code from google
+*	get tokens for access code
+*	  save them to DB
+*	  save them to session
+*	redirect to user's referer from before step 1
+*
+*/
 exports.auth2 = function(req, res) {
 	oauth2Client.getToken(req.query.code, function(err, tokens) {
 		if (!err) {
@@ -57,12 +75,14 @@ exports.auth2 = function(req, res) {
 		} else {
 			console.log('error:', err);
 		}
+
+		// send respose after tokens saved to session
+		if (req.session.referer)
+			res.redirect(req.session.referer);
+		else
+			res.status(200).end();
 	});
 
-	if (req.session.referer)
-		res.redirect(req.session.referer);
-	else
-		res.status(200).end();
 }
 
 // internal business functions
