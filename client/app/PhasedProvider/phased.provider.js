@@ -3045,6 +3045,7 @@ angular.module('webappApp')
     	}).then(function(res) {
 	    		callback(res.data);
 	    	}, function(err) {
+	    		callback([]);
 	    		console.log(err);
 	    	});
     }
