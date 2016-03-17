@@ -212,7 +212,7 @@
   					<!-- GOOGLE CAL -->
   					<div role="tabpanel" class="tab-pane" id="google-calendar" ng-if="isSelf">
   						<div class="google-calendar">
-  							<p ng-if="!google">
+  							<p ng-if="!phased.user.googleAuth">
   								<a href="#" ng-click="startGoogleAuth($event)">Authenticate with Google</a> to automatically post status updates when an event on a calendar begins (for example, for every event on a company "meetings" calendar). <em>This will only take effect for this team; to manage your calendar status updates for another team, switch to that team.</em>
   							</p>
   							<p ng-if="!calendarList">

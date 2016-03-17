@@ -301,6 +301,7 @@ angular.module('webappApp')
       PhasedProvider.toggleGHWebhookActive = _toggleGHWebhookActive;
       PhasedProvider.deleteGHWebhook = _deleteGHWebhook;
       // GOOGLE
+      PhasedProvider.checkGoogleAuth = _checkGoogleAuth;
       PhasedProvider.getGoogleCalendars = _getGoogleCalendars;
       PhasedProvider.registerGoogleCalendar = _registerGoogleCalendar;
       PhasedProvider.deregisterGoogleCalendar = _deregisterGoogleCalendar;
@@ -3062,6 +3063,32 @@ angular.module('webappApp')
     *	GOOGLE
     *
     */
+
+    /**
+    *
+    *	Asks the server if the current user is authenticated to use
+    *	the Google apis.
+    *
+    *	Can be called immediately.
+    *
+    */
+    var _checkGoogleAuth = function(callback) {
+    	var callback = (typeof callback == 'function') ? callback : function(){};
+    	registerAsync(doCheckGoogleAuth, callback);
+    }
+
+    var doCheckGoogleAuth = function(callback) {
+    	$http.get('/api/google/hasAuth', {
+    		headers : {
+    			Authorization : 'Bearer ' + _Auth.user.token
+    		}
+    	}).then(function(res) {
+    		PhasedProvider.user.googleAuth = res.data;
+    		callback(res.data);
+    	}, function(err) {
+    		console.log(err);
+    	});
+    }
 
     /**
     *

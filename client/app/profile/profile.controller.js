@@ -294,6 +294,11 @@ return function(items, field, reverse) {
 		  }
 		}
 
+		// GOOGLE CAL INTEGRATION
+
+		// check user's auth state every time the panel is hit
+		Phased.checkGoogleAuth();
+
 		// starts google Auth process
 		$scope.startGoogleAuth = function(e) {
 			e.preventDefault();

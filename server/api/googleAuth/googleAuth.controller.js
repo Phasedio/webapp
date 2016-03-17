@@ -91,6 +91,19 @@ exports.auth2 = function(req, res) {
 
 /**
 *
+*	Check if the user has google token saved anywhere
+*
+*/
+exports.hasAuth = function(req, res) {
+	getGoogleTokensForUser(req).then(function(tokens){
+		res.send(true);
+	}, function(){
+		res.send(false);
+	});
+}
+
+/**
+*
 *	GET /api/google/cal
 *
 *	1. check Google auth
@@ -185,33 +198,43 @@ var saveUserTokens = function(user, tokens) {
 /**
 *
 * Sets the google oauth2 client credentials
-*
-*	1. if we have session creds, use those
-*	2. otherwise get from DB
-*	3. otherwise reject promise
 *	
-*	returns a promise (due to async FB call)
+*	returns a promise
 *	passes the fulfill method an authorized oauth2Client
-*	(that isn't in the global scope) to make this request
 *
 */
 var setGOA2Creds = function(req) {
 	return new Promise(function(fulfill, reject) {
-		var _oa2Client = new OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL);
-		// 1.
-		if (req.session && 'tokens' in req.session && 'refresh_token' in req.session) {
-			_oa2Client.setCredentials(req.session.tokens); // user session tokens to auth client
+		getGoogleTokensForUser(req).then(function(tokens) {
+			var _oa2Client = new OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL); // make client
+			_oa2Client.setCredentials(tokens); // authenticate client
 			fulfill(_oa2Client); // give callback authed client
+		}, reject);
+	});
+}
+
+/**
+*
+*	Get Google tokens for a user that has them anywhere
+*	If they're in the session, use those
+*	If they're in the DB, use those
+*	Otherwise, reject the promise
+*
+*/
+var getGoogleTokensForUser = function(req) {
+	return new Promise(function(fulfill, reject) {
+		// 1. check session. needs to have refresh_token
+		if (req.session && 'tokens' in req.session && 'refresh_token' in req.session) {
+			fulfill(req.session.user.tokens);
 			return;
 		} else {
-			console.log('user tokens not in session, retrieving from DB');
+			// 2. check DB
 			FBRef.authWithCustomToken(FBToken, function(error) {
 				FBRef.child('integrations/google/tokens/' + req.session.user.uid).once('value', function (snap) {
 					var tokens = snap.val();
 					if (tokens) {
 						req.session.tokens = tokens; // save DB tokens to session
-						_oa2Client.setCredentials(tokens); // authorize client
-						fulfill(_oa2Client); // give callback authed client
+						fulfill(tokens);
 					} else {
 						console.log('no tokens in DB, failing');
 						reject();
