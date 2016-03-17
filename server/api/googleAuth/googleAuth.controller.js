@@ -108,7 +108,7 @@ exports.getCals = function(req, res) {
 				auth: authClient
 			}, function(err, response) {
 				if (response) {
-					res.status(200).send(response);
+					res.status(200).send(response.items);
 				} else {
 					console.log(err);
 					res.status(err.code).send(err);
