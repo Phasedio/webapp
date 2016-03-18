@@ -20,9 +20,9 @@ var FBToken = tokenGenerator.createToken({ uid: "gcal-server"});
 
 // Google vars
 // ====
-var CLIENT_ID = '313573711545-p9bo68ve6d5oih51datnkv1i8vrumipq.apps.googleusercontent.com',
-		CLIENT_SECRET = 'vanRqrxMPnlZ2qNpEp4bwDTW',
-		REDIRECT_URL = 'https://a882c26d.ngrok.io/api/google/auth2';
+var CLIENT_ID = config.google.CLIENT_ID,
+		CLIENT_SECRET = config.google.CLIENT_SECRET,
+		REDIRECT_URL = config.google.REDIRECT_URL;
 
 var google = require('googleapis');
 var OAuth2 = google.auth.OAuth2;
