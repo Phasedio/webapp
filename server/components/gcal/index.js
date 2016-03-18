@@ -30,7 +30,10 @@ var CLIENT_ID = config.google.CLIENT_ID,
 // internal business
 // ====
 var masterJob, // set in init
-	eventJobList = {}; // organized by calendar for cancelling later (ie, eventJobList[calID] = [job, job, ...])
+	eventJobList = {}, // organized by calendar for cancelling later (ie, eventJobList[calID] = [job, job, ...])
+	// time at which statuses should be posted for all day events. IN GMT!!! 24h, HH:MM:SS
+	// maybe a better solution to this. (ie, get timezone from calendar)
+	DAY_START_TIME = '12:00:00'; // 8AM EST
 
 module.exports = function init() {
 	console.log('starting GCal task scheduling');
@@ -101,9 +104,24 @@ var onCalAdd = function(snap) {
 					GCal.events.list(params, function(err, res) {
 						if (err) return console.log(err);
 
-						// 3. schedule event
-						console.log(cal.id + ' events:');
-						console.log(res.items);	
+						// 3. schedule event jobs
+						for (var j in res.items) {
+							var thisEvent = res.items[j];
+							// get start time OR date (for full day events)
+							// then make it a date Obj
+							var jobStart = 'dateTime' in thisEvent.start ? thisEvent.start.dateTime : thisEvent.start.date + 'T' + DAY_START_TIME + '.000Z';
+							jobStart = new Date(jobStart);
+
+							// schedule the job
+							var job = schedule.scheduleJob(jobStart,
+								doEventJob.bind(null, thisEvent, userID, teamID) // bind data to callback (see https://github.com/node-schedule/node-schedule#date-based-scheduling)
+							);
+							
+							// stash job for future cancelling
+							var calID = teamCals[i].id;
+							eventJobList[calID] = eventJobList[calID] || {}; // ensure list exists
+							eventJobList[calID][thisEvent.id] = thisEvent;
+						}
 					});
 				}
 			}
@@ -121,13 +139,34 @@ var onCalAdd = function(snap) {
 var onCalRemoved = function(snap) {
 	console.log('onCalRemoved');
 }
-
+ 
 /*
-	- (check that the event still exists)
+	- (check that the event still exists TODO)
 	- post status update
 */
-var doEventJob = function() {
-	console.log('doEventJob');
+var doEventJob = function(event, userID, teamID) {
+	console.log('doEventJob', event.summary, userID, teamID);
+	// 0. check event still exists TODO
+
+	// 1. post status update
+	var status = {
+		name : 'Event: ' + event.summary,
+		time : new Date().getTime(),
+		user : userID
+	};
+	// do after authenticated
+	FBRef.authWithCustomToken(FBToken, function(error, authData) {
+		// fail if error
+		if (error)
+			return console.error('Could not post status because FB won\'t auth.', error);
+
+		FBRef.child('team/' + teamID + '/statuses').push(status, function(err) {
+			if (!err) {
+				console.log('posted');
+				FBRef.child('team/' + teamID + '/members/' + userID + '/currentStatus').set(status);
+			}
+		});
+	});
 }
 
 
