@@ -46,7 +46,6 @@ module.exports = function init() {
 	};
 
 	masterJob = schedule.scheduleJob(rule, doMasterJob);
-	// console.log(masterJob.pendingInvocations()[0].fireDate);
 	masterJob.job(); // invoke job immediately as well as when scheduled
 };
 
@@ -60,15 +59,15 @@ module.exports = function init() {
 	- stash this handler for next iteration to remove
 */
 var doMasterJob = function() {
-	console.log('doMasterJob');
+	console.log('executing masterJob; next iteration at ', masterJob.pendingInvocations()[0].fireDate.toString());
 	// do after authenticated
 	FBRef.authWithCustomToken(FBToken, function(error, authData) {
 		// fail if error
 		if (error)
-			return console.error('GCal schedule not running this time round due to Firebase auth error, will try again at ' + masterJob.pendingInvocations()[0].fireDate, error);
+			return console.error('GCal schedule not running this time round due to Firebase auth error, will try again next time.', error);
 
-		FBRef.child('integrations/google/calendars').on('child_added', onCalAdd);
-		FBRef.child('integrations/google/calendars').on('child_removed', onCalRemoved);
+		FBRef.child('integrations/google/calendars').on('child_added', onUserAdd, console.log);
+		FBRef.child('integrations/google/calendars').on('child_removed', onUserRemoved, console.log);
 	});
 }
 
@@ -77,78 +76,128 @@ var doMasterJob = function() {
 	2. get all events for each calendar on each team before next main job invocation
 	3. schedule doEventJob for each event
 */
-var onCalAdd = function(snap) {
-	console.log('onCalAdd');
-	// 1. first, get an authenticated google client
-	var userID = snap.key();
-	setGOA2Creds(userID).then(
-		function success(_oa2Client) {
-			// 2. now, for each calendar on each team...
-			var calsByTeam = snap.val(); // list of calendars by team
-			for (var teamID in calsByTeam) {
-				var teamCals = calsByTeam[teamID]; // list of calendars this user has registered to be updated for this team
-				for (var i in teamCals) {
+var onUserAdd = function(snap) {
+	console.log('onUserAdd', snap.val());
+	var userID = snap.key(),
+		calsByTeam = snap.val();
 
-					// ...get all events
-					var cal = teamCals[i]; // the calendar
-					var nextInvocation = masterJob.pendingInvocations()[0].fireDate.toISOString();
-					var params = {
-						auth : _oa2Client,
-						singleEvents: true,
-						calendarId : cal.id,
-						timeMax : nextInvocation,
-						timeMin : (new Date()).toISOString() // now
-					};
+	// set up initial scheduling
+	setGOA2Creds(userID).then(function success(_oa2Client) {
+		for (var teamID in calsByTeam) {
+			registerCalsForTeam(_oa2Client, calsByTeam[teamID], userID, teamID);
+		}
+	});
 
-					// make API request
-					GCal.events.list(params, function(err, res) {
-						if (err) return console.log(err);
-
-						// 3. schedule event jobs
-						for (var j in res.items) {
-							var thisEvent = res.items[j];
-							// get start time OR date (for full day events)
-							// then make it a date Obj
-							var jobStart = 'dateTime' in thisEvent.start ? thisEvent.start.dateTime : thisEvent.start.date + 'T' + DAY_START_TIME + '.000Z';
-							jobStart = new Date(jobStart);
-
-							// schedule the job
-							var job = schedule.scheduleJob(jobStart,
-								doEventJob.bind(null, thisEvent, userID, teamID) // bind data to callback (see https://github.com/node-schedule/node-schedule#date-based-scheduling)
-							);
-							
-							// stash job for future cancelling
-							var calID = teamCals[i].id;
-							eventJobList[calID] = eventJobList[calID] || {}; // ensure list exists
-							eventJobList[calID][thisEvent.id] = thisEvent;
-						}
-					});
-				}
-			}
-		},
-		function failure() {
-			console.log('Could not authenticate user');
+	// future-proofing: whenever the user's calendar registration changes
+	FBRef.child('integrations/google/calendars/' + userID).on('child_changed', function onTeamChanged(snap) {
+		var teamID = snap.key(),
+			cals = snap.val();
+		// register new cals
+		setGOA2Creds(userID).then(function success(_oa2Client) {
+			registerCalsForTeam(_oa2Client, cals, userID, teamID);
 		});
-	
+	});
+
+	/*
+		only register calendars that aren't already registered
+	*/
+	var registerCalsForTeam = function(_oa2Client, cals, userID, teamID) {
+		for (var i in cals) {
+			if (!(cals[i].id in eventJobList)) {
+				getAndRegisterEventsForCalendar(_oa2Client, cals[i], userID, teamID);
+
+				// watch newly registered cal for deregistration
+				FBRef.child('integrations/google/calendars/' + userID + '/' + teamID).on('child_removed', function teamChildRemoved(snap){
+					onCalRemoved(snap.val().id);
+					FBRef.child('integrations/google/calendars/' + userID + '/' + teamID).off(); // stop watching for deregistration
+				});
+			}
+		}
+	}
+}
+
+// deregister all events for all cals for all teams on this user
+var onUserRemoved = function(snap) {
+	var userID = snap.key();
+	console.log(userID + ' rm', snap.val());
+	FBRef.child('integrations/google/calendars/' + userID).off(); // stop listening for this user's data
+
+	var teams = snap.val();
+	for (var teamID in teams) {
+		for (var i in teams[teamID])
+			onCalRemoved(teams[teamID][i].id);
+	}
+}
+
+/**
+*
+*	gets events from Google API and schedules jobs for them
+*
+*/
+var getAndRegisterEventsForCalendar = function(_oa2Client, cal, userID, teamID) {
+	// ...get all events
+	var nextInvocation = masterJob.pendingInvocations()[0].fireDate.toISOString();
+	var params = {
+		auth : _oa2Client,
+		singleEvents: true,
+		calendarId : cal.id,
+		timeMax : nextInvocation,
+		timeMin : (new Date()).toISOString() // now
+	};
+
+	// ensure cal evt job list exists (since list is also used as cal registration indicator)
+	eventJobList[cal.id] = eventJobList[cal.id] || {};
+
+	// make API request
+	GCal.events.list(params, function(err, res) {
+		if (err) return console.log(err);
+
+		// 3. schedule event jobs
+		for (var j in res.items) {
+			var thisEvent = res.items[j];
+			// get start time OR date (for full day events)
+			// then make it a date Obj
+			var jobStart = 'dateTime' in thisEvent.start ? thisEvent.start.dateTime : thisEvent.start.date + 'T' + DAY_START_TIME + '.000Z';
+			jobStart = new Date(jobStart);
+
+			// schedule the job
+			var job = schedule.scheduleJob(jobStart,
+				doEventJob.bind(null, thisEvent, userID, teamID) // bind data to callback (see https://github.com/node-schedule/node-schedule#date-based-scheduling)
+			);
+			
+			// stash job for future cancelling
+			eventJobList[cal.id][thisEvent.id] = job;
+		}
+		console.log('all events in cycle for calendar ' + cal.id + ' registered, calendars with pending jobs:', Object.keys(eventJobList));
+	});
 }
 
 /*
 	- remove all scheduled jobs for this calendar
 		- loop through eventJobList, remove all events for this cal
+	NB: uses GCal ID, not FB key!
 */
-var onCalRemoved = function(snap) {
-	console.log('onCalRemoved');
+var onCalRemoved = function(calID) {
+	// cancel all jobs associated with that calendar
+	if (calID in eventJobList) {
+		for (var i in eventJobList[calID]) {
+			if (eventJobList[calID][i] != null && 'cancel' in eventJobList[calID][i]) {
+				eventJobList[calID][i].cancel();
+				delete eventJobList[calID][i]; // clean up job
+			}
+		}
+	}
+
+	// delete calendar from list
+	delete eventJobList[calID];
+	console.log(calID + ' removed, pending jobs', Object.keys(eventJobList));
 }
  
 /*
-	- (check that the event still exists TODO)
-	- post status update
+	post status update for the event
 */
 var doEventJob = function(event, userID, teamID) {
 	console.log('doEventJob', event.summary, userID, teamID);
-	// 0. check event still exists TODO
-
-	// 1. post status update
 	var status = {
 		name : 'Event: ' + event.summary,
 		time : new Date().getTime(),
@@ -191,7 +240,10 @@ var setGOA2Creds = function(userID) {
 			var _oa2Client = new OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL); // make client
 			_oa2Client.setCredentials(tokens); // authenticate client
 			fulfill(_oa2Client); // give callback authed client
-		}, reject);
+		}, function() {
+			console.log('could not auth user with Google');
+			reject();
+		});
 	});
 }
 
