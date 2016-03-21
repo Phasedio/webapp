@@ -30,10 +30,13 @@ var CLIENT_ID = config.google.CLIENT_ID,
 // internal business
 // ====
 var masterJob, // set in init
- 	// list of all scheduled jobs, indexed by calendar's FireBase key, which is
+
+ 	// eventJobList is a list of all scheduled jobs, indexed by calendar's FireBase key, which is
  	// guaranteed to be unique (important, since the same cal could be registered
  	// for multiple people or multiple teams)
- 	// also our reference of which calendars do not need to be re-registered
+	//
+ 	// also our reference of which calendars do not need to be re-registered. Since we re-gather
+ 	// all calendar information each masterJob cycle, this is reset to {} every cycle.
  	// eventJobList = {
 	//		calFBKey : [job, job, ...], ...
  	// }
@@ -55,7 +58,7 @@ module.exports = function init() {
 
 	// run the master job every 5 minutes to test
 	if (config.env === 'development')
-		rule = '*/5 * * * *';
+		rule = '*/1 * * * *';
 
 	masterJob = schedule.scheduleJob(rule, doMasterJob);
 	masterJob.job(); // invoke job immediately as well as when scheduled
@@ -67,24 +70,33 @@ module.exports = function init() {
 
 /*
 	- 1. Authenticate with firebase
-	- 2. Remove last round's .on()
+	- 2. Remove last round's .on() & eventJobList (there should be none outstanding and we need to re-gather all calendars anyway)
 	- 3. FB.on to monitor calendars:
 		- onUserAdd/Removed registers handlers for cals added/removed (also takes care of nesting by teams)
 */
 var doMasterJob = function() {
 	console.log('executing masterJob; next iteration at ', masterJob.pendingInvocations()[0].fireDate.toString());
+
 	// 1. do after authenticated
 	FBRef.authWithCustomToken(FBToken, function(error, authData) {
 		// fail if error
 		if (error)
-			return console.error('GCal schedule not running this time round due to Firebase auth error, will try again next time.', error);
+			return console.log('GCal schedule not running this time round due to Firebase auth error, will try again next time.', error);
 		
 		// 2.
 		FBRef.child('integrations/google/calendars').off(); // kills all event handlers
+		eventJobList = {}; // clear job list; 
 
 		// 3. get this party started
-		FBRef.child('integrations/google/calendars').on('child_added', onUserAdd, console.log);
-		FBRef.child('integrations/google/calendars').on('child_removed', onUserRemoved, console.log);
+		console.log('get this party started');
+		FBRef.child('integrations/google/calendars').on('child_added', onUserAdd, function(err){
+			console.log('err', err);
+		});
+		FBRef.child('integrations/google/calendars').on('child_removed', onUserRemoved, function(err){
+			console.log('err', err);
+		});
+	}, function(err) {
+		console.log('err', err);
 	});
 }
 
@@ -151,6 +163,7 @@ var onUserRemoved = function(snap) {
 *
 */
 var registerCalsForTeam = function(_oa2Client, cals, userID, teamID) {
+	console.log('registering ' + Object.keys(cals).length + ' cals for ' + userID);
 	for (var calFBKey in cals) {
 		if (!(calFBKey in eventJobList)) {
 			// 1. schedule jobs for calendar events
@@ -201,18 +214,21 @@ var onCalAdded = function(_oa2Client, cal, calFBKey, userID, teamID) {
 			jobStart = new Date(jobStart);
 
 			// only schedule the job if it's in the future
-			if (jobStart > new Date()) {
+			if (jobStart.getTime() > new Date().getTime()) {
+				console.log('scheduling "' + thisEvent.summary + '" post for', jobStart.toString());
 				var job = schedule.scheduleJob(jobStart,
-					doEventJob.bind(null, thisEvent, userID, teamID) // bind data to callback (see https://github.com/node-schedule/node-schedule#date-based-scheduling)
+					doEventJob.bind(null, thisEvent, userID, teamID, {calFBKey : calFBKey, eventID : thisEvent.id}) // bind data to callback (see https://github.com/node-schedule/node-schedule#date-based-scheduling)
 				);
 				
 				if (job != null) {
 					// stash job for future cancelling
 					eventJobList[calFBKey][thisEvent.id] = job;
 				}
+			} else {
+				console.log('"' + thisEvent.summary + '" in past and not scheduled', jobStart.toString(), new Date().toString());
 			}
 		}
-		console.log(Object.keys(eventJobList).length + ' registered cals');
+		console.log('cal added, ' + Object.keys(eventJobList).length + ' registered cals');
 	});
 }
 
@@ -231,13 +247,14 @@ var onCalRemoved = function(calFBKey) {
 	}
 	// delete calendar from list
 	delete eventJobList[calFBKey];
-	console.log(Object.keys(eventJobList).length + ' registered cals');
+	console.log('cal removed, ' +  Object.keys(eventJobList).length + ' registered cals');
 }
  
 /*
 *	post status a update for the event
+*	delete event job from list after it's done
 */
-var doEventJob = function(event, userID, teamID) {
+var doEventJob = function(event, userID, teamID, jobKeys) {
 	console.log('doEventJob', event.summary, userID, teamID);
 	var status = {
 		name : 'Event: ' + event.summary,
@@ -253,7 +270,9 @@ var doEventJob = function(event, userID, teamID) {
 		FBRef.child('team/' + teamID + '/statuses').push(status, function(err) {
 			if (!err) {
 				console.log('posted');
-				FBRef.child('team/' + teamID + '/members/' + userID + '/currentStatus').set(status);
+				FBRef.child('team/' + teamID + '/members/' + userID + '/currentStatus').set(status, function(){
+					delete eventJobList[jobKeys.calFBKey][jobKeys.eventID];
+				});
 			}
 		});
 	});
