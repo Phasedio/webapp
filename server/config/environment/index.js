@@ -34,6 +34,15 @@ var all = {
 
   // List of user roles
   userRoles: ['guest', 'user', 'admin'],
+  
+  // routes which do not require a FB token to access
+  // NB: GET requests (other than to api routes) are allowed by default
+  // NB: route can be anywhere in req.path
+  authURLWhiteList : [
+	  	'/api/google/auth1',
+	  	'/api/google/auth2',
+	  	'/api/hooks/'
+  	],
 
   // MongoDB connection options
   mongo: {

@@ -31,6 +31,7 @@ module.exports = function(app) {
   app.use('/api/things', require('./api/thing'));
   app.use('/api/registration', require('./api/registration'));
   app.use('/api/hooks/github', require('./api/hooks/github'));
+  app.use('/api/hooks/google', require('./api/hooks/google'))
 
   // generous api endpoint spellings
   app.use('/api/notification', require('./api/notification'));

@@ -41,13 +41,15 @@
 			- cancel all FB event handlers
 			- cancel all event jobs for all calendars (using onCalRemoved for each)
 
-		TODO:
-		event added in Google (webhook hit)
-			- schedule job for all instances of that event's calendar's registrations
-			- we have calendar ID so we should be able to find teamID and userID from the DB keys
-
+		TODO webhooks:
+			(webhooks registered to urls with userID and teamID in params, calregistration ID as a token)
+		event added in Google
+			- schedule job
+		event changed in Google
+			- cancel scheduled job
+			- schedule new job with updated info (best soln in case details other than time change)
 		event canceled in Google (webhook hit)
-			- cancel all relevant scheduled jobs
+			- cancel job
 
  */
 
@@ -61,6 +63,7 @@ var FirebaseTokenGenerator = require("firebase-token-generator");
 var schedule = require("node-schedule");
 var Promise = require("promise");
 var google = require('googleapis');
+var querystring = require('querystring');
 
 // Firebase business
 // ====
@@ -95,26 +98,45 @@ var masterJob, // set in init
 	// maybe a better solution to this. (ie, get timezone from calendar)
 	DAY_START_TIME = '12:00:00'; // 8AM EST
 
-module.exports = function init() {
-	console.log('starting GCal task scheduling');
+module.exports = {
 
-	// using the rule means the job will recur
-	// using a date object will only run the job once
-	var rule = {
-		hour : 2, // start scheduling the day's events at 2AM
-		minute : 0 // leaving this null would run the job every minute!
-	};
+	/**
+	*
+	*	BEGIN SCHEDULING CYCLES
+	*
+	*/
+	init : function() {
+		console.log('starting GCal task scheduling');
 
-	// run the master job every 5 minutes to test
-	if (config.env === 'development')
-		rule = '*/1 * * * *';
+		// using the rule means the job will recur
+		// using a date object will only run the job once
+		var rule = {
+			hour : 2, // start scheduling the day's events at 2AM
+			minute : 0 // leaving this null would run the job every minute!
+		};
 
-	masterJob = schedule.scheduleJob(rule, doMasterJob);
-	masterJob.job(); // invoke job immediately as well as when scheduled
+		// run the master job every 5 minutes to test
+		if (config.env === 'development')
+			rule = '*/1 * * * *';
 
-	schedule.scheduleJob('*/5 * * * *', function(){
-		console.log('scheduled jobs:', eventJobList);
-	});
+		masterJob = schedule.scheduleJob(rule, doMasterJob);
+		masterJob.job(); // invoke job immediately as well as when scheduled
+
+		schedule.scheduleJob('*/5 * * * *', function(){
+			console.log('scheduled jobs:', eventJobList);
+		});
+	},
+
+	/**
+	*
+	*	EVENTS WEBHOOK ENDPOINT
+	*	hit by google server
+	*
+	*/
+	eventPush : function(req, res) {
+		console.log('eventPush', req.body);
+		res.status(200).end();
+	}
 };
 
 /*
@@ -254,7 +276,8 @@ var onCalAdded = function(_oa2Client, cal, calFBKey, userID, teamID) {
 	// ensure cal evt job list exists (since list is also used as cal registration indicator)
 	eventJobList[calFBKey] = eventJobList[calFBKey] || {};
 
-	// make API request
+	// make API requests
+	// 1. get all events and schedule jobs
 	GCal.events.list(params, function(err, res) {
 		if (err) return console.log(err);
 
@@ -291,6 +314,9 @@ var onCalAdded = function(_oa2Client, cal, calFBKey, userID, teamID) {
 		}
 		console.log('cal added, ' + Object.keys(eventJobList).length + ' registered cals');
 	});
+
+	// 2. watch for changes to events (register webhook)
+	registerWebhookForCalendar(_oa2Client, cal.id, calFBKey, userID, teamID);
 }
 
 /**
@@ -345,6 +371,43 @@ var doEventJob = function(event, userID, teamID, jobKeys) {
 // Google API utils
 // (lifted from googleAuth.controller.js -- not DRY but maybe not worth
 // making another module for...)
+
+/**
+*
+*	registers the webhook for a calendar's registration
+*
+*/
+var registerWebhookForCalendar = function(_oa2Client, calID, calFBKey, userID, teamID) {
+	console.log('rwhfc');
+	var nextInvocation = masterJob.pendingInvocations()[0].fireDate;
+	
+	// token will be embedded to the webhook registration as a query string
+	// so we can use this metadata when the webhook is hit
+	var token = {
+		calFBKey : calFBKey,
+		userID : userID,
+		teamID : teamID
+	};
+
+	GCal.events.watch({
+		auth: _oa2Client,
+		calendarId : calID,
+		timeMax : nextInvocation.toISOString(),
+		timeMin : new Date().toISOString(),
+		resource : {
+			id : new Date().getTime(),
+			type: 'web_hook',
+			address : config.google.CALENDAR_EVENTS_WEBHOOK_URL,
+			token: querystring.stringify(token),
+			expiration: nextInvocation.getTime()
+		}
+	}, function(err, res) {
+		if (err)
+			console.log('error registering webhook:', err.message);
+		else
+			console.log('webhook registered, expires', new Date(parseInt(res.expiration)).toString());
+	});
+}
 
 /**
 *

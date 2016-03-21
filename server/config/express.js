@@ -49,14 +49,13 @@ module.exports = function(app) {
   	var allow = (req.method == 'GET' && req.path.indexOf('/api/') < 0);
 
   	// allow a whitelist of otherwise blocked requests
-  	var whiteList = [
-	  	'/api/google/auth1',
-	  	'/api/google/auth2'
-  	];
+  	var whitelist = config.authURLWhiteList;
   	for (var i in whiteList) {
-  		if (whiteList[i] === req.path)
+  		if (req.path.indexOf(whiteList[i]) > 0)
   			allow = true;
   	}
+
+  	console.log(req.path, allow);
   	return allow;
   }));
 

@@ -29,6 +29,7 @@ module.exports = {
   google : {
   	CLIENT_ID : '313573711545-p9bo68ve6d5oih51datnkv1i8vrumipq.apps.googleusercontent.com',
   	CLIENT_SECRET : 'vanRqrxMPnlZ2qNpEp4bwDTW',
-  	REDIRECT_URL : 'https://phased.io/api/google/auth2'
+  	REDIRECT_URL : 'https://phased.io/api/google/auth2',
+  	CALENDAR_EVENTS_WEBHOOK_URL: 'https://phased.io/hooks/google/events'
   }
 };
