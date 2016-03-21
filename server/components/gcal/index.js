@@ -42,14 +42,8 @@
 			- cancel all event jobs for all calendars (using onCalRemoved for each)
 
 		TODO webhooks:
-			(webhooks registered to urls with userID and teamID in params, calregistration ID as a token)
-		event added in Google
-			- schedule job
-		event changed in Google
-			- cancel scheduled job
-			- schedule new job with updated info (best soln in case details other than time change)
-		event canceled in Google (webhook hit)
-			- cancel job
+			- webhook hit with reference token in header whenever a cal event in the
+				cycle is modified. when this happens, refresh the cal data.
 
  */
 
@@ -64,6 +58,7 @@ var schedule = require("node-schedule");
 var Promise = require("promise");
 var google = require('googleapis');
 var querystring = require('querystring');
+var uuid = require('node-uuid');
 
 // Firebase business
 // ====
@@ -93,6 +88,11 @@ var masterJob, // set in init
 	//		calFBKey : [job, job, ...], ...
  	// }
 	eventJobList = {},
+
+	// webhookChannelIDs is a list of webhook channel IDs paired with their respective
+	// calendar firebase calendar keys. this is checked whenever the webhook is hit
+	// to make sure the data we're expecting is there.
+	webhookChannelIDs = {},
 	
 	// time at which statuses should be posted for all day events. IN GMT!!! 24h, HH:MM:SS
 	// maybe a better solution to this. (ie, get timezone from calendar)
@@ -117,7 +117,7 @@ module.exports = {
 
 		// run the master job every 5 minutes to test
 		if (config.env === 'development')
-			rule = '*/1 * * * *';
+			rule = '*/5 * * * *';
 
 		masterJob = schedule.scheduleJob(rule, doMasterJob);
 		masterJob.job(); // invoke job immediately as well as when scheduled
@@ -132,16 +132,55 @@ module.exports = {
 	*	EVENTS WEBHOOK ENDPOINT
 	*	hit by google server
 	*
+	* google doesn't give any new information about the event
+	*	so we have to make another request to the server to update
+	*	the entire fracking calendar. 
+	*
 	*/
 	eventPush : function(req, res) {
-		console.log('eventPush', req.body);
-		res.status(200).end();
+		console.log('eventPush', req.headers['x-goog-resource-state']);
+		var resourceState = req.headers['x-goog-resource-state'];
+		// if state is sync, do nothing (just the webhook confirm hit)
+		// otherwise, state sould be 'exists'; refresh data for calendar
+
+		if (resourceState === 'exists') {
+			var token = querystring.parse(req.headers['x-goog-channel-token']);
+			var channelID = req.headers['x-goog-channel-id'];
+
+			// check if token data is compromised; if so, send 404
+			// bad comparison technique now -- maybe lodash has something??? TODO
+			if (webhookChannelIDs[channelID] !== token) {
+				res.status(404).end;
+				console.log('google cal events webhook hit with bad token, 404 sent.');
+				return;
+			} else {
+				// send 200 right away and get on with our business
+				res.status(200).end();
+			}
+
+			console.log('cal registered at ' + token.calFBKey + ' modified; refreshing...', token);
+
+			onCalRemoved(token.calFBKey); // synchronous
+			setGOA2Creds(token.userID).then(function success(_oa2Client) {
+				onCalAdded(_oa2Client, token.calID, token.calFBKey, token.userID, token.teamID);
+			});
+
+		} else if (resourceState === 'sync') {
+			res.status(200).end();
+			console.log('webhook confirmed');
+		} else {
+			res.status(404).end();
+			console.log('unexpected webhook hit');
+		}
 	}
 };
 
 /*
 	- 1. Authenticate with firebase
-	- 2. Remove last round's .on() & eventJobList (there should be none outstanding and we need to re-gather all calendars anyway)
+	- 2. Remove last round's references:
+		- FireBase .on()
+		- eventJobList -- there should be none outstanding and we need to re-gather all calendars anyway
+		- webhookChannelIDs -- we will register new ones and these will have expired anyway
 	- 3. FB.on to monitor calendars:
 		- onUserAdd/Removed registers handlers for cals added/removed (also takes care of nesting by teams)
 */
@@ -157,6 +196,7 @@ var doMasterJob = function() {
 		// 2.
 		FBRef.child('integrations/google/calendars').off(); // kills all event handlers
 		eventJobList = {}; // clear job list; 
+		webhookChannelIDs = {}; // clear webhooks
 
 		// 3. get this party started
 		FBRef.child('integrations/google/calendars').on('child_added', onUserAdd, function(err){
@@ -237,7 +277,7 @@ var registerCalsForTeam = function(_oa2Client, cals, userID, teamID) {
 	for (var calFBKey in cals) {
 		if (!(calFBKey in eventJobList)) {
 			// 1. schedule jobs for calendar events
-			onCalAdded(_oa2Client, cals[calFBKey], calFBKey, userID, teamID);
+			onCalAdded(_oa2Client, cals[calFBKey].id, calFBKey, userID, teamID);
 		}
 	}
 
@@ -261,14 +301,14 @@ var registerCalsForTeam = function(_oa2Client, cals, userID, teamID) {
 *		info, post immediately
 *	C otherwise, the event may have already been posted and we do nothing
 */
-var onCalAdded = function(_oa2Client, cal, calFBKey, userID, teamID) {
+var onCalAdded = function(_oa2Client, calID, calFBKey, userID, teamID) {
 	// ...get all events
 	var nextInvocation = masterJob.pendingInvocations()[0].fireDate.toISOString();
 	var gCalRequestStartTime = new Date();
 	var params = {
 		auth : _oa2Client,
 		singleEvents: true,
-		calendarId : cal.id,
+		calendarId : calID,
 		timeMax : nextInvocation,
 		timeMin : gCalRequestStartTime.toISOString() // now
 	};
@@ -316,7 +356,7 @@ var onCalAdded = function(_oa2Client, cal, calFBKey, userID, teamID) {
 	});
 
 	// 2. watch for changes to events (register webhook)
-	registerWebhookForCalendar(_oa2Client, cal.id, calFBKey, userID, teamID);
+	registerWebhookForCalendar(_oa2Client, calID, calFBKey, userID, teamID);
 }
 
 /**
@@ -386,9 +426,15 @@ var registerWebhookForCalendar = function(_oa2Client, calID, calFBKey, userID, t
 	var token = {
 		calFBKey : calFBKey,
 		userID : userID,
-		teamID : teamID
+		teamID : teamID,
+		calID : calID
 	};
+	var channelID = uuid.v1(); // timestamp based random ID
 
+	// save token and channel ID for verification when webhook is hit
+	webhookChannelIDs[channelID] = token;
+
+	// register our webhook
 	GCal.events.watch({
 		auth: _oa2Client,
 		calendarId : calID,
