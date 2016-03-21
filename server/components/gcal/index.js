@@ -88,7 +88,6 @@ var doMasterJob = function() {
 		eventJobList = {}; // clear job list; 
 
 		// 3. get this party started
-		console.log('get this party started');
 		FBRef.child('integrations/google/calendars').on('child_added', onUserAdd, function(err){
 			console.log('err', err);
 		});
@@ -163,7 +162,7 @@ var onUserRemoved = function(snap) {
 *
 */
 var registerCalsForTeam = function(_oa2Client, cals, userID, teamID) {
-	console.log('registering ' + Object.keys(cals).length + ' cals for ' + userID);
+	// console.log('registering ' + Object.keys(cals).length + ' cals for ' + userID);
 	for (var calFBKey in cals) {
 		if (!(calFBKey in eventJobList)) {
 			// 1. schedule jobs for calendar events
@@ -186,16 +185,21 @@ var registerCalsForTeam = function(_oa2Client, cals, userID, teamID) {
 *	- only gets events before the next master job cycle
 *	- ensures	that the calendar FBKey is listed in eventJobList
 *		even if there are no events this cycle
+*	A if event is in the future, schedule its post
+*	B if the event started between making the request and receiving the 
+*		info, post immediately
+*	C otherwise, the event may have already been posted and we do nothing
 */
 var onCalAdded = function(_oa2Client, cal, calFBKey, userID, teamID) {
 	// ...get all events
 	var nextInvocation = masterJob.pendingInvocations()[0].fireDate.toISOString();
+	var gCalRequestStartTime = new Date();
 	var params = {
 		auth : _oa2Client,
 		singleEvents: true,
 		calendarId : cal.id,
 		timeMax : nextInvocation,
-		timeMin : (new Date()).toISOString() // now
+		timeMin : gCalRequestStartTime.toISOString() // now
 	};
 
 	// ensure cal evt job list exists (since list is also used as cal registration indicator)
@@ -213,9 +217,10 @@ var onCalAdded = function(_oa2Client, cal, calFBKey, userID, teamID) {
 			var jobStart = 'dateTime' in thisEvent.start ? thisEvent.start.dateTime : thisEvent.start.date + 'T' + DAY_START_TIME + '.000Z';
 			jobStart = new Date(jobStart);
 
-			// only schedule the job if it's in the future
+			// A schedule the job if it's in the future
+			// (this Date will be later than the gcal request start time)
 			if (jobStart.getTime() > new Date().getTime()) {
-				console.log('scheduling "' + thisEvent.summary + '" post for', jobStart.toString());
+				// console.log('scheduling "' + thisEvent.summary + '" post for', jobStart.toString());
 				var job = schedule.scheduleJob(jobStart,
 					doEventJob.bind(null, thisEvent, userID, teamID, {calFBKey : calFBKey, eventID : thisEvent.id}) // bind data to callback (see https://github.com/node-schedule/node-schedule#date-based-scheduling)
 				);
@@ -224,8 +229,15 @@ var onCalAdded = function(_oa2Client, cal, calFBKey, userID, teamID) {
 					// stash job for future cancelling
 					eventJobList[calFBKey][thisEvent.id] = job;
 				}
-			} else {
-				console.log('"' + thisEvent.summary + '" in past and not scheduled', jobStart.toString(), new Date().toString());
+			} 
+			// post immediately if event started between making the request and receiving the info (and a 1sec grace margin)
+			else if (jobStart.getTime() > (gCalRequestStartTime.getTime() - 1000)) {
+				// console.log('doing immediate post for "' + thisEvent.summary + '"', jobStart.toString(), gCalRequestStartTime.toString());
+				doEventJob(thisEvent, userID, teamID, {calFBKey: calFBKey, eventID : thisEvent.id});
+			}
+			// C do nothing
+			else {
+				// console.log('"' + thisEvent.summary + '" started in past and not scheduled', jobStart.toString(), gCalRequestStartTime.toString());
 			}
 		}
 		console.log('cal added, ' + Object.keys(eventJobList).length + ' registered cals');
@@ -269,7 +281,7 @@ var doEventJob = function(event, userID, teamID, jobKeys) {
 
 		FBRef.child('team/' + teamID + '/statuses').push(status, function(err) {
 			if (!err) {
-				console.log('posted');
+				// console.log('posted');
 				FBRef.child('team/' + teamID + '/members/' + userID + '/currentStatus').set(status, function(){
 					delete eventJobList[jobKeys.calFBKey][jobKeys.eventID];
 				});
