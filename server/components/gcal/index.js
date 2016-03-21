@@ -1,5 +1,54 @@
 /**
- * GCal task scheduling
+		GCal task scheduling
+
+		Scheduling works in cycles: a masterJob is run once every period (daily in prod, minutely in dev)
+		It gathers information about registered calendars, then gathers their current event information
+		and schedules posts for those events. Additionally, it monitors the DB for changes in calendar
+		registration and modifies the scheduled events as necessary (adding or removing).
+
+		*Calendar registration unique to each user on a team.
+		eg, cal A registered to team 1 for user N is a different registration than cal A registered to team 2
+		for user N or for cal A registered to team 1 for user Y. This is tracked by the firebase key, which
+		is how the respective event post jobs are grouped in eventJobList
+
+		Timeline:
+		MasterJob {
+			- authenticate
+			- (clear event handlers and list of registered calendars from last cycle)
+			- register new event handlers (user key added or removed in calendar integrations)
+			info for a user integration comes in (onUserAdded) {
+				- get google creds from DB
+				get events from google for each calendar for each team in list {
+					for each calendar registration in our DB (onCalAdded)
+						- make sure it has an entry in eventJobList (possibly just {})
+						- get all events from Google API
+							then either schedule the post, post immediately, or do nothing
+				}
+			}
+		}
+
+		scheduling a post (in onCalAdded):
+			- use the node-schedule module to create a job
+			- attach the job to the event's calendar-registration key in eventJobList
+				in case it needs to be canceled later
+		job executes (doEventJob):
+			- post for the user for that team
+			- remove job from eventJobList (since it's done)
+		calendar-registration removed (onCalRemoved):
+			- cancel all listed jobs in eventJobList
+			- delete eventJobList calendar key
+		user key removed from integrations (onUserRemoved)
+			- cancel all FB event handlers
+			- cancel all event jobs for all calendars (using onCalRemoved for each)
+
+		TODO:
+		event added in Google (webhook hit)
+			- schedule job for all instances of that event's calendar's registrations
+			- we have calendar ID so we should be able to find teamID and userID from the DB keys
+
+		event canceled in Google (webhook hit)
+			- cancel all relevant scheduled jobs
+
  */
 
 'use strict';
