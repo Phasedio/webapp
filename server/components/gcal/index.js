@@ -109,20 +109,21 @@ module.exports = {
 	init : function() {
 		console.log('starting GCal task scheduling');
 
-		// using the rule means the job will recur
+		// using a rule means the job will recur
 		// using a date object will only run the job once
 		var rule = {
 			hour : 2, // start scheduling the day's events at 2AM
 			minute : 0 // leaving this null would run the job every minute!
 		};
 
-		// run the master job every 5 minutes to test
+		// run the master job every 30 minutes to test
 		if (config.env === 'development')
-			rule = '*/5 * * * *';
+			rule = '*/30 * * * *';
 
 		masterJob = schedule.scheduleJob(rule, doMasterJob);
 		masterJob.job(); // invoke job immediately as well as when scheduled
 
+		// every five mins, log the jobs that are currently scheduled
 		schedule.scheduleJob('*/5 * * * *', function(){
 			console.log('scheduled jobs:', eventJobList);
 		});
