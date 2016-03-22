@@ -1012,7 +1012,7 @@ angular.module('webappApp')
 		*
 		*/
     var watchGoogleCalendars = function() {
-    	FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + PhasedProvider.team.uid).on('value', function(snap) {
+    	var doUpdateCals = function(snap) {
 				var data = snap.val();
 				var list = {};
 				// reorganize to index by google cal ID
@@ -1021,6 +1021,15 @@ angular.module('webappApp')
 					list[data[i].id] = data[i];
 				}
 				PhasedProvider.user.registeredCalendars = list;
+  		};
+
+  		// watch current team
+    	FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + PhasedProvider.team.uid).on('value', doUpdateCals);
+
+    	// when team switches, unwatch old team and watch new team
+  		$rootScope.$on('Phased:switchedTeam', function(e, args) {
+  			FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + args.oldTeamID).off();
+  			FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + args.newTeamID).on('value', doUpdateCals);
   		});
     }
 
@@ -2043,7 +2052,7 @@ angular.module('webappApp')
           args.callback();
         ga('send', 'event', 'Team', 'Team switched');
 
-        $rootScope.$broadcast('Phased:switchedTeam');
+        $rootScope.$broadcast('Phased:switchedTeam', {oldTeamID : oldTeam, newTeamID : PhasedProvider.team.uid});
       });
 
       // update presence information for both teams
