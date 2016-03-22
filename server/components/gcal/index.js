@@ -90,10 +90,10 @@ var masterJob, // set in init
  	// }
 	eventJobList = {},
 
-	// webhookChannelIDs is a list of webhook channel IDs paired with their respective
-	// calendar firebase calendar keys. this is checked whenever the webhook is hit
-	// to make sure the data we're expecting is there.
-	webhookChannelIDs = {},
+	// webhookChannelTokens is a list of webhook tokens indexed by their channel IDs.
+	// this is validated against whenever the webhook is hit to make sure the data 
+	// we're expecting is there.
+	webhookChannelTokens = {},
 	
 	// time at which statuses should be posted for all day events. IN GMT!!! 24h, HH:MM:SS
 	// maybe a better solution to this. (ie, get timezone from calendar)
@@ -151,9 +151,9 @@ module.exports = {
 
 			// check if token data is compromised; if so, send 404
 			// bad comparison technique now -- maybe lodash has something??? TODO
-			if (! _.isEqual(webhookChannelIDs[channelID], token) ) {
+			if (! _.isEqual(webhookChannelTokens[channelID], token) ) {
 				res.status(404).end;
-				console.log('google cal events webhook hit with bad token, 404 sent.', webhookChannelIDs[channelID], token);
+				console.log('google cal events webhook hit with bad token, 404 sent.', webhookChannelTokens[channelID], token);
 				return;
 			} else {
 				// send 200 right away and get on with our business
@@ -164,7 +164,8 @@ module.exports = {
 
 			onCalRemoved(token.calFBKey); // synchronous
 			setGOA2Creds(token.userID).then(function success(_oa2Client) {
-				onCalAdded(_oa2Client, token.calID, token.calFBKey, token.userID, token.teamID);
+				// passing true as the last parameter ensures multiple webhooks aren't registered in the same cycle
+				onCalAdded(_oa2Client, token.calID, token.calFBKey, token.userID, token.teamID, true);
 			});
 
 		} else if (resourceState === 'sync') {
@@ -182,7 +183,7 @@ module.exports = {
 	- 2. Remove last round's references:
 		- FireBase .on()
 		- eventJobList -- there should be none outstanding and we need to re-gather all calendars anyway
-		- webhookChannelIDs -- we will register new ones and these will have expired anyway
+		- webhookChannelTokens -- we will register new ones and these will have expired anyway
 	- 3. FB.on to monitor calendars:
 		- onUserAdd/Removed registers handlers for cals added/removed (also takes care of nesting by teams)
 */
@@ -198,7 +199,7 @@ var doMasterJob = function() {
 		// 2.
 		FBRef.child('integrations/google/calendars').off(); // kills all event handlers
 		eventJobList = {}; // clear job list; 
-		webhookChannelIDs = {}; // clear webhooks
+		webhookChannelTokens = {}; // clear webhooks
 
 		// 3. get this party started
 		FBRef.child('integrations/google/calendars').on('child_added', onUserAdd, function(err){
@@ -303,7 +304,7 @@ var registerCalsForTeam = function(_oa2Client, cals, userID, teamID) {
 *		info, post immediately
 *	C otherwise, the event may have already been posted and we do nothing
 */
-var onCalAdded = function(_oa2Client, calID, calFBKey, userID, teamID) {
+var onCalAdded = function(_oa2Client, calID, calFBKey, userID, teamID, webhookAlreadyRegistered) {
 	// ...get all events
 	var nextInvocation = masterJob.pendingInvocations()[0].fireDate.toISOString();
 	var gCalRequestStartTime = new Date();
@@ -358,7 +359,8 @@ var onCalAdded = function(_oa2Client, calID, calFBKey, userID, teamID) {
 	});
 
 	// 2. watch for changes to events (register webhook)
-	registerWebhookForCalendar(_oa2Client, calID, calFBKey, userID, teamID);
+	if (!webhookAlreadyRegistered)
+		registerWebhookForCalendar(_oa2Client, calID, calFBKey, userID, teamID);
 }
 
 /**
@@ -433,7 +435,7 @@ var registerWebhookForCalendar = function(_oa2Client, calID, calFBKey, userID, t
 	var channelID = uuid.v1(); // timestamp based random ID
 
 	// save token and channel ID for verification when webhook is hit
-	webhookChannelIDs[channelID] = token;
+	webhookChannelTokens[channelID] = token;
 
 	// register our webhook
 	GCal.events.watch({
