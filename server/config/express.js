@@ -49,20 +49,19 @@ module.exports = function(app) {
   	var allow = (req.method == 'GET' && req.path.indexOf('/api/') < 0);
 
   	// allow a whitelist of otherwise blocked requests
-  	var whitelist = config.authURLWhiteList;
+  	var whiteList = config.authURLWhiteList;
   	for (var i in whiteList) {
   		if (req.path.indexOf(whiteList[i]) > 0)
   			allow = true;
   	}
 
-  	console.log(req.path, allow);
   	return allow;
   }));
 
   app.use(function (err, req, res, next) {
   	if (err.name === 'UnauthorizedError' && req.originalUrl.indexOf('logout') == -1) {
   		console.log('Unauthorized request to ' + req.originalUrl);
-  		res.status(401).send(err.name + ': ' + err.message).end();
+  		res.status(401).send(err.name + ': ' + err.message);
   		return;
   	}
   	next();
