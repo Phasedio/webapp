@@ -48,7 +48,10 @@ exports.index = function(req,res) { res.send([]) };
 exports.auth1 = function(req, res) {
 	if (!req.session.user) {
 		console.log('Cannot process Google authorization, no session user');
-		res.end();
+		if (req.headers.referer)
+			res.redirect(req.headers.referer);
+		else
+			res.end();
 		return;
 	}
 
@@ -129,7 +132,7 @@ exports.getCals = function(req, res) {
 			});
 		},
 		function failure() {
-			res.status(401).send('Unauthorized').end();
+			res.status(401).send('Unauthorized');
 		}
 	);
 }
@@ -227,7 +230,7 @@ var getGoogleTokensForUser = function(req) {
 		if (req.session && 'tokens' in req.session && 'refresh_token' in req.session) {
 			fulfill(req.session.user.tokens);
 			return;
-		} else {
+		} else if ('user' in req.session && 'uid' in req.session.user && req.session.user.uid !== undefined) {
 			// 2. check DB
 			FBRef.authWithCustomToken(FBToken, function(error) {
 				FBRef.child('integrations/google/tokens/' + req.session.user.uid).once('value', function (snap) {
@@ -241,6 +244,9 @@ var getGoogleTokensForUser = function(req) {
 					}
 				});
 			});
+		} else {
+			console.log('no session user or uid, cannot get google auth tokens', req.session.user);
+			reject();
 		}
 	});
 }
