@@ -153,10 +153,9 @@ module.exports = {
 			var channelID = req.headers['x-goog-channel-id'];
 
 			// check if token data is compromised; if so, send 404
-			// bad comparison technique now -- maybe lodash has something??? TODO
 			if (! _.isEqual(webhookChannelTokens[channelID], token) ) {
-				res.status(404).end;
-				console.info('google cal events webhook hit with bad token, 404 sent.', channelID);
+				res.status(404).end();
+				// console.info('google cal events webhook hit with bad token, 404 sent.', channelID);
 				return;
 			} else {
 				// send 200 right away and get on with our business
