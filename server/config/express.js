@@ -53,7 +53,7 @@ module.exports = function(app) {
   	// allow a whitelist of otherwise blocked requests
   	var whiteList = config.authURLWhiteList;
   	for (var i in whiteList) {
-  		if (req.path.indexOf(whiteList[i]) > 0)
+  		if (req.path.indexOf(whiteList[i]) >= 0)
   			allow = true;
   	}
 
