@@ -16,8 +16,8 @@ module.exports = {
   google : {
   	CLIENT_ID : '313573711545-p9bo68ve6d5oih51datnkv1i8vrumipq.apps.googleusercontent.com',
   	CLIENT_SECRET : 'vanRqrxMPnlZ2qNpEp4bwDTW',
-  	REDIRECT_URL : 'https://81a3e00e.ngrok.io/api/google/auth2',
-  	CALENDAR_EVENTS_WEBHOOK_URL: 'https://81a3e00e.ngrok.io/api/hooks/google/events/'
+  	REDIRECT_URL : 'https://18896d93.ngrok.io/api/google/auth2',
+  	CALENDAR_EVENTS_WEBHOOK_URL: 'https://18896d93.ngrok.io/api/hooks/google/events/'
   },
 
   seedDB: true

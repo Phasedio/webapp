@@ -59,6 +59,7 @@ var Promise = require("promise");
 var google = require('googleapis');
 var querystring = require('querystring');
 var uuid = require('node-uuid');
+var _ = require('lodash');
 
 // Firebase business
 // ====
@@ -146,12 +147,13 @@ module.exports = {
 		if (resourceState === 'exists') {
 			var token = querystring.parse(req.headers['x-goog-channel-token']);
 			var channelID = req.headers['x-goog-channel-id'];
+			console.log('channelID', channelID);
 
 			// check if token data is compromised; if so, send 404
 			// bad comparison technique now -- maybe lodash has something??? TODO
-			if (webhookChannelIDs[channelID] !== token) {
+			if (! _.isEqual(webhookChannelIDs[channelID], token) ) {
 				res.status(404).end;
-				console.log('google cal events webhook hit with bad token, 404 sent.');
+				console.log('google cal events webhook hit with bad token, 404 sent.', webhookChannelIDs[channelID], token);
 				return;
 			} else {
 				// send 200 right away and get on with our business
@@ -418,7 +420,6 @@ var doEventJob = function(event, userID, teamID, jobKeys) {
 *
 */
 var registerWebhookForCalendar = function(_oa2Client, calID, calFBKey, userID, teamID) {
-	console.log('rwhfc');
 	var nextInvocation = masterJob.pendingInvocations()[0].fireDate;
 	
 	// token will be embedded to the webhook registration as a query string
@@ -441,7 +442,7 @@ var registerWebhookForCalendar = function(_oa2Client, calID, calFBKey, userID, t
 		timeMax : nextInvocation.toISOString(),
 		timeMin : new Date().toISOString(),
 		resource : {
-			id : new Date().getTime(),
+			id : channelID,
 			type: 'web_hook',
 			address : config.google.CALENDAR_EVENTS_WEBHOOK_URL,
 			token: querystring.stringify(token),
