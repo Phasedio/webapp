@@ -90,6 +90,10 @@ var masterJob, // set in init
  	// }
 	eventJobList = {},
 
+	// similarly, usersList is a list of userIDs with FB event handlers registered
+	// these will be deregistered each cycle and the list emptied and refilled as appropriate
+	usersList = {}, // usersList[userID] = true
+
 	// webhookChannelTokens is a list of webhook tokens indexed by their channel IDs.
 	// this is validated against whenever the webhook is hit to make sure the data 
 	// we're expecting is there.
@@ -140,7 +144,6 @@ module.exports = {
 	*
 	*/
 	eventPush : function(req, res) {
-		console.log('eventPush', req.headers['x-goog-resource-state']);
 		var resourceState = req.headers['x-goog-resource-state'];
 		// if state is sync, do nothing (just the webhook confirm hit)
 		// otherwise, state sould be 'exists'; refresh data for calendar
@@ -148,20 +151,17 @@ module.exports = {
 		if (resourceState === 'exists') {
 			var token = querystring.parse(req.headers['x-goog-channel-token']);
 			var channelID = req.headers['x-goog-channel-id'];
-			console.log('channelID', channelID);
 
 			// check if token data is compromised; if so, send 404
 			// bad comparison technique now -- maybe lodash has something??? TODO
 			if (! _.isEqual(webhookChannelTokens[channelID], token) ) {
 				res.status(404).end;
-				console.log('google cal events webhook hit with bad token, 404 sent.', webhookChannelTokens[channelID], token);
+				console.info('google cal events webhook hit with bad token, 404 sent.', channelID);
 				return;
 			} else {
 				// send 200 right away and get on with our business
 				res.status(200).end();
 			}
-
-			console.log('cal registered at ' + token.calFBKey + ' modified; refreshing...', token);
 
 			onCalRemoved(token.calFBKey); // synchronous
 			setGOA2Creds(token.userID).then(function success(_oa2Client) {
@@ -171,7 +171,7 @@ module.exports = {
 
 		} else if (resourceState === 'sync') {
 			res.status(200).end();
-			console.log('webhook confirmed');
+			// console.log('webhook confirmed');
 		} else {
 			res.status(404).end();
 			console.log('unexpected webhook hit');
@@ -199,8 +199,12 @@ var doMasterJob = function() {
 		
 		// 2.
 		FBRef.child('integrations/google/calendars').off(); // kills all event handlers
+		for (var userID in usersList) {
+			FBRef.child('integrations/google/calendars/' + userID).off(); // remove all event handlers
+		}
+		usersList = {}; // clear user list
 		eventJobList = {}; // clear job list; 
-		webhookChannelTokens = {}; // clear webhooks
+		webhookChannelTokens = {}; // clear webhook tokens
 
 		// 3. get this party started
 		FBRef.child('integrations/google/calendars').on('child_added', onUserAdd, function(err){
@@ -218,31 +222,39 @@ var doMasterJob = function() {
 *
 * registers all events for all cals for all teams on this user
 *
-*	1. immediately register all present calendars
-*	2. listen for changes and register all newly added calendars
-*			(using child_changed instead of child_added because it covers
-*			new calendars on known teams as well as new teams)	
+*	1. immediately register all present calendars using child_added
+*			to also listen for new teams (doesn't catch new cals on known teams)
+*	2. watch for new cals on known teams using child_changed
 *
 */
 var onUserAdd = function(snap) {
 	var userID = snap.key(),
 		calsByTeam = snap.val();
 
+	usersList[userID] = true; // setting this key lets us know we have FB event handlers to de-register later
+
 	// 1. set up initial scheduling
-	setGOA2Creds(userID).then(function success(_oa2Client) {
-		for (var teamID in calsByTeam) {
-			registerCalsForTeam(_oa2Client, calsByTeam[teamID], userID, teamID);
-		}
+	FBRef.child('integrations/google/calendars/' + userID).on('child_added', function onTeamAdded(snap) {
+		var teamID = snap.key(),
+			cals = snap.val();
+
+		// register new cals
+		setGOA2Creds(userID).then(function success(_oa2Client) {
+			registerCalsForTeam(_oa2Client, cals, userID, teamID);
+		});
 	});
 
 	// 2. future-proofing: whenever the user's calendar registration changes
 	FBRef.child('integrations/google/calendars/' + userID).on('child_changed', function onTeamChanged(snap) {
 		var teamID = snap.key(),
 			cals = snap.val();
+
 		// register new cals
 		setGOA2Creds(userID).then(function success(_oa2Client) {
 			registerCalsForTeam(_oa2Client, cals, userID, teamID);
 		});
+	}, function(err){
+		console.log('child_changed err', err);
 	});
 }
 
@@ -288,8 +300,9 @@ var registerCalsForTeam = function(_oa2Client, cals, userID, teamID) {
 	// 2. watch team for calendar deregistration
 	var address = 'integrations/google/calendars/' + userID + '/' + teamID;
 	FBRef.child(address).off(); // first get rid of any old handlers, since this fn will be called many times
-	FBRef.child(address).on('child_removed', function teamChildRemoved(snap){
+	FBRef.child(address).on('child_removed', function teamChildRemoved(snap) {
 		onCalRemoved(snap.key());
+		FBRef.child(address).off(); // don't catch multiple child_removeds to this endpoint
 	});
 }
 
@@ -453,9 +466,7 @@ var registerWebhookForCalendar = function(_oa2Client, calID, calFBKey, userID, t
 		}
 	}, function(err, res) {
 		if (err)
-			console.log('error registering webhook:', err.message);
-		else
-			console.log('webhook registered, expires', new Date(parseInt(res.expiration)).toString());
+			console.log('error registering webhook:', err.message, token);
 	});
 }
 
