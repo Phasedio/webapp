@@ -15,6 +15,7 @@ var errorHandler = require('errorhandler');
 var path = require('path');
 var config = require('./environment');
 var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
 var FirebaseStore = require('connect-firebase')(session);
 var expressJWT = require('express-jwt');
 var unless = require('express-unless');
@@ -34,6 +35,7 @@ module.exports = function(app) {
   app.use(methodOverride());
   app.use(cookieParser());
 
+  // configure JWT auth parsing
   // for strategy below, see https://jwt.io/introduction/ and https://github.com/auth0/express-jwt
   // same except FB makes our JWTs using the secret specified below
   app.use(expressJWT({
@@ -68,23 +70,19 @@ module.exports = function(app) {
   });
 
 
-  // configure sessions
-  // see https://github.com/ca98am79/connect-firebase
-  var FBStoreOpts = {
-  	host : 	'phased-dev2.firebaseio.com',
-  	token : config.FB_SECRET_2//,
-  	// reapInterval : 21600000 // session cleanup interval in ms (default is 6hrs = 21600000ms)
-  };
+  // configure session
   // see https://github.com/expressjs/session
   var expressSessionOpts = {
   	name : 'phased.sid', // name for SID cookie
-  	// store: new FirebaseStore(FBStoreOpts),
+  	store: new MongoStore({ url : config.mongoStoreConnectionString }), // more options at https://www.npmjs.com/package/connect-mongo
   	secret : '331c3b825824c749abc01bf3', // signs session ID cookie
   	resave : false, // whether to resave if data hasn't changed. could create race condition.
   	saveUninitialized : false // not sure if this should be false or true.
   };
   app.use(session(expressSessionOpts));
 
+
+  // configure prod and dev services
   if ('production' === env) {
     app.use(favicon(path.join(config.root, 'public', 'favicon.ico')));
     app.use(express.static(path.join(config.root, 'public')));

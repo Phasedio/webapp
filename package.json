@@ -9,7 +9,7 @@
     "composable-middleware": "^0.3.0",
     "compression": "~1.0.1",
     "connect-firebase": "0.0.9",
-    "connect-mongo": "^0.8.1",
+    "connect-mongo": "^0.8.2",
     "cookie-parser": "~1.0.1",
     "ejs": "~0.8.4",
     "errorhandler": "~1.0.0",

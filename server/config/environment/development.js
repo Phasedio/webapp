@@ -7,6 +7,9 @@ module.exports = {
   mongo: {
     uri: 'mongodb://localhost/webapp-dev'
   },
+
+  // mongo session store
+  mongoStoreConnectionString : 'mongodb://localhost/phased-session-store',
   
   // firebase secrets
   FB_SECRET_1 : '0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh',
