@@ -128,9 +128,9 @@ module.exports = {
 		masterJob.job(); // invoke job immediately as well as when scheduled
 
 		// every five mins, log the jobs that are currently scheduled
-		schedule.scheduleJob('*/5 * * * *', function(){
-			console.log('scheduled jobs:', eventJobList);
-		});
+		// schedule.scheduleJob('*/5 * * * *', function(){
+		// 	console.log('scheduled jobs:', eventJobList);
+		// });
 	},
 
 	/**
@@ -368,7 +368,7 @@ var onCalAdded = function(_oa2Client, calID, calFBKey, userID, teamID, webhookAl
 				// console.log('"' + thisEvent.summary + '" started in past and not scheduled', jobStart.toString(), gCalRequestStartTime.toString());
 			}
 		}
-		console.log('cal added, ' + Object.keys(eventJobList).length + ' registered cals');
+		// console.log('cal added, ' + Object.keys(eventJobList).length + ' registered cals', calFBKey);
 	});
 
 	// 2. watch for changes to events (register webhook)
@@ -391,7 +391,7 @@ var onCalRemoved = function(calFBKey) {
 	}
 	// delete calendar from list
 	delete eventJobList[calFBKey];
-	console.log('cal removed, ' +  Object.keys(eventJobList).length + ' registered cals');
+	// console.log('cal removed, ' +  Object.keys(eventJobList).length + ' registered cals', calFBKey);
 }
  
 /*
@@ -454,8 +454,9 @@ var registerWebhookForCalendar = function(_oa2Client, calID, calFBKey, userID, t
 	GCal.events.watch({
 		auth: _oa2Client,
 		calendarId : calID,
-		timeMax : nextInvocation.toISOString(),
-		timeMin : new Date().toISOString(),
+		singleEvents : true,
+		timeMax : nextInvocation.toISOString().replace('Z', '+00:00'),
+		timeMin : new Date().toISOString().replace('Z', '+00:00'),
 		resource : {
 			id : channelID,
 			type: 'web_hook',
