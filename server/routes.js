@@ -40,6 +40,7 @@ module.exports = function(app) {
   app.use('/api/notifs', require('./api/notification'));
 
   app.use('/api/google', require('./api/googleAuth'));
+  app.use('/api/slack', require('./api/slack'));
 
   app.use('/api/setup', require('./api/setup'));
   
