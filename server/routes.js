@@ -61,6 +61,7 @@ module.exports = function(app) {
   app.route(/\/(ping|touch)/).post(function(req, res){
   	res.status(200).end();
   });
+	
   // destroy
   app.route('/logout')
   	.get(function(req, res){
@@ -71,11 +72,7 @@ module.exports = function(app) {
   		req.session.destroy();
   		res.status(200).end();
   	});
-		app.route('/googleb5d0582998a25c5d.html')
-	    .get(function(req, res){
-	      
-				res.sendFile(path.resolve(app.get('appPath') + '/api/googleb5d0582998a25c5d.html'));
-	    });
+
   // All other routes should redirect to the index.html
   app.route('/*')
     .get(function(req, res) {
