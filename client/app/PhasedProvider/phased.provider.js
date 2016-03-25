@@ -624,6 +624,7 @@ angular.module('webappApp')
         PhasedProvider.team.categoryObj = data.category;
         PhasedProvider.team.categorySelect = objToArray(data.category); // adds key prop
         PhasedProvider.team.repos = data.repos;
+        PhasedProvider.team.slack = data.slack;
 
         // set up references in .get[objectName] to their respective objects
         // this allows us to have an unordered collection of, eg, all tasks, to gather data
@@ -891,6 +892,18 @@ angular.module('webappApp')
 
       PhasedProvider.team._FBHandlers.push({
         address : teamKey + '/repos',
+        eventType : 'value',
+        callback : cb
+      });
+
+
+      // slack
+      cb = FBRef.child(teamKey + '/slack').on('value', function(snap){
+      	PhasedProvider.team.slack = snap.val();
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/slack',
         eventType : 'value',
         callback : cb
       });

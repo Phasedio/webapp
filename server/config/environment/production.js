@@ -37,5 +37,10 @@ module.exports = {
   	CLIENT_SECRET : 'vanRqrxMPnlZ2qNpEp4bwDTW',
   	REDIRECT_URL : 'https://phased.io/api/google/auth2',
   	CALENDAR_EVENTS_WEBHOOK_URL: 'https://phased.io/hooks/google/events'
+  },
+  slack : {
+  	CLIENT_ID : '9715671828.29433898465',
+  	CLIENT_SECRET : '77413729efd3d554430fa6c123a157cc',
+  	REDIRECT_URL : 'https://phased.io/api/slack/auth' //nb: this has to be changed in the slack contol panel to match...
   }
 };

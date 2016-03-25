@@ -23,5 +23,11 @@ module.exports = {
   	CALENDAR_EVENTS_WEBHOOK_URL: 'https://18896d93.ngrok.io/api/hooks/google/events/'
   },
 
+  slack : {
+  	CLIENT_ID : '9715671828.29433898465',
+  	CLIENT_SECRET : '77413729efd3d554430fa6c123a157cc',
+  	REDIRECT_URL : 'https://8b96d1c1.ngrok.io/api/slack/auth' //nb: this has to be changed in the slack contol panel to match...
+  },
+
   seedDB: true
 };
