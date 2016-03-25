@@ -14,12 +14,18 @@ module.exports = {
             8080,
 
   // MongoDB connection options
+  // mongo: {
+  //   uri:    process.env.MONGOLAB_URI ||
+  //           process.env.MONGOHQ_URL ||
+  //           process.env.OPENSHIFT_MONGODB_DB_URL+process.env.OPENSHIFT_APP_NAME ||
+  //           'mongodb://localhost/webapp'
+  // },
   mongo: {
-    uri:    process.env.MONGOLAB_URI ||
-            process.env.MONGOHQ_URL ||
-            process.env.OPENSHIFT_MONGODB_DB_URL+process.env.OPENSHIFT_APP_NAME ||
-            'mongodb://localhost/webapp'
+    uri: 'mongodb://webapp:lordofwolves@ds025469.mlab.com:25469/heroku_nmqv1jnf/'
   },
+
+  // mongo session store
+  mongoStoreConnectionString : 'mongodb://webapp:lordofwolves@ds025469.mlab.com:25469/heroku_nmqv1jnf/phased-session-store', // our db on mLabs
 
   // firebase secrets
   FB_SECRET_1 : '0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh',
