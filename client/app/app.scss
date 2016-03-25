@@ -260,13 +260,21 @@ body{
 }
 
 //side navbar-nav
+// ng-include div
+div[ng-include*="sidebar.html"] {
+	display: block;
+	position: relative;
+	height: 100vh;
+	float: left;
+	width: 16.66667%; // matches .sideMenu inside it, bc .sideMenu no longer floats
+}
 .sideMenu{
   //margin-top: 16px;
   background: $liteBlack;
+  display: block;
+  position: fixed;
+  height: 100%;
   width: 16.66667%;
-  float: left;
-  position: relative;
-  min-height: 100vh;
   .brand__area{
     background: $darkDark;
     overflow: auto;
@@ -449,6 +457,9 @@ body{
 
 @media (max-width: 969px) {
   //side navbar-nav
+  div[ng-include*="sidebar.html"] {
+  	width: 75px; // match .sideMenu
+  }
   .sideMenu{
     width: 75px;
     .brand__area{
@@ -490,6 +501,9 @@ body{
 
 @media (max-width: 969px) {
   //side navbar-nav
+  [ng-include*="sidebar.html"] {
+  	width: 75px; // match
+  }
   .sideMenu{
     width: 75px;
     .brand__area{

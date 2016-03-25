@@ -169,7 +169,7 @@ return function(items, field, reverse) {
     $scope.update = {
     	aliases : {}
     };
-    console.log(Phased.team);
+    $scope.calendarList = false; // where calendars will be held
     var ref = new Firebase(FURL);
 
     // bounce users if team has problems
@@ -213,6 +213,11 @@ return function(items, field, reverse) {
 
 			// prevent Update
 			$scope.isSelf = ($scope.currentUserID == Auth.user.uid);
+
+			// get calendars if isSelf and self is authed with google
+			Phased.getGoogleCalendars(function(res) {
+				$scope.calendarList = res;
+			});
 		}
 		initProfileUser();
 
@@ -258,39 +263,68 @@ return function(items, field, reverse) {
 			//  reader.readAsDataURL(f);
 		}
 
- $scope.changeImage = function(){
-    var f = $("#file-upload")[0].files[0];
-    console.log(f);
-    if(f.size < 2097152){
-      //var f = document.getElementById("file-upload").value;
-      var reader = new FileReader();
-      reader.onload = (function(theFile) {
-        return function(e) {
+		$scope.changeImage = function(){
+		  var f = $("#file-upload")[0].files[0];
+		  console.log(f);
+		  if(f.size < 2097152){
+		    //var f = document.getElementById("file-upload").value;
+		    var reader = new FileReader();
+		    reader.onload = (function(theFile) {
+		      return function(e) {
 
-          var gravatar = e.target.result;
-          console.log(gravatar);
-          // Generate a location that can't be guessed using the file's contents and a random number
-          //var hash = CryptoJS.SHA256(Math.random() + CryptoJS.SHA256(gravatar));
-          var f = ref.child('profile').child(Phased.user.uid).child('gravatar');
-          f.set(gravatar, function() {
-            mixpanel.track("Changed Profile Image");
-            //document.getElementById("pano").src = e.target.result;
-            $('#file-upload').hide();
+		        var gravatar = e.target.result;
+		        console.log(gravatar);
+		        // Generate a location that can't be guessed using the file's contents and a random number
+		        //var hash = CryptoJS.SHA256(Math.random() + CryptoJS.SHA256(gravatar));
+		        var f = ref.child('profile').child(Phased.user.uid).child('gravatar');
+		        f.set(gravatar, function() {
+		          mixpanel.track("Changed Profile Image");
+		          //document.getElementById("pano").src = e.target.result;
+		          $('#file-upload').hide();
 
-            // Update the location bar so the URL can be shared with others
-            //window.location.hash = hash;
+		          // Update the location bar so the URL can be shared with others
+		          //window.location.hash = hash;
 
-          });
-
-
-        };
-      })(f);
-      reader.readAsDataURL(f);
-    }
+		        });
 
 
- }
+		      };
+		    })(f);
+		    reader.readAsDataURL(f);
+		  }
+		}
 
+		// GOOGLE CAL INTEGRATION
+
+		// check user's auth state every time the panel is hit
+		Phased.checkGoogleAuth();
+
+		// starts google Auth process
+		$scope.startGoogleAuth = function(e) {
+			e.preventDefault();
+			Auth.googleLogin();
+		}
+
+		$scope.getCals = function(e) {
+			e.preventDefault();
+			Phased.getGoogleCalendars(function(res) {
+				$scope.calendarList = res;
+			}); // get google calendars if user is authenticated
+		}
+
+		// click handler to toggle calendar registration
+		$scope.toggleCalRegistered = function(cal, e) {
+			e.preventDefault();
+			if ( $scope.isCalRegistered(cal) ) {
+				Phased.deregisterGoogleCalendar(cal);
+			} else {
+				Phased.registerGoogleCalendar(cal);
+			}
+		}
+
+		$scope.isCalRegistered = function(cal){
+			return cal.id in Phased.user.registeredCalendars;
+		}
 
     // Update Account
     $scope.updateUser = function(update){

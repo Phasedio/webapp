@@ -37,8 +37,15 @@ exports.index = function(req, res) {
 *
 */
 exports.repoPush = function(req, res) {
+	// This header sniffing is a BAD EXCUSE FOR SECURITY
+	// and should be replaced with https://developer.github.com/webhooks/securing/
+	if (req.headers['user-agent'].indexOf('GitHub-Hookshot') !== 0) {
+		res.status(404).end(); // send 404 to imitate not actually being here
+		return;
+	}
+
 	if ('zen' in req.body) { // gh ping event whenever hook is registered
-		console.log(req.body.zen);
+		console.log(req.body.zen + ' (courtesy ' + req.headers['user-agent'] + ')');
 		res.status(202).end();
 		return;
 	}

@@ -31,7 +31,7 @@ angular.module('webappApp')
     };
 
     var showAdminLink = function(){
-      $scope.sideBarHeight = $("body").height();
+      // $scope.sideBarHeight = $("body").height();
       // do only after Phased is set up
       if (!Phased.SET_UP) {
         $scope.$on('Phased:setup', showAdminLink);
@@ -57,11 +57,11 @@ angular.module('webappApp')
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
 
-
+/*
 
 
   function setHeight(){
-    $scope.sideBarHeight = $("body").height() + 200;
+    // $scope.sideBarHeight = $("body").height() + 200;
     //$scope.$apply();
   }
   // When anything happens make sure height is ajusted.
@@ -71,6 +71,6 @@ angular.module('webappApp')
   $scope.$on('Phased:setup', setHeight());
   $scope.$on('Phased:taskAdded', setHeight());
   $scope.$on('Phased:taskDeleted', setHeight());
-  $scope.$on('Phased:newStatus', setHeight());
+  $scope.$on('Phased:newStatus', setHeight());*/
 
   });

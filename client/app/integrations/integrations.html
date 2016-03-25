@@ -19,6 +19,27 @@
 						<div class="ph-card">
 							<div class="panel panel-default">
 								<!-- Default panel contents -->
+								<div class="panel-heading">Slack</div>
+								<div class="panel-body">
+									<div ng-if="Phased.team.slack">
+										<p>Team <strong>{{Phased.team.slack.teamName}}</strong> linked.</p>
+									</div>
+									<!-- add to slack button -->
+									<div ng-if="!Phased.team.slack">
+										<a href="https://slack.com/oauth/authorize?scope=commands,users:read&client_id=9715671828.29433898465">
+											<img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-xs-12">
+						<div class="ph-card">
+							<div class="panel panel-default">
+								<!-- Default panel contents -->
 								<div class="panel-heading">Github</div>
 								<div class="panel-body">
 									<h3 ng-if="!Phased.team.repos">No Linked Repositories</h3>

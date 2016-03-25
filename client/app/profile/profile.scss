@@ -100,3 +100,19 @@
 .profile-history{
 
 }
+
+.calendar-item {
+	.block {
+		position: relative;
+		display: inline-block;
+		width: 0.66rem;
+		height: 0.66rem;
+		margin: 0.33rem;
+	}
+	&.registered-calendar {
+		font-weight: bold;
+		.block {
+			transform: scale(1.4, 1.4); // adv: stays centered, doesn't affect line-height; disadv: blurry edges...
+		}
+	}
+}

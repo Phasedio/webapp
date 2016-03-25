@@ -16,7 +16,8 @@ angular.module('webappApp')
       circumvent this, methods that need this data are registered as callbacks (via registerAsync) which
       are either fired immediately if doAfterAuth is complete (ie, PHASED_SET_UP == true) or at the end of
       this.init() if not (via doAsync).
-        Because of this, all methods exposed by PhasedProvider must be registered with registerAsync.
+        Because of this, all methods exposed by PhasedProvider must be registered with an async callback
+        (callbacks are listed below)
 
       Class organization:
 
@@ -38,14 +39,15 @@ angular.module('webappApp')
         - General account things
         - "Data functions" (adding statuses or tasks, modifying projects, etc)
 
-
 			Events:
 
-			- Phased:setup -- all meta, user, team, team member, status, and task data has been loaded
+			- Phased:setup -- all meta, user, team, team member, status, and project/task data has been loaded
 			- Phased:meta -- all metadata has been loaded
 			- Phased:member -- a single member has been loaded
 			- Phased:memberChanged -- a single member has changed
 			- Phased:membersComplete -- all team members have been loaded
+			- Phased:projectsComplete -- all projects are fully loaded (including col/card/task data)
+			- Phased:statusesComplete -- all statuses are loaded
 			- Phased:changedStatus -- a status has changed
 
 			- Phased:PaymentInfo -- team payment info (and Phased.viewType) has changed
@@ -56,7 +58,7 @@ angular.module('webappApp')
 				 This means that on setup, these events are broadcast
 				 for EVERY 'thing' in the team's database!
 				 To get only NEW 'things', register event handlers in a callback
-				 to Phased:setup
+				 to, eg, Phased:setup or Phased:projectsComplete
 
 			- Phased:columnAdded
 			- Phased:columnDeleted
@@ -66,6 +68,14 @@ angular.module('webappApp')
 			- Phased:taskDeleted
 			- Phased:projectAdded
 			- Phased:projectDeleted
+
+			Callbacks:
+
+			registerAsync					PHASED_SET_UP
+			registerAfterMeta			PHASED_META_SET_UP
+			registerAfterMembers	PHASED_MEMBERS_SET_UP
+			registerAfterProjects	PHASED_PROJECTS_SET_UP
+			registerAfterStatuses	PHASED_STATUSES_SET_UP
 
     **/
 
@@ -83,25 +93,34 @@ angular.module('webappApp')
       PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       PHASED_META_SET_UP = false, // set to true after static meta values are loaded
+      PHASED_PROJECTS_SET_UP = false, // set to true after the initial data has been loaded (incl col/card/task)
+      PHASED_STATUSES_SET_UP = false,
       WATCH_PROJECTS = false, // set in setWatchProjects in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
+      WATCH_INTEGRATIONS = false, // set in setWatchIntegrations in config; whether to monitor integration data
       WEBHOOKS_LIVE = { // switches for individual webhooks, so that eg Github hooks can be live while Google is in dev
-      	GITHUB : false,
-      	GOOGLE : false
+      	GITHUB : true,
+      	GOOGLE : true
       },
 
       // ASYNC CALLBACKS
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
       req_after_members = [], // filled with operations to complete after members are in
       req_after_meta = [], // filled with operations to complete after meta are in
+      req_after_projects = [], // "" for after projects
+      req_after_statuses = [], // "" for after statuses
       membersRetrieved = 0, // incremented with each member's profile gathered
 
       // INTERNAL "CONSTANTS"
-      WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints
+      WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints (with trailing slash)
       	LIVE : 'https://app.phased.io/',
-      	DEV : 'http://03034ab8.ngrok.io/'
+      	DEV : 'http://93aa8d5a.ngrok.io/'
       };
+
+
+
+
 
     var _Auth, FBRef; // tacked on to PhasedProvider
     var ga = ga || function(){}; // in case ga isn't defined (as in chromeapp)
@@ -116,6 +135,10 @@ angular.module('webappApp')
     */
     var PhasedProvider = {
         SET_UP : false, // exposed duplicate of PHASED_SET_UP
+        META_SET_UP : false,
+        MEMBERS_SET_UP : false,
+        PROJECTS_SET_UP : false,
+        STATUSES_SET_UP : false,
         FBRef : FBRef, // set in setFBRef()
         user : {}, // set in this.init() to Auth.user.profile
         team : { // set in initializeTeam()
@@ -226,6 +249,9 @@ angular.module('webappApp')
           watchNotifications();
         if (WATCH_PRESENCE)
           registerAfterMeta(watchPresence);
+        if (WATCH_INTEGRATIONS) {
+        	watchGoogleCalendars();
+        }
 
         // if the user is new, welcome them to the world
         // and remove newUser flag
@@ -296,6 +322,11 @@ angular.module('webappApp')
       PhasedProvider.registerGHWebhookForRepo = _registerGHWebhookForRepo;
       PhasedProvider.toggleGHWebhookActive = _toggleGHWebhookActive;
       PhasedProvider.deleteGHWebhook = _deleteGHWebhook;
+      // GOOGLE
+      PhasedProvider.checkGoogleAuth = _checkGoogleAuth;
+      PhasedProvider.getGoogleCalendars = _getGoogleCalendars;
+      PhasedProvider.registerGoogleCalendar = _registerGoogleCalendar;
+      PhasedProvider.deregisterGoogleCalendar = _deregisterGoogleCalendar;
 
       return PhasedProvider;
     }];
@@ -334,6 +365,15 @@ angular.module('webappApp')
         WATCH_PRESENCE = true;
     }
 
+    // sets WATCH_INTEGRATIONS
+    // determines whether own user's registered
+    // integrations metadata are watched (currently only
+    // Google Calendar)
+    this.setWatchIntegrations = function(watch) {
+      if (watch)
+        WATCH_INTEGRATIONS = true;
+    }
+
 
     /*
     **
@@ -365,7 +405,7 @@ angular.module('webappApp')
     /**
     *
     * registerAsync
-    * if Phased has team and member data, do the thing
+    * if Phased has team, member, status, and task data, do the thing
     * otherwise, add it to the list of things to do
     *
     */
@@ -382,6 +422,24 @@ angular.module('webappApp')
       }
       PHASED_SET_UP = true;
       PhasedProvider.SET_UP = true;
+			$rootScope.$broadcast('Phased:setup');
+    }
+
+    /**
+    *
+    *	maybeFinalizeSetUp
+    *	checks if the Provider is totally set up, then calls doAsync
+    *
+    */
+    var maybeFinalizeSetUp = function() {
+    	if (  !PHASED_SET_UP
+	    		&& PHASED_META_SET_UP
+	    		&& PHASED_MEMBERS_SET_UP
+	    		&& PHASED_PROJECTS_SET_UP
+	    		&& PHASED_STATUSES_SET_UP
+    		) {
+				doAsync();
+    	}
     }
 
     /**
@@ -402,6 +460,9 @@ angular.module('webappApp')
         req_after_meta[i].callback(req_after_meta[i].args || undefined);
       }
       PHASED_META_SET_UP = true;
+      PhasedProvider.META_SET_UP = true;
+			$rootScope.$broadcast('Phased:meta');
+      maybeFinalizeSetUp();
     }
 
     /**
@@ -421,6 +482,56 @@ angular.module('webappApp')
         req_after_members[i].callback(req_after_members[i].args || undefined);
       }
       PHASED_MEMBERS_SET_UP = true;
+      PhasedProvider.MEMBERS_SET_UP = true;
+      $rootScope.$broadcast('Phased:membersComplete');
+      maybeFinalizeSetUp();
+    }
+
+    /**
+    *
+    * registerAfterProjects
+    * called after all project data is in from server
+    * implied that col/card/task data is also ALL in
+    */
+    var registerAfterProjects = function(callback, args) {
+      if (PHASED_PROJECTS_SET_UP)
+        callback(args);
+      else
+        req_after_projects.push({callback : callback, args : args });
+    }
+
+    var doAfterProjects = function() {
+      for (var i in req_after_projects) {
+        req_after_projects[i].callback(req_after_projects[i].args || undefined);
+      }
+
+			PHASED_PROJECTS_SET_UP = true;
+      PhasedProvider.PROJECTS_SET_UP = true;
+			$rootScope.$broadcast('Phased:projectsComplete');
+			maybeFinalizeSetUp();
+    }
+
+    /**
+    *
+    * registerAfterStatuses
+    * called after all status (timeline) data is in from server
+    */
+    var registerAfterStatuses = function(callback, args) {
+      if (PHASED_STATUSES_SET_UP)
+        callback(args);
+      else
+        req_after_statuses.push({callback : callback, args : args });
+    }
+
+    var doAfterStatuses = function() {
+      for (var i in req_after_statuses) {
+        req_after_statuses[i].callback(req_after_statuses[i].args || undefined);
+      }
+
+			PHASED_STATUSES_SET_UP = true;
+      PhasedProvider.STATUSES_SET_UP = true;
+			$rootScope.$broadcast('Phased:statusesComplete');
+			maybeFinalizeSetUp();
     }
 
 
@@ -489,7 +600,6 @@ angular.module('webappApp')
         PhasedProvider.NOTIF_TYPE_ID = data.NOTIF_TYPE_ID;
 
         doAfterMeta();
-        $rootScope.$broadcast('Phased:meta');
       });
     }
 
@@ -514,6 +624,7 @@ angular.module('webappApp')
         PhasedProvider.team.categoryObj = data.category;
         PhasedProvider.team.categorySelect = objToArray(data.category); // adds key prop
         PhasedProvider.team.repos = data.repos;
+        PhasedProvider.team.slack = data.slack;
 
         // set up references in .get[objectName] to their respective objects
         // this allows us to have an unordered collection of, eg, all tasks, to gather data
@@ -529,6 +640,14 @@ angular.module('webappApp')
         for (var i in PhasedProvider.get.cards) {
           for (var j in PhasedProvider.get.cards[i].tasks)
             PhasedProvider.get.tasks[j] = PhasedProvider.get.cards[i].tasks[j];
+        }
+
+        // statuses are all in
+        doAfterStatuses();
+
+        // if we're only gathering the project data once, broadcast that it's in
+        if (!WATCH_PROJECTS) {
+        	doAfterProjects();
         }
 
         // get profile details for team members
@@ -624,9 +743,6 @@ angular.module('webappApp')
         membersRetrieved++;
         if (membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
           doAfterMembers();
-          $rootScope.$broadcast('Phased:membersComplete');
-          doAsync();
-          $rootScope.$broadcast('Phased:setup');
         }
       });
 
@@ -659,8 +775,9 @@ angular.module('webappApp')
     **/
     var checkPlanStatus = function(stripeid,subid) {
       if (typeof stripeid == 'string' && stripeid.length > 0) {
-        $.post('./api/pays/find', {customer: stripeid,sub:subid})
-          .success(function(data){
+        $http.post('./api/pays/find', {customer: stripeid,sub:subid})
+          .then(function(res){
+        		var data = res.data;
             if (data.err) {
               console.log(data.err);
               // handle error
@@ -685,8 +802,7 @@ angular.module('webappApp')
 
             }
             $rootScope.$broadcast('Phased:PaymentInfo');
-          })
-          .error(function(data){
+          }, function(data){
             console.log(data);
           });
       } else {
@@ -776,6 +892,18 @@ angular.module('webappApp')
 
       PhasedProvider.team._FBHandlers.push({
         address : teamKey + '/repos',
+        eventType : 'value',
+        callback : cb
+      });
+
+
+      // slack
+      cb = FBRef.child(teamKey + '/slack').on('value', function(snap){
+      	PhasedProvider.team.slack = snap.val();
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/slack',
         eventType : 'value',
         callback : cb
       });
@@ -893,18 +1021,18 @@ angular.module('webappApp')
 
       registerAfterMembers(function doWatchNotifications(){
         // clean notifications once
-        $.post('./api/notification/clean', {
+        $http.post('./api/notification/clean', {
           user: PhasedProvider.user.uid,
           team : PhasedProvider.team.uid
-        })
-          .success(function(data) {
+        }).then(function(res) {
+        	var data = res.data;
             if (data.success) {
               // console.log('clean notifications success', data);
             } else {
               console.log('clean notifications error', data);
             }
-          })
-          .error(function(data){
+          },
+          function(data){
             console.log('err', data.error());
           });
 
@@ -981,6 +1109,39 @@ angular.module('webappApp')
       });
     }
 
+
+		/**
+		*
+		*	Keeps registered google calendars synced
+		*
+		*	list is indexed by google cal ID, not FB key
+		*	(FB key available at .FBKey)
+		*
+		*	NB: This does NOT synch google calendars with
+		*		the Google server; see doGetGoogleCalendars
+		*
+		*/
+    var watchGoogleCalendars = function() {
+    	var doUpdateCals = function(snap) {
+				var data = snap.val();
+				var list = {};
+				// reorganize to index by google cal ID
+				for (var i in data) {
+					data[i].FBKey = i;
+					list[data[i].id] = data[i];
+				}
+				PhasedProvider.user.registeredCalendars = list;
+  		};
+
+  		// watch current team
+    	FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + PhasedProvider.team.uid).on('value', doUpdateCals);
+
+    	// when team switches, unwatch old team and watch new team
+  		$rootScope.$on('Phased:switchedTeam', function(e, args) {
+  			FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + args.oldTeamID).off();
+  			FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + args.newTeamID).on('value', doUpdateCals);
+  		});
+    }
 
     /**
     *
@@ -1192,6 +1353,7 @@ angular.module('webappApp')
           PhasedProvider.get.tasks[taskID] = PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID];
           watchOneTask(taskID, cardID, colID, projID);
           $rootScope.$broadcast('Phased:taskAdded');
+          maybeDoAfterProjects();
         });
         PhasedProvider.team._FBHandlers.push({
           address : cardRef.child('tasks').key(),
@@ -1242,6 +1404,18 @@ angular.module('webappApp')
           eventType : 'child_removed',
           callback : cb
         });
+      }
+
+      var _loadedTasks = 0,
+      	_totalTasks = Object.keys(PhasedProvider.get.tasks).length;
+      // we have all the tasks, but we need to tell when all tasks have been
+      // loaded with child_added so that Phased:setup is broadcast after their own Phased:taskAdded
+      var maybeDoAfterProjects = function() {
+      	_loadedTasks++;
+      	// this condition will be true when the very last task has been called
+      	if (!PHASED_PROJECTS_SET_UP && _loadedTasks == _totalTasks) {
+      		doAfterProjects();
+      	}
       }
 
       // watch projects
@@ -1305,19 +1479,18 @@ angular.module('webappApp')
     *
     */
     var issueNotification = function(notification) {
-      $.post('./api/notification/issue', {
+      $http.post('./api/notification/issue', {
         user: _Auth.user.uid,
         team : _Auth.currentTeam,
         notification : JSON.stringify(notification)
-      })
-        .success(function(data) {
-            if (data.success) {
+      }).then(function(res) {
+        	var data = res.data;
+            if (res.status == 200 && data.success) {
               // console.log('IssueNotif success', data);
             } else {
               console.log('IssueNotif error', data);
             }
-        })
-        .error(function(data){
+        }, function(data){
           console.log('err', data.error());
         });
     }
@@ -1883,13 +2056,14 @@ angular.module('webappApp')
     var doAddMember = function(args) {
       console.log(args);
       ga('send', 'event', 'Team', 'Member invited');
-      $.post('./api/registration/invite', {
+      $http.post('./api/registration/invite', {
         invitedEmail: args.newMember.email,
         inviterEmail : PhasedProvider.user.email,
         inviterName : PhasedProvider.user.name,
         team : PhasedProvider.team.uid
       })
-      .success(function(data) {
+      .then(function(res) {
+      	var data = res.data;
         if (data.success) {
           console.log('success', data);
           if (data.added) {
@@ -1904,8 +2078,8 @@ angular.module('webappApp')
         } else {
           console.log('err', data);
         }
-      })
-      .error(function(data){
+      },
+      function(data){
         console.log('err', data);
       });
     }
@@ -1932,11 +2106,12 @@ angular.module('webappApp')
 
     var doAddTeam = function(args) {
       // 1.
-      $.post('./api/registration/registerTeam', {
+      $http.post('./api/registration/registerTeam', {
         userID : PhasedProvider.user.uid,
         teamName : args.teamName
       })
-      .success(function(data){
+      .then(function(res){
+        var data = res.data;
         if (data.success) {
           ga('send', 'event', 'Team', 'team added');
           // 2A. switch to that team
@@ -1950,8 +2125,7 @@ angular.module('webappApp')
           if (typeof args.failure == 'function')
             args.failure(args.teamName);
         }
-      })
-      .error(function(error){
+      }, function(error){
         // 2B. fail!
         console.log(error);
         if (typeof args.failure == 'function')
@@ -2001,7 +2175,7 @@ angular.module('webappApp')
           args.callback();
         ga('send', 'event', 'Team', 'Team switched');
 
-        $rootScope.$broadcast('Phased:switchedTeam');
+        $rootScope.$broadcast('Phased:switchedTeam', {oldTeamID : oldTeam, newTeamID : PhasedProvider.team.uid});
       });
 
       // update presence information for both teams
@@ -2322,9 +2496,9 @@ angular.module('webappApp')
 
       //Send status to server for URL parsing.
       var postID = newStatusRef.key();
-      $.post('./api/things', {text: newStatus.name,id:postID})
-        .success(function(data){
-
+      $http.post('./api/things', {text: newStatus.name,id:postID})
+        .then(function(res) {
+        	var data = res.data;
           var statusRef = newStatusRef.key();
           console.log(data);
           if(data.url){
@@ -2634,7 +2808,7 @@ angular.module('webappApp')
     var _setTaskPriority = function(taskID, newPriority) {
       var args = {
         taskID : taskID,
-        newPriority : newPriority || ''
+        newPriority : newPriority
       }
       registerAsync(doSetTaskPriority, args);
     }
@@ -2700,22 +2874,24 @@ angular.module('webappApp')
 
     var doGetGHRepos = function(callback) {
     	if (!('github' in _Auth.user)) {
-    		callback(false)
-    	} else {
-    		$http.get('https://api.github.com/user/repos', {
-    			params : {
-    				access_token : _Auth.user.github.accessToken
-    			}
-    		}).then(
-    			function success(res){
-	    			callback(res.data);
-    			},
-    			function error(res){
-	    			console.trace('Error with GH request', res);
-	    			callback(res);
-    			}
-    		);
+    		console.warn('Cannot perform GitHub interaction for non-authenticated user.');
+    		callback(false);
+    		return;
     	}
+
+  		$http.get('https://api.github.com/user/repos', {
+  			params : {
+  				access_token : _Auth.user.github.accessToken
+  			}
+  		}).then(
+  			function success(res){
+    			callback(res.data);
+  			},
+  			function error(res){
+    			console.trace('Error with GH request', res);
+    			callback(res);
+  			}
+  		);
     }
 
 
@@ -2747,34 +2923,36 @@ angular.module('webappApp')
     		onlyPhased = args.onlyPhased;
 
     	if (!('github' in _Auth.user)) {
-    		callback(false)
-    	} else {
-    		var ghAPIEndpoint = repo.hooks_url || repo.apiUrl + '/hooks';
-    		$http.get(ghAPIEndpoint, {
-    			params : {
-    				access_token : _Auth.user.github.accessToken
-    			}
-    		}).then(
-    			function success(res) {
-    				var hooks = res.data;
-    				// rm all hooks with non-phased URL
-    				if (onlyPhased)
-							for (var i = 0; i < hooks.length; i++) {
-								var hookUrl = hooks[i].config.url.toLowerCase();
-								if (hookUrl.indexOf('phased') < 0 &&
-									hookUrl.indexOf('ngrok') < 0 ) {
-									hooks.splice(i, 1);
-									i--; // to account for newly lost element
-								}
-							}
-	    			callback(hooks);
-	    		},
-	    		function error(res){
-	    			console.trace('Error with GH request', res);
-	    			callback(res);
-	    		}
-	    	);
+    		console.warn('Cannot perform GitHub interaction for non-authenticated user.');
+    		callback(false);
+    		return;
     	}
+
+  		var ghAPIEndpoint = repo.hooks_url || repo.apiUrl + '/hooks';
+  		$http.get(ghAPIEndpoint, {
+  			params : {
+  				access_token : _Auth.user.github.accessToken
+  			}
+  		}).then(
+  			function success(res) {
+  				var hooks = res.data;
+  				// rm all hooks with non-phased URL
+  				if (onlyPhased)
+						for (var i = 0; i < hooks.length; i++) {
+							var hookUrl = hooks[i].config.url.toLowerCase();
+							if (hookUrl.indexOf('phased') < 0 &&
+								hookUrl.indexOf('ngrok') < 0 ) {
+								hooks.splice(i, 1);
+								i--; // to account for newly lost element
+							}
+						}
+    			callback(hooks);
+    		},
+    		function error(res){
+    			console.trace('Error with GH request', res);
+    			callback(res);
+    		}
+    	);
     }
 
 
@@ -2793,7 +2971,8 @@ angular.module('webappApp')
     }
 
     var doGetAllGHRepoHooks = function(callback) {
-    	if ( !('github' in _Auth.user) ) return;
+    	if (!('github' in _Auth.user))
+    		return console.warn('Cannot perform GitHub interaction for non-authenticated user.');
 
     	for (var i in PhasedProvider.team.repos) {
     		(function(_i) {
@@ -2834,6 +3013,12 @@ angular.module('webappApp')
     	var repo = args.repo,
     		callback = args.callback,
     		phasedAPIEndpoint = 'api/hooks/github/repo/' + PhasedProvider.team.uid;
+
+    	if (!('github' in _Auth.user)) {
+    		console.warn('Cannot perform GitHub interaction for non-authenticated user.');
+    		callback(false);
+    		return;
+    	}
 
     	// live/dev switch
     	if (WEBHOOKS_LIVE.GITHUB)
@@ -2929,6 +3114,12 @@ angular.module('webappApp')
     		// use the supplied state or the opposite of the current state
     		active = (typeof args.active == 'boolean') ? args.active : !hook.active;
 
+    	if (!('github' in _Auth.user)) {
+    		console.warn('Cannot perform GitHub interaction for non-authenticated user.');
+    		callback(false);
+    		return;
+    	}
+
     	// 1. send PATCH request to github
     	$http.patch(hook.url, {
 				active : active,
@@ -2985,6 +3176,9 @@ angular.module('webappApp')
     	var hook = args.hook,
     		repoID = args.repoID;
 
+    	if (!('github' in _Auth.user))
+    		return console.warn('Cannot perform GitHub interaction for non-authenticated user.');
+
     	// 1. send PATCH request to github
     	$http.delete(hook.url, {
 				headers : {
@@ -2996,12 +3190,115 @@ angular.module('webappApp')
 			FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + repoID).set(null);
     }
 
+    /*
+    *
+    *	GOOGLE
+    *
+    */
+
+    /**
+    *
+    *	Asks the server if the current user is authenticated to use
+    *	the Google apis.
+    *
+    *	Can be called immediately.
+    *
+    */
+    var _checkGoogleAuth = function(callback) {
+    	var callback = (typeof callback == 'function') ? callback : function(){};
+    	registerAsync(doCheckGoogleAuth, callback);
+    }
+
+    var doCheckGoogleAuth = function(callback) {
+    	$http.get('/api/google/hasAuth', {
+    		headers : {
+    			Authorization : 'Bearer ' + _Auth.user.token
+    		}
+    	}).then(function(res) {
+    		PhasedProvider.user.googleAuth = res.data;
+    		callback(res.data);
+    	}, function(err) {
+    		console.log(err);
+    	});
+    }
+
+    /**
+    *
+    *	passes a list of calendars to the callback
+    *	gets calendars from our server (which gets from google)
+    *
+    */
+    var _getGoogleCalendars = function(callback) {
+    	var callback = (typeof callback == 'function') ? callback : function(){};
+    	registerAsync(doGetGoogleCalendars, callback);
+    }
+
+    var doGetGoogleCalendars = function(callback) {
+    	$http.get('/api/google/cal', {
+    		headers : {
+    			Authorization : 'Bearer ' + _Auth.user.token
+    		}
+    	}).then(function(res) {
+	    		callback(res.data);
+	    	}, function(err) {
+	    		callback([]);
+	    		console.log(err);
+	    	});
+    }
+
+    /**
+    *
+    *	registers a calendar for future status updates
+    *
+    *	Simply saves the calendar ID to the DB and the server does the rest
+    *
+    */
+    var _registerGoogleCalendar = function(cal) {
+    	registerAsync(doRegisterGoogleCalendar, cal);
+    }
+
+    var doRegisterGoogleCalendar = function(cal) {
+    	// don't allow double registrations
+    	if (cal.id in PhasedProvider.user.registeredCalendars)
+    		return;
+
+    	// add to FireBase
+    	FBRef.child('integrations/google/calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid).push({
+    		id : cal.id,
+    		name : cal.summary
+    	});
+    }
+
+    /**
+    *
+    *	deregisters a calendar
+    *
+    *	Simply removes the calendar ID from the DB
+    *	HASN'T BEEN TESTED
+    *
+    */
+    var _deregisterGoogleCalendar = function(cal) {
+    	registerAsync(doDeregisterGoogleCalendar, cal);
+    }
+
+    var doDeregisterGoogleCalendar = function(cal) {
+    	// removal from FireBase requires a 2x round trip
+    	// because for some entirely frustrating reason
+    	// one can neither remove via a query NOR a .ref().
+    	var calsAddr = 'integrations/google/calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid;
+			FBRef.child(calsAddr).orderByChild('id').equalTo(cal.id).once('value', function(snap) {
+				var key = Object.keys(snap.val())[0];
+  			FBRef.child(calsAddr + '/' + key).remove();
+  		});
+    }
+
   })
   .config(['PhasedProvider', 'FURL', 'AuthProvider', function(PhasedProvider, FURL, AuthProvider) {
     PhasedProvider.setFBRef(FURL);
     PhasedProvider.setWatchProjects(true);
     PhasedProvider.setWatchNotifications(true);
     PhasedProvider.setWatchPresence(true);
+    PhasedProvider.setWatchIntegrations(true);
 
     // configure phasedProvider as a callback to AuthProvider
     AuthProvider.setDoAfterAuth(PhasedProvider.init);
