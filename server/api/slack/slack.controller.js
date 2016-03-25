@@ -7,7 +7,6 @@
 // ====
 var config = require('../../config/environment');
 var request = require('request');
-request.debug = true;
 
 // Firebase vars
 // ====
@@ -32,14 +31,14 @@ var FBToken = tokenGenerator.createToken({ uid: "slack-server"});
 */
 exports.auth = function (req, res) {
 	console.log('hit', req.query);
-	// res.status(200).end();
+	res.redirect('/'); // send the user back to the app QUICKLY
 
 	// 1.
 	var opts = {
 		url : 'https://slack.com/api/oauth.access',
 		method : 'POST',
-		json: true,
-		body : {
+		json : true,
+		qs : {
 			code : req.query.code,
 			client_id : config.slack.CLIENT_ID,
 			client_secret : config.slack.CLIENT_SECRET,
@@ -47,17 +46,15 @@ exports.auth = function (req, res) {
 		}
 	}
 
-	console.log('requesting with opts', opts);
-
 	request(opts, function(error, message, data) {
-
 		// 2.
-		console.log('response error', error);
-		// console.log(message.method, message.rawHeaders);
-		console.log('response data', data);
-
 		if (error || !data || !data.ok) {
-			res.redirect('/');
+			console.log('Error with Slack authentication', (error || data.error));
+			return;
+		}
+
+		if (!('user' in req.session) || !('uid' in req.session.user)) {
+			console.log('No session user, cannot save Slack token');
 			return;
 		}
 
@@ -66,10 +63,65 @@ exports.auth = function (req, res) {
 				console.log("FireBase auth failed!", error);
 				return;
 			}
+			// we only have user ID, need to get team they just authed Slack on behalf of
+			var sessionUser = req.session.user;
 
-			// FBRef.child('team/')
+			// straightforward
+			if (sessionUser.provider == 'password') {
+				saveAuthTokensForUserTeam(sessionUser.uid, data);
+			} else {
+				// get user's actual uid
+				FBRef.child('userMappings/' + sessionUser.uid).once('value', function(snap) {
+					var userID = snap.val();
+					if (!userID) {
+						console.log('No mapped UID for user requesting Slack integration');
+						return;
+					} else {
+						saveAuthTokensForUserTeam(userID, data);
+					}
+				}, maybeLogErr);
+			}
 
 		});
 
 	});
+}
+
+
+/**
+*
+* 1.	Get user's current team
+*	2. Save their slack ID to their /team key
+*	3. Save their slack tokens and team ID to their /integrations key
+*	Rejoice
+*
+*/
+var saveAuthTokensForUserTeam = function(userID, slackResponse) {
+	// 1. get current team
+	FBRef.child('profile/' + userID + '/curTeam').once('value', function(snap) {
+		var teamID = snap.val();
+		console.log('teamID', teamID);
+
+		if (!teamID) {
+			console.log('No curTeam for Slack authenticating user');
+			return;
+		}
+
+		// 2.
+		FBRef.child('team/' + teamID + '/slack').set({
+			teamName : slackResponse.team_name,
+			teamID : slackResponse.team_id
+		}, maybeLogErr);
+
+		// 3. 
+		FBRef.child('integrations/slack/teams/' + slackResponse.team_id).set({
+			teamID : teamID,
+			token : slackResponse.access_token
+		}, maybeLogErr);
+	});
+}
+
+
+var maybeLogErr = function(error) {
+	if (error) console.log(error);
 }
