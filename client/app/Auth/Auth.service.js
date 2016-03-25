@@ -3,9 +3,9 @@
 angular.module('webappApp')
   .provider('Auth', function() {
 
-    this.$get = ['FURL', '$firebaseAuth', '$firebase', '$firebaseObject', '$location', '$window', '$rootScope', 'toaster',
-        function (FURL, $firebaseAuth, $firebase, $firebaseObject, $location, $window, $rootScope, toaster) {
-            return new AuthProvider(FURL, $firebaseAuth, $firebase, $firebaseObject, $location, $window, $rootScope, toaster);
+    this.$get = ['FURL', '$firebaseAuth', '$firebase', '$firebaseObject', '$location', '$window', '$rootScope', 'toaster', '$http',
+        function (FURL, $firebaseAuth, $firebase, $firebaseObject, $location, $window, $rootScope, toaster, $http) {
+            return new AuthProvider(FURL, $firebaseAuth, $firebase, $firebaseObject, $location, $window, $rootScope, toaster, $http);
         }];
 
     // array of callbacks to execute after auth is finished
@@ -30,8 +30,9 @@ angular.module('webappApp')
         }
     }
 
+
     // AngularJS will instantiate a singleton by calling "new" on this function
-    var AuthProvider = function(FURL, $firebaseAuth, $firebase,$firebaseObject, $location, $window, $rootScope, toaster) {
+    var AuthProvider = function(FURL, $firebaseAuth, $firebase,$firebaseObject, $location, $window, $rootScope, toaster, $http) {
         var ref = new Firebase(FURL);
         var auth = $firebaseAuth(ref);
 
@@ -70,41 +71,17 @@ angular.module('webappApp')
 							This function sets up some mappings which allow users authenticated with GH to access
 								their previously authenticated account.
 
-							NB: the user's Auth data STAYS THE SAME locally
+							NB: the user's Auth data STAYS THE SAME locally, but FB sees the GH auth data
 
             	1 stash profile/oldUID/mappings[newProvider] = 'authenticating'
             	2 auth with github
-            	3 stash userMapping[newUID] = oldUID (only works if 'authenticating' == profile/oldUID/mappings[newProvider])
-            	4 stash profile/oldUID/mappings[newProvider] = newUID
-            	5 stash alias to team if Auth.curTeam is set
+            	3 providerAuthSuccess sets up user mappings etc
             */
             githubLogin : function(success, failure) {
             	var fail = function(err){
             		console.trace(err);
             		if (typeof failure == "function")
             			failure(error);
-            	}
-
-            	// 3 & 4
-            	var authSuccess = function(authData) {
-            		var newUID = authData.uid,
-            		oldUID = Auth.user.uid;
-            		Auth.user.github = authData.github;
-        				// 3.
-        				ref.child('userMappings/' + newUID).set(oldUID, function(err){
-        					if (err) return fail(err);
-        					// 4.
-        					ref.child('profile/' + oldUID + '/mappings/github/').set(newUID, function(err){
-        						if (err) return fail(err);
-        						if (typeof success == "function") return success(authData.github);
-        					})
-        				});
-
-        				// 5. 
-        				if (Auth.currentTeam) {
-        					ref.child('team/' + Auth.currentTeam + '/members/' + oldUID + '/aliases/github/0')
-        						.set(authData.github.username);
-        				}
             	}
 
             	// 1
@@ -115,30 +92,33 @@ angular.module('webappApp')
             		if (error) {
             			ref.authWithOAuthRedirect('github', function(error, authData) {
             				if (error) return fail(error);
-            				else authSuccess(authData);
-            			});
+            				else providerAuthSuccess(authData, success, fail);
+            			}, {scope: 'user,repo'});
             		} else {
-            			authSuccess(authData);
+            			providerAuthSuccess(authData, success, fail);
             		}
-            	}, {
-            		scope: 'user,repo'
-            	});
-            	
+            	}, { scope: 'user,repo' });
+            },
+            /*
+            	Authenticate with Google provider
+							Redirect to server to start OAuth handshake
+            */
+            googleLogin : function() {
+            	$window.location = '/api/google/auth1';
             },
             register : function(user) {
                 user.email = user.email.toLowerCase();
-                $.post('./api/registration/register', {
+                $http.post('./api/registration/register', {
                     user: JSON.stringify(user)
                 })
-                .success(function(data) {
+                .then(function(data) {
                     if (data.success) {
                         console.log('success', data);
                         Auth.login(user);
                     } else {
                         console.log('err', data);
                     }
-                })
-                .error(function(data){
+                }, function(data){
                     console.log('err', data);
                 });
             },
@@ -255,8 +235,7 @@ angular.module('webappApp')
             		}
             	});
             } else {
-            	console.trace('Grave error: no provider');
-        			$location.path('/login');
+            	console.log('no provider');
             }
 
             // return the pseudo-promise
@@ -311,6 +290,45 @@ angular.module('webappApp')
             }
         };
 
+				/**
+				*
+				* Provider Auth Success
+				*
+				*	Called on a successful provider login
+				*	Sets up the appropriate user mappings and team/member[uid] alias
+				* (currently only allows one alias per provider)
+				*
+		    *	1 stash userMapping[newUID] = oldUID (only works if 'authenticating' == profile/oldUID/mappings[newProvider])
+		    *	2 stash profile/oldUID/mappings[newProvider] = newUID
+		    *	3 stash alias to team if Auth.curTeam is set
+		    *
+				*/
+				var providerAuthSuccess = function(authData, success, fail) {
+					var newUID = authData.uid,
+					oldUID = Auth.user.uid;
+					Auth.user[authData.provider] = authData[authData.provider];
+					// 1.
+					ref.child('userMappings/' + newUID).set(oldUID, function(err){
+						if (err) return fail(err);
+						// 2.
+						ref.child('profile/' + oldUID + '/mappings/' + authData.provider + '/').set(newUID, function(err){
+							if (err) return fail(err);
+							if (typeof success == "function") return success(authData);
+						})
+					});
+
+					// 3. 
+					if (Auth.currentTeam) {
+						var aliasKey = '';
+						if (authData.provider == 'github')
+							aliasKey = 'username';
+						else if (authData.provider == 'google')
+							aliasKey = 'id';
+
+						ref.child('team/' + Auth.currentTeam + '/members/' + oldUID + '/aliases/' + authData.provider + '/0')
+							.set(authData[authData.provider][aliasKey]);
+					}
+				}
 
         /**
         *   INIT
@@ -321,17 +339,26 @@ angular.module('webappApp')
         // if logging out (or session timeout!), go to /login
         // else do nothing
         auth.$onAuth(function(authData) {
+						// attach FB token to Authorization header
+						if (authData)
+							$http.defaults.headers.post.Authorization = 'Bearer ' + authData.token;
+						else
+							delete $http.defaults.headers.post.Authorization;
+
             var path = '';
             // if not authenticated, go to /login
             if (!authData) {
                 path = '/login';
+                $http.post('/logout'); // cue server to destroy session
             }
             // if authenticated on the login screen, go to /
             else if ($location.path() == '/login') {
                 path = '/';
+                $http.post('/ping'); // cue server to start session
             }
             // do nothing if authenticated within the app
             else {
+            		$http.post('/ping'); // cue server to start session
                 return;
             }
 
@@ -346,7 +373,8 @@ angular.module('webappApp')
         // get user account metadata if already logged in
         var authData = auth.$getAuth();
         if (authData) {
-        	// console.log('$getAuth', authData);
+        	// attach FB token to Authorization header
+					$http.defaults.headers.post.Authorization = 'Bearer ' + authData.token;
           angular.copy(authData, Auth.user);
           getProfileDetails(Auth.user.uid, authData.provider); // go to app after getting details
         

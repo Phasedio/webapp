@@ -98,6 +98,7 @@ angular.module('webappApp')
       WATCH_PROJECTS = false, // set in setWatchProjects in config; tells init whether to do it
       WATCH_NOTIFICATIONS = false, // set in setWatchNotifications in config; whether to watch notifications
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
+      WATCH_INTEGRATIONS = false, // set in setWatchIntegrations in config; whether to monitor integration data
       WEBHOOKS_LIVE = { // switches for individual webhooks, so that eg Github hooks can be live while Google is in dev
       	GITHUB : true,
       	GOOGLE : false
@@ -114,7 +115,7 @@ angular.module('webappApp')
       // INTERNAL "CONSTANTS"
       WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints (with trailing slash)
       	LIVE : 'https://app.phased.io/',
-      	DEV : 'http://7b9a20f7.ngrok.io/'
+      	DEV : 'http://93aa8d5a.ngrok.io/'
       };
 
 
@@ -248,6 +249,9 @@ angular.module('webappApp')
           watchNotifications();
         if (WATCH_PRESENCE)
           registerAfterMeta(watchPresence);
+        if (WATCH_INTEGRATIONS) {
+        	watchGoogleCalendars();
+        }
 
         // if the user is new, welcome them to the world
         // and remove newUser flag
@@ -318,6 +322,11 @@ angular.module('webappApp')
       PhasedProvider.registerGHWebhookForRepo = _registerGHWebhookForRepo;
       PhasedProvider.toggleGHWebhookActive = _toggleGHWebhookActive;
       PhasedProvider.deleteGHWebhook = _deleteGHWebhook;
+      // GOOGLE
+      PhasedProvider.checkGoogleAuth = _checkGoogleAuth;
+      PhasedProvider.getGoogleCalendars = _getGoogleCalendars;
+      PhasedProvider.registerGoogleCalendar = _registerGoogleCalendar;
+      PhasedProvider.deregisterGoogleCalendar = _deregisterGoogleCalendar;
 
       return PhasedProvider;
     }];
@@ -354,6 +363,15 @@ angular.module('webappApp')
     this.setWatchPresence = function(watch) {
       if (watch)
         WATCH_PRESENCE = true;
+    }
+
+    // sets WATCH_INTEGRATIONS
+    // determines whether own user's registered 
+    // integrations metadata are watched (currently only 
+    // Google Calendar)
+    this.setWatchIntegrations = function(watch) {
+      if (watch)
+        WATCH_INTEGRATIONS = true;
     }
 
 
@@ -756,8 +774,9 @@ angular.module('webappApp')
     **/
     var checkPlanStatus = function(stripeid,subid) {
       if (typeof stripeid == 'string' && stripeid.length > 0) {
-        $.post('./api/pays/find', {customer: stripeid,sub:subid})
-          .success(function(data){
+        $http.post('./api/pays/find', {customer: stripeid,sub:subid})
+          .then(function(res){
+        		var data = res.data;
             if (data.err) {
               console.log(data.err);
               // handle error
@@ -782,8 +801,7 @@ angular.module('webappApp')
 
             }
             $rootScope.$broadcast('Phased:PaymentInfo');
-          })
-          .error(function(data){
+          }, function(data){
             console.log(data);
           });
       } else {
@@ -990,18 +1008,18 @@ angular.module('webappApp')
 
       registerAfterMembers(function doWatchNotifications(){
         // clean notifications once
-        $.post('./api/notification/clean', {
+        $http.post('./api/notification/clean', {
           user: PhasedProvider.user.uid,
           team : PhasedProvider.team.uid
-        })
-          .success(function(data) {
+        }).then(function(res) {
+        	var data = res.data;
             if (data.success) {
               // console.log('clean notifications success', data);
             } else {
               console.log('clean notifications error', data);
             }
-          })
-          .error(function(data){
+          },
+          function(data){
             console.log('err', data.error());
           });
 
@@ -1078,6 +1096,39 @@ angular.module('webappApp')
       });
     }
 
+
+		/**
+		*
+		*	Keeps registered google calendars synced
+		*
+		*	list is indexed by google cal ID, not FB key
+		*	(FB key available at .FBKey)
+		*	
+		*	NB: This does NOT synch google calendars with 
+		*		the Google server; see doGetGoogleCalendars
+		*
+		*/
+    var watchGoogleCalendars = function() {
+    	var doUpdateCals = function(snap) {
+				var data = snap.val();
+				var list = {};
+				// reorganize to index by google cal ID
+				for (var i in data) {
+					data[i].FBKey = i;
+					list[data[i].id] = data[i];
+				}
+				PhasedProvider.user.registeredCalendars = list;
+  		};
+
+  		// watch current team
+    	FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + PhasedProvider.team.uid).on('value', doUpdateCals);
+
+    	// when team switches, unwatch old team and watch new team
+  		$rootScope.$on('Phased:switchedTeam', function(e, args) {
+  			FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + args.oldTeamID).off();
+  			FBRef.child('integrations/google/calendars/' + _Auth.user.uid + '/' + args.newTeamID).on('value', doUpdateCals);
+  		});
+    }
 
     /**
     *
@@ -1415,19 +1466,18 @@ angular.module('webappApp')
     *
     */
     var issueNotification = function(notification) {
-      $.post('./api/notification/issue', {
+      $http.post('./api/notification/issue', {
         user: _Auth.user.uid,
         team : _Auth.currentTeam,
         notification : JSON.stringify(notification)
-      })
-        .success(function(data) {
-            if (data.success) {
+      }).then(function(res) {
+        	var data = res.data;
+            if (res.status == 200 && data.success) {
               // console.log('IssueNotif success', data);
             } else {
               console.log('IssueNotif error', data);
             }
-        })
-        .error(function(data){
+        }, function(data){
           console.log('err', data.error());
         });
     }
@@ -1993,13 +2043,14 @@ angular.module('webappApp')
     var doAddMember = function(args) {
       console.log(args);
       ga('send', 'event', 'Team', 'Member invited');
-      $.post('./api/registration/invite', {
+      $http.post('./api/registration/invite', {
         invitedEmail: args.newMember.email,
         inviterEmail : PhasedProvider.user.email,
         inviterName : PhasedProvider.user.name,
         team : PhasedProvider.team.uid
       })
-      .success(function(data) {
+      .then(function(res) {
+      	var data = res.data;
         if (data.success) {
           console.log('success', data);
           if (data.added) {
@@ -2014,8 +2065,8 @@ angular.module('webappApp')
         } else {
           console.log('err', data);
         }
-      })
-      .error(function(data){
+      },
+      function(data){
         console.log('err', data);
       });
     }
@@ -2042,11 +2093,12 @@ angular.module('webappApp')
 
     var doAddTeam = function(args) {
       // 1.
-      $.post('./api/registration/registerTeam', {
+      $http.post('./api/registration/registerTeam', {
         userID : PhasedProvider.user.uid,
         teamName : args.teamName
       })
-      .success(function(data){
+      .then(function(res){
+        var data = res.data;
         if (data.success) {
           ga('send', 'event', 'Team', 'team added');
           // 2A. switch to that team
@@ -2060,8 +2112,7 @@ angular.module('webappApp')
           if (typeof args.failure == 'function')
             args.failure(args.teamName);
         }
-      })
-      .error(function(error){
+      }, function(error){
         // 2B. fail!
         console.log(error);
         if (typeof args.failure == 'function')
@@ -2111,7 +2162,7 @@ angular.module('webappApp')
           args.callback();
         ga('send', 'event', 'Team', 'Team switched');
 
-        $rootScope.$broadcast('Phased:switchedTeam');
+        $rootScope.$broadcast('Phased:switchedTeam', {oldTeamID : oldTeam, newTeamID : PhasedProvider.team.uid});
       });
 
       // update presence information for both teams
@@ -2432,9 +2483,9 @@ angular.module('webappApp')
 
       //Send status to server for URL parsing.
       var postID = newStatusRef.key();
-      $.post('./api/things', {text: newStatus.name,id:postID})
-        .success(function(data){
-
+      $http.post('./api/things', {text: newStatus.name,id:postID})
+        .then(function(res) {
+        	var data = res.data;
           var statusRef = newStatusRef.key();
           console.log(data);
           if(data.url){
@@ -3126,12 +3177,115 @@ angular.module('webappApp')
 			FBRef.child('team/' + PhasedProvider.team.uid + '/repos/' + repoID).set(null);
     }
 
+    /*
+    *
+    *	GOOGLE
+    *
+    */
+
+    /**
+    *
+    *	Asks the server if the current user is authenticated to use
+    *	the Google apis.
+    *
+    *	Can be called immediately.
+    *
+    */
+    var _checkGoogleAuth = function(callback) {
+    	var callback = (typeof callback == 'function') ? callback : function(){};
+    	registerAsync(doCheckGoogleAuth, callback);
+    }
+
+    var doCheckGoogleAuth = function(callback) {
+    	$http.get('/api/google/hasAuth', {
+    		headers : {
+    			Authorization : 'Bearer ' + _Auth.user.token
+    		}
+    	}).then(function(res) {
+    		PhasedProvider.user.googleAuth = res.data;
+    		callback(res.data);
+    	}, function(err) {
+    		console.log(err);
+    	});
+    }
+
+    /**
+    *
+    *	passes a list of calendars to the callback
+    *	gets calendars from our server (which gets from google)
+    *	
+    */
+    var _getGoogleCalendars = function(callback) {
+    	var callback = (typeof callback == 'function') ? callback : function(){};
+    	registerAsync(doGetGoogleCalendars, callback);
+    }
+
+    var doGetGoogleCalendars = function(callback) {
+    	$http.get('/api/google/cal', {
+    		headers : {
+    			Authorization : 'Bearer ' + _Auth.user.token
+    		}
+    	}).then(function(res) {
+	    		callback(res.data);
+	    	}, function(err) {
+	    		callback([]);
+	    		console.log(err);
+	    	});
+    }
+
+    /**
+    *
+    *	registers a calendar for future status updates
+    *	
+    *	Simply saves the calendar ID to the DB and the server does the rest
+    *
+    */
+    var _registerGoogleCalendar = function(cal) {
+    	registerAsync(doRegisterGoogleCalendar, cal);
+    }
+
+    var doRegisterGoogleCalendar = function(cal) {
+    	// don't allow double registrations
+    	if (cal.id in PhasedProvider.user.registeredCalendars) 
+    		return;
+
+    	// add to FireBase
+    	FBRef.child('integrations/google/calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid).push({
+    		id : cal.id,
+    		name : cal.summary
+    	});
+    }
+
+    /**
+    *
+    *	deregisters a calendar
+    *	
+    *	Simply removes the calendar ID from the DB
+    *	HASN'T BEEN TESTED
+    *
+    */
+    var _deregisterGoogleCalendar = function(cal) {
+    	registerAsync(doDeregisterGoogleCalendar, cal);
+    }
+
+    var doDeregisterGoogleCalendar = function(cal) {
+    	// removal from FireBase requires a 2x round trip
+    	// because for some entirely frustrating reason 
+    	// one can neither remove via a query NOR a .ref().
+    	var calsAddr = 'integrations/google/calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid;
+			FBRef.child(calsAddr).orderByChild('id').equalTo(cal.id).once('value', function(snap) {
+				var key = Object.keys(snap.val())[0];
+  			FBRef.child(calsAddr + '/' + key).remove();
+  		});
+    }
+
   })
   .config(['PhasedProvider', 'FURL', 'AuthProvider', function(PhasedProvider, FURL, AuthProvider) {
     PhasedProvider.setFBRef(FURL);
     PhasedProvider.setWatchProjects(true);
     PhasedProvider.setWatchNotifications(true);
     PhasedProvider.setWatchPresence(true);
+    PhasedProvider.setWatchIntegrations(true);
 
     // configure phasedProvider as a callback to AuthProvider
     AuthProvider.setDoAfterAuth(PhasedProvider.init);

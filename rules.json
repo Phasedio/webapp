@@ -20,7 +20,7 @@
 			adding an additional rule but replacing auth.uid with root.child('userMappings/' + auth.uid).val()
     */
     "userMappings" : {
-      ".read" : "auth.uid !== null",
+      ".read" : "auth.uid !== null || auth.uid === 'gcal-server'",
       ".write" : "auth.uid !== null && (
           root.child('profile/' + newData.child(auth.uid).val() + '/mappings/' + auth.provider).val() == 'authenticating' ||
           root.child('profile/' + newData.child(auth.uid).val() + '/mappings/' + auth.provider).val() == auth.uid
@@ -29,8 +29,33 @@
         ".validate" : "auth.uid == $providerID"
       }
     },
+    "integrations" : {
+      "google" : {
+        "tokens" : {
+          /*
+            Only the server can see this business
+          */
+          ".read" : "auth.uid == 'gcal-server'",
+          ".write" : "auth.uid == 'gcal-server'"
+        },
+        "calendars" : {
+          ".read" : "auth.uid == 'gcal-server'", // only the gcal-server can get the whole list
+          "$uid" : {
+            "$teamID" : {
+              /*
+                read: only authenticated user
+                write: only authenticated user on that team
+              */
+              ".read" : "auth.uid == $uid || root.child('userMappings/' + auth.uid).val() === $uid",
+              ".write" : "(auth.uid == $uid || root.child('userMappings/' + auth.uid).val() === $uid) &&
+                          root.child('profile/' + $uid + '/curTeam').val() == $teamID"
+            }
+          }
+        }
+      }
+    },
     "profile": {
-      ".read" : "auth.uid == 'registration-server'",
+      ".read" : "auth.uid == 'registration-server' || auth.uid == 'gcal-server'",
       ".indexOn" : "email",
 			"$uid": {
 			  /*
@@ -106,13 +131,17 @@
       ".indexOn" : "name",
       "$teamID" : {
         // anyone on the team can read the data; so can the server
-        ".read" : "data.child('members/' + auth.uid).exists() || data.child('members/' + root.child('userMappings/' + auth.uid).val()).exists() || auth.uid == 'notif-server' || auth.uid == 'registration-server' || auth.uid == 'hook-server'",
+        ".read" : "data.child('members/' + auth.uid).exists() || 
+          (root.child('userMappings/' + auth.uid).exists() && data.child('members/' + root.child('userMappings/' + auth.uid).val()).exists()) || 
+          auth.uid == 'notif-server' || auth.uid == 'registration-server' || auth.uid == 'hook-server' || auth.uid === 'gcal-server'",
         "statuses" : {
           /*
             read: only users on this team
             write: only users on this team
           */
-          ".write" :  "data.parent().child('members/' + auth.uid).exists() || data.parent().child('members/' + root.child('userMappings/' + auth.uid).val()).exists()",
+          ".write" :  "data.parent().child('members/' + auth.uid).exists() || 
+            (root.child('userMappings/' + auth.uid).exists() && data.parent().child('members/' + root.child('userMappings/' + auth.uid).val()).exists()) ||
+            auth.uid === 'gcal-server'",
           ".indexOn" : "time"
         },
         "projects": {
@@ -238,9 +267,15 @@
             },
             "currentStatus" : {
               /*
+                write: only current user or server
+              */
+              ".write" : "auth.uid == $memberID || root.child('userMappings/' + auth.uid).val() == $memberID || auth.uid === 'registration-server' || auth.uid === 'gcal-server'" 
+            },
+            "aliases" : {
+              /*
                 write: only current user
               */
-              ".write" : "auth.uid == $memberID || root.child('userMappings/' + auth.uid).val() == $memberID || auth.uid === 'registration-server'" 
+              ".write" : "auth.uid == $memberID || root.child('userMappings/' + auth.uid).val() == $memberID || auth.uid === 'registration-server'"
             }
           }
         },
@@ -263,9 +298,9 @@
         },
         "$default" : {
           // only members of this team can write
-          ".write" : "data.child('members/' + auth.uid).exists() ||
-                      data.child('members/' + root.child('userMappings/' + auth.uid).val()).exists() ||
-                      auth.uid == 'notif-server' || auth.uid == 'registration-server'" 
+          ".write" : "data.parent().child('members/' + auth.uid).exists() ||
+                      data.parent().child('members/' + root.child('userMappings/' + auth.uid).val()).exists() ||
+                      auth.uid == 'notif-server' || auth.uid == 'registration-server' || auth.uid === 'gcal-server'" 
         }
       }
     },

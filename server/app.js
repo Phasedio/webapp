@@ -5,7 +5,8 @@
 'use strict';
 
 // Set default node environment to development
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+//process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+process.env.NODE_ENV = process.env.NODE_ENV || 'production';
 
 var express = require('express');
 var config = require('./config/environment');
@@ -15,6 +16,7 @@ var http = require('http');
 var server = http.createServer(app);
 require('./config/express')(app);
 require('./routes')(app);
+require('./components/gcal').init(); // start google calendar scheduled statuses
 
 
 // Start server

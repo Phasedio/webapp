@@ -19,7 +19,14 @@ exports.create = function(req, res) {
 	var team = req.body.team;
   var cc = req.body.token;
   //var amount = req.body.amount;
-  console.log(team,token);
+
+  var badStrings = [".", "#", "$", "[", "]"];
+  for (var i in badStrings) {
+  	if (team.indexOf(badStrings[i]) >= 0) {
+  		res.status(400).end(); // bad request
+  	}
+  }
+
   FBRef.authWithCustomToken(token, function(error, authData) {
     if (error) {
       res.send(error);
@@ -49,6 +56,10 @@ exports.create = function(req, res) {
 exports.find = function(req, res) {
 	var user = req.body.customer;
   var sub = req.body.sub;
+
+  if (!user || !sub || user.length < 1 || sub.length < 1){
+  	res.status(400).end(); // bad request
+  }
 
   stripe.customers.retrieveSubscription(
     user,

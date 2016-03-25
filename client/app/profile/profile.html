@@ -27,6 +27,7 @@
               <li><a href="#backlog" aria-controls="home" role="tab" data-toggle="tab">Tasks</a></li>
               <li><a href="#stats" aria-controls="home" role="tab" data-toggle="tab">Stats</a></li>
               <li><a href="#settings" aria-controls="home" role="tab" data-toggle="tab">edit</a></li>
+              <li><a href="#google-calendar" aria-controls="home" role="tab" data-toggle="tab">Google Calendar</a></li>
             </ul>
           </div>
 
@@ -204,11 +205,44 @@
                   <input type="submit" class="btn btn-phased-blue btn-block " value="Update Account">
                 </div>
               </div>
-            </form>
-  					<button class="btn btn-phased-blue btn-block " ng-click="logout()">logout</button>
-
-
+            	</form>
+  						<button class="btn btn-phased-blue btn-block " ng-click="logout()">logout</button>
   					</div>
+
+  					<!-- GOOGLE CAL -->
+  					<div role="tabpanel" class="tab-pane" id="google-calendar" ng-if="isSelf">
+  						<div class="google-calendar">
+  							<p ng-if="!phased.user.googleAuth">
+  								<a href="#" ng-click="startGoogleAuth($event)">Authenticate with Google</a> to automatically post status updates when an event on a calendar begins (for example, for every event on a company "meetings" calendar). <em>This will only take effect for this team; to manage your calendar status updates for another team, switch to that team.</em>
+  							</p>
+  							<p ng-if="!calendarList">
+  								<a href="#" ng-click="getCals($event)">Get calendars</a>
+  							</p>
+
+  							<div ng-if="calendarList">
+  								<h5>Calendars</h5>
+  								<ul>
+  									<li
+  										ng-repeat="cal in calendarList"
+  										class="calendar-item"
+  										ng-class="{ 'registered-calendar' : isCalRegistered(cal) }">
+  										<a 
+  											href="#"
+  											ng-click="toggleCalRegistered(cal, $event)">
+  											<span
+  												class="block"
+  												style="background-color:{{cal.backgroundColor}};"
+  											></span>
+  											{{cal.summary}}
+  										</a>
+  									</li>
+  								</ul>
+  							</div>
+  						</div>
+  					</div>
+  					<!-- end GOOGLE CAL -->
+
+
           </div>
 
 
