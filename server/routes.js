@@ -19,7 +19,7 @@ module.exports = function(app) {
 				console.log('session started');
 			else if (req.session.user.uid != req.user.d.uid)
 				console.log('session user changed');
-			
+
 			req.session.user = req.user.d;
 		}
 		next();
@@ -43,7 +43,7 @@ module.exports = function(app) {
   app.use('/api/slack', require('./api/slack'));
 
   app.use('/api/setup', require('./api/setup'));
-  
+
   // All undefined asset or api routes should return a 404
   app.route('/:url(api|auth|components|app|bower_components|assets)/*')
    .get(errors[404]);
@@ -71,7 +71,12 @@ module.exports = function(app) {
   		req.session.destroy();
   		res.status(200).end();
   	});
-
+		app.route('/googleb5d0582998a25c5d.html')
+	    .get(function(req, res){
+	      // deny request politely here if user is not logged in
+	      // ...how do we get the user?
+	      res.send("google-site-verification: googleb5d0582998a25c5d.html");
+	    });
   // All other routes should redirect to the index.html
   app.route('/*')
     .get(function(req, res) {

@@ -101,7 +101,7 @@ angular.module('webappApp')
       WATCH_INTEGRATIONS = false, // set in setWatchIntegrations in config; whether to monitor integration data
       WEBHOOKS_LIVE = { // switches for individual webhooks, so that eg Github hooks can be live while Google is in dev
       	GITHUB : true,
-      	GOOGLE : false
+      	GOOGLE : true
       },
 
       // ASYNC CALLBACKS
@@ -366,8 +366,8 @@ angular.module('webappApp')
     }
 
     // sets WATCH_INTEGRATIONS
-    // determines whether own user's registered 
-    // integrations metadata are watched (currently only 
+    // determines whether own user's registered
+    // integrations metadata are watched (currently only
     // Google Calendar)
     this.setWatchIntegrations = function(watch) {
       if (watch)
@@ -1116,8 +1116,8 @@ angular.module('webappApp')
 		*
 		*	list is indexed by google cal ID, not FB key
 		*	(FB key available at .FBKey)
-		*	
-		*	NB: This does NOT synch google calendars with 
+		*
+		*	NB: This does NOT synch google calendars with
 		*		the Google server; see doGetGoogleCalendars
 		*
 		*/
@@ -3226,7 +3226,7 @@ angular.module('webappApp')
     *
     *	passes a list of calendars to the callback
     *	gets calendars from our server (which gets from google)
-    *	
+    *
     */
     var _getGoogleCalendars = function(callback) {
     	var callback = (typeof callback == 'function') ? callback : function(){};
@@ -3249,7 +3249,7 @@ angular.module('webappApp')
     /**
     *
     *	registers a calendar for future status updates
-    *	
+    *
     *	Simply saves the calendar ID to the DB and the server does the rest
     *
     */
@@ -3259,7 +3259,7 @@ angular.module('webappApp')
 
     var doRegisterGoogleCalendar = function(cal) {
     	// don't allow double registrations
-    	if (cal.id in PhasedProvider.user.registeredCalendars) 
+    	if (cal.id in PhasedProvider.user.registeredCalendars)
     		return;
 
     	// add to FireBase
@@ -3272,7 +3272,7 @@ angular.module('webappApp')
     /**
     *
     *	deregisters a calendar
-    *	
+    *
     *	Simply removes the calendar ID from the DB
     *	HASN'T BEEN TESTED
     *
@@ -3283,7 +3283,7 @@ angular.module('webappApp')
 
     var doDeregisterGoogleCalendar = function(cal) {
     	// removal from FireBase requires a 2x round trip
-    	// because for some entirely frustrating reason 
+    	// because for some entirely frustrating reason
     	// one can neither remove via a query NOR a .ref().
     	var calsAddr = 'integrations/google/calendars/' + PhasedProvider.user.uid + '/' + PhasedProvider.team.uid;
 			FBRef.child(calsAddr).orderByChild('id').equalTo(cal.id).once('value', function(snap) {
