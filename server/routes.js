@@ -73,9 +73,8 @@ module.exports = function(app) {
   	});
 		app.route('/googleb5d0582998a25c5d.html')
 	    .get(function(req, res){
-	      // deny request politely here if user is not logged in
-	      // ...how do we get the user?
-	      res.send("google-site-verification: googleb5d0582998a25c5d.html");
+	      
+				res.sendFile(path.resolve(app.get('appPath') + '/api/googleb5d0582998a25c5d.html'));
 	    });
   // All other routes should redirect to the index.html
   app.route('/*')
