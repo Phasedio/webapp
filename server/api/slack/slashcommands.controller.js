@@ -17,7 +17,8 @@ var slackTokens = {
 	link : 'nxCvd9z7Imj2FNdoscrOktM3',
 	whatsup : 'q2Pa5ydGeR6s6attD2GQug35',
 	sup : '8xTUgcyMNSTxX8M4MF3tkTUz',
-	assign: 'q6xkAC9MORQxaMmgD7MImzxU'
+	assign: 'q6xkAC9MORQxaMmgD7MImzxU',
+	app: 'r7ITYpbnK2wVFzzZtI1QW0sp'
 }
 
 /**
@@ -37,7 +38,7 @@ exports.linkUser = function(req, res, next) {
 	var slackReq = req.body;
 	slackReq.text = slackReq.text.trim();
 	// 0. verify token
-	if (slackReq.token !== slackTokens.link) {
+	if (slackReq.token !== slackTokens.link && slackReq.token !== slackTokens.app) {
 		res.end();
 		return;
 	}
@@ -108,7 +109,7 @@ exports.update = function(req, res, next) {
 	console.log('updating...', req.body);
 	var slackReq = req.body;
 	// 0. verify token
-	if (slackReq.token !== slackTokens.update) {
+	if (slackReq.token !== slackTokens.update && slackReq.token !== slackTokens.app) {
 		res.end();
 		return;
 	}
@@ -160,7 +161,7 @@ exports.tell = function(req, res, next) {
 	console.log('tell:', slackReq);
 
 	// 0. verify token
-	if (slackReq.token !== slackTokens.tell) {
+	if (slackReq.token !== slackTokens.tell && slackReq.token !== slackTokens.app) {
 		res.end();
 		return;
 	}
@@ -196,7 +197,7 @@ exports.assign = function(req, res, next) {
 	console.log('assign:', slackReq);
 
 	// 0. verify token
-	if (slackReq.token !== slackTokens.assign) {
+	if (slackReq.token !== slackTokens.assign && slackReq.token !== slackTokens.app) {
 		res.end();
 		return;
 	}
@@ -231,7 +232,7 @@ exports.task = function(req, res, next) {
 	console.log('making unassigned task...', req.body);
 	var slackReq = req.body;
 	// 0. verify token
-	if (slackReq.token !== slackTokens.task) {
+	if (slackReq.token !== slackTokens.task && slackReq.token !== slackTokens.app) {
 		res.end();
 		return;
 	}
@@ -282,7 +283,7 @@ exports.status = function(req, res, next) {
 	slackReq.text = slackReq.text.trim();
 
 	// 0. verify token
-	if (slackReq.token !== slackTokens.whatsup && slackReq.token !== slackTokens.sup) {
+	if (slackReq.token !== slackTokens.whatsup && slackReq.token !== slackTokens.sup && slackReq.token !== slackTokens.app) {
 		res.end();
 		return;
 	}
