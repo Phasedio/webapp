@@ -42,6 +42,7 @@ var all = {
 	  	'/api/google/auth1',
 	  	'/api/google/auth2',
 	  	'/api/slack/auth',
+	  	'/api/slack/slash',
 	  	'/api/hooks/'
   	],
 
