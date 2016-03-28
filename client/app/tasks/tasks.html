@@ -2,50 +2,20 @@
 <div ng-include="'components/content-nav/content-nav.html'"></div>
 <section class="container-fluid">
   <div class="row">
-    <div class="content__area">
-
-
-      <div class="task__area">
-        <div class="task__list">
-          <div class="task__add">
-            <form id="todo-form" ng-submit="addTodo()">
-              <p>Add a task</p>
-              <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
-            </form>
-          </div>
-
-          <div class="dropdown">
-            <button class="btn btn-block btn-default  dropdown-toggle no__boarder__radius no__border__side" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-              {{currentFilter}}
-              <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-              <li><a href="#" ng-click="setFilter('me')">My Tasks</a></li>
-              <li><a href="#" ng-click="setFilter('all')">All Tasks</a></li>
-              <li><a href="#" ng-click="setFilter('me_complete')">My Completed Tasks</a></li>
-            </ul>
-          </div>
-
-          <ul>
-            <li class="task__item" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks |
-            orderObjectBy : 'time' : true" ng-if="getFilter(assignment)" ng-click="selectTask(assignment)">
-              <div class="task__item__title">
-                <h4>{{assignment.name}}</h4>
-              </div>
-              <div class="">
-                <p>
-                  {{Phased.task.STATUS[assignment.status]}} {{assignment.deadline | date : 'd MMM yy'}}
-                </p>
-              </div>
-						</li>
-          </ul>
+    <div class="col-xs-12">
+      <div class="task__holder">
+        <div class="task__add">
+          <form id="todo-form" ng-submit="addTodo()">
+            <p>Add a task</p>
+            <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
+          </form>
         </div>
-
-        <!-- details go here -->
+        <div class="list-group">
+          <a href="#" class="list-group-item" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">{{assignment.name}}</a>
+        </div>
       </div>
     </div>
   </div>
-
 </section>
 
 <!-- add task -->
