@@ -296,3 +296,18 @@
 		color:#9a9a9a;
 	}
 }
+
+/*
+*
+* MEDIA QUERIES
+*
+*
+*/
+
+@media (min-width: 992px) {
+	.action__container,.feed__container{
+		max-width: 496px;
+		margin: 0 auto;
+	}
+
+}
