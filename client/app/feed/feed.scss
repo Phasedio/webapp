@@ -119,6 +119,10 @@
   .status__compose{
     padding: 12px;
     padding-bottom: 0;
+		img{
+			width: 40px;
+    	position: absolute;
+		}
   }
   .status__title{
     font-size: 12px;
@@ -128,15 +132,15 @@
   }
 
   .inputArea{
-    width: 100%;
-    min-height: 69px;
-    padding-top: 23px;
-    padding-bottom: 13px;
-    margin-bottom: 4px;
-    color:#141823;
-    outline: 0;
-    border: none;
-    border-top:1px solid #dcdee3;
+		width: 100%;
+		padding-left: 50px;
+		padding-top: 12px;
+		padding-bottom: 24px;
+		margin-bottom: 4px;
+		color: #141823;
+		outline: 0;
+		border: none;
+
     &:focus{
       outline: none;
       &::-webkit-input-placeholder { /* Chrome/Opera/Safari */

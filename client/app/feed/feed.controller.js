@@ -109,22 +109,10 @@ angular.module('webappApp')
   .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location,toaster,$route) {
     ga('send', 'pageview', '/feed');
 
-    // Background image
-    var monImage =  "weekdayPhotos/mon.jpg";
-    var tuesImage =  "weekdayPhotos/tues.jpg";
-    var wedImage =  "weekdayPhotos/wed.jpg";
-    var thursImage =  "weekdayPhotos/thurs.jpg";
-    var friImage = "weekdayPhotos/fri.jpg";
-    var satImage = "weekdayPhotos/sat.jpg";
-    var sunImage = "weekdayPhotos/sun.jpg";
 
-    var d=new Date();
-
-    var backgroundImage = [sunImage, monImage, tuesImage, wedImage, thursImage, friImage, satImage];
-    $scope.dayImage = backgroundImage[d.getDay()];
 
     $scope.selectedCategory = '';
-
+    $scope.showExtras = false;
     $scope.viewType = Phased.viewType;
     $scope.myID = Auth.user.uid;
     $scope.team = Phased.team;
