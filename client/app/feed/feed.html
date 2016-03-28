@@ -3,9 +3,9 @@
 
 	<div class="container-fluid">
 		<div class="row">
-			<div ng-include="'components/sidebar/sidebar.html'"></div>
+			<!-- <div ng-include="'components/sidebar/sidebar.html'"></div> -->
 			<div class="content__area">
-	      <div ng-include="'components/content-nav/content-nav.html'"></div>
+	      <!-- <div ng-include="'components/content-nav/content-nav.html'"></div> -->
 				<div class="col-xs-12 col-md-5 col-lg-6 ph-update-area">
 					<div class="action__container">
 						<form name="taskForm" ng-submit="addTask(task)" novalidation>
@@ -30,7 +30,7 @@
 									<button type="button" class="btn" ng-class="{btn__active : selectedTask.name}" name="button" ng-click="moreTasks()" data-toggle="tooltip" data-placement="bottom" data-delay="{'show':500,'hide':100}" title="Add Task"><i class="fa fa-tasks"></i> <small>{{selectedTask.name | limitTo:15}}</small></button>
 								</div>
 								<div class="meta__right">
-									<input type="submit" class="button-phasedFB" name="name" value="Post">
+									<input type="submit" class="button_phasedFB" name="name" value="Post">
 								</div>
 
 							</div>

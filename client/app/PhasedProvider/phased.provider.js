@@ -100,8 +100,8 @@ angular.module('webappApp')
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
       WATCH_INTEGRATIONS = false, // set in setWatchIntegrations in config; whether to monitor integration data
       WEBHOOKS_LIVE = { // switches for individual webhooks, so that eg Github hooks can be live while Google is in dev
-      	GITHUB : true,
-      	GOOGLE : true
+      	GITHUB : false,
+      	GOOGLE : false
       },
 
       // ASYNC CALLBACKS
