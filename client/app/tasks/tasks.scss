@@ -13,7 +13,7 @@
 .task__add{
   display: block;
   padding: 12px;
-  
+
   width: 100%;
   margin-bottom: 20px;
   border: 1px solid;
@@ -26,6 +26,18 @@
     text-align: center;
     border: 1px solid rgba(0,0,0,.35);
   }
+}
+.task__complete{
+  display: inline-block;
+  width: 25px;
+  height: 25px;
+  float: left;
+  background: green;
+  margin-right: 10px;
+}
+.task__name{
+  display: inline-block;
+  float: left;
 }
 
 /*
