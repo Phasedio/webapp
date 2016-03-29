@@ -12,13 +12,15 @@
         </div>
         <div class="list-group">
           <a href="#" class="list-group-item clearfix" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
-            <div class="task__complete">
-
+            <div class="task__complete" ng-click="setCompleted(assignment)">
+              <i class="fa fa-check"></i>
             </div>
-            <div class="task__name">
+            <div class="task__name" ng-click="sendToTask('0A','0A','0A',assignment.key)">
               {{assignment.name}}
             </div>
-
+            <div class="task__details">
+              <i class="fa fa-ellipsis-h"></i>
+            </div>
           </a>
         </div>
       </div>

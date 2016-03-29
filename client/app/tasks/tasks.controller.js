@@ -206,6 +206,30 @@ angular.module('webappApp')
     $scope.taskDescript = 'hidden'; //hide the task description till the user does something
     $scope.taskInfo = {}; // Task information for the description area
 
+    $scope.sendToTask = function(project,column,card,key){
+
+      $location.path('/tasks/'+ project +'/'+ column +'/'+ card +'/'+ key);
+    }
+
+
+    $scope.setCompleted = function(task) {
+      mixpanel.track("Complete Task");
+      var nameReset = task.name;
+      var status = task;
+      status.name = "Has completed task : " +status.name;
+      status.task = {
+        project : '0A',
+        column : '0A',
+        card : '0A',
+        id : task.key,
+        name : nameReset
+      }
+      Phased.addStatus(status);
+      task.name = nameReset;
+      Phased.setTaskStatus(task.key, Phased.task.STATUS_ID.COMPLETE);
+      toaster.pop('success', "Task Complete!", "Great work!");
+
+    }
 
     $scope.selectTask = function(task){
       mixpanel.track("Open Task Details");

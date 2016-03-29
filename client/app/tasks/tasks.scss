@@ -27,18 +27,36 @@
     border: 1px solid rgba(0,0,0,.35);
   }
 }
-.task__complete{
+
+.task__name,.task__details,.task__complete{
   display: inline-block;
-  width: 25px;
-  height: 25px;
   float: left;
-  background: green;
+}
+
+.task__complete{
   margin-right: 10px;
+  .fa{
+    padding: 10px;
+    border: 1px solid #a4a4a4;
+    color:#a4a4a4;
+    border-radius: 1000px;
+    transition: all 0.3s;
+  }
+  &:hover{
+    .fa{
+      border-color: #2fc2a3;
+      color:#2fc2a3;
+    }
+  }
 }
 .task__name{
-  display: inline-block;
-  float: left;
+  width: 75%;
+  padding-bottom: 2rem;
 }
+.task__details{
+  float: right;
+}
+
 
 /*
 *
