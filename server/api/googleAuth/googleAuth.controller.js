@@ -7,16 +7,7 @@
 // ====
 var config = require('../../config/environment');
 var Promise = require("promise");
-
-// Firebase vars
-// ====
-var Firebase = require("firebase");
-var FirebaseTokenGenerator = require("firebase-token-generator");
-
-var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
-var tokenGenerator = new FirebaseTokenGenerator(config.FB_SECRET_1);
-var FBToken = tokenGenerator.createToken({ uid: config.FB_TOKEN_UID});
-
+var FBRef = require('../../components/phasedFBRef').getRef();
 
 // Google vars
 // ====
@@ -164,31 +155,18 @@ var saveUserTokens = function(user, tokens) {
 	}
 	// 1.
 	if (user.provider !== 'password') {
-		FBRef.authWithCustomToken(FBToken, function(error) {
-			if (error) {
-				console.log(error);
+		FBRef.child('userMappings/' + user.uid + '/' + user.provider).once('value', function(snap){
+			var properID = snap.val();
+			if (!properID) {
+				console.log('Bad user! They might be gaming us...');
 				return;
 			}
 
-			FBRef.child('userMappings/' + user.uid + '/' + user.provider).once('value', function(snap){
-				var properID = snap.val();
-				if (!properID) {
-					console.log('Bad user! They might be gaming us...');
-					return;
-				}
-
-				// 2. we have the proper UID, moving on
-				updateUserTokens(uid, tokens);
-			});
+			// 2. we have the proper UID, moving on
+			updateUserTokens(uid, tokens);
 		});
 	} else {
-		FBRef.authWithCustomToken(FBToken, function(error) {
-			if (error) {
-				console.log(error);
-				return;
-			}
-			updateUserTokens(user.uid, tokens);
-		});
+		updateUserTokens(user.uid, tokens);
 	}
 
 	var updateUserTokens = function(uid, tokens) {
@@ -232,17 +210,15 @@ var getGoogleTokensForUser = function(req) {
 			return;
 		} else if ('user' in req.session && 'uid' in req.session.user && req.session.user.uid !== undefined) {
 			// 2. check DB
-			FBRef.authWithCustomToken(FBToken, function(error) {
-				FBRef.child('integrations/google/tokens/' + req.session.user.uid).once('value', function (snap) {
-					var tokens = snap.val();
-					if (tokens) {
-						req.session.tokens = tokens; // save DB tokens to session
-						fulfill(tokens);
-					} else {
-						console.log('no tokens in DB, failing');
-						reject();
-					}
-				});
+			FBRef.child('integrations/google/tokens/' + req.session.user.uid).once('value', function (snap) {
+				var tokens = snap.val();
+				if (tokens) {
+					req.session.tokens = tokens; // save DB tokens to session
+					fulfill(tokens);
+				} else {
+					console.log('no tokens in DB, failing');
+					reject();
+				}
 			});
 		} else {
 			console.log('no session user or uid, cannot get google auth tokens', req.session.user);

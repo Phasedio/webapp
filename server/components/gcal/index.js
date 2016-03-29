@@ -63,9 +63,7 @@ var _ = require('lodash');
 
 // Firebase business
 // ====
-var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
-var tokenGenerator = new FirebaseTokenGenerator(config.FB_SECRET_1);
-var FBToken = tokenGenerator.createToken({ uid: config.FB_TOKEN_UID}); 
+var FBRef = require('../../components/phasedFBRef').getRef(); 
 
 // Google API business 
 // ====
@@ -190,29 +188,20 @@ module.exports = {
 var doMasterJob = function() {
 	console.log('executing masterJob; next iteration at ', masterJob.pendingInvocations()[0].fireDate.toString());
 
-	// 1. do after authenticated
-	FBRef.authWithCustomToken(FBToken, function(error, authData) {
-		// fail if error
-		if (error)
-			return console.log('GCal schedule not running this time round due to Firebase auth error, will try again next time.', error);
-		
-		// 2.
-		FBRef.child('integrations/google/calendars').off(); // kills all event handlers
-		for (var userID in usersList) {
-			FBRef.child('integrations/google/calendars/' + userID).off(); // remove all event handlers
-		}
-		usersList = {}; // clear user list
-		eventJobList = {}; // clear job list; 
-		webhookChannelTokens = {}; // clear webhook tokens
+	// 2.
+	FBRef.child('integrations/google/calendars').off(); // kills all event handlers
+	for (var userID in usersList) {
+		FBRef.child('integrations/google/calendars/' + userID).off(); // remove all event handlers
+	}
+	usersList = {}; // clear user list
+	eventJobList = {}; // clear job list; 
+	webhookChannelTokens = {}; // clear webhook tokens
 
-		// 3. get this party started
-		FBRef.child('integrations/google/calendars').on('child_added', onUserAdd, function(err){
-			console.log('err', err);
-		});
-		FBRef.child('integrations/google/calendars').on('child_removed', onUserRemoved, function(err){
-			console.log('err', err);
-		});
-	}, function(err) {
+	// 3. get this party started
+	FBRef.child('integrations/google/calendars').on('child_added', onUserAdd, function(err){
+		console.log('err', err);
+	});
+	FBRef.child('integrations/google/calendars').on('child_removed', onUserRemoved, function(err){
 		console.log('err', err);
 	});
 }
@@ -405,20 +394,14 @@ var doEventJob = function(event, userID, teamID, jobKeys) {
 		time : new Date().getTime(),
 		user : userID
 	};
-	// do after authenticated
-	FBRef.authWithCustomToken(FBToken, function(error, authData) {
-		// fail if error
-		if (error)
-			return console.error('Could not post status because FB won\'t auth.', error);
 
-		FBRef.child('team/' + teamID + '/statuses').push(status, function(err) {
-			if (!err) {
-				// console.log('posted');
-				FBRef.child('team/' + teamID + '/members/' + userID + '/currentStatus').set(status, function(){
-					delete eventJobList[jobKeys.calFBKey][jobKeys.eventID];
-				});
-			}
-		});
+	FBRef.child('team/' + teamID + '/statuses').push(status, function(err) {
+		if (!err) {
+			// console.log('posted');
+			FBRef.child('team/' + teamID + '/members/' + userID + '/currentStatus').set(status, function(){
+				delete eventJobList[jobKeys.calFBKey][jobKeys.eventID];
+			});
+		}
 	});
 }
 

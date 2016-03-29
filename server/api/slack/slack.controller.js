@@ -10,12 +10,7 @@ var request = require('request');
 
 // Firebase vars
 // ====
-var Firebase = require("firebase");
-var FirebaseTokenGenerator = require("firebase-token-generator");
-
-var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
-var tokenGenerator = new FirebaseTokenGenerator(config.FB_SECRET_1);
-var FBToken = tokenGenerator.createToken({uid: config.FB_TOKEN_UID});
+var FBRef = require('../../components/phasedFBRef').getRef();
 
 
 
@@ -58,32 +53,24 @@ exports.auth = function (req, res) {
 			return;
 		}
 
-		FBRef.authWithCustomToken(FBToken, function(error, authData) {
-			if (error) {
-				console.log("FireBase auth failed!", error);
-				return;
-			}
-			// we only have user ID, need to get team they just authed Slack on behalf of
-			var sessionUser = req.session.user;
+		// we only have user ID, need to get team they just authed Slack on behalf of
+		var sessionUser = req.session.user;
 
-			// straightforward
-			if (sessionUser.provider == 'password') {
-				saveAuthTokensForUserTeam(sessionUser.uid, data);
-			} else {
-				// get user's actual uid
-				FBRef.child('userMappings/' + sessionUser.uid).once('value', function(snap) {
-					var userID = snap.val();
-					if (!userID) {
-						console.log('No mapped UID for user requesting Slack integration');
-						return;
-					} else {
-						saveAuthTokensForUserTeam(userID, data);
-					}
-				}, maybeLogErr);
-			}
-
-		});
-
+		// straightforward
+		if (sessionUser.provider == 'password') {
+			saveAuthTokensForUserTeam(sessionUser.uid, data);
+		} else {
+			// get user's actual uid
+			FBRef.child('userMappings/' + sessionUser.uid).once('value', function(snap) {
+				var userID = snap.val();
+				if (!userID) {
+					console.log('No mapped UID for user requesting Slack integration');
+					return;
+				} else {
+					saveAuthTokensForUserTeam(userID, data);
+				}
+			}, maybeLogErr);
+		}
 	});
 }
 

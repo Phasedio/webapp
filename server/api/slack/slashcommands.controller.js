@@ -5,10 +5,7 @@ var Promise = require('promise');
 var moment = require('moment');
 
 var Firebase = require("firebase");
-var FirebaseTokenGenerator = require("firebase-token-generator");
-var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
-var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
-var token = tokenGenerator.createToken({uid: config.FB_TOKEN_UID});
+var FBRef = require('../../components/phasedFBRef').getRef();
 
 // tokens to confirm our hit is coming from slack
 var slackTokens = {
@@ -56,40 +53,31 @@ exports.linkUser = function(req, res, next) {
 		});
 	}
 
-	// auth
-	FBRef.authWithCustomToken(token, function(error, authData) {
-		if (error) {
-			console.log("FireBase auth failed!", error);
-			slackReplyError(slackReq.response_url);
+	// 1. get phased user for email address
+	FBRef.child('profile').orderByChild('email').equalTo(slackReq.text).once('value', function(snap) {
+		var user = snap.val();
+		var userID = Object.keys(user)[0];
+
+		if (!user) {
+			slackReply(slackReq.response_url,
+				'Whoops, couldn\'t find that email address',
+				true,
+				slackReq.text);
 			return;
 		}
 
-		// 1. get phased user for email address
-		FBRef.child('profile').orderByChild('email').equalTo(slackReq.text).once('value', function(snap) {
-			var user = snap.val();
-			var userID = Object.keys(user)[0];
-
-			if (!user) {
+		// now link accounts
+		FBRef.child('integrations/slack/users/' + slackReq.user_id).set(userID, function(err) {
+			if (err)
+				slackReplyError(slackReq.response_url);
+			else
 				slackReply(slackReq.response_url,
-					'Whoops, couldn\'t find that email address',
-					true,
-					slackReq.text);
-				return;
-			}
-
-			// now link accounts
-			FBRef.child('integrations/slack/users/' + slackReq.user_id).set(userID, function(err) {
-				if (err)
-					slackReplyError(slackReq.response_url);
-				else
-					slackReply(slackReq.response_url,
-						'Great, you\'re all set up. Try saying "/update Linking up my Slack and Phased accounts"',
-						true);
-			});
-		}, function(e) {
-			console.log('fb err', e);
-			slackReplyError(slackReq.response_url);
+					'Great, you\'re all set up. Try saying "/update Linking up my Slack and Phased accounts"',
+					true);
 		});
+	}, function(e) {
+		console.log('fb err', e);
+		slackReplyError(slackReq.response_url);
 	});
 }
 
@@ -127,27 +115,18 @@ exports.update = function(req, res, next) {
 	}
 
 	// Post the new status update after authenticating and getting the Phased user ID
-	// 2a)
-	FBRef.authWithCustomToken(token, function(error, authData) {
-		if (error) {
-			console.log("FireBase auth failed!", error);
+	// 2b)
+	getPhasedIDs(slackReq).then(function(args) {
+		// 2c)
+		updateStatus(args.userID, args.teamID, slackReq.text).then(function(){
+			slackReply(slackReq.response_url,
+				'Your Phased.io status has been updated.',
+				true,
+				slackReq.text);
+		}, function(){
 			slackReplyError(slackReq.response_url);
-			return;
-		}
-
-		// 2b)
-		getPhasedIDs(slackReq).then(function(args) {
-			// 2c)
-			updateStatus(args.userID, args.teamID, slackReq.text).then(function(){
-				slackReply(slackReq.response_url,
-					'Your Phased.io status has been updated.',
-					true,
-					slackReq.text);
-			}, function(){
-				slackReplyError(slackReq.response_url);
-			});
-		}, notLinkedYet);
-	});
+		});
+	}, notLinkedYet);
 }
 
 /**
@@ -250,27 +229,18 @@ exports.task = function(req, res, next) {
 	}
 
 	// Post the new status update after authenticating and getting the Phased user ID
-	// 2a)
-	FBRef.authWithCustomToken(token, function(error, authData) {
-		if (error) {
-			console.log("FireBase auth failed!", error);
+	// 2b)
+	getPhasedIDs(slackReq).then(function(args) {
+		// 2c)
+		makeTask(args.userID, args.teamID, slackReq.text).then(function(){
+			slackReply(slackReq.response_url,
+				'Your new task has been added to Phased.',
+				true,
+				slackReq.text);
+		}, function(){
 			slackReplyError(slackReq.response_url);
-			return;
-		}
-
-		// 2b)
-		getPhasedIDs(slackReq).then(function(args) {
-			// 2c)
-			makeTask(args.userID, args.teamID, slackReq.text).then(function(){
-				slackReply(slackReq.response_url,
-					'Your new task has been added to Phased.',
-					true,
-					slackReq.text);
-			}, function(){
-				slackReplyError(slackReq.response_url);
-			});
-		}, notLinkedYet);
-	});
+		});
+	}, notLinkedYet);
 }
 
 /**
@@ -315,42 +285,35 @@ exports.status = function(req, res, next) {
 		// update slackReq to use with this fn
 		slackReq.user_id = user_slack_ID;
 
-		FBRef.authWithCustomToken(token, function(error, authData) {
-			if (error) {
-				console.log("FireBase auth failed!", error);
-				slackReplyError(slackReq.response_url);
-				return;
-			}
-			// get Phased ID for user and team
-			getPhasedIDs(slackReq).then(function(args) {
-				console.log('got phased IDs', args);
+		// get Phased ID for user and team
+		getPhasedIDs(slackReq).then(function(args) {
+			console.log('got phased IDs', args);
 
-				// get user's current status
-				FBRef.child('team/' + args.teamID + '/members/' + args.userID).once('value', function(snap) {
-					var member = snap.val();
-					console.log('got member', member);
+			// get user's current status
+			FBRef.child('team/' + args.teamID + '/members/' + args.userID).once('value', function(snap) {
+				var member = snap.val();
+				console.log('got member', member);
 
-					if (!member) {
-						slackReplyError(slackReq.response_url);
-					} else {
-						slackReply(slackReq.response_url,
-							'@' + user_slack_name + '\'s current status: "' + member.currentStatus.name + '" (' + moment(member.currentStatus.time).fromNow() + ')',
-							true,
-							'Last active ' + moment(member.lastOnline).fromNow()
-						);
-					}
-				});
-			}, function(args) {
-				console.log('err', args);
-				if ('missingID' in args) {
-					if (args.missingID == 'team')
-						slackReply(slackReq.response_url, 'Looks like your team hasn\'t yet linked Slack and Phased accounts.');
-					else if (args.missingID == 'user')
-						slackReply(slackReq.response_url, 'Looks like that user hasn\'t linked their Slack and Phased accounts.');
-				} else {
+				if (!member) {
 					slackReplyError(slackReq.response_url);
+				} else {
+					slackReply(slackReq.response_url,
+						'@' + user_slack_name + '\'s current status: "' + member.currentStatus.name + '" (' + moment(member.currentStatus.time).fromNow() + ')',
+						true,
+						'Last active ' + moment(member.lastOnline).fromNow()
+					);
 				}
 			});
+		}, function(args) {
+			console.log('err', args);
+			if ('missingID' in args) {
+				if (args.missingID == 'team')
+					slackReply(slackReq.response_url, 'Looks like your team hasn\'t yet linked Slack and Phased accounts.');
+				else if (args.missingID == 'user')
+					slackReply(slackReq.response_url, 'Looks like that user hasn\'t linked their Slack and Phased accounts.');
+			} else {
+				slackReplyError(slackReq.response_url);
+			}
 		});
 	}, function() {
 		res.send(200, {text: 'Couldn\'t find @' + user_slack_name });
@@ -490,32 +453,25 @@ var giveTaskToSlackUser = function(slackReq, res, taskName, assigned_to_slack_na
 
 		// Post the new status update after authenticating and getting the Phased user ID
 		// 2a)
-		FBRef.authWithCustomToken(token, function(error, authData) {
-			if (error) {
-				console.log("FireBase auth failed!", error);
-				slackReplyError(slackReq.response_url);
-				return;
-			}
-			// Get phased userID for assigned_to slack user
-			getPhasedUserID(assigned_to_slack_ID).then(function(assigned_to_phased_ID) {
-				// Get phased IDs for assigning slack user and team
-				getPhasedIDs(slackReq).then(function(args) {
-					// we now have all of our info and we can make our task.
-					makeTask(args.userID, args.teamID, taskName, {assigned_to : assigned_to_phased_ID}).then(function() {
-						slackReply(slackReq.response_url,
-							'Your new task has been added to Phased and assigned to @' + assigned_to_slack_name,
-							true,
-							'Assigned "' + taskName + '"');
-					}, function(){
-						slackReplyError(slackReq.response_url);
-					});
-				}, notLinkedYet);
-			}, function() {
-				slackReply(slackReq.response_url,
-					'@' + assigned_to_slack_name + ' hasn\'t liknked their Slack and Phased accounts yet.',
-					true);
-				return;
-			});
+		// Get phased userID for assigned_to slack user
+		getPhasedUserID(assigned_to_slack_ID).then(function(assigned_to_phased_ID) {
+			// Get phased IDs for assigning slack user and team
+			getPhasedIDs(slackReq).then(function(args) {
+				// we now have all of our info and we can make our task.
+				makeTask(args.userID, args.teamID, taskName, {assigned_to : assigned_to_phased_ID}).then(function() {
+					slackReply(slackReq.response_url,
+						'Your new task has been added to Phased and assigned to @' + assigned_to_slack_name,
+						true,
+						'Assigned "' + taskName + '"');
+				}, function(){
+					slackReplyError(slackReq.response_url);
+				});
+			}, notLinkedYet);
+		}, function() {
+			slackReply(slackReq.response_url,
+				'@' + assigned_to_slack_name + ' hasn\'t liknked their Slack and Phased accounts yet.',
+				true);
+			return;
 		});
 	}, function() {
 		res.send(200, {text: 'Sorry, I couldn\'t find a match for the user @' + assigned_to_slack_name});
