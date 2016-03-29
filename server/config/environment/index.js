@@ -32,6 +32,8 @@ var all = {
     session: 'webapp-secret'
   },
 
+  FB_TOKEN_UID: 'phased-server',
+
   // List of user roles
   userRoles: ['guest', 'user', 'admin'],
   

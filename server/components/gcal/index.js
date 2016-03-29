@@ -65,7 +65,7 @@ var _ = require('lodash');
 // ====
 var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
 var tokenGenerator = new FirebaseTokenGenerator(config.FB_SECRET_1);
-var FBToken = tokenGenerator.createToken({ uid: "gcal-server"}); 
+var FBToken = tokenGenerator.createToken({ uid: config.FB_TOKEN_UID}); 
 
 // Google API business 
 // ====

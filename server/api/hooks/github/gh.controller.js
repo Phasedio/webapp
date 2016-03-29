@@ -1,5 +1,5 @@
 'use strict';
-
+var config = require('../../../config/environment');
 // Firebase business
 // copied from pushserver
 var Firebase = require("firebase");
@@ -7,7 +7,7 @@ var FirebaseTokenGenerator = require("firebase-token-generator");
 
 var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
 var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
-var token = tokenGenerator.createToken({ uid: "hook-server"});
+var token = tokenGenerator.createToken({ uid: config.FB_TOKEN_UID});
 
 var GHClientID = '84542af1ca986f17bd26';
 var GHClientSecret = '8f6d49d7be3e358ec229c97967055ce9551e122d';

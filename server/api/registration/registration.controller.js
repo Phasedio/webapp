@@ -1,5 +1,7 @@
 'use strict';
 
+var config = require('../../config/environment');
+
 // Firebase business
 // copied from pushserver
 var Firebase = require("firebase");
@@ -7,7 +9,7 @@ var FirebaseTokenGenerator = require("firebase-token-generator");
 
 var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
 var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
-var token = tokenGenerator.createToken({uid: "registration-server",isReg: true });
+var token = tokenGenerator.createToken({uid: config.FB_TOKEN_UID, isReg: true });
 var stripe = require('stripe')('sk_live_nKZ1ouWkI3WuiVGK2hIvZUH1');
 
 exports.index = function(req, res) {

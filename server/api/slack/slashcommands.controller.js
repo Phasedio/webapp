@@ -1,3 +1,4 @@
+var config = require('../../config/environment');
 var request = require('request');
 var url = require('url');
 var Promise = require('promise');
@@ -7,7 +8,7 @@ var Firebase = require("firebase");
 var FirebaseTokenGenerator = require("firebase-token-generator");
 var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
 var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
-var token = tokenGenerator.createToken({uid: "slack-server"});
+var token = tokenGenerator.createToken({uid: config.FB_TOKEN_UID});
 
 // tokens to confirm our hit is coming from slack
 var slackTokens = {

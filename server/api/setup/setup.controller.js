@@ -7,14 +7,14 @@
 	if firebase DB isn't set up, make sure default data is in
 
 **/
-
+var config = require('../../config/environment');
 // Firebase business
 var Firebase = require("firebase");
 var FirebaseTokenGenerator = require("firebase-token-generator");
 
 var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
 var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
-var token = tokenGenerator.createToken({uid: "modServer" , origin : "auth.controller.js" });
+var token = tokenGenerator.createToken({uid: config.FB_TOKEN_UID, origin : "auth.controller.js" });
 FBRef.authWithCustomToken(token, function(error, authData) {});
 
 exports.index = function(req, res) {
