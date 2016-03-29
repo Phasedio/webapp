@@ -141,7 +141,9 @@ angular.module('webappApp')
 
     // Broadcasts that user is working on Task
     $scope.broadcastTask = function(task) {
-      Phased.activateTask(task.key);
+      mixpanel.track("Broadcast Task");
+      console.log(task);
+      Phased.activateTask(task.key, task, "Is working on task: ");
       toaster.pop('success', "Success!", "Your task was posted");
     }
 

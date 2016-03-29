@@ -1,9 +1,9 @@
 
+<div ng-include="'components/content-nav/content-nav.html'"></div>
 <section class="container-fluid">
   <div class="row">
-    <div ng-include="'components/sidebar/sidebar.html'"></div>
     <div class="content__area">
-      <div ng-include="'components/content-nav/content-nav.html'"></div>
+
       <div class="col-xs-10">
         <div class="profile-holder transparent">
           <div class="col-xs-6 profile-user">
@@ -226,7 +226,7 @@
   										ng-repeat="cal in calendarList"
   										class="calendar-item"
   										ng-class="{ 'registered-calendar' : isCalRegistered(cal) }">
-  										<a 
+  										<a
   											href="#"
   											ng-click="toggleCalRegistered(cal, $event)">
   											<span
