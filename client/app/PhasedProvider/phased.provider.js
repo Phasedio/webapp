@@ -282,6 +282,9 @@ angular.module('webappApp')
       $location = _location;
       // register functions listed after this in the script...
 
+      // ensure user and team have right privileges
+      PhasedProvider.maybeBounceUser = _maybeBounceUser;
+
       // add member and team
       PhasedProvider.addMember = _addMember;
       PhasedProvider.changeMemberRole = _changeMemberRole;
@@ -936,6 +939,10 @@ angular.module('webappApp')
         for (var key in data) {
           PhasedProvider.team.members[memberID][key] = data[key];
         }
+
+        // update teamLength
+        PhasedProvider.team.teamLength = Object.keys(PhasedProvider.team.members).length;
+        
         $rootScope.$broadcast('Phased:memberChanged');
       });
 
@@ -2439,6 +2446,33 @@ angular.module('webappApp')
       });
     }
 
+
+    /**
+    *
+    *	bounces user to / if they aren't admin or owner
+    *
+    *	an agressive function. Will try to bounce user as soon as
+    *	it knows what role the user is.
+    */
+
+    var _maybeBounceUser = function() {
+    	// try to do immediately if user's role is set
+    	if (!!PhasedProvider.team.members[PhasedProvider.user.uid] &&
+    		typeof PhasedProvider.team.members[PhasedProvider.user.uid].role !== 'undefined')
+    		doMaybeBounceUser();
+
+    	// also schedule for when data comes in
+    	registerAsync(doMaybeBounceUser);
+
+    	// also do whenever user's role may have changed
+    	$rootScope.$on('Phased:memberChanged', doMaybeBounceUser);
+    }
+
+    var doMaybeBounceUser = function() {
+    	var myRole = PhasedProvider.team.members[_Auth.user.uid].role;
+    	if (myRole != PhasedProvider.ROLE_ID.ADMIN && myRole != PhasedProvider.ROLE_ID.OWNER)
+    		$location.path('/');
+    }
 
     /**
 

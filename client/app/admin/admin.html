@@ -73,11 +73,11 @@
       </div>
       <div class="modal-body ">
 
-        <p>{{team.name}} has <b>{{numMembers}} / 10 </b>  members.</p>
+        <p>{{team.name}} has <b>{{team.teamLength}} / 10 </b>  members.</p>
         <p>Your team can only hold <b>10 members</b>. For more information on what your plan provides check out <a href="http://www.phased.io/pricing" target="_blank">this page</a></p>
 
         <p>If you need to remove members please contact <a href="mailto:support@phased.io">support@phased.io</a></p>
-        <form name="addmember" ng-submit="addMembers(user)" novalidation ng-if="canAddMembers">
+        <form name="addmember" ng-submit="addMembers(user)" novalidation ng-if="team.teamLength < 10">
           <div class="form-group">
             <label ffor="addEmail">Email address</label>
             <input type="email" class="form-control" iid="addEmail" ng-model="user.email" placeholder="email" required>
