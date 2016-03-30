@@ -8,6 +8,7 @@ var FirebaseTokenGenerator = require("firebase-token-generator");
 var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
 var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
 var token = tokenGenerator.createToken({ uid: "notif-server"});
+var moment = require('moment');
 
 exports.index = function(req, res) {
 	res.json([]);
@@ -177,29 +178,26 @@ exports.cleanNotifications = function(req, res) {
 		}
 
 		// 1. get timestamp (currently one month ago)
-		var aDate = new Date();
-		var timestamp = aDate.setMonth(aDate.getMonth() - 1);
+		var aDate = moment().subtract(1, 'month');
+		var timestamp = aDate.unix()
 
 		// 2. get notifications older than one month
 		var notifAddr = 'notif/' + team + '/' + user;
 		FBRef.child(notifAddr)
 			.orderByChild('time')
-			.endAt(timestamp)
+			.startAt(timestamp)
 			.once('value', function(data){
 				// 3. remove read notifs
 				var notifs = data.val();
 				var i = 0;
 				for (var key in notifs) {
-					if (notifs[key].read) {
-						FBRef.child(notifAddr + '/' + key).remove();
-						i++;
-					}
+					FBRef.child(notifAddr + '/' + key).remove();
+					i++;
 				}
-
 				// send a nice response
 				res.send({
 					success : true,
-					message : 'cleaned ' + i + ' read notifs since ' + aDate
+					message : 'removed ' + i + ' notifs before ' + aDate.format()
 				});
 				return;
 			});
