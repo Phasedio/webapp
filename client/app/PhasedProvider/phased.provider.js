@@ -116,7 +116,8 @@ angular.module('webappApp')
       WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints (with trailing slash)
       	LIVE : 'https://app.phased.io/',
       	DEV : 'http://93aa8d5a.ngrok.io/'
-      };
+      },
+      NOTIF_LIMIT = 30; // limit to how many notifications to keep in memory
 
 
 
@@ -1039,6 +1040,7 @@ angular.module('webappApp')
         // set up watcher
         var notifAddress = 'notif/' + PhasedProvider.team.uid + '/' + PhasedProvider.user.uid;
         var cb = FBRef.child(notifAddress)
+        	.limitToLast(NOTIF_LIMIT)
           .on('value', function(data) {
             var notifications = data.val();
 
