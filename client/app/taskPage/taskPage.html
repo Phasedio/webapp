@@ -4,7 +4,9 @@
   <div class="row">
     <div class="content__area">
       <div class="col-xs-12">
+        <a href="/tasks">back to to-do list</a>
         <div class="taskPage__details box" >
+
           <div class="task ">
             <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
               <button class="btn btn-phased-blue " ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>

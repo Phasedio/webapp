@@ -528,6 +528,8 @@ div[ng-include*="sidebar.html"] {
 
 //}
 
+
+
 @media (max-width: 969px) {
   //side navbar-nav
   [ng-include*="sidebar.html"] {
@@ -560,5 +562,14 @@ div[ng-include*="sidebar.html"] {
       top: 50rem;
       left: 4px;
       color: #fff;
+  }
+
+
+}
+
+@media (min-width: 992px) {
+  .box{
+    max-width: 496px;
+		margin: 0 auto;
   }
 }

@@ -3,9 +3,9 @@
 <section>
 	<div class="">
 
-		<div class="container-fluid">
+		<div class="container">
 			<div class="row">
-				<div class="col-xs-12  ">
+				<div class="col-xs-12 col-md-6  ">
 					<div class="action__container">
 						<form name="taskForm" ng-submit="addTask(task)" novalidation>
 							<div class="status__compose">
@@ -131,6 +131,29 @@
 						</div>
 					</div>
 
+				</div>
+				<div class="col-md-6" ng-controller="TasksCtrl">
+					<div class="task__holder" >
+		        <div class="task__add">
+		          <form id="todo-form" ng-submit="addTodo()">
+		            <p>Add a task</p>
+		            <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
+		          </form>
+		        </div>
+		        <div class="list-group">
+		          <a href="#" class="list-group-item clearfix" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
+		            <div class="task__complete" ng-click="setCompleted(assignment)">
+		              <i class="fa fa-check"></i>
+		            </div>
+		            <div class="task__name" ng-click="sendToTask('0A','0A','0A',assignment.key)">
+		              {{assignment.name}}
+		            </div>
+		            <div class="task__details">
+		              <i class="fa fa-ellipsis-h"></i>
+		            </div>
+		          </a>
+		        </div>
+		      </div>
 				</div>
 
 
