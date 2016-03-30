@@ -6,32 +6,34 @@
 
 var errors = require('./components/errors');
 var path = require('path');
+var config = require('./config/environment');
 
 module.exports = function(app) {
-	// save authenticated user to session if present
-	// use with req.session.user.uid
-	// NB: This is from the FB JWT, and so could be a mapped
-	// 			user from another provider. req.session.user.provider
-	//			will be set to the provider name.
-	app.use(function(req, res, next) {
-		if (req.user) {
-			if (!('user' in req.session))
-				console.log('session started');
-			else if (req.session.user.uid != req.user.d.uid)
-				console.log('session user changed');
+	if (config.env == 'production') {
+		// save authenticated user to session if present
+		// use with req.session.user.uid
+		// NB: This is from the FB JWT, and so could be a mapped
+		// 			user from another provider. req.session.user.provider
+		//			will be set to the provider name.
+		app.use(function(req, res, next) {
+			if (req.user) {
+				if (!('user' in req.session))
+					console.log('session started');
+				else if (req.session.user.uid != req.user.d.uid)
+					console.log('session user changed');
 
-			req.session.user = req.user.d;
-		}
-		next();
-	});
+				req.session.user = req.user.d;
+			}
+			next();
+		});
+	}
 
   // Insert routes below
   app.use('/api/downloads', require('./api/download'));
   app.use('/api/pays', require('./api/pay'));
   app.use('/api/things', require('./api/thing'));
   app.use('/api/registration', require('./api/registration'));
-  app.use('/api/hooks/github', require('./api/hooks/github'));
-  app.use('/api/hooks/google', require('./api/hooks/google'))
+	app.use('/api/google', require('./api/googleAuth'));
 
   // generous api endpoint spellings
   app.use('/api/notification', require('./api/notification'));
@@ -39,8 +41,11 @@ module.exports = function(app) {
   app.use('/api/notif', require('./api/notification'));
   app.use('/api/notifs', require('./api/notification'));
 
-  app.use('/api/google', require('./api/googleAuth'));
-  app.use('/api/slack', require('./api/slack'));
+  if (config.env == 'production') {
+	  app.use('/api/slack', require('./api/slack'));
+	  app.use('/api/hooks/github', require('./api/hooks/github'));
+	  app.use('/api/hooks/google', require('./api/hooks/google'));
+	}
 
   app.use('/api/setup', require('./api/setup'));
 

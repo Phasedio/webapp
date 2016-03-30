@@ -69,21 +69,19 @@ module.exports = function(app) {
   	next();
   });
 
-
-  // configure session
-  // see https://github.com/expressjs/session
-  var expressSessionOpts = {
-  	name : 'phased.sid', // name for SID cookie
-  	store: new MongoStore({ url : config.mongoStoreConnectionString }), // more options at https://www.npmjs.com/package/connect-mongo
-  	secret : '331c3b825824c749abc01bf3', // signs session ID cookie
-  	resave : false, // whether to resave if data hasn't changed. could create race condition.
-  	saveUninitialized : false // not sure if this should be false or true.
-  };
-  app.use(session(expressSessionOpts));
-
-
   // configure prod and dev services
   if ('production' === env) {
+  	// configure session
+	  // see https://github.com/expressjs/session
+	  var expressSessionOpts = {
+	  	name : 'phased.sid', // name for SID cookie
+	  	store: new MongoStore({ url : config.mongoStoreConnectionString }), // more options at https://www.npmjs.com/package/connect-mongo
+	  	secret : '331c3b825824c749abc01bf3', // signs session ID cookie
+	  	resave : false, // whether to resave if data hasn't changed. could create race condition.
+	  	saveUninitialized : false // not sure if this should be false or true.
+	  };
+	  app.use(session(expressSessionOpts));
+
     app.use(favicon(path.join(config.root, 'public', 'favicon.ico')));
     app.use(express.static(path.join(config.root, 'public')));
     app.set('appPath', path.join(config.root, 'public'));

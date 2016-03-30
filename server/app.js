@@ -16,7 +16,8 @@ var http = require('http');
 var server = http.createServer(app);
 require('./config/express')(app);
 require('./routes')(app);
-require('./components/gcal').init(); // start google calendar scheduled statuses
+if (process.env.NODE_ENV === 'production')
+	require('./components/gcal').init(); // start google calendar scheduled statuses
 
 
 // Start server
