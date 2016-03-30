@@ -9,7 +9,7 @@
 					<div class="action__container">
 						<form name="taskForm" ng-submit="addTask(task)" novalidation>
 							<div class="status__compose">
-								<img src="{{team.members[myID].pic}}" alt="{{team.members[myID].name}}" />
+								<img ng-src="{{::team.members[myID].pic}}" alt="{{::team.members[myID].name}}" />
 								<input type="text" class="inputArea" ng-click="showExtras = true" name="name" ng-focus="submitTip = true" ng-blur="submitTip = false" autocomplete="off" placeholder="What are you up to?" ng-model="task.name" ng-trim="false">
 
 							</div>
@@ -34,26 +34,21 @@
 
 						<div class="member__activity " ng-show="filterFeed == 'recent'" ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 ">
 							<div class="activity__person clearfix">
-								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
+								<img ng-src="{{::$parent.team.members[item.user].pic}}" alt="{{::$parent.team.members[item.user].name}}" />
 								<div class="activity__info">
 									<h5 class="">
-									<a href="/profile/{{item.user}}">{{$parent.team.members[item.user].name}}</a>
-									<span class="activity__tag" ng-if="item.task.name">
-										<a href="/tasks/{{item.task.project}}/{{item.task.column}}/{{item.task.card}}/{{item.task.id}}">
-											<small>
-												<i class="fa fa-tasks"></i>
-												<!-- <span role="presentation" aria-hidden="true"> · </span> -->
-												{{item.task.name | limitTo:50}}
-											</small>
-										</a>
-
-
-									</span>
-							</h5>
+										<a ng-href="/profile/{{::item.user}}">{{::$parent.team.members[item.user].name}}</a>
+										<span class="activity__tag" ng-if="item.task.name">
+											<a ng-href="/tasks/{{::item.task.project}}/{{::item.task.column}}/{{::item.task.card}}/{{::item.task.id}}">
+												<small>
+													<i class="fa fa-tasks"></i>
+													{{::item.task.name | limitTo:50}}
+												</small>
+											</a>
+										</span>
+									</h5>
 									<p class="activity__meta">
 										<span am-time-ago="item.time"></span>
-
-
 									</p>
 								</div>
 								<div class="activity__options" ng-if="item.user == myID">
@@ -71,13 +66,13 @@
 							</div>
 
 							<div class="activity__content">
-								<p class="">{{item.name}}</p>
+								<p class="">{{::item.name}}</p>
 							</div>
 							<div class="activity__attachment" ng-if="item.attachment">
-								<a class="" href="{{item.attachment.url}}" target="_blank">
-									<h5>{{item.attachment.title | limitTo:50 }}</h5>
+								<a class="" ng-href="{{::item.attachment.url}}" target="_blank">
+									<h5>{{::item.attachment.title | limitTo:50 }}</h5>
 									<p>
-										{{item.attachment.discript}}
+										{{::item.attachment.discript}}
 									</p>
 								</a>
 							</div>
@@ -91,12 +86,12 @@
 						<!-- members -->
 						<div class="member__activity " ng-show="filterFeed == 'members'" ng-repeat="item in team.members | orderMembers : 'lastUpdated' : true  ">
 							<div class="activity__person clearfix">
-								<img src="{{$parent.team.members[item.key].pic}}" alt="{{$parent.team.members[item.key].name}}" />
+								<img ng-src="{{::$parent.team.members[item.key].pic}}" alt="{{::$parent.team.members[item.key].name}}" />
 								<div class="activity__info">
 									<h5 class="">
-									<a href="/profile/{{item.key}}">{{$parent.team.members[item.key].name}}</a>
+									<a ng-href="/profile/{{::item.key}}">{{::$parent.team.members[item.key].name}}</a>
 									<span class="activity__tag" ng-if="item.task.name">
-										<a href="/tasks/{{item.currentStatus.task.project}}/{{item.currentStatus.task.column}}/{{item.currentStatus.task.card}}/{{item.currentStatus.task.id}}">
+										<a ng-href="/tasks/{{item.currentStatus.task.project}}/{{item.currentStatus.task.column}}/{{item.currentStatus.task.card}}/{{item.currentStatus.task.id}}">
 											<small>
 												<i class="fa fa-tasks"></i>
 												<!-- <span role="presentation" aria-hidden="true"> · </span> -->
@@ -381,7 +376,7 @@
 				</div>
 				<div class="modal-body ">
 
-					<p>{{team.name}} has <b>{{numMembers}} / 10 </b> members.</p>
+					<p>{{::team.name}} has <b>{{::numMembers}} / 10 </b> members.</p>
 					<p>Your team can only hold <b>10 members</b>. For more information on what your plan provides check out <a href="http://www.phased.io/pricing" target="_blank">this page</a></p>
 
 					<p>If you need to remove members please contact <a href="mailto:support@phased.io">support@phased.io</a></p>

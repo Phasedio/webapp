@@ -46,7 +46,7 @@
 
           <label for="priority">Priority</label>
           <select ng-model="newTask.priority" id="priority">
-            <option ng-repeat="priority in Phased.task.PRIORITY_ID" value="{{priority}}">{{Phased.task.PRIORITY[priority]}}</option>
+            <option ng-repeat="priority in Phased.task.PRIORITY_ID" value="{{::priority}}">{{::Phased.task.PRIORITY[priority]}}</option>
           </select>
 
           <label for="deadline">Deadline</label>
