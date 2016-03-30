@@ -7,7 +7,7 @@ angular.module('webappApp')
 
     $scope.phased = Phased;
     $scope.team = Phased.team;
-    $scope.assignments = Phased.assignments;
+    $scope.assignments = Phased.get.tasks;
     $scope.archive = Phased.archive;
     $scope.taskInfo = {}; // Task information for the description area
     $scope.today = new Date().getTime(); // min date for deadline datepicker
@@ -68,8 +68,9 @@ angular.module('webappApp')
       //     //$location.path("/tasks")
       //   }
       // }
-      if(Phased.SET_UP){
-        $scope.taskInfo = Phased.team.projects[$routeParams.project].columns[$routeParams.column].cards[$routeParams.card].tasks[$routeParams.taskID];
+      if(Phased.SET_UP) {
+        // $scope.taskInfo = Phased.team.projects[$routeParams.project].columns[$routeParams.column].cards[$routeParams.card].tasks[$routeParams.taskID];
+        $scope.taskInfo = Phased.get.tasks[$routeParams.taskID]; // easy / lite syntax (same object reference)
         getStatuses($scope.taskInfo);
       }
 
@@ -159,7 +160,7 @@ angular.module('webappApp')
 
     // Edit assigned user
     $scope.taskEditAssigned = function(taskObj, userID) {
-      Phased.editTaskAssignee(taskObj, userID);
+      Phased.setTaskAssignee(taskObj, userID);
     }
     // Edits date of deadline or clears it
     $scope.taskEditDate = function(taskID, date) {
