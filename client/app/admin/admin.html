@@ -33,7 +33,7 @@
           <tbody>
   					<tr class="task" ng-repeat="member in team.members" >
   						<td>
-  							{{member.name}}
+  							{{::member.name}}
   						</td>
               <td>
                 {{Phased.ROLE[member.role]}}
@@ -42,9 +42,11 @@
 
   							<select
   								ng-change="changeRole(member, '{{member.role}}')"
-  								ng-model="member.role">
-                  <option  value="0"></option>
-                  <option ng-repeat="role in Phased.ROLE_ID" value="{{role}}">{{Phased.ROLE[role]}}</option>
+  								ng-model="member.role"
+  								ng-options="role as Phased.ROLE[role] for role in Phased.ROLE_ID"
+  								>
+                  <!-- <option value="0"></option>
+                  <option ng-repeat="role in Phased.ROLE_ID" value="{{role}}">{{Phased.ROLE[role]}}</option> -->
   							</select>
   						</td>
               <td>

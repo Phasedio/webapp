@@ -22,7 +22,7 @@
 								<div class="panel-heading">Slack</div>
 								<div class="panel-body">
 									<div ng-if="Phased.team.slack">
-										<p>Team <strong>{{Phased.team.slack.teamName}}</strong> linked.</p>
+										<p>Team <strong>{{::Phased.team.slack.teamName}}</strong> linked.</p>
 									</div>
 									<!-- add to slack button -->
 									<div ng-if="!Phased.team.slack">
@@ -46,7 +46,7 @@
 									<h3 ng-if="Phased.team.repos">Linked Repositories:</h3>
 									<ul>
 										<li ng-repeat="repo in Phased.team.repos">
-											<p><a ng-href="{{repo.url}}">{{repo.fullName}}</a> registered at {{repo.hook.created_at | date : 'short'}} <br/>
+											<p><a ng-href="{{::repo.url}}">{{::repo.fullName}}</a> registered at {{::repo.hook.created_at | date : 'short'}} <br/>
 											<a href="#" ng-click="toggleGHHookActive(repo.hook, repo.id)"><span ng-if="repo.hook.active">Deactivate</span><span ng-if="!repo.hook.active">Activate</span></a> &middot; <a href="#" ng-click="deleteGHHook(repo.hook, repo.id)">Unlink</a></p>
 										</li>
 									</ul>
@@ -79,7 +79,7 @@
 				<h4>Repos</h4>
 				<ul>
 					<li ng-repeat="repo in github.repos" ng-click="stageGHRepo(repo)" ng-class="{disabled: Phased.team.repos[repo.id]}">
-						<span>{{repo.name}}</span>
+						<span>{{::repo.name}}</span>
 					</li>
 				</ul>
 			</div>

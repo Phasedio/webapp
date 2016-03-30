@@ -19,9 +19,9 @@
   			</thead>
   			<tbody>
   				<tr ng-repeat="item in team.categorySelect">
-  					<td>{{item.name}}</td>
-  					<td><div class="feed-cat-color" style="background:{{item.color}}"></td>
-  					<td>{{$parent.team.categoryObj[item.key].created | amDateFormat:'MM/DD/YY'}}</td>
+  					<td>{{::item.name}}</td>
+  					<td><div class="feed-cat-color" style="background:{{::item.color}}"></td>
+  					<td>{{::$parent.team.categoryObj[item.key].created | amDateFormat:'MM/DD/YY'}}</td>
   				</tr>
   			</tbody>
   		</table>
