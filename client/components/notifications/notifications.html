@@ -1,37 +1,14 @@
-<!-- <div ng-controller="NotifCtrl">
-	<a
-		ng-click="togglePane()"
-		class="toggleNotifBtn"
-		ng-class="{ hasUnread : hasUnread() }"
-		>
-			<span class="fa-stack fa-lg">
-			  <i class="fa fa-square fa-stack-2x"></i>
-			  <i class="fa fa-bell-o fa-stack-1x " style="color:#1e1e24"></i>
-			</span>
-	</a>
-	<div ng-show="showNotifs" class="notifPane">
-		<ul>
-			<li ng-repeat="notif in notifications.stream | orderObjectBy : 'time' : true | limitTo : 10" ng-class="{unread : !notif.read}" class="notif {{notif.type}}">
-				<h5>{{notif.title}} <small>{{notif.time | date : 'short'}}</small></h5>
-				<p>{{notif.body}}</p>
-			</li>
-		</ul>
-	</div>
-</div> -->
-
 <div ng-controller="NotifCtrl" class="dropdown toggleNotifBtn " ng-class="{ hasUnread : hasUnread() }">
 	<button id="dLabel" type="button" ng-click="togglePane()" class="btn btn-transparent no-padding" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 		<i class="fa fa-bell-o fa-lg"></i>
 	</button>
 	<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dLabel">
-		<!-- <li><a href="#">Switch Team</a></li>
-		<li><a href="#">Logout</a></li> -->
 		<li ng-repeat="notif in notifications.stream | orderObjectBy : 'time' : true | limitTo : 10" ng-class="{unread : !notif.read}" class="notif {{notif.type}}">
 			<a href="#">
-				<h5>{{notif.title}}</h5>
-				<p>{{notif.body}}</p>
+				<h5>{{::notif.title}}</h5>
+				<p>{{::notif.body}}</p>
 				<p>
-					<small>{{notif.time | date : 'short'}}</small>
+					<small>{{::notif.time | date : 'short'}}</small>
 				</p>
 			</a>
 
