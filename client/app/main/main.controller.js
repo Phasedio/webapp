@@ -29,7 +29,7 @@ angular.module('webappApp')
       } else if (Phased.viewType == 'canceled') {
         $location.path('/switchteam');
       }
-      $scope.canAddMembers();
+      // $scope.canAddMembers();
     }
     $scope.$on('Phased:PaymentInfo', checkTeam);
     checkTeam();
