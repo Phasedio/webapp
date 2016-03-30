@@ -185,7 +185,7 @@ exports.cleanNotifications = function(req, res) {
 		var notifAddr = 'notif/' + team + '/' + user;
 		FBRef.child(notifAddr)
 			.orderByChild('time')
-			.startAt(timestamp)
+			.endAt(timestamp)
 			.once('value', function(data){
 				// 3. remove read notifs
 				var notifs = data.val();
