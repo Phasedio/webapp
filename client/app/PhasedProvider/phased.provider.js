@@ -118,6 +118,7 @@ angular.module('webappApp')
       	LIVE : 'https://app.phased.io/',
       	DEV : 'http://93aa8d5a.ngrok.io/'
       },
+      STATUS_LIMIT = 30, // limit to how many statuses to load
       NOTIF_LIMIT = 30; // limit to how many notifications to keep in memory
 
 
@@ -641,21 +642,42 @@ angular.module('webappApp')
     *
     */
     var initializeTeam = function() {
-      FBRef.child('team/' + PhasedProvider.team.uid).once('value', function(snap) {
-        var data = snap.val();
+    	var teamID = PhasedProvider.team.uid,
+    		teamAddr = 'team/' + teamID,
+    		simpleProps = ['name', 'members', 'category', 'repos', 'slack', 'billing'];
 
-        PhasedProvider.team.name = data.name;
-        PhasedProvider.team.members = data.members;
-        PhasedProvider.team.teamLength = Object.keys(data.members).length;
-        PhasedProvider.team.statuses = data.statuses || []; // need to do this here bc FB doesn't store empty vals
-        PhasedProvider.team.projects = data.projects || [];
-        PhasedProvider.team.project_archive = data.project_archive;
-        PhasedProvider.team.categoryObj = data.category;
-        PhasedProvider.team.categorySelect = objToArray(data.category); // adds key prop
-        PhasedProvider.team.repos = data.repos;
-        PhasedProvider.team.slack = data.slack;
+    	// due to the current data structure, it's easier to make many small calls
+    	// than one big call (thanks to statuses being at the same root as name, repos, etc)
+    	for (var i in simpleProps) {
+    		(function getSimpleProp(prop) {
+    			FBRef.child(teamAddr + '/' + prop).once('value', function(snap){
+    				var data = snap.val();
+    				PhasedProvider.team[prop] = data;
 
-        // set up references in .get[objectName] to their respective objects
+    				if (prop == 'members') {
+    					PhasedProvider.team.teamLength = Object.keys(data).length;
+    					// get profile details for team members
+			        for (var id in PhasedProvider.team.members) {
+			          initializeMember(id);
+			        }
+						} else if (prop == 'category') {
+							delete PhasedProvider.team.category; // not actually using that key
+							PhasedProvider.team.categoryObj = data;
+							PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
+    				} else if (prop == 'billing') {
+			        checkPlanStatus(data.stripeid, data.subid);
+    				}
+    			});
+    		})(simpleProps[i]);
+    	}
+
+    	// get projects
+    	FBRef.child(teamAddr + '/projects').once('value', function(snap) {
+    		var data = snap.val();
+    		PhasedProvider.team.projects = data || [];
+    		if (!data) return;
+
+    		// set up references in .get[objectName] to their respective objects
         // this allows us to have an unordered collection of, eg, all tasks, to gather data
         // (this is similar to how .assignments.all used to work)
         for (var i in PhasedProvider.team.projects) {
@@ -671,24 +693,23 @@ angular.module('webappApp')
             PhasedProvider.get.tasks[j] = PhasedProvider.get.cards[i].tasks[j];
         }
 
-        // statuses are all in
-        doAfterStatuses();
-
         // if we're only gathering the project data once, broadcast that it's in
         if (!WATCH_PROJECTS) {
         	doAfterProjects();
         }
+    	});
 
-        // get profile details for team members
-        for (var id in PhasedProvider.team.members) {
-          initializeMember(id);
-        }
+			// get statuses
+      FBRef.child(teamAddr + '/statuses')
+      .limitToLast(STATUS_LIMIT)
+      .once('value', function(snap) {
+        var data = snap.val();
 
+        PhasedProvider.team.statuses = data || []; // need to do this here bc FB doesn't store empty vals
+        // statuses are all in
+        doAfterStatuses();
         // monitor team for changes
         watchTeam();
-
-        // get billing info
-        checkPlanStatus(data.billing.stripeid, data.billing.subid);
       });
     }
 
@@ -856,7 +877,8 @@ angular.module('webappApp')
     */
     var watchTeam = function() {
       var teamKey = 'team/' + PhasedProvider.team.uid,
-        cb = ''; // set to callback for each FBRef.on()
+        cb = '', // set to callback for each FBRef.on()
+        now = new Date().getTime();
 
       // name
       cb = FBRef.child(teamKey + '/name').on('value', function(snap){
@@ -872,7 +894,9 @@ angular.module('webappApp')
 
       // statuses
       // adds the status if it's not already there
-      cb = FBRef.child(teamKey + '/statuses').on('child_added', function(snap){
+      cb = FBRef.child(teamKey + '/statuses')
+      .orderByChild('time').startAt(now)
+      .on('child_added', function(snap){
         var key = snap.key();
         if (!(key in PhasedProvider.team.statuses))
           PhasedProvider.team.statuses[key] = snap.val();
@@ -887,7 +911,9 @@ angular.module('webappApp')
       });
 
       // update status on change
-      cb = FBRef.child(teamKey + '/statuses').on('child_changed', function(snap){
+      cb = FBRef.child(teamKey + '/statuses')
+      .limitToLast(STATUS_LIMIT)
+      .on('child_changed', function(snap) {
         var key = snap.key();
         PhasedProvider.team.statuses[key] = snap.val();
         $rootScope.$broadcast('Phased:changedStatus');
