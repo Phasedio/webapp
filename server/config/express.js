@@ -70,7 +70,11 @@ module.exports = function(app) {
   });
 
   // configure prod and dev services
-  if ('production' === env) {
+
+  /*
+  ** PROD OR TESTING SESSIONS
+  */
+  if ('production' === env || 'test' === env) {
   	// configure session
 	  // see https://github.com/expressjs/session
 	  var expressSessionOpts = {
@@ -81,13 +85,21 @@ module.exports = function(app) {
 	  	saveUninitialized : false // not sure if this should be false or true.
 	  };
 	  app.use(session(expressSessionOpts));
+  }
 
-    app.use(favicon(path.join(config.root, 'public', 'favicon.ico')));
-    app.use(express.static(path.join(config.root, 'public')));
-    app.set('appPath', path.join(config.root, 'public'));
+  /*
+  ** PROD
+  */
+  if ('production' === env) {
+    app.use(favicon(path.join(config.root, 'client', 'favicon.ico')));
+    app.use(express.static(path.join(config.root, 'client')));
+    app.set('appPath', path.join(config.root, 'client'));
     app.use(morgan('dev'));
   }
 
+  /*
+  ** DEV
+  */
   if ('development' === env || 'test' === env) {
     app.use(require('connect-livereload')());
     app.use(express.static(path.join(config.root, '.tmp')));

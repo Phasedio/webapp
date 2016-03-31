@@ -9,7 +9,7 @@ var path = require('path');
 var config = require('./config/environment');
 
 module.exports = function(app) {
-	if (config.env == 'production') {
+	if (config.env == 'production' || config.env == 'test') {
 		// save authenticated user to session if present
 		// use with req.session.user.uid
 		// NB: This is from the FB JWT, and so could be a mapped
@@ -41,7 +41,8 @@ module.exports = function(app) {
   app.use('/api/notif', require('./api/notification'));
   app.use('/api/notifs', require('./api/notification'));
 
-  if (config.env == 'production') {
+  if (config.env == 'production' || config.env == 'test') {
+  	console.log('API integration routes open')
 	  app.use('/api/slack', require('./api/slack'));
 	  app.use('/api/hooks/github', require('./api/hooks/github'));
 	  app.use('/api/hooks/google', require('./api/hooks/google'));
