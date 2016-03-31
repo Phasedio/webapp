@@ -6,10 +6,11 @@ var moment = require('moment');
 
 var Firebase = require("firebase");
 var FBRef = require('../../components/phasedFBRef').getRef();
+var Phased = require('../../components/phased');
 
 // tokens to confirm our hit is coming from slack
 var slackTokens = {
-	update : 'N7etE1hdGQKZ2rHR4hWOPA2N',
+	update : 'fjhbejgFdNO3q2Av1h2wx4cH',
 	task : 'IvbJXqmXcMrH2c3vveEEVdoK',
 	tell : 'QIFh8mSnSIrn905VbcWABRm3',
 	link : 'nxCvd9z7Imj2FNdoscrOktM3',
@@ -353,7 +354,9 @@ var updateStatus = function(userID, teamID, statusText) {
 		var newStatus = {
 				name: statusText,
 				time: new Date().getTime(),
-				user: userID
+				user: userID,
+				type: Phased.meta.status.TYPE_ID.UPDATE,
+				source: Phased.meta.status.SOURCE_ID.SLACK
 			}
 
 		// 2A) push status to team
