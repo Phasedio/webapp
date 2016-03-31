@@ -113,6 +113,7 @@ angular.module('webappApp')
       membersRetrieved = 0, // incremented with each member's profile gathered
 
       // INTERNAL "CONSTANTS"
+      BOUNCE_ROUTES = {}, // routes for different view types to bounce to
       WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints (with trailing slash)
       	LIVE : 'https://app.phased.io/',
       	DEV : 'http://93aa8d5a.ngrok.io/'
@@ -375,6 +376,16 @@ angular.module('webappApp')
     this.setWatchIntegrations = function(watch) {
       if (watch)
         WATCH_INTEGRATIONS = true;
+    }
+
+    // sets BOUNCE_ROUTES for different viewTypes
+    // pass FALSE not to bounce for team pay statuses
+    // otherwise, pass an object so that
+    // BOUNCE_ROUTES[viewType] == '/routeForThatView'
+    // eg,
+    // BOUNCE_ROUTES['problem'] == '/team-expired'
+    this.setBounceRoutes = function(newRoutes) {
+  		BOUNCE_ROUTES = newRoutes;
     }
 
 
@@ -787,29 +798,28 @@ angular.module('webappApp')
             }
 
             if (data.status == "active") {
-
               //Show thing for active
               PhasedProvider.viewType = 'active';
 
             } else if (data.status == "trialing") {
               //Show thing for problem with account
               PhasedProvider.viewType = 'trialing';
-
             } else if (data.status == 'past_due' || data.status == 'unpaid') {
               //Show thing for problem with account
               PhasedProvider.viewType = 'problem';
-
             } else if (data.status == 'canceled') {
               //Show thing for problem with canceled
               PhasedProvider.viewType = 'canceled';
-
             }
+
+            _maybeBounceTeam()
             $rootScope.$broadcast('Phased:PaymentInfo');
           }, function(data){
             console.log(data);
           });
       } else {
         PhasedProvider.viewType = 'notPaid';
+        _maybeBounceTeam();
       }
     }
 
@@ -942,7 +952,7 @@ angular.module('webappApp')
 
         // update teamLength
         PhasedProvider.team.teamLength = Object.keys(PhasedProvider.team.members).length;
-        
+
         $rootScope.$broadcast('Phased:memberChanged');
       });
 
@@ -2475,6 +2485,22 @@ angular.module('webappApp')
     }
 
     /**
+    *
+    *	bounces a user to the respective route depending on their
+    *	team's pay status
+    *
+    */
+    var _maybeBounceTeam = function() {
+    	if (
+	    		BOUNCE_ROUTES && // we're using bounce routes
+	    		PhasedProvider.viewType in BOUNCE_ROUTES && // the view type requires a bounce route
+	    		$location.path() != BOUNCE_ROUTES[PhasedProvider.viewType] // we're not already at that route
+    		)
+    		$location.path(BOUNCE_ROUTES[PhasedProvider.viewType]);
+    }
+
+
+    /**
 
       Data functions
       Things like adding statuses, assignments, projects, etc.
@@ -3333,6 +3359,15 @@ angular.module('webappApp')
     PhasedProvider.setWatchNotifications(true);
     PhasedProvider.setWatchPresence(true);
     PhasedProvider.setWatchIntegrations(true);
+
+    // pass an object so that
+    // BOUNCE_ROUTES[viewType] == '/routeForThatView'
+    // eg,
+    // BOUNCE_ROUTES['problem'] == '/team-expired'
+    PhasedProvider.setBounceRoutes({
+    	problem : '/team-expired',
+    	canceled : '/switchteam'
+    });
 
     // configure phasedProvider as a callback to AuthProvider
     AuthProvider.setDoAfterAuth(PhasedProvider.init);

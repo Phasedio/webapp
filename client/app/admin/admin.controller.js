@@ -13,23 +13,6 @@ angular.module('webappApp')
     // bounces accordingly
     Phased.maybeBounceUser();
 
-    // bounce users if team has problems
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
-      var teamCheck = Phased.viewType;
-      if (teamCheck == 'problem'){
-        $location.path('/team-expired');
-      }else if (teamCheck == 'canceled') {
-        $location.path('/switchteam');
-      }
-
-    }
-    checkTeam();
-
     $scope.changeRole = function(member, oldRole) {
       console.log(member,oldRole);
       Phased.changeMemberRole(member.uid, member.role, parseInt(oldRole), function failure(code, message){

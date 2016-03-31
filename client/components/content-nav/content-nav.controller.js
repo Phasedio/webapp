@@ -44,16 +44,6 @@ angular.module('webappApp')
     }
     showAdminLink(); // in case of moving within app and not updating profile
 
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
-      $scope.isTrial = (Phased.viewType == "trialing");
-    }
-    $scope.$on('Phased:PaymentInfo', checkTeam);
-    checkTeam();
     $scope.isCollapsed = true;
 
     // function isActive(){

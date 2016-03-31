@@ -172,25 +172,6 @@ return function(items, field, reverse) {
     $scope.calendarList = false; // where calendars will be held
     var ref = new Firebase(FURL);
 
-    // bounce users if team has problems
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
-      var teamCheck = Phased.viewType;
-      console.log(teamCheck);
-      if (teamCheck == 'problem'){
-        $location.path('/team-expired');
-      }else if (teamCheck == 'canceled') {
-        $location.path('/switchteam');
-      }
-
-    }
-    $scope.$on('Phased:PaymentInfo', checkTeam);
-    checkTeam();
-
     // fills profile for the selected user
     // must be done AFTER Auth and Phased are set up
     // in case the user is logged in with another service

@@ -7,8 +7,6 @@ angular.module('webappApp')
     $scope.Phased = Phased;
     $scope.creatingTeam = false;
 
-
-
     // logout
     $scope.logout = function(){
       console.log('logging you out');

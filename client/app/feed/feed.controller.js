@@ -130,26 +130,6 @@ angular.module('webappApp')
 
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
-
-    // bounce users if team has problems
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
-      $scope.countActiveTasks = countActiveTasks();
-      var teamCheck = Phased.viewType;
-      if (teamCheck == 'problem'){
-        $location.path('/team-expired');
-      }else if (teamCheck == 'canceled') {
-        $location.path('/switchteam');
-      }
-
-    }
-    $scope.$on('Phased:PaymentInfo', checkTeam);
-    checkTeam();
-
     $scope.$on('Phased:changedStatus', function(){
       if ($scope.statusComment) {
         console.log($scope.statusComment);

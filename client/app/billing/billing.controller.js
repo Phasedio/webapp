@@ -18,40 +18,7 @@ angular.module('webappApp')
   	// };
 
     // bounce users without Admin or Owner permissions
-    var checkRole = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkRole);
-        return;
-      }
-
-      var myRole = Phased.team.members[Auth.user.uid].role;
-      if (myRole != Phased.ROLE_ID.ADMIN && myRole != Phased.ROLE_ID.OWNER)
-        $location.path('/');
-    }
-    checkRole();
-
-    $scope.$on('Phased:memberChanged', checkRole);
-
-
-    // bounce users if team has problems
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
-      var teamCheck = Phased.viewType;
-      console.log(teamCheck);
-      if (teamCheck == 'problem'){
-        $location.path('/team-expired');
-      }else if (teamCheck == 'canceled') {
-        $location.path('/switchteam');
-      }
-
-    }
-    $scope.$on('Phased:PaymentInfo', checkTeam);
-    checkTeam();
+    Phased.maybeBounceUser();
 
 
     $scope.removeTeam = function () {

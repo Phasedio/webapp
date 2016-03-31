@@ -16,23 +16,7 @@ angular.module('webappApp')
     //   }
     // };
     //
-    // // bounce users if team has problems
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
 
-      if (Phased.viewType == 'problem') {
-        $location.path('/team-expired');
-      } else if (Phased.viewType == 'canceled') {
-        $location.path('/switchteam');
-      }
-      // $scope.canAddMembers();
-    }
-    $scope.$on('Phased:PaymentInfo', checkTeam);
-    checkTeam();
     //
     // /**
     // *

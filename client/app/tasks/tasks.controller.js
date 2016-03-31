@@ -176,23 +176,6 @@ angular.module('webappApp')
 
     $('.dropdown-toggle').dropdown();
 
-    // bounce users if team has problems
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
-      var teamCheck = Phased.viewType;
-      if (teamCheck == 'problem'){
-        $location.path('/team-expired');
-      }else if (teamCheck == 'canceled') {
-        $location.path('/switchteam');
-      }
-    }
-    $scope.$on('Phased:PaymentInfo', checkTeam);
-    checkTeam();
-
     $scope.activeAssignmentID = Phased.user.uid;
 
 
