@@ -1,6 +1,7 @@
 'use strict';
 var config = require('../../../config/environment');
 var FBRef = require('../../../components/phasedFBRef').getRef();
+var Phased = require('../../../components/phased');
 
 var GHClientID = '84542af1ca986f17bd26';
 var GHClientSecret = '8f6d49d7be3e358ec229c97967055ce9551e122d';
@@ -99,7 +100,9 @@ exports.repoPush = function(req, res) {
 		var newStatus = {
 			name: statusText,
 			time: pushEvent.pushed_at || new Date().getTime(),
-			user: thePusher // ID or false
+			user: thePusher, // ID or false
+			type: Phased.meta.status.TYPE.REPO_PUSH,
+			source: Phased.meta.status.SOURCE.GITHUB
 		};
 
 		console.log('updating status: ' + statusText);

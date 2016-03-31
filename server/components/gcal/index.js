@@ -63,7 +63,8 @@ var _ = require('lodash');
 
 // Firebase business
 // ====
-var FBRef = require('../../components/phasedFBRef').getRef(); 
+var FBRef = require('../../components/phasedFBRef').getRef();
+var Phased = require('../../components/phased');
 
 // Google API business 
 // ====
@@ -392,7 +393,9 @@ var doEventJob = function(event, userID, teamID, jobKeys) {
 	var status = {
 		name : 'Event: ' + event.summary,
 		time : new Date().getTime(),
-		user : userID
+		user : userID,
+		type : Phased.meta.status.TYPE.CALENDAR_EVENT,
+		source: Phased.meta.status.SOURCE.GOOGLE_CALENDAR
 	};
 
 	FBRef.child('team/' + teamID + '/statuses').push(status, function(err) {
@@ -449,7 +452,7 @@ var registerWebhookForCalendar = function(_oa2Client, calID, calFBKey, userID, t
 		}
 	}, function(err, res) {
 		if (err)
-			console.log('error registering webhook:', err.message, token);
+			console.log('error registering webhook:', err.message);
 	});
 }
 

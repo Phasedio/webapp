@@ -53,4 +53,4 @@ FBRef.onAuth(function (authData) {
 			}
 		});
 	}
-})
+});
