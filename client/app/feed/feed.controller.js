@@ -122,6 +122,9 @@ angular.module('webappApp')
     $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
     $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
+    $scope.meta = {
+    	status : Phased.status
+    } 
     $scope.user = Phased.user;
     $scope.deleteHolder = '';
     $scope.editHolder = '';

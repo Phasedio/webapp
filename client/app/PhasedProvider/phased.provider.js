@@ -193,6 +193,14 @@ angular.module('webappApp')
           HISTORY_ID : {}
         },
 
+        // STATUS
+        status : {
+        	SOURCE : {},
+        	SOURCE_ID : {},
+        	TYPE : {},
+        	TYPE_ID : {}
+        },
+
         // ROLE
         ROLE : {},
         ROLE_ID : {},
@@ -601,6 +609,12 @@ angular.module('webappApp')
           HISTORY : data.card.HISTORY,
           HISTORY_ID : data.card.HISTORY_ID
         };
+
+        // STATUS
+        PhasedProvider.status.SOURCE = data.status.SOURCE;
+        PhasedProvider.status.SOURCE_ID = data.status.SOURCE_ID;
+        PhasedProvider.status.TYPE = data.status.TYPE;
+        PhasedProvider.status.TYPE_ID = data.status.TYPE_ID;
 
         // ROLE
         PhasedProvider.ROLE = data.ROLE;
@@ -2005,7 +2019,12 @@ angular.module('webappApp')
         }
       };
 
-      return cleanObjectShallow(newStatus, config);
+      var newStatus = cleanObjectShallow(newStatus, config);
+
+      newStatus.type = PhasedProvider.status.TYPE_ID.UPDATE;
+      newStatus.source = PhasedProvider.status.SOURCE_ID.WEBAPP;
+
+      return newStatus;
     }
 
     // remove an item from an array
@@ -2549,11 +2568,10 @@ angular.module('webappApp')
       });
 
       // if the status had a task attached to it then submit the status id to the task
-      if(newStatus.task){
+      if (newStatus.task) {
         console.log('I have a task');
         var postID = newStatusRef.key();
         teamRef.child('projects/' + newStatus.task.project +'/columns/'+newStatus.task.column +'/cards/'+ newStatus.task.card +'/tasks/'+newStatus.task.id+'/statuses').push(postID);
-
       }
 
       //Send status to server for URL parsing.
@@ -2569,7 +2587,6 @@ angular.module('webappApp')
             teamRef.child('statuses').child(statusRef).child('attachment').set(data);
           }
         });
-
     }
 
 

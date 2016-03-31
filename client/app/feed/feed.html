@@ -32,7 +32,11 @@
 					</div>
 					<div class="feed__container">
 
-						<div class="member__activity " ng-show="filterFeed == 'recent'" ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 ">
+						<div
+							ng-show="filterFeed == 'recent'" 
+							ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 "
+							class="member__activity type-{{meta.status.TYPE[item.type]}} source-{{meta.status.SOURCE[item.source]}}"
+							>
 							<div class="activity__person clearfix">
 								<img ng-src="{{::$parent.team.members[item.user].pic}}" alt="{{::$parent.team.members[item.user].name}}" />
 								<div class="activity__info">
