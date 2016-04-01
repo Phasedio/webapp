@@ -145,7 +145,7 @@ angular.module('webappApp')
 
     $scope.$on('Phased:history', function() {
       $scope.countActiveTasks = countActiveTasks();
-      $scope.$apply();
+      // $scope.$digest(); // instead of apply; only affects current scope instead of rootscope
     });
 
     $scope.addTask = function(update) {
@@ -271,7 +271,7 @@ angular.module('webappApp')
           //var ref = new Firebase(s).set(null);
           ref.child(locate+"/"+s[0]).remove();
 
-          $scope.$apply();
+          $scope.$digest();
         });
       }
       //rm from FB

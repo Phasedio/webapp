@@ -68,39 +68,6 @@ angular.module('webappApp')
         }
       });
   };
-  $scope.checkPlanStatus = function(teamData){
-    console.log('wohohohohoo');
-    var team = teamData;
-    console.log(team);
-    if(team.billing){
-      $scope.billinInfo = team.billing;
-      console.log('wohohohohoo');
-      $http.post('./api/pays/find',{customer:team.billing.stripeid}).success(function(data){
-        console.log(data);
-        if(data.err){
-          console.log(data.err);
-        }
-        if(data.status == "active"){
-          //Show thing for active
-          $scope.viewType = 'active';
-
-        }else if(data.status == 'past_due' || data.status == 'unpaid'){
-          //Show thing for problem with account
-          $scope.viewType = 'problem';
-        }else if(data.status == 'canceled'){
-          //Show thing for problem with canceled
-          $scope.viewType = 'notPaid';
-        }
-        console.log($scope.viewType);
-        //$scope.$apply();
-      }).error(function(data){
-        console.log(data);
-      });
-    }else{
-      $scope.viewType = 'notPaid';
-      $scope.$apply();
-    }
-  }
 
   // $scope.init = function(){
   //   ref.child('profile').child(Auth.user.uid).once('value',function(data){

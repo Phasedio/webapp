@@ -30,9 +30,4 @@ angular.module('webappApp')
       Phased.switchTeam(id);
       $location.path("/feed");
     }
-    $scope.$on('Phased:meta', function(){$scope.Phased = Phased; $scope.$apply();});
-    $scope.$on('Phased:setup', function(){ $scope.Phased = Phased; $scope.$apply();});
-
-
-
   });

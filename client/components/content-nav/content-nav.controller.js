@@ -46,18 +46,6 @@ angular.module('webappApp')
 
     $scope.isCollapsed = true;
 
-    // function isActive(){
-    //   var r = $location.path();
-    //   routes
-    //   if (routes[r]) {
-    //     $scope.pageTitle = routes[r];
-    //   }else{
-    //     $scope.pageTitle = '';
-    //   }
-    //
-    // }
-    // isActive();
-    // 
     $scope.logout = function(){
       console.log('logging you out');
       Auth.logout();
@@ -66,12 +54,4 @@ angular.module('webappApp')
     $scope.switchTeams = function(){
       $location.path('/switchteam');
     }
-
-    //Not a fan of this!!!
-    window.setInterval(function () {
-    $scope.team = Auth.currentTeam;
-    $scope.$apply();
-    //console.log('yo');
-    }, 500);
-
   });

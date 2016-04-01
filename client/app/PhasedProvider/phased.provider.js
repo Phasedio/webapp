@@ -446,6 +446,8 @@ angular.module('webappApp')
       }
       PHASED_SET_UP = true;
       PhasedProvider.SET_UP = true;
+      console.log('phased setup');
+      $rootScope.$apply();
 			$rootScope.$broadcast('Phased:setup');
     }
 

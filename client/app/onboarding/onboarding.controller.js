@@ -9,9 +9,6 @@ angular.module('webappApp')
     $scope.creatingTeam = false;
     $scope.showThis = 'addteam';
 
-
-    $scope.$on('Phased:meta', function(){$scope.Phased = Phased; $scope.$apply();});
-    $scope.$on('Phased:setup', function(){ $scope.Phased = Phased; $scope.$apply();});
     console.log(Phased.user.email);
     console.log(Phased.user.name);
     console.log(Phased.team.uid);
@@ -25,7 +22,7 @@ angular.module('webappApp')
 
         $scope.showThis = 'addMembers';
         $scope.creatingTeam = false;
-        $scope.$apply();
+        $scope.$digest();
         // $('#addTeamModal').modal('hide');
         // toaster.pop('success', 'Success', 'Welcome to Phased, ' + teamName);
       }, function error(teamName) {
