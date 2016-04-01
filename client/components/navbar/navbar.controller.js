@@ -54,11 +54,4 @@ angular.module('webappApp')
       $location.path('/login');
     }
 
-    //Not a fan of this!!!
-    window.setInterval(function () {
-    $scope.team = Auth.currentTeam;
-    $scope.$apply();
-    //console.log('yo');
-    }, 500);
-
   });
