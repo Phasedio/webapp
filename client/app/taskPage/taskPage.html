@@ -46,7 +46,7 @@
 
             </div>
 
-            <label for="">Task discription</label>
+            <label for="">Task description</label>
             <textarea class="task__title" ng-model="taskInfo.description" ng-blur="taskEditDesc(taskInfo.key,taskInfo.description)" placeholder="Enter description..."></textarea>
 
             <p>Assigned by: {{team.members[taskInfo.assigned_by].name}}</p>
@@ -93,10 +93,10 @@
 
           </div>
           <!-- STATUS HISTORY -->
-          <!-- <div class="" ng-if="taskInfo.statues">
+          <div class="" ng-if="taskStatuses">
             <h4>Status History</h4>
 
-            <div class="member__activity " ng-repeat="item in taskInfo.statues | orderBy: 'time'">
+            <div class="member__activity " ng-repeat="item in taskStatuses | orderBy: 'time'">
               <div class="activity__person">
                 <img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
                 <div class="activity__info">
@@ -120,7 +120,7 @@
               </div>
 
             </div>
-          </div> -->
+          </div>
 
           <!-- TASK HISTORY -->
           <!-- <div class="ph-card" ng-if="taskInfo.history">

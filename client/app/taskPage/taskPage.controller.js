@@ -33,59 +33,29 @@ angular.module('webappApp')
       },
       FBRef = new Firebase(FURL);
 
-    function init(){
-      // get route peram and try to assign it
-      console.log($scope.assignments);
-      //check if phased is set up
-      // if(Phased.assignments){
-      //   if($routeParams.taskID && Phased.assignments.all[$routeParams.taskID]){
-      //     $scope.taskInfo = Phased.assignments.all[$routeParams.taskID];
-      //     console.log($scope.taskInfo);
-      //
-      //   }else{
-      //     //fail - send user to tasks page
-      //     //alert("failed")
-      //     //$location.path("/tasks")
-      //   }
-      // }
-      if(Phased.SET_UP) {
-        // $scope.taskInfo = Phased.team.projects[$routeParams.project].columns[$routeParams.column].cards[$routeParams.card].tasks[$routeParams.taskID];
+    function init() {
+      // get route param and try to assign it
+      if (Phased.PROJECTS_SET_UP) {
         $scope.taskInfo = Phased.get.tasks[$routeParams.taskID]; // easy / lite syntax (same object reference)
         getStatuses($scope.taskInfo);
+      } else {
+				// If this was deep linked to then wait for the provider to get set up
+				$scope.$on('Phased:projectsComplete', init);
       }
-
     }
-
-    // If this was deep linked to then wait for the provider to get set up
-    $scope.$on('Phased:setup', function() {
-
-      // if($routeParams.taskID && Phased.assignments.all[$routeParams.taskID]){
-      //   $scope.taskInfo = Phased.assignments.all[$routeParams.taskID];
-      //   console.log($scope.taskInfo);
-      //
-      // }else{
-      //   //fail - send user to tasks page
-      //   alert("failed")
-      //   //$location.path("/tasks")
-      // }
-      init();
-      $scope.$apply();
-    });
-
-
     init();
 
 
-    //grabs any statues that are on the task
+    //grabs any statuses that are on the task
     function getStatuses(task){
-      $scope.taskInfo.statues = [];
+      $scope.taskStatuses = $scope.taskStatuses || [];
       for (var i in task.statuses) {
         if (task.statuses.hasOwnProperty(i)) {
           console.log(i);
           var item = task.statuses[i];
           FBRef.child('team').child(Phased.user.curTeam).child('statuses').child(item).once('value',function(snap){
             console.log(snap.val());
-            $scope.taskInfo.statues.push(snap.val());
+            $scope.taskStatuses.push(snap.val());
           });
         }
       }
