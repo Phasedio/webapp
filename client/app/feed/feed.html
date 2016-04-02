@@ -6,7 +6,7 @@
 		<div class="container">
 			<div class="row">
 				<div class="hidden-xs col-sm-4 dashboard">
-					<div class="box">
+					<div class="feed__team__name box ">
 						<h3>{{team.name}}</h3>
 					</div>
 					<div class="box feed__members">
@@ -163,8 +163,9 @@
 		            <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
 		          </form>
 		        </div> -->
-						<div class="task__lable box">
+						<div class="task__lable box clearfix">
 							<h3>To-do's</h3>
+							<a href="/tasks">add more</a>
 						</div>
 		        <div class="list-group">
 		          <a href="#" class="list-group-item clearfix" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
