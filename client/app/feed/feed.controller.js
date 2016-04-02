@@ -129,6 +129,7 @@ angular.module('webappApp')
     $scope.deleteHolder = '';
     $scope.editHolder = '';
 
+
     //bootstrap opt-in func;
 
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
@@ -143,7 +144,7 @@ angular.module('webappApp')
     //Print blank lines in for task area
     $scope.taskTable = [1,2,3,4,5];
 
-    $scope.$on('Phased:history', function() {
+    $scope.$on('Phased:setup', function() {
       $scope.countActiveTasks = countActiveTasks();
       // $scope.$digest(); // instead of apply; only affects current scope instead of rootscope
     });
@@ -486,5 +487,6 @@ angular.module('webappApp')
 
       return count
     }
+    //$scope.countActiveTasks = countActiveTasks();
 
   });
