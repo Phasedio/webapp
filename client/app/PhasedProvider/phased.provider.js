@@ -48,7 +48,9 @@ angular.module('webappApp')
 			- Phased:membersComplete -- all team members have been loaded
 			- Phased:projectsComplete -- all projects are fully loaded (including col/card/task data)
 			- Phased:statusesComplete -- all statuses are loaded
+			- Phased:newStatus -- a new status is added
 			- Phased:changedStatus -- a status has changed
+			- Phased:deletedStatus -- a status has been deleted
 
 			- Phased:PaymentInfo -- team payment info (and Phased.viewType) has changed
 			- Phased:notification -- the current user has received a notification
@@ -928,7 +930,26 @@ angular.module('webappApp')
       .on('child_changed', function(snap) {
         var key = snap.key();
         PhasedProvider.team.statuses[key] = snap.val();
+
+        $rootScope.$apply();
         $rootScope.$broadcast('Phased:changedStatus');
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/statuses',
+        eventType : 'child_changed',
+        callback : cb
+      });
+
+      // update status on change
+      cb = FBRef.child(teamKey + '/statuses')
+      .limitToLast(STATUS_LIMIT)
+      .on('child_removed', function(snap) {
+        var key = snap.key();
+        delete PhasedProvider.team.statuses[key];
+        
+        $rootScope.$apply();
+        $rootScope.$broadcast('Phased:deletedStatus');
       });
 
       PhasedProvider.team._FBHandlers.push({
