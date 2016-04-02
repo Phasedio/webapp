@@ -111,6 +111,7 @@ angular.module('webappApp')
       req_after_projects = [], // "" for after projects
       req_after_statuses = [], // "" for after statuses
       membersRetrieved = 0, // incremented with each member's profile gathered
+      oldestStatusTime = new Date().getTime(), // date of the oldest status in memory; used for pagination
 
       // INTERNAL "CONSTANTS"
       BOUNCE_ROUTES = {}, // routes for different view types to bounce to
@@ -326,6 +327,9 @@ angular.module('webappApp')
       // NOTIFS
       PhasedProvider.markNotifAsRead = _markNotifAsRead;
       PhasedProvider.markAllNotifsAsRead = _markAllNotifsAsRead;
+
+      // PAGINATED STATUSES FOR USER
+      PhasedProvider.getStatusesPage = _getStatusesPage;
 
       // INTEGRATIONS
       // GITHUB
@@ -708,6 +712,11 @@ angular.module('webappApp')
         var data = snap.val();
 
         PhasedProvider.team.statuses = data || []; // need to do this here bc FB doesn't store empty vals
+        // find oldest status time and save val for pagination
+        for (var i in PhasedProvider.team.statuses) {
+    			if (PhasedProvider.team.statuses[i].time < oldestStatusTime)
+    				oldestStatusTime = PhasedProvider.team.statuses[i].time;
+    		}
         // statuses are all in
         doAfterStatuses();
         // monitor team for changes
@@ -2931,6 +2940,54 @@ angular.module('webappApp')
           });
         }
       });
+    }
+
+    /**
+    *
+    *	gets n statuses for the team, starting at the time of the last status 
+    *	in memory. To be called when a new "page" of statuses needs to be
+    *	loaded in (eg, at the bottom of a lazy-loaded list).
+    *
+    *	1. get time of oldest status
+    *	2. gets n of the team's statuses older than that time
+    *	3. joins with current statuses
+    *
+    *	args: 
+    *		n 	// number of statuses to load (defaults to STATUS_LIMIT)
+    *
+    */
+    var _getStatusesPage = function(n) {
+    	var args = {
+    		n : n
+    	}
+    	registerAfterStatuses(doGetStatusesPage, args);
+    }
+
+    var doGetStatusesPage = function(args) {
+    	console.log('doGetStatusesPage', args, 'since ' + moment(oldestStatusTime).format());
+    	var n = args.n || STATUS_LIMIT;
+
+    	console.log('current statuses', PhasedProvider.team.statuses);
+
+    	// 1. get teams statuses since end time
+    	FBRef.child('team/' + PhasedProvider.team.uid + '/statuses')
+    	.orderByChild('time').endAt(oldestStatusTime).limitToLast(n)
+    	.once('value', function(snap) {
+    		var data = snap.val();
+    		if (!data) return; // not an error if empty: we got all of the statuses requested (there were none)
+
+    		console.log('got statuses', data);
+
+    		// add to our list (no dupes possible)
+    		_.assign(PhasedProvider.team.statuses, data);
+    		
+    		// update oldest status time
+    		for (var i in data) {
+    			if (data[i].time < oldestStatusTime)
+    				oldestStatusTime = data[i].time;
+    		}
+    		console.log('updated statuses', PhasedProvider.team.statuses);
+    	});
     }
 
     /*
