@@ -255,7 +255,7 @@ p{
     font-family: 'open_sansregular';
     //text-transform: uppercase;
     color:$liteBlack;
-    font-size: 20px;
+    font-size: 14px;
     letter-spacing: 0.92px;
     line-height: 15px;
   }
@@ -518,23 +518,21 @@ div[ng-include*="sidebar.html"] {
       color: #fff;
   }
 }
-// .ion{
-//       width: 41.5%;
-//     }
-//     .navItem{
-//       text-align: center;
-//     }
-//   }
-
-//}
 
 
 
-@media (max-width: 969px) {
-  //side navbar-nav
-  [ng-include*="sidebar.html"] {
-  	width: 75px; // match
+
+
+@media (min-width: 992px) {
+  .container{
+    width:1190px;
   }
+  .box{
+    max-width: 496px;
+		margin: 0 auto;
+  }
+}
+
   .sideMenu{
     width: 75px;
     .brand__area{
@@ -565,9 +563,21 @@ div[ng-include*="sidebar.html"] {
   }
 
 
-}
+
 
 @media (min-width: 992px) {
+  .container{
+    width:1190px;
+  }
+
+  .dashboard {
+    float: left;
+    width: 290px;
+  }
+  .content-main {
+    float: left;
+    width: 590px;
+  }
   .box{
     max-width: 496px;
 		margin: 0 auto;

@@ -5,7 +5,12 @@
 
 		<div class="container">
 			<div class="row">
-				<div class="col-xs-12 col-md-6  ">
+				<div class="col-xs-4 dashboard">
+					<div class="box">
+
+					</div>
+				</div>
+				<div class="col-xs-12 col-md-5  content-main">
 					<div class="action__container">
 						<form name="taskForm" ng-submit="addTask(task)" novalidation>
 							<div class="status__compose">
@@ -33,7 +38,7 @@
 					<div class="feed__container">
 
 						<div
-							ng-show="filterFeed == 'recent'" 
+							ng-show="filterFeed == 'recent'"
 							ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 "
 							class="member__activity type-{{meta.status.TYPE[item.type]}} source-{{meta.status.SOURCE[item.source]}}"
 							>
@@ -131,7 +136,7 @@
 					</div>
 
 				</div>
-				<div class="col-md-6" ng-controller="TasksCtrl">
+				<div class="col-md-3 dashboard" ng-controller="TasksCtrl">
 					<div class="task__holder" >
 		        <div class="task__add">
 		          <form id="todo-form" ng-submit="addTodo()">
