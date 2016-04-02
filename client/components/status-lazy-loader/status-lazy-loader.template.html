@@ -1,8 +1,8 @@
 <div
-	class="status-lazy-loader"
-	ng-class="{inView : $inview}"
-	in-view="$inview && testSth()"
+	in-view="$inview && loadMore()"
 	in-view-options="{ debounce: 500 }"
+	class="status-lazy-loader"
+	ng-class="{'in-view' : $inview}"
 >
-	<h3>super fuggin lazy</h3>
+	<p><a href="#" ng-click="goToTop($event)">back to top</a></p>
 </div>
