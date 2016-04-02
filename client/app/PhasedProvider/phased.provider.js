@@ -45,6 +45,7 @@ angular.module('webappApp')
 			- Phased:meta -- all metadata has been loaded
 			- Phased:member -- a single member has been loaded
 			- Phased:memberChanged -- a single member has changed
+			- Phased:teamComplete -- all team metadata is loaded
 			- Phased:membersComplete -- all team members have been loaded
 			- Phased:projectsComplete -- all projects are fully loaded (including col/card/task data)
 			- Phased:statusesComplete -- all statuses are loaded
@@ -93,6 +94,7 @@ angular.module('webappApp')
 
       // FLAGS
       PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
+      PHASED_TEAM_SET_UP = false,
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       PHASED_META_SET_UP = false, // set to true after static meta values are loaded
       PHASED_PROJECTS_SET_UP = false, // set to true after the initial data has been loaded (incl col/card/task)
@@ -108,6 +110,7 @@ angular.module('webappApp')
 
       // ASYNC CALLBACKS
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
+      req_after_team = [],
       req_after_members = [], // filled with operations to complete after members are in
       req_after_meta = [], // filled with operations to complete after meta are in
       req_after_projects = [], // "" for after projects
@@ -452,8 +455,7 @@ angular.module('webappApp')
       }
       PHASED_SET_UP = true;
       PhasedProvider.SET_UP = true;
-      console.log('phased setup');
-      $rootScope.$apply();
+
 			$rootScope.$broadcast('Phased:setup');
     }
 
@@ -464,14 +466,17 @@ angular.module('webappApp')
     *
     */
     var maybeFinalizeSetUp = function() {
-    	if (  !PHASED_SET_UP
-	    		&& PHASED_META_SET_UP
-	    		&& PHASED_MEMBERS_SET_UP
-	    		&& PHASED_PROJECTS_SET_UP
-	    		&& PHASED_STATUSES_SET_UP
-    		) {
-				doAsync();
-    	}
+    	console.log('maybeFinalizeSetUp; members:', PHASED_MEMBERS_SET_UP, ' team:', PHASED_TEAM_SET_UP);
+    	$rootScope.$evalAsync(function(){
+	    	if (  !PHASED_SET_UP
+		    		&& PHASED_META_SET_UP
+		    		&& PHASED_MEMBERS_SET_UP
+		    		&& PHASED_PROJECTS_SET_UP
+		    		&& PHASED_STATUSES_SET_UP
+	    		) {
+	    		doAsync();
+	    	}
+	    });
     }
 
     /**
@@ -496,6 +501,30 @@ angular.module('webappApp')
 			$rootScope.$broadcast('Phased:meta');
       maybeFinalizeSetUp();
     }
+
+    /**
+    *
+    * registerAfterTeam
+    * called after team data is in from server
+    *	(team metadata but not members' individual data)
+    *
+    */
+    var registerAfterTeam = function(callback, args) {
+      if (PHASED_TEAM_SET_UP)
+        callback(args);
+      else
+        req_after_team.push({callback : callback, args : args });
+    }
+
+    var doAfterTeam = function() {
+      for (var i in req_after_team) {
+        req_after_team[i].callback(req_after_team[i].args || undefined);
+      }
+      PHASED_TEAM_SET_UP = true;
+      PhasedProvider.TEAM_SET_UP = true;
+      $rootScope.$broadcast('Phased:teamComplete');
+      maybeFinalizeSetUp(); // this should definitely fail but will cue a digest if needed
+    } 
 
     /**
     *
@@ -652,7 +681,8 @@ angular.module('webappApp')
     var initializeTeam = function() {
     	var teamID = PhasedProvider.team.uid,
     		teamAddr = 'team/' + teamID,
-    		simpleProps = ['name', 'members', 'category', 'repos', 'slack', 'billing'];
+    		simpleProps = ['name', 'members', 'category', 'repos', 'slack', 'billing'],
+    		loaded = [];
 
     	// due to the current data structure, it's easier to make many small calls
     	// than one big call (thanks to statuses being at the same root as name, repos, etc)
@@ -672,8 +702,13 @@ angular.module('webappApp')
 							delete PhasedProvider.team.category; // not actually using that key
 							PhasedProvider.team.categoryObj = data;
 							PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
-    				} else if (prop == 'billing') {
-			        checkPlanStatus(data.stripeid, data.subid);
+    				}
+
+    				// check/broadcast team set up
+    				loaded.push(prop);
+    				if (loaded.length == simpleProps.length) {
+    					// we're all loaded
+    					doAfterTeam();
     				}
     			});
     		})(simpleProps[i]);
