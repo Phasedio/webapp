@@ -12,7 +12,8 @@ angular.module('webappApp', [
   'firebase',
   'angularMoment',
   'ngAnimate',
-  'toaster'
+  'toaster',
+  'angular-inview'
 ])
 .config(function (stripeProvider) {
     stripeProvider.setPublishableKey('pk_live_FPvARdIWeOzOfW8TGqtFd9QN');

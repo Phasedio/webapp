@@ -1,22 +1,22 @@
 'use strict';
 
 angular.module('webappApp')
-.filter('orderObjectBy', function() {
-return function(items, field, reverse) {
-  var filtered = [];
-  for (var i in items) {
-    items[i].key = i;
-    items[i].lastUpdated = items[i].currentStatus.time;
-    filtered.push(items[i]);
-  }
-  filtered.sort(function (a, b) {
-    return (a[field] > b[field] ? 1 : -1);
-  });
-  if(reverse) filtered.reverse();
-  //console.log(filtered);
-  return filtered;
-};
-})
+	.filter('orderObjectBy', function() {
+		return function(items, field, reverse) {
+		  var filtered = [];
+		  for (var i in items) {
+		    items[i].key = i;
+		    items[i].lastUpdated = items[i].currentStatus.time;
+		    filtered.push(items[i]);
+		  }
+		  filtered.sort(function (a, b) {
+		    return (a[field] > b[field] ? 1 : -1);
+		  });
+		  if(reverse) filtered.reverse();
+		  //console.log(filtered);
+		  return filtered;
+		};
+	})
   .filter('tel', function() {
     return function(tel) {
       var res = formatLocal('CA', tel);
@@ -214,6 +214,12 @@ return function(items, field, reverse) {
       console.log('logging you out');
       Auth.logout();
       $location.path('/login');
+    }
+
+    // LAZY LOADING LIST
+    $scope.loadMoreStatuses = function(e) {
+    	e.preventDefault();
+    	Phased.getStatusesPage();
     }
 
 		//Photo stuff
