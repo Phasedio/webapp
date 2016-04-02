@@ -21,6 +21,57 @@
 }
 
 
+/*
+*
+* MEMBER AREA
+*
+*
+*/
+
+.feed__members{
+	ul{
+		margin: 0;
+		padding:0;
+		list-style: none;
+		padding-bottom:10px;
+	}
+	li{
+			display: block;
+			padding-bottom:5px;
+			.online{
+				width: 8px;
+				height: 8px;
+				display: inline-block;
+				border-radius: 100px;
+				background-color: #2fc2a3;
+				float: right;
+				margin-top: 9px;
+				//position: relative;
+			}
+			.offline{
+				display: inline-block;
+				float: right;
+				span{
+					margin-top: 9px;
+					font-size: 10px;
+				}
+			}
+			&:hover{
+				background-color: #f5f5f5;
+			}
+	}
+	img{
+		display: inline-block;
+		float: left;
+	}
+	.feed__members__name{
+		display: inline-block;
+		float: left;
+		padding-left: 8px;
+		font-size:12px;
+		line-height: 32px;
+	}
+}
 
 /*
 *

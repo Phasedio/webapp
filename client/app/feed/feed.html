@@ -7,7 +7,26 @@
 			<div class="row">
 				<div class="col-xs-4 dashboard">
 					<div class="box">
+						<h3>{{team.name}}</h3>
+					</div>
+					<div class="box feed__members">
+						<ul >
+							<li ng-repeat="item in team.members | orderObjectBy: 'lastOnline':true" class="clearfix">
+								<img ng-src="{{::item.pic}}" alt="{{::item.name}}" width="35px"/>
+								<div class="feed__members__name">
+									{{item.name}}
+								</div>
+								<div class="online" ng-if="item.presence == 1">
 
+
+								</div>
+								<div class="offline" ng-if="item.presence != 1">
+									<span am-time-ago="item.lastOnline"></span>
+
+								</div>
+							</li>
+						</ul>
+						<button type="button" class="btn btn-success btn-block" name="button">Add member</button>
 					</div>
 				</div>
 				<div class="col-xs-12 col-md-5  content-main">
@@ -138,12 +157,12 @@
 				</div>
 				<div class="col-md-3 dashboard" ng-controller="TasksCtrl">
 					<div class="task__holder" >
-		        <div class="task__add">
+		        <!-- <div class="task__add">
 		          <form id="todo-form" ng-submit="addTodo()">
 		            <p>Add a task</p>
 		            <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
 		          </form>
-		        </div>
+		        </div> -->
 		        <div class="list-group">
 		          <a href="#" class="list-group-item clearfix" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
 		            <div class="task__complete" ng-click="setCompleted(assignment)">
@@ -152,9 +171,9 @@
 		            <div class="task__name" ng-click="sendToTask('0A','0A','0A',assignment.key)">
 		              {{assignment.name}}
 		            </div>
-		            <div class="task__details">
+		            <!-- <div class="task__details">
 		              <i class="fa fa-ellipsis-h"></i>
-		            </div>
+		            </div> -->
 		          </a>
 		        </div>
 		      </div>

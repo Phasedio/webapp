@@ -108,9 +108,9 @@ angular.module('webappApp')
   })
   .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location,toaster,$route) {
     ga('send', 'pageview', '/feed');
+    console.log(Phased);
 
-
-
+    $scope.thisP = Phased.PRESENCE;
     $scope.selectedCategory = '';
     $scope.showExtras = false;
     $scope.viewType = Phased.viewType;
@@ -124,7 +124,7 @@ angular.module('webappApp')
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
     $scope.meta = {
     	status : Phased.status
-    } 
+    }
     $scope.user = Phased.user;
     $scope.deleteHolder = '';
     $scope.editHolder = '';
