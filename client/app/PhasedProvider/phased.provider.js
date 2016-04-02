@@ -2970,9 +2970,14 @@ angular.module('webappApp')
     *	in memory. To be called when a new "page" of statuses needs to be
     *	loaded in (eg, at the bottom of a lazy-loaded list).
     *
-    *	1. get time of oldest status
-    *	2. gets n of the team's statuses older than that time
-    *	3. joins with current statuses
+    *	NB: oldest status age (timestamp) is updated whenever old statuses are 
+    *	loaded (page init and here).
+    *
+    *	NB: instead of debouncing this until after PHASED_STATUSES_SET_UP,
+    *	it is simply not completed unless the call itself happens after statuses are in.
+    *
+    *	1. gets n of the team's statuses older than oldest status in memory
+    *	2. joins with current statuses
     *
     *	args: 
     *		n 	// number of statuses to load (defaults to STATUS_LIMIT)
@@ -2982,7 +2987,10 @@ angular.module('webappApp')
     	var args = {
     		n : n
     	}
-    	registerAfterStatuses(doGetStatusesPage, args);
+
+    	if (PHASED_STATUSES_SET_UP) {
+    		doGetStatusesPage(args);
+    	}
     }
 
     var doGetStatusesPage = function(args) {
