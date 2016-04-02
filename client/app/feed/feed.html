@@ -299,12 +299,12 @@
 				</div>
 				<div class="modal-body ">
 					<ul>
-						<li class="task__item" ng-if="selectedTask.name" ng-click="cleartaskChoice()">
+						<li class="modal__task__item" ng-if="selectedTask.name" ng-click="cleartaskChoice()">
 							<div class="task__item__title">
 								<h4>clear selection</h4>
 							</div>
 						</li>
-						<li class="task__item" ng-repeat="assignment in getUserTasks |
+						<li class="modal__task__item" ng-repeat="assignment in getUserTasks |
 				orderObjectBy : 'time' : true" ng-click="taskChoice(assignment)">
 							<div class="task__item__title">
 								<h4>{{assignment.name}}</h4>
