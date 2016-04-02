@@ -5,7 +5,7 @@
 
 		<div class="container">
 			<div class="row">
-				<div class="col-xs-4 dashboard">
+				<div class="hidden-xs col-sm-4 dashboard">
 					<div class="box">
 						<h3>{{team.name}}</h3>
 					</div>
@@ -21,7 +21,7 @@
 
 								</div>
 								<div class="offline" ng-if="item.presence != 1">
-									<span am-time-ago="item.lastOnline"></span>
+									<span class="hidden-sm" am-time-ago="item.lastOnline"></span>
 
 								</div>
 							</li>
@@ -29,7 +29,7 @@
 						<button type="button" class="btn btn-success btn-block" name="button">Add member</button>
 					</div>
 				</div>
-				<div class="col-xs-12 col-md-5  content-main">
+				<div class="col-xs-12 col-sm-8 col-md-5  content-main">
 					<div class="action__container">
 						<form name="taskForm" ng-submit="addTask(task)" novalidation>
 							<div class="status__compose">
@@ -155,7 +155,7 @@
 					</div>
 
 				</div>
-				<div class="col-md-3 dashboard" ng-controller="TasksCtrl">
+				<div class="col-lg-3 visible-lg dashboard" ng-controller="TasksCtrl">
 					<div class="task__holder" >
 		        <!-- <div class="task__add">
 		          <form id="todo-form" ng-submit="addTodo()">
@@ -163,6 +163,9 @@
 		            <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
 		          </form>
 		        </div> -->
+						<div class="task__lable box">
+							<h3>To-do's</h3>
+						</div>
 		        <div class="list-group">
 		          <a href="#" class="list-group-item clearfix" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
 		            <div class="task__complete" ng-click="setCompleted(assignment)">
