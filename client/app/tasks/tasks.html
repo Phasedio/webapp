@@ -4,12 +4,7 @@
   <div class="row">
     <div class="col-xs-12">
       <div class="task__holder">
-        <div class="task__add">
-          <form id="todo-form" ng-submit="addTodo()">
-            <p>Add a task</p>
-            <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
-          </form>
-        </div>
+
         <div class="list-group">
           <a href="#" class="list-group-item clearfix" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
             <div class="task__complete" ng-click="setCompleted(assignment)">
@@ -22,6 +17,11 @@
               <i class="fa fa-ellipsis-h"></i>
             </div>
           </a>
+        </div>
+        <div class="task__add">
+          <form id="todo-form" ng-submit="addTodo()">
+            <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
+          </form>
         </div>
       </div>
     </div>
