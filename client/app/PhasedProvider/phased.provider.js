@@ -2986,10 +2986,7 @@ angular.module('webappApp')
     }
 
     var doGetStatusesPage = function(args) {
-    	console.log('doGetStatusesPage', args, 'since ' + moment(oldestStatusTime).format());
     	var n = args.n || STATUS_LIMIT;
-
-    	console.log('current statuses', PhasedProvider.team.statuses);
 
     	// 1. get teams statuses since end time
     	FBRef.child('team/' + PhasedProvider.team.uid + '/statuses')
@@ -2997,8 +2994,6 @@ angular.module('webappApp')
     	.once('value', function(snap) {
     		var data = snap.val();
     		if (!data) return; // not an error if empty: we got all of the statuses requested (there were none)
-
-    		console.log('got statuses', data);
 
     		// add to our list (no dupes possible)
     		_.assign(PhasedProvider.team.statuses, data);
@@ -3009,7 +3004,6 @@ angular.module('webappApp')
     			if (data[i].time < oldestStatusTime)
     				oldestStatusTime = data[i].time;
     		}
-    		console.log('updated statuses', PhasedProvider.team.statuses);
     	});
     }
 
