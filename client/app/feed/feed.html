@@ -110,6 +110,7 @@
 								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(item)"><i class="fa fa-comment-o"></i> Comment <span class="badge" ng-if="countInts(item.comments) > 0">{{countInts(item.comments)}}</span></button>
 							</div>
 						</div>
+						<div ng-if="filterFeed == 'recent'" status-lazy-loader></div>
 
 						<!-- members -->
 						<div class="member__activity " ng-show="filterFeed == 'members'" ng-repeat="item in team.members | orderMembers : 'lastUpdated' : true  ">
