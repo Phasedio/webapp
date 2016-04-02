@@ -946,11 +946,15 @@ angular.module('webappApp')
       .orderByChild('time').startAt(now)
       .on('child_added', function(snap){
         var key = snap.key();
-        if (!(key in PhasedProvider.team.statuses))
-          PhasedProvider.team.statuses[key] = snap.val();
-
-        $rootScope.$apply();
-        $rootScope.$broadcast('Phased:newStatus');
+        console.log('got', key);
+        if (!(key in PhasedProvider.team.statuses)) {
+        	console.log('scheduled', key);
+        	$rootScope.$evalAsync(function(key) {
+        		console.log('adding', key);
+	          PhasedProvider.team.statuses[key] = snap.val();
+	        	$rootScope.$broadcast('Phased:newStatus');
+	        }.bind(null, key) );
+        }
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -964,10 +968,10 @@ angular.module('webappApp')
       .limitToLast(STATUS_LIMIT)
       .on('child_changed', function(snap) {
         var key = snap.key();
-        PhasedProvider.team.statuses[key] = snap.val();
-
-        $rootScope.$apply();
-        $rootScope.$broadcast('Phased:changedStatus');
+        $rootScope.$evalAsync(function(key){
+	        PhasedProvider.team.statuses[key] = snap.val();
+	        $rootScope.$broadcast('Phased:changedStatus');
+	      }.bind(null, key));
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -981,10 +985,10 @@ angular.module('webappApp')
       .limitToLast(STATUS_LIMIT)
       .on('child_removed', function(snap) {
         var key = snap.key();
-        delete PhasedProvider.team.statuses[key];
-        
-        $rootScope.$apply();
-        $rootScope.$broadcast('Phased:deletedStatus');
+        $rootScope.$evalAsync(function(key){
+	        delete PhasedProvider.team.statuses[key];
+	        $rootScope.$broadcast('Phased:deletedStatus');
+        }.bind(null, key));
       });
 
       PhasedProvider.team._FBHandlers.push({
