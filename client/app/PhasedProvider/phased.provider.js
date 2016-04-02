@@ -912,6 +912,7 @@ angular.module('webappApp')
         if (!(key in PhasedProvider.team.statuses))
           PhasedProvider.team.statuses[key] = snap.val();
 
+        $rootScope.$apply();
         $rootScope.$broadcast('Phased:newStatus');
       });
 
@@ -2980,6 +2981,7 @@ angular.module('webappApp')
 
     		// add to our list (no dupes possible)
     		_.assign(PhasedProvider.team.statuses, data);
+    		$rootScope.$apply();
     		
     		// update oldest status time
     		for (var i in data) {
