@@ -100,30 +100,36 @@ angular.module('webappApp')
 
     // Edit name
     $scope.taskEditName = function(taskID, newName) {
-      Phased.editTaskName(taskID, newName);
+      var taskID = $routeParams.taskID;
+      Phased.setTaskName(taskID, newName);
     }
 
     // edit description
     $scope.taskEditDesc = function(taskID, desc) {
-      Phased.editTaskDesc(taskID, desc);
+      var taskID = $routeParams.taskID;
+      Phased.setTaskDesc(taskID, desc);
     }
 
     // Edit assigned user
     $scope.taskEditAssigned = function(taskObj, userID) {
+      var taskID = $routeParams.taskID;
       Phased.setTaskAssignee(taskObj, userID);
     }
     // Edits date of deadline or clears it
     $scope.taskEditDate = function(taskID, date) {
-      Phased.editTaskDeadline(taskID, date);
+      var taskID = $routeParams.taskID;
+      Phased.setTaskDeadline(taskID, date);
     }
 
     // change category
     $scope.changeCategory = function(taskID, catKey) {
-      Phased.editTaskCategory(taskID, catKey);
+      var taskID = $routeParams.taskID;
+      Phased.setTaskCategory(taskID, catKey);
     }
     // change priority
     $scope.changePriority = function(taskID, priorityKey) {
-      Phased.editTaskPriority(taskID, priorityKey);
+      var taskID = $routeParams.taskID;
+      Phased.setTaskPriority(taskID, priorityKey);
     }
 
 
