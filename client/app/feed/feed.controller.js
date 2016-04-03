@@ -106,7 +106,9 @@ angular.module('webappApp')
       return filtered;
     };
   })
-  .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
+
+  .controller('FeedCtrl', function ($scope, $http, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
+
     ga('send', 'pageview', '/feed');
 
     $scope.thisP = Phased.PRESENCE;
@@ -129,7 +131,7 @@ angular.module('webappApp')
     $scope.editHolder = '';
     $scope.atTop = true;
 
-    
+
 		angular.element($window).bind('scroll', _.debounce(function() {
     	$scope.atTop = $window.pageYOffset < 100;
     	$scope.$digest();

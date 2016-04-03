@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('AdminCsvDwlCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location) {
+  .controller('AdminCsvDwlCtrl', function ($scope, $http, Auth, Phased, FURL,amMoment, $location) {
     ga('send', 'pageview', '/admin');
 
     var FBRef = new Firebase(FURL);

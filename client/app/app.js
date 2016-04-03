@@ -7,7 +7,7 @@ angular.module('webappApp', [
   'ngRoute',
   'ui.bootstrap',
   'ui.calendar',
-  'angular-stripe',
+  // 'angular-stripe',
   'credit-cards',
   'firebase',
   'angularMoment',
@@ -15,8 +15,8 @@ angular.module('webappApp', [
   'toaster',
   'angular-inview'
 ])
-.config(function (stripeProvider) {
-    stripeProvider.setPublishableKey('pk_live_FPvARdIWeOzOfW8TGqtFd9QN');
+.config(function () {
+    //stripeProvider.setPublishableKey('pk_live_FPvARdIWeOzOfW8TGqtFd9QN');
   })
 .constant('FURL', 'https://phaseddev.firebaseio.com/')
 .run(['$rootScope', '$location', function ($rootScope, $location) {
