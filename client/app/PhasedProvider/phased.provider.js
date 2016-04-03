@@ -45,6 +45,7 @@ angular.module('webappApp')
 			- Phased:meta -- all metadata has been loaded
 			- Phased:member -- a single member has been loaded
 			- Phased:memberChanged -- a single member has changed
+			- Phased:teamComplete -- all team metadata is loaded
 			- Phased:membersComplete -- all team members have been loaded
 			- Phased:projectsComplete -- all projects are fully loaded (including col/card/task data)
 			- Phased:statusesComplete -- all statuses are loaded
@@ -93,6 +94,7 @@ angular.module('webappApp')
 
       // FLAGS
       PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
+      PHASED_TEAM_SET_UP = false,
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       PHASED_META_SET_UP = false, // set to true after static meta values are loaded
       PHASED_PROJECTS_SET_UP = false, // set to true after the initial data has been loaded (incl col/card/task)
@@ -108,6 +110,7 @@ angular.module('webappApp')
 
       // ASYNC CALLBACKS
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
+      req_after_team = [],
       req_after_members = [], // filled with operations to complete after members are in
       req_after_meta = [], // filled with operations to complete after meta are in
       req_after_projects = [], // "" for after projects
@@ -452,8 +455,7 @@ angular.module('webappApp')
       }
       PHASED_SET_UP = true;
       PhasedProvider.SET_UP = true;
-      console.log('phased setup');
-      $rootScope.$apply();
+      console.log('Phased:setup');
 			$rootScope.$broadcast('Phased:setup');
     }
 
@@ -464,14 +466,16 @@ angular.module('webappApp')
     *
     */
     var maybeFinalizeSetUp = function() {
-    	if (  !PHASED_SET_UP
-	    		&& PHASED_META_SET_UP
-	    		&& PHASED_MEMBERS_SET_UP
-	    		&& PHASED_PROJECTS_SET_UP
-	    		&& PHASED_STATUSES_SET_UP
-    		) {
-				doAsync();
-    	}
+    	$rootScope.$evalAsync(function(){
+	    	if (  !PHASED_SET_UP
+		    		&& PHASED_META_SET_UP
+		    		&& PHASED_MEMBERS_SET_UP
+		    		&& PHASED_PROJECTS_SET_UP
+		    		&& PHASED_STATUSES_SET_UP
+	    		) {
+	    		doAsync();
+	    	}
+	    });
     }
 
     /**
@@ -496,6 +500,30 @@ angular.module('webappApp')
 			$rootScope.$broadcast('Phased:meta');
       maybeFinalizeSetUp();
     }
+
+    /**
+    *
+    * registerAfterTeam
+    * called after team data is in from server
+    *	(team metadata but not members' individual data)
+    *
+    */
+    var registerAfterTeam = function(callback, args) {
+      if (PHASED_TEAM_SET_UP)
+        callback(args);
+      else
+        req_after_team.push({callback : callback, args : args });
+    }
+
+    var doAfterTeam = function() {
+      for (var i in req_after_team) {
+        req_after_team[i].callback(req_after_team[i].args || undefined);
+      }
+      PHASED_TEAM_SET_UP = true;
+      PhasedProvider.TEAM_SET_UP = true;
+      $rootScope.$broadcast('Phased:teamComplete');
+      maybeFinalizeSetUp(); // this should definitely fail but will cue a digest if needed
+    } 
 
     /**
     *
@@ -652,7 +680,8 @@ angular.module('webappApp')
     var initializeTeam = function() {
     	var teamID = PhasedProvider.team.uid,
     		teamAddr = 'team/' + teamID,
-    		simpleProps = ['name', 'members', 'category', 'repos', 'slack', 'billing'];
+    		simpleProps = ['name', 'members', 'category', 'repos', 'slack', 'billing'],
+    		loaded = [];
 
     	// due to the current data structure, it's easier to make many small calls
     	// than one big call (thanks to statuses being at the same root as name, repos, etc)
@@ -672,8 +701,13 @@ angular.module('webappApp')
 							delete PhasedProvider.team.category; // not actually using that key
 							PhasedProvider.team.categoryObj = data;
 							PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
-    				} else if (prop == 'billing') {
-			        checkPlanStatus(data.stripeid, data.subid);
+    				}
+
+    				// check/broadcast team set up
+    				loaded.push(prop);
+    				if (loaded.length == simpleProps.length) {
+    					// we're all loaded
+    					doAfterTeam();
     				}
     			});
     		})(simpleProps[i]);
@@ -911,11 +945,15 @@ angular.module('webappApp')
       .orderByChild('time').startAt(now)
       .on('child_added', function(snap){
         var key = snap.key();
-        if (!(key in PhasedProvider.team.statuses))
-          PhasedProvider.team.statuses[key] = snap.val();
-
-        $rootScope.$apply();
-        $rootScope.$broadcast('Phased:newStatus');
+        console.log('got', key);
+        if (!(key in PhasedProvider.team.statuses)) {
+        	console.log('scheduled', key);
+        	$rootScope.$evalAsync(function(key) {
+        		console.log('adding', key);
+	          PhasedProvider.team.statuses[key] = snap.val();
+	        	$rootScope.$broadcast('Phased:newStatus');
+	        }.bind(null, key) );
+        }
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -929,10 +967,10 @@ angular.module('webappApp')
       .limitToLast(STATUS_LIMIT)
       .on('child_changed', function(snap) {
         var key = snap.key();
-        PhasedProvider.team.statuses[key] = snap.val();
-
-        $rootScope.$apply();
-        $rootScope.$broadcast('Phased:changedStatus');
+        $rootScope.$evalAsync(function(key){
+	        PhasedProvider.team.statuses[key] = snap.val();
+	        $rootScope.$broadcast('Phased:changedStatus');
+	      }.bind(null, key));
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -946,10 +984,10 @@ angular.module('webappApp')
       .limitToLast(STATUS_LIMIT)
       .on('child_removed', function(snap) {
         var key = snap.key();
-        delete PhasedProvider.team.statuses[key];
-        
-        $rootScope.$apply();
-        $rootScope.$broadcast('Phased:deletedStatus');
+        $rootScope.$evalAsync(function(key){
+	        delete PhasedProvider.team.statuses[key];
+	        $rootScope.$broadcast('Phased:deletedStatus');
+        }.bind(null, key));
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -962,8 +1000,10 @@ angular.module('webappApp')
       // category (doesn't need memory references)
       cb = FBRef.child(teamKey + '/category').on('value', function(snap) {
         var data = snap.val();
-        PhasedProvider.team.categoryObj = data;
-        PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
+        $rootScope.$evalAsync(function(data){
+        	PhasedProvider.team.categoryObj = data;
+       		PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
+        }.bind(null, data));
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -974,7 +1014,9 @@ angular.module('webappApp')
 
       // repos
       cb = FBRef.child(teamKey + '/repos').on('value', function(snap){
-      	PhasedProvider.team.repos = snap.val();
+      	$rootScope.$evalAsync(function(snap) {
+      		PhasedProvider.team.repos = snap.val();
+      	}.bind(null, snap));
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -986,7 +1028,9 @@ angular.module('webappApp')
 
       // slack
       cb = FBRef.child(teamKey + '/slack').on('value', function(snap){
-      	PhasedProvider.team.slack = snap.val();
+      	$rootScope.$evalAsync(function(snap){
+	      	PhasedProvider.team.slack = snap.val();
+	      }.bind(null, snap));
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -999,7 +1043,9 @@ angular.module('webappApp')
       // billing
       cb = FBRef.child(teamKey + '/billing').on('value', function(snap){
         var billing = snap.val();
-        checkPlanStatus(billing.stripeid, billing.subid);
+        $rootScope.$evalAsync(function(billing) {
+        	checkPlanStatus(billing.stripeid, billing.subid);
+        }.bind(null, billing));
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -1011,23 +1057,25 @@ angular.module('webappApp')
 
       // members
       cb = FBRef.child(teamKey + '/members').on('child_changed', function(snap) {
-        var memberID = snap.key(),
-          data = snap.val();
+      	$rootScope.$evalAsync(function(snap) {
+	        var memberID = snap.key(),
+	          data = snap.val();
 
-        // if new member, initialize
-        if (!(memberID in PhasedProvider.team.members)) {
-          initializeMember(memberID);
-        }
+	        // if new member, initialize
+	        if (!(memberID in PhasedProvider.team.members)) {
+	          initializeMember(memberID);
+	        }
 
-        // update all keys as needed
-        for (var key in data) {
-          PhasedProvider.team.members[memberID][key] = data[key];
-        }
+	        // update all keys as needed
+	        for (var key in data) {
+	          PhasedProvider.team.members[memberID][key] = data[key];
+	        }
 
-        // update teamLength
-        PhasedProvider.team.teamLength = Object.keys(PhasedProvider.team.members).length;
+	        // update teamLength
+	        PhasedProvider.team.teamLength = Object.keys(PhasedProvider.team.members).length;
 
-        $rootScope.$broadcast('Phased:memberChanged');
+	        $rootScope.$broadcast('Phased:memberChanged');
+	      }.bind(null, snap));
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -1131,20 +1179,22 @@ angular.module('webappApp')
         var notifAddress = 'notif/' + PhasedProvider.team.uid + '/' + PhasedProvider.user.uid;
         var cb = FBRef.child(notifAddress)
         	.limitToLast(NOTIF_LIMIT)
-          .on('value', function(data) {
-            var notifications = data.val();
+          .on('value', function(snap) {
+          	$rootScope.$evalAsync(function(snap){
+	            var notifications = snap.val();
 
-            // format titles and bodies
-            for (var id in notifications) {
-              notifications[id].title = stringify(notifications[id].title);
-              notifications[id].body = stringify(notifications[id].body);
-              notifications[id].key = id;
-            }
-            // update stream
-            PhasedProvider.notif.stream = notifications;
+	            // format titles and bodies
+	            for (var id in notifications) {
+	              notifications[id].title = stringify(notifications[id].title);
+	              notifications[id].body = stringify(notifications[id].body);
+	              notifications[id].key = id;
+	            }
+	            // update stream
+	            PhasedProvider.notif.stream = notifications;
 
-            // issue notification event
-            $rootScope.$broadcast('Phased:notification');
+	            // issue notification event
+	            $rootScope.$broadcast('Phased:notification');
+	          }.bind(null, snap));
           });
 
         // stash for deregistering
@@ -1263,189 +1313,18 @@ angular.module('webappApp')
         projectsRef = FBRef.child(projAddr),
         cb;
 
-      // sets up watchers for a single project
-      var watchOneProject = function(projID) {
-        var projRef = projectsRef.child(projID);
-
-        // then watch own children
-        cb = projRef.on('child_changed', function(snap) {
-          var key = snap.key();
-          if (key != 'columns') // don't directly update the columns key
-            PhasedProvider.team.projects[projID][key] = snap.val();
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + projID,
-          eventType : 'child_changed',
-          callback : cb
-        });
-
-        cb = projRef.on('child_added', function(snap){
-          var key = snap.key()
-          PhasedProvider.team.projects[projID][key] = snap.val();
-          // watch columns after they're added
-          if (key == 'columns')
-            watchAllColumns(projID, projRef);
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + projID,
-          eventType : 'child_added',
-          callback : cb
-        });
-
-        cb = projRef.on('child_removed', function(snap){
-          delete PhasedProvider.team.projects[projID][snap.key()];
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + projID,
-          eventType : 'child_removed',
-          callback : cb
-        });
-      }
-
-      // observe when cards are added to or removed from a col
-      var watchAllColumns = function(projID, projRef) {
-        cb = projRef.child('columns').on('child_added', function(snap){
-          var colID = snap.key();
-          PhasedProvider.team.projects[projID].columns[colID] = snap.val();
-          PhasedProvider.get.columns[colID] = PhasedProvider.team.projects[projID].columns[colID];
-          watchOneColumn(colID, projID);
-          $rootScope.$broadcast('Phased:columnAdded');
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projRef.child('columns').key(),
-          eventType : 'child_added',
-          callback : cb
-        });
-
-        cb = projRef.child('columns').on('child_removed', function(snap){
-          delete PhasedProvider.get.columns[snap.key()];
-          delete PhasedProvider.team.projects[projID].columns[snap.key()];
-          $rootScope.$broadcast('Phased:columnDeleted');
-        });
-
-        PhasedProvider.team._FBHandlers.push({
-          address : projRef.child('columns').key(),
-          eventType : 'child_removed',
-          callback : cb
-        });
-      }
-      var watchOneColumn = function(colID, projID) {
-        var thisColAddr = projID + '/columns/' + colID;
-        var colRef = projectsRef.child(thisColAddr);
-
-        // then watch own children
-        cb = colRef.on('child_changed', function(snap) {
-          var key = snap.key();
-          if (key != 'cards') // don't directly update the cards key
-            PhasedProvider.team.projects[projID].columns[colID][key] = snap.val();
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisColAddr,
-          eventType : 'child_changed',
-          callback : cb
-        });
-
-        cb = colRef.on('child_added', function(snap){
-          var key = snap.key()
-          PhasedProvider.team.projects[projID].columns[colID][key] = snap.val();
-          // watch cards after they're added
-          if (key == 'cards')
-            watchAllCards(colID, projID, colRef);
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisColAddr,
-          eventType : 'child_added',
-          callback : cb
-        });
-
-        cb = colRef.on('child_removed', function(snap){
-          delete PhasedProvider.team.projects[projID].columns[colID][snap.key()];
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisColAddr,
-          eventType : 'child_removed',
-          callback : cb
-        });
-      }
-
-      // observe when cards are added to or removed from a col
-      var watchAllCards = function(colID, projID, colRef) {
-        var cb = '';
-        cb = colRef.child('cards').on('child_added', function(snap){
-          var cardID = snap.key();
-          PhasedProvider.team.projects[projID].columns[colID].cards[cardID] = snap.val();
-          PhasedProvider.get.cards[cardID] = PhasedProvider.team.projects[projID].columns[colID].cards[cardID];
-          watchOneCard(cardID, colID, projID);
-          $rootScope.$broadcast('Phased:cardAdded');
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : colRef.child('cards').key(),
-          eventType : 'child_added',
-          callback : cb
-        });
-
-        cb = colRef.child('cards').on('child_removed', function(snap){
-          delete PhasedProvider.get.cards[cardID];
-          delete PhasedProvider.team.projects[projID].columns[colID].cards[snap.key()];
-          $rootScope.$broadcast('Phased:cardDeleted');
-        });
-
-        PhasedProvider.team._FBHandlers.push({
-          address : colRef.child('cards').key(),
-          eventType : 'child_removed',
-          callback : cb
-        });
-      }
-      var watchOneCard = function(cardID, colID, projID) {
-        var thisCardAddr = projID + '/columns/' + colID + '/cards/' + cardID;
-        var cardRef = projectsRef.child(thisCardAddr);
-
-        // then watch own children
-        cb = cardRef.on('child_changed', function(snap) {
-          var key = snap.key();
-          if (key != 'tasks') // don't directly update the tasks key
-            PhasedProvider.team.projects[projID].columns[colID].cards[cardID][key] = snap.val();
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisCardAddr,
-          eventType : 'child_changed',
-          callback : cb
-        });
-
-        cb = cardRef.on('child_added', function(snap){
-          var key = snap.key()
-          PhasedProvider.team.projects[projID].columns[colID].cards[cardID][key] = snap.val();
-          // watch tasks when they are added
-          if (key == 'tasks') {
-            watchAllTasks(cardID, colID, projID, cardRef);
-          }
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisCardAddr,
-          eventType : 'child_added',
-          callback : cb
-        });
-
-        cb = cardRef.on('child_removed', function(snap){
-          delete PhasedProvider.team.projects[projID].columns[colID].cards[cardID][snap.key()];
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisCardAddr,
-          eventType : 'child_removed',
-          callback : cb
-        });
-      }
-
       // observe when tasks are added to or removed from a card
       var watchAllTasks = function(cardID, colID, projID, cardRef) {
         var cb = '';
         cb = cardRef.child('tasks').on('child_added', function(snap){
-          var taskID = snap.key();
-          PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID] = snap.val();
-          PhasedProvider.get.tasks[taskID] = PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID];
-          watchOneTask(taskID, cardID, colID, projID);
-          $rootScope.$broadcast('Phased:taskAdded');
-          maybeDoAfterProjects();
+        	$rootScope.$evalAsync(function(snap){
+	          var taskID = snap.key();
+	          PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID] = snap.val();
+	          PhasedProvider.get.tasks[taskID] = PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID];
+	          watchOneTask(taskID, DEFAULTS.cardID, DEFAULTS.columnID, DEFAULTS.projectID);
+	          $rootScope.$broadcast('Phased:taskAdded');
+	          maybeDoAfterProjects();
+	        }.bind(null, snap));
         });
         PhasedProvider.team._FBHandlers.push({
           address : cardRef.child('tasks').key(),
@@ -1454,9 +1333,11 @@ angular.module('webappApp')
         });
 
         cb = cardRef.child('tasks').on('child_removed', function(snap){
-          delete PhasedProvider.get.tasks[snap.key()];
-          delete PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[snap.key()];
-          $rootScope.$broadcast('Phased:taskDeleted');
+        	$rootScope.$evalAsync(function(snap){
+	          delete PhasedProvider.get.tasks[snap.key()];
+	          delete PhasedProvider.team.projects[projID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[snap.key()];
+	          $rootScope.$broadcast('Phased:taskDeleted');
+	        }.bind(null, snap));
         });
 
         PhasedProvider.team._FBHandlers.push({
@@ -1465,13 +1346,15 @@ angular.module('webappApp')
           callback : cb
         });
       }
-      var watchOneTask = function(taskID, cardID, colID, projID) {
-        var thisTaskAddr = projID + '/columns/' + colID + '/cards/' + cardID + '/tasks/' + taskID;
+      var watchOneTask = function(taskID) {
+        var thisTaskAddr = DEFAULTS.projectID + '/columns/' + DEFAULTS.columnID + '/cards/' + DEFAULTS.cardID + '/tasks/' + taskID;
         var taskRef = projectsRef.child(thisTaskAddr);
         var cb = '';
 
         cb = taskRef.on('child_changed', function(snap) {
-          PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID][snap.key()] = snap.val();
+        	$rootScope.$evalAsync(function(snap){
+          	PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID][snap.key()] = snap.val();
+          }.bind(null, snap));
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisTaskAddr,
@@ -1480,7 +1363,9 @@ angular.module('webappApp')
         });
 
         cb = taskRef.on('child_added', function(snap){
-          PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID][snap.key()] = snap.val();
+        	$rootScope.$evalAsync(function(snap){
+          	PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID][snap.key()] = snap.val();
+          }.bind(null, snap));
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisTaskAddr,
@@ -1489,7 +1374,9 @@ angular.module('webappApp')
         });
 
         cb = taskRef.on('child_removed', function(snap){
-          delete PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID][snap.key()];
+        	$rootScope.$evalAsync(function(snap){
+          	delete PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID][snap.key()];
+          }.bind(null, snap));
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisTaskAddr,
@@ -1510,33 +1397,8 @@ angular.module('webappApp')
       	}
       }
 
-      // watch projects
-      var cb = '';
-      cb = projectsRef.on('child_added', function(snap){
-        // add project
-        PhasedProvider.team.projects[snap.key()] = snap.val();
-        // watch project
-        watchOneProject(snap.key());
-        $rootScope.$broadcast('Phased:projectAdded');
-      });
-
-      PhasedProvider.team._FBHandlers.push({
-        address : projAddr,
-        eventType : 'child_added',
-        callback : cb
-      });
-
-      cb = projectsRef.on('child_removed', function(snap){
-        // remove project
-        delete PhasedProvider.team.projects[snap.key()];
-        $rootScope.$broadcast('Phased:projectDeleted');
-      });
-
-      PhasedProvider.team._FBHandlers.push({
-        address : projAddr,
-        eventType : 'child_removed',
-        callback : cb
-      });
+      var cardRef = FBRef.child('team/' + PhasedProvider.team.uid + '/projects/' + DEFAULTS.projectID + '/columns/' + DEFAULTS.columnID + '/cards/' + DEFAULTS.cardID);
+      watchAllTasks(DEFAULTS.cardID, DEFAULTS.columnID, DEFAULTS.projectID, cardRef);
     }
 
 
