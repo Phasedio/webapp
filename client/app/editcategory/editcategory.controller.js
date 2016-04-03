@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('EditcategoryCtrl', function ($scope, $http, stripe, Auth, FURL,amMoment,$location) {
+  .controller('EditcategoryCtrl', function ($scope, $http, Auth, FURL,amMoment,$location) {
     ga('send', 'pageview', '/editcategory');
     var ref = new Firebase(FURL);
     $scope.team = {

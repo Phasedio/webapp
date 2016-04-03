@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('TaskPageCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig,$routeParams,$location) {
+  .controller('TaskPageCtrl', function ($scope, $http, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig,$routeParams,$location) {
     $scope.message = 'Hello';
 
 

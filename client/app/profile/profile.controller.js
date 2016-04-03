@@ -160,7 +160,7 @@ angular.module('webappApp')
       return out;
     }
   }])
-  .controller('ProfileCtrl', function ($scope,$routeParams, $http, stripe, Auth, Phased, FURL,amMoment,$location) {
+  .controller('ProfileCtrl', function ($scope,$routeParams, $http, Auth, Phased, FURL,amMoment,$location) {
     ga('send', 'pageview', '/profile');
 
     $scope.phased = Phased;
@@ -175,7 +175,7 @@ angular.module('webappApp')
     // fills profile for the selected user
     // must be done AFTER Auth and Phased are set up
     // in case the user is logged in with another service
-    // (Auth replaces the user's OAuth provider id with their 
+    // (Auth replaces the user's OAuth provider id with their
     // "proper" id)
 		var initProfileUser = function() {
 			// do only after Phased is set up
