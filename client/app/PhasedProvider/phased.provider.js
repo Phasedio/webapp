@@ -48,7 +48,9 @@ angular.module('webappApp')
 			- Phased:membersComplete -- all team members have been loaded
 			- Phased:projectsComplete -- all projects are fully loaded (including col/card/task data)
 			- Phased:statusesComplete -- all statuses are loaded
+			- Phased:newStatus -- a new status is added
 			- Phased:changedStatus -- a status has changed
+			- Phased:deletedStatus -- a status has been deleted
 
 			- Phased:PaymentInfo -- team payment info (and Phased.viewType) has changed
 			- Phased:notification -- the current user has received a notification
@@ -111,6 +113,7 @@ angular.module('webappApp')
       req_after_projects = [], // "" for after projects
       req_after_statuses = [], // "" for after statuses
       membersRetrieved = 0, // incremented with each member's profile gathered
+      oldestStatusTime = new Date().getTime(), // date of the oldest status in memory; used for pagination
 
       // INTERNAL "CONSTANTS"
       BOUNCE_ROUTES = {}, // routes for different view types to bounce to
@@ -326,6 +329,9 @@ angular.module('webappApp')
       // NOTIFS
       PhasedProvider.markNotifAsRead = _markNotifAsRead;
       PhasedProvider.markAllNotifsAsRead = _markAllNotifsAsRead;
+
+      // PAGINATED STATUSES FOR USER
+      PhasedProvider.getStatusesPage = _getStatusesPage;
 
       // INTEGRATIONS
       // GITHUB
@@ -708,6 +714,11 @@ angular.module('webappApp')
         var data = snap.val();
 
         PhasedProvider.team.statuses = data || []; // need to do this here bc FB doesn't store empty vals
+        // find oldest status time and save val for pagination
+        for (var i in PhasedProvider.team.statuses) {
+    			if (PhasedProvider.team.statuses[i].time < oldestStatusTime)
+    				oldestStatusTime = PhasedProvider.team.statuses[i].time;
+    		}
         // statuses are all in
         doAfterStatuses();
         // monitor team for changes
@@ -903,6 +914,7 @@ angular.module('webappApp')
         if (!(key in PhasedProvider.team.statuses))
           PhasedProvider.team.statuses[key] = snap.val();
 
+        $rootScope.$apply();
         $rootScope.$broadcast('Phased:newStatus');
       });
 
@@ -918,7 +930,26 @@ angular.module('webappApp')
       .on('child_changed', function(snap) {
         var key = snap.key();
         PhasedProvider.team.statuses[key] = snap.val();
+
+        $rootScope.$apply();
         $rootScope.$broadcast('Phased:changedStatus');
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/statuses',
+        eventType : 'child_changed',
+        callback : cb
+      });
+
+      // update status on change
+      cb = FBRef.child(teamKey + '/statuses')
+      .limitToLast(STATUS_LIMIT)
+      .on('child_removed', function(snap) {
+        var key = snap.key();
+        delete PhasedProvider.team.statuses[key];
+        
+        $rootScope.$apply();
+        $rootScope.$broadcast('Phased:deletedStatus');
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -2931,6 +2962,57 @@ angular.module('webappApp')
           });
         }
       });
+    }
+
+    /**
+    *
+    *	gets n statuses for the team, starting at the time of the last status 
+    *	in memory. To be called when a new "page" of statuses needs to be
+    *	loaded in (eg, at the bottom of a lazy-loaded list).
+    *
+    *	NB: oldest status age (timestamp) is updated whenever old statuses are 
+    *	loaded (page init and here).
+    *
+    *	NB: instead of debouncing this until after PHASED_STATUSES_SET_UP,
+    *	it is simply not completed unless the call itself happens after statuses are in.
+    *
+    *	1. gets n of the team's statuses older than oldest status in memory
+    *	2. joins with current statuses
+    *
+    *	args: 
+    *		n 	// number of statuses to load (defaults to STATUS_LIMIT)
+    *
+    */
+    var _getStatusesPage = function(n) {
+    	var args = {
+    		n : n
+    	}
+
+    	if (PHASED_STATUSES_SET_UP) {
+    		doGetStatusesPage(args);
+    	}
+    }
+
+    var doGetStatusesPage = function(args) {
+    	var n = args.n || STATUS_LIMIT;
+
+    	// 1. get teams statuses since end time
+    	FBRef.child('team/' + PhasedProvider.team.uid + '/statuses')
+    	.orderByChild('time').endAt(oldestStatusTime).limitToLast(n)
+    	.once('value', function(snap) {
+    		var data = snap.val();
+    		if (!data) return; // not an error if empty: we got all of the statuses requested (there were none)
+
+    		// add to our list (no dupes possible)
+    		_.assign(PhasedProvider.team.statuses, data);
+    		$rootScope.$apply();
+    		
+    		// update oldest status time
+    		for (var i in data) {
+    			if (data[i].time < oldestStatusTime)
+    				oldestStatusTime = data[i].time;
+    		}
+    	});
     }
 
     /*

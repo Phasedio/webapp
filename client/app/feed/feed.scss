@@ -20,7 +20,6 @@
 	}
 }
 
-
 /*
 *
 * MEMBER AREA
@@ -72,6 +71,25 @@
 		padding-left: 8px;
 		font-size:12px;
 		line-height: 32px;
+	}
+}
+
+/**
+*
+*	Sticky toplink
+*
+*/
+.feed__toplink {
+	position: fixed;
+	bottom: 1em;
+	text-align: center;
+	font-size: 0.8em;
+	font-style: italic;
+	width: 247.5px; // one third of .row
+	transition: opacity 500ms;
+	z-index: -1;
+	.at-top & {
+		opacity: 0;
 	}
 }
 
@@ -391,6 +409,10 @@
 		h3{
 			margin-top: 10px;
 		}
+	}
+
+	.feed__toplink.col-sm-4 {
+		width: 290px;
 	}
 
 }

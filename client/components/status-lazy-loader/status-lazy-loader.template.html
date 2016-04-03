@@ -1,0 +1,8 @@
+<div
+	in-view="$inview && loadMore()"
+	in-view-options="{ debounce: 500 }"
+	class="status-lazy-loader"
+	ng-class="{'in-view' : $inview}"
+>
+	<p><a href="#" ng-click="goToTop($event)">back to top</a></p>
+</div>
