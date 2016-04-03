@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('AdminCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location, toaster) {
+  .controller('AdminCtrl', function ($scope, $http, Auth, Phased, FURL,amMoment, $location, toaster) {
     ga('send', 'pageview', '/admin');
 
     $scope.viewType = Phased.viewType;

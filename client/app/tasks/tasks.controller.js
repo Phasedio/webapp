@@ -164,7 +164,7 @@ angular.module('webappApp')
       return types[input] || input; // fail gracefully
     }
   }])
-  .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig,$location) {
+  .controller('TasksCtrl', function ($scope, $http, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig,$location) {
     ga('send', 'pageview', '/tasks');
 
     $scope.viewType = Phased.viewType;

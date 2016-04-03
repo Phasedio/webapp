@@ -106,7 +106,7 @@ angular.module('webappApp')
       return filtered;
     };
   })
-  .controller('FeedCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location,toaster,$route) {
+  .controller('FeedCtrl', function ($scope, $http, Auth, Phased, FURL,amMoment, $location,toaster,$route) {
     ga('send', 'pageview', '/feed');
     console.log(Phased);
 
