@@ -1,5 +1,9 @@
 'use strict';
 
+// first thing: remove .no-js from html
+var rootEl = document.getElementsByTagName('html')[0];
+rootEl.className = rootEl.className.split('no-js').join('');
+
 angular.module('webappApp', [
   'ngCookies',
   'ngResource',
@@ -20,6 +24,7 @@ angular.module('webappApp', [
   })
 .constant('FURL', 'https://phaseddev.firebaseio.com/')
 .run(['$rootScope', '$location', function ($rootScope, $location) {
+
       $rootScope.$on("$routeChangeError", function(event, next, previous, error) {
         // We can catch the error thrown when the $requireAuth promise is rejected
         // and redirect the user back to the home page
