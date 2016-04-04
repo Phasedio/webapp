@@ -110,7 +110,7 @@ angular.module('webappApp')
   .controller('FeedCtrl', function ($scope, $http, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
 
     ga('send', 'pageview', '/feed');
-
+    console.log(Phased);
     $scope.thisP = Phased.PRESENCE;
     $scope.selectedCategory = '';
     $scope.showExtras = false;
