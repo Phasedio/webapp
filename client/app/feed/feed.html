@@ -63,7 +63,7 @@
 
 						<div
 							ng-show="filterFeed == 'recent'"
-							ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 "
+							sly-repeat="item in team.statuses | orderObjectBy : 'time' : true "
 							class="member__activity type-{{meta.status.TYPE[item.type]}} source-{{meta.status.SOURCE[item.source]}}"
 							>
 							<div class="activity__person clearfix">
@@ -119,7 +119,7 @@
 						<div ng-if="filterFeed == 'recent'" status-lazy-loader></div>
 
 						<!-- members -->
-						<div class="member__activity " ng-show="filterFeed == 'members'" ng-repeat="item in team.members | orderMembers : 'lastUpdated' : true  ">
+						<div class="member__activity " ng-show="filterFeed == 'members'" sly-repeat="item in team.members | orderMembers : 'lastUpdated' : true  ">
 							<div class="activity__person clearfix">
 								<img ng-src="{{::$parent.team.members[item.key].pic}}" alt="{{::$parent.team.members[item.key].name}}" />
 								<div class="activity__info">
@@ -175,7 +175,11 @@
 							<a href="/tasks">add more</a>
 						</div>
 		        <div class="list-group">
-		          <a href="#" class="list-group-item clearfix" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
+		          <a href="#"
+		          class="list-group-item clearfix"
+		          sly-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true"
+		          ng-if="getFilter(assignment)"
+		          >
 		            <div class="task__complete" ng-click="setCompleted(assignment)">
 		              <i class="fa fa-check"></i>
 		            </div>
@@ -312,8 +316,7 @@
 								<h4>clear selection</h4>
 							</div>
 						</li>
-						<li class="modal__task__item" ng-repeat="assignment in getUserTasks |
-				orderObjectBy : 'time' : true" ng-click="taskChoice(assignment)">
+						<li class="modal__task__item" sly-repeat="assignment in getUserTasks | orderObjectBy : 'time' : true" ng-click="taskChoice(assignment)">
 							<div class="task__item__title">
 								<h4>{{assignment.name}}</h4>
 							</div>
@@ -384,7 +387,7 @@
 							<label for="exampleInputFile">Task</label>
 							<select class="form-control" ng-model="editHolder.task.id">
 								<option>None</option>
-								<option ng-repeat="assignment in getUserTasks | orderObjectBy : 'time' : true" value="{{assignment.id}}">{{assignment.name}}</option>
+								<option sly-repeat="assignment in getUserTasks | orderObjectBy : 'time' : true" value="{{assignment.id}}">{{assignment.name}}</option>
 
 							</select>
 						</div>

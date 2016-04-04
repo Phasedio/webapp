@@ -8,7 +8,7 @@
           <h3>Your To-Do List</h3>
         </div>
         <div class="list-group">
-          <a href="#" class="list-group-item clearfix" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
+          <a href="#" class="list-group-item clearfix" sly-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
             <div class="task__complete" ng-click="setCompleted(assignment)">
               <i class="fa fa-check"></i>
             </div>

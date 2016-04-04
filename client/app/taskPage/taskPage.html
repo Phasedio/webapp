@@ -24,7 +24,7 @@
                   <p ng-if="taskInfo.unassigned">Assign task to </p>
                   <div class="dropdown">
                     <button id="dLabel" type="button" class="btn btn-transparent no-padding" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      <img ng-if="taskInfo.assigned_to" src="{{team.members[taskInfo.assigned_to].pic}}" width="35px" height="35px"> {{team.members[taskInfo.assigned_to].name}}
+                      <img ng-if="taskInfo.assigned_to" ng-src="{{team.members[taskInfo.assigned_to].pic}}" width="35px" height="35px"> {{team.members[taskInfo.assigned_to].name}}
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dLabel">
                       <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo.key,member.uid)"><img src="{{member.pic}}" width="35px" height="35px"> <p>
@@ -72,7 +72,7 @@
 
               </p>
               <ul class="dropdown-menu" aria-labelledby="dLabel2">
-                <li ng-repeat="priority in Phased.task.PRIORITY_ID | orderBy">
+                <li sly-repeat="priority in Phased.task.PRIORITY_ID | orderBy">
                   <a href="#" ng-click="changePriority(taskInfo.key, priority)">
                     <p>
                      {{ Phased.task.PRIORITY[priority] }}
@@ -96,7 +96,7 @@
           <div class="" ng-if="taskStatuses">
             <h4>Status History</h4>
 
-            <div class="member__activity " ng-repeat="item in taskStatuses | orderBy: 'time'">
+            <div class="member__activity " sly-repeat="item in taskStatuses | orderBy: 'time'">
               <div class="activity__person">
                 <img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
                 <div class="activity__info">
@@ -125,7 +125,7 @@
           <!-- TASK HISTORY -->
           <!-- <div class="ph-card" ng-if="taskInfo.history">
             <h4>Task History</h4>
-            <div ng-repeat="moment in taskInfo.history | orderObjectBy : 'time' : true">
+            <div sly-repeat="moment in taskInfo.history | orderObjectBy : 'time' : true">
               <h5>{{moment.type | historyType}} <small>{{moment.time | date : 'short'}}</small></h5>
 
 

@@ -324,10 +324,10 @@ angular.module('webappApp', [
     return function(items, field, reverse) {
       var filtered = [];
       for (var i in items) {
-      items[i].key = i;
-      items[i].lastUpdated = items[i].currentStatus.time;
-      filtered.push(items[i]);
-    }
+        items[i].key = i;
+        items[i].lastUpdated = items[i].currentStatus.time;
+        filtered.push(items[i]);
+      }
       filtered.sort(function (a, b) {
         return (a[field] > b[field] ? 1 : -1);
       });
