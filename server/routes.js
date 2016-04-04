@@ -75,7 +75,8 @@ module.exports = function(app) {
   		res.sendFile(path.resolve(app.get('appPath') + '/index.html'));
   	})
   	.post(function(req, res){
-  		req.session.destroy();
+      if (req.session)
+  		  req.session.destroy();
   		res.status(200).end();
   	});
 
