@@ -1,10 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  
-
   .controller('FeedCtrl', function ($scope, $http, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
-
     ga('send', 'pageview', '/feed');
     console.log(Phased);
     $scope.thisP = Phased.PRESENCE;
@@ -47,10 +44,13 @@ angular.module('webappApp')
     //Print blank lines in for task area
     $scope.taskTable = [1,2,3,4,5];
 
-    $scope.$on('Phased:setup', function() {
+    if (Phased.SET_UP)
       $scope.countActiveTasks = countActiveTasks();
-      // $scope.$digest(); // instead of apply; only affects current scope instead of rootscope
-    });
+    else {
+      $scope.$on('Phased:setup', function() {
+        $scope.countActiveTasks = countActiveTasks();
+      });
+    }
 
     $scope.addTask = function(update) {
       ga('send', 'event', 'Update', 'submited');
@@ -376,7 +376,7 @@ angular.module('webappApp')
 
 
     // get number of active tasks assigned to userID
-    function countActiveTasks(){
+    function countActiveTasks() {
       var count = 0;
       var thing = [];
       _.forEach(Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks, function(value, key){
@@ -390,6 +390,5 @@ angular.module('webappApp')
 
       return count
     }
-    //$scope.countActiveTasks = countActiveTasks();
 
   });
