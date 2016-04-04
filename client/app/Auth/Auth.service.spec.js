@@ -1,6 +1,6 @@
 'use strict';
 
-describe('Service: Auth', function () {
+describe('Service: Auth', function AuthSpec() {
 
   // load the service's module
   beforeEach(module('webappApp'));

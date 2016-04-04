@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('FeedCtrl', function ($scope, $http, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
+  .controller('FeedCtrl', function feedCtrl($scope, $http, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
     ga('send', 'pageview', '/feed');
     $scope.thisP = Phased.PRESENCE;
     $scope.selectedCategory = '';
@@ -24,7 +24,7 @@ angular.module('webappApp')
     $scope.atTop = true;
 
 
-		angular.element($window).bind('scroll', _.debounce(function() {
+		angular.element($window).bind('scroll', _.debounce(function scrollHandler() {
     	$scope.atTop = $window.pageYOffset < 100;
     	$scope.$digest();
     }, 200));
@@ -33,6 +33,22 @@ angular.module('webappApp')
 
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
+
+    // get number of active tasks assigned to userID
+    var countActiveTasks = function countActiveTasks() {
+      var count = 0;
+      var thing = [];
+      _.forEach(Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks, function(value, key){
+        if((value.status == 0 || value.status == 2) && value.assigned_to == Phased.user.uid){
+          count++;
+          value.id = key;
+          thing.push(value);
+        }
+      });
+      $scope.getUserTasks = thing;
+
+      return count
+    }
     $scope.$on('Phased:changedStatus', function(){
       if ($scope.statusComment) {
         console.log($scope.statusComment);
@@ -369,25 +385,6 @@ angular.module('webappApp')
       // var pattern = new RegExp(p.protocol + p.domain + p.tld + p.params, 'gi');
       // var res = pattern.exec(text);
       //console.log(res);
-    }
-
-
-
-
-    // get number of active tasks assigned to userID
-    function countActiveTasks() {
-      var count = 0;
-      var thing = [];
-      _.forEach(Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks, function(value, key){
-        if((value.status == 0 || value.status == 2) && value.assigned_to == Phased.user.uid){
-          count++;
-          value.id = key;
-          thing.push(value);
-        }
-      });
-      $scope.getUserTasks = thing;
-
-      return count
     }
 
   });
