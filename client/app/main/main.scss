@@ -6,9 +6,15 @@
     float: left;
     min-height: 250px;
     header{
+      padding-bottom: 12px;
+      border-bottom: 1px solid #aaa;
       h3,img{
         display: inline-block;
       }
+      img{
+        border-radius: 100px;
+      }
+
     }
 }
 .member__box__tasks{
@@ -18,7 +24,7 @@
     padding:0;
   }
   li{
-    
+    font-size: 14px;
   }
 }
 
