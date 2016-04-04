@@ -248,6 +248,38 @@ p{
   padding-top: 0;
   background: transparent;
 }
+
+// loader styles
+body:not(.route-login) {
+  &:not(.phasedSetup) {
+    .ng-view {
+      &:after {
+        // centered text
+        // content: "Phasing...";
+        // display: block;
+        // position: absolute;
+        // top: 50%;
+        // right: 0;
+        // left: 0;
+        // text-align: center;
+
+        // loader gif
+        content: " ";
+        display: block;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: url('/assets/images/loader-ball.gif') no-repeat center center;
+      }
+      & > section {
+        display: none;
+      }
+    }
+  }
+}
+
 // navbar
 .navbar{
 
