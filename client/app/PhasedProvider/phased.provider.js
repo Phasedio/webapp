@@ -2862,18 +2862,19 @@ angular.module('webappApp')
     	FBRef.child('team/' + PhasedProvider.team.uid + '/statuses')
     	.orderByChild('time').endAt(oldestStatusTime).limitToLast(n)
     	.once('value', function(snap) {
-    		var data = snap.val();
-    		if (!data) return; // not an error if empty: we got all of the statuses requested (there were none)
+        $rootScope.$evalAsync(function getStatusesPageCallback(){
+      		var data = snap.val();
+      		if (!data) return; // not an error if empty: we got all of the statuses requested (there were none)
 
-    		// add to our list (no dupes possible)
-    		_.assign(PhasedProvider.team.statuses, data);
-    		$rootScope.$apply();
-    		
-    		// update oldest status time
-    		for (var i in data) {
-    			if (data[i].time < oldestStatusTime)
-    				oldestStatusTime = data[i].time;
-    		}
+      		// add to our list (no dupes possible)
+      		_.assign(PhasedProvider.team.statuses, data);
+      		
+      		// update oldest status time
+      		for (var i in data) {
+      			if (data[i].time < oldestStatusTime)
+      				oldestStatusTime = data[i].time;
+      		}
+        });
     	});
     }
 
