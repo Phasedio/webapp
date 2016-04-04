@@ -19,9 +19,9 @@ var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
 
 module.exports = {
 	/**
-	*	
+	*
 	*	Returns the FBRef after maybe starting the re-auth process
-	*	
+	*
 	*/
 	getRef : function getFBRef() {
 		if (!FBRef.getAuth()) {
@@ -48,7 +48,7 @@ FBRef.onAuth(function (authData) {
 		FBRef.authWithCustomToken(token, function(error, authData) {
 			if (error) {
 				console.log(error);
-			} else { 
+			} else {
 				console.log('Reauthenticated FBRef');
 			}
 		});

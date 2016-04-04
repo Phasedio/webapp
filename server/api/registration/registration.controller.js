@@ -264,7 +264,7 @@ exports.removeMember = function(req, res) {
 
 	var teamID = req.body.team;
 	var memberID = req.body.member.uid;
-	console.log(teamID,memberID); 
+	console.log(teamID,memberID);
 
 
 	//remove member id from members in team

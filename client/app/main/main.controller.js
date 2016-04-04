@@ -5,7 +5,11 @@ angular.module('webappApp')
     ga('send', 'pageview', '/team');
     $scope.team = Phased.team;
     $scope.Phased = Phased;
-
+    $scope.logout = function(){
+      console.log('logging you out');
+      Auth.logout();
+      $location.path('/login');
+    }
     // $scope.canAddMembers = function(){
     //   var k = Object.keys(Phased.team.members);
     //   $scope.numMembers = k.length;

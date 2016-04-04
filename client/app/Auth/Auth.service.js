@@ -86,7 +86,7 @@ angular.module('webappApp')
 
             	// 1
             	ref.child('profile/' + Auth.user.uid + '/mappings/github').set('authenticating', function(err){ if (err) return fail(err); });
-            	
+
             	// 2.
             	ref.authWithOAuthPopup("github", function(error, authData) {
             		if (error) {
@@ -108,11 +108,11 @@ angular.module('webappApp')
             },
             register : function(user) {
                 user.email = user.email.toLowerCase();
-                $http.post('./api/registration/register', {
+                $http.post('/api/registration/register', {
                     user: JSON.stringify(user)
                 })
                 .then(function(data) {
-                    if (data.success) {
+                    if (data.data.success) {
                         console.log('success', data);
                         Auth.login(user);
                     } else {
@@ -317,7 +317,7 @@ angular.module('webappApp')
 						})
 					});
 
-					// 3. 
+					// 3.
 					if (Auth.currentTeam) {
 						var aliasKey = '';
 						if (authData.provider == 'github')
@@ -377,7 +377,7 @@ angular.module('webappApp')
 					$http.defaults.headers.post.Authorization = 'Bearer ' + authData.token;
           angular.copy(authData, Auth.user);
           getProfileDetails(Auth.user.uid, authData.provider); // go to app after getting details
-        
+
         }
 
         return Auth;
