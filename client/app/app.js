@@ -24,7 +24,6 @@ angular.module('webappApp', [
   })
 .constant('FURL', 'https://phaseddev.firebaseio.com/')
 .run(['$rootScope', '$location', function ($rootScope, $location) {
-
       $rootScope.$on("$routeChangeError", function(event, next, previous, error) {
         // We can catch the error thrown when the $requireAuth promise is rejected
         // and redirect the user back to the home page
@@ -34,7 +33,6 @@ angular.module('webappApp', [
       });
 
       $rootScope.$on("$routeChangeSuccess", function(e, next) {
-        console.log('route changed', next.$$route.originalPath);
         $rootScope.route = next.$$route.originalPath.split('/')[1];
       });
 
@@ -57,7 +55,6 @@ angular.module('webappApp', [
       $rootScope.$on('Phased:statusesComplete', function(){
         $rootScope.phasedStatusesComplete = true;
       });
-
   }])
 
   .config(function ($routeProvider, $locationProvider) {
