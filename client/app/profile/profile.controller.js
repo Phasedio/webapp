@@ -1,22 +1,6 @@
 'use strict';
 
 angular.module('webappApp')
-	// .filter('orderObjectBy', function() {
-	// 	return function(items, field, reverse) {
-	// 	  var filtered = [];
-	// 	  for (var i in items) {
-	// 	    items[i].key = i;
-	// 	    items[i].lastUpdated = items[i].currentStatus.time;
-	// 	    filtered.push(items[i]);
-	// 	  }
-	// 	  filtered.sort(function (a, b) {
-	// 	    return (a[field] > b[field] ? 1 : -1);
-	// 	  });
-	// 	  if(reverse) filtered.reverse();
-	// 	  //console.log(filtered);
-	// 	  return filtered;
-	// 	};
-	// })
 
   .controller('ProfileCtrl', function ($scope,$routeParams, $http, Auth, Phased, FURL,amMoment,$location) {
     ga('send', 'pageview', '/profile');

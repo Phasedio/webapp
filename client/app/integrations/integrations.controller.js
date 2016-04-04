@@ -1,13 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-.filter('hostname', function ($document) {
-	return function (input) {
-		var parser = document.createElement('a');
-		parser.href = input;
-		return parser.hostname;
-	};
-})
+
 .controller('IntegrationsCtrl', function ($scope, $http, Auth, FURL, Phased, $location, $window) {
 	ga('send', 'pageview', '/integrations');
 	var ref = new Firebase(FURL);
@@ -44,10 +38,10 @@ angular.module('webappApp')
 			$scope.github.repos = repos; // GitHub repo data, not FB repo data
 		});
 	}
-	
+
 	// stages a repo if it's not already registered
 	$scope.stageGHRepo = function(repo) {
-		if (!Phased.team.repos || !(repo.id in Phased.team.repos)) 
+		if (!Phased.team.repos || !(repo.id in Phased.team.repos))
 			$scope.selectedRepo = repo;
 	}
 

@@ -480,4 +480,11 @@ angular.module('webappApp', [
       return out;
     }
   }])
+  .filter('hostname', function ($document) {
+  	return function (input) {
+  		var parser = document.createElement('a');
+  		parser.href = input;
+  		return parser.hostname;
+  	};
+  })
 ;
