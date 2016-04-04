@@ -27,6 +27,32 @@ angular.module('webappApp', [
           $location.path("/login");
         }
       });
+
+      $rootScope.$on("$routeChangeSuccess", function(e, next) {
+        console.log('route changed', next.$$route.originalPath);
+        $rootScope.route = next.$$route.originalPath.split('/')[1];
+      });
+
+      // various stages of loading
+      $rootScope.$on('Phased:setup', function(){
+        $rootScope.phasedSetup = true;
+      });
+      $rootScope.$on('Phased:meta', function(){
+        $rootScope.phasedMeta = true;
+      });
+      $rootScope.$on('Phased:teamComplete', function(){
+        $rootScope.phasedTeamComplete = true;
+      });
+      $rootScope.$on('Phased:membersComplete', function(){
+        $rootScope.phasedMembersComplete = true;
+      });
+      $rootScope.$on('Phased:projectsComplete', function(){
+        $rootScope.phasedProjectsComplete = true;
+      });
+      $rootScope.$on('Phased:statusesComplete', function(){
+        $rootScope.phasedStatusesComplete = true;
+      });
+
   }])
 
   .config(function ($routeProvider, $locationProvider) {

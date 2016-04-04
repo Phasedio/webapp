@@ -44,13 +44,23 @@ for(g=0;g<i.length;g++)f(c,i[g]);b._i.push([a,e,d])};b.__SV=1.2;a=e.createElemen
 mixpanel.init("3523d22678914e71ad1e5d45551cd96c");</script><!-- end Mixpanel -->
 
   </head>
-  <body ng-app="webappApp">
+  <body
+    ng-app="webappApp"
+    class="route-{{route}}"
+    ng-class="{
+      phasedSetup: phasedSetup,
+      phasedMeta : phasedMeta,
+      phasedTeamComplete : phasedTeamComplete,
+      phasedMembersComplete : phasedMembersComplete,
+      phasedProjectsComplete : phasedProjectsComplete,
+      phasedStatusesComplete : phasedStatusesComplete
+    }">
     <!--[if lt IE 7]>
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
 
     <!-- Add your site or application content here -->
-    <div ng-view=""></div>
+    <div class="ng-view"></div>
 
     <!-- Google Analytics: change UA-XXXXX-X to be your site's ID -->
     <script>
