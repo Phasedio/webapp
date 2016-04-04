@@ -17,7 +17,8 @@ angular.module('webappApp', [
   'angularMoment',
   'ngAnimate',
   'toaster',
-  'angular-inview'
+  'angular-inview',
+  'sly'
 ])
 .config(function () {
     //stripeProvider.setPublishableKey('pk_live_FPvARdIWeOzOfW8TGqtFd9QN');
