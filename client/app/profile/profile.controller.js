@@ -1,165 +1,23 @@
 'use strict';
 
 angular.module('webappApp')
-	.filter('orderObjectBy', function() {
-		return function(items, field, reverse) {
-		  var filtered = [];
-		  for (var i in items) {
-		    items[i].key = i;
-		    items[i].lastUpdated = items[i].currentStatus.time;
-		    filtered.push(items[i]);
-		  }
-		  filtered.sort(function (a, b) {
-		    return (a[field] > b[field] ? 1 : -1);
-		  });
-		  if(reverse) filtered.reverse();
-		  //console.log(filtered);
-		  return filtered;
-		};
-	})
-  .filter('tel', function() {
-    return function(tel) {
-      var res = formatLocal('CA', tel);
-      return res || tel;
-    }
-  })
-  /*
-    Basically a length property that will also count objects
-  */
-  .filter('length', function(){
-    return function(input) {
-      return Object.keys(input).length;
-    }
-  })
-  /*
-    Gets updates for a user
-  */
-  .filter('updatesFor', function() {
-    return function(input, uid) {
-      var out = {};
-      // for each status
-      for (var i in input) {
-        // if both a user is specified and it matches the user, add to output array
-        if (typeof uid == 'string' && input[i].user === uid) {
-          out[i] = input[i];
-        }
-      }
+	// .filter('orderObjectBy', function() {
+	// 	return function(items, field, reverse) {
+	// 	  var filtered = [];
+	// 	  for (var i in items) {
+	// 	    items[i].key = i;
+	// 	    items[i].lastUpdated = items[i].currentStatus.time;
+	// 	    filtered.push(items[i]);
+	// 	  }
+	// 	  filtered.sort(function (a, b) {
+	// 	    return (a[field] > b[field] ? 1 : -1);
+	// 	  });
+	// 	  if(reverse) filtered.reverse();
+	// 	  //console.log(filtered);
+	// 	  return filtered;
+	// 	};
+	// })
 
-      return out;
-    }
-  })
-  /*
-    get updates during a specified period ('today' or 'week')
-    1. sets after and before vars depending on period
-    2. checks each update's time attribute to see if it's between them
-  */
-  .filter('updatesForTime', function() {
-    // get midnight timestamp outside of returned function so we don't have to do the calculation each digest
-    var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
-    var midnight = new Date(today[2],today[1],today[0]).getTime();
-    var tomorrow = midnight + 86400000;
-    var weekOffSet = midnight - ((new Date(midnight).getDay()) * 86400000 * 7);
-
-
-
-    return function(input, since) {
-      var out = {};
-      var after, before;
-
-      // 1. determine range
-      if (since == 'today') {
-        after = midnight;
-        before = tomorrow;
-      } else if (since == 'week') {
-        after = weekOffSet;
-        before = midnight;
-      } else {
-        return input;
-      }
-
-      // 2. check each update
-      for (var i in input) {
-        if (input[i].time >= after && input[i].time < before) {
-          out[i] = input[i];
-        }
-      }
-
-      return out;
-    }
-  })
-  /*
-    gets a list of incomplete tasks assigned to a user
-  */
-  .filter('backlogFor', ['Phased', function(Phased) {
-    return function(input, uid) {
-      var out = {};
-
-      // for each task
-      for (var i in input) {
-        // if isn't finished and both a user is specified and it matches the user, add to output array
-        if (input[i].status != Phased.task.STATUS_ID.COMPLETE &&
-          (typeof uid == 'string' && input[i].assigned_to === uid)) {
-          out[i] = input[i];
-        }
-      }
-
-      return out;
-    }
-  }])
-  /*
-    gets a list of tasks assigned to a user
-  */
-  .filter('tasksFor', function() {
-    return function(input, uid) {
-      var out = {};
-
-      // for each task
-      for (var i in input) {
-        if (typeof uid == 'string' && input[i].assigned_to === uid) {
-          out[i] = input[i];
-        }
-      }
-
-      return out;
-    }
-  })
-  /*
-    gets a list of tasks completed within a specified period ('today', 'week', or 'ever')
-  */
-  .filter('tasksCompletedForTime', ['Phased', function(Phased) {
-    var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
-    var midnight = new Date(today[2],today[1],today[0]).getTime();
-    var tomorrow = midnight + 86400000;
-    var weekOffSet = midnight - ((new Date(midnight).getDay()) * 86400000 * 7);
-
-    return function(input, since) {
-      var out = {};
-      var after, before;
-
-      if (since == 'today') {
-        after = midnight;
-        before = tomorrow;
-      } else if (since == 'week') {
-        after = weekOffSet;
-        before = midnight;
-      } else if (since == 'ever') {
-        after = 0;
-        before = tomorrow;
-      } else {
-        return input;
-      }
-
-      // for each task
-      for (var i in input) {
-        if (input[i].status == Phased.task.STATUS_ID.COMPLETE &&
-          input[i].completeTime >= after && input[i].completeTime < before) {
-          out[i] = input[i];
-        }
-      }
-
-      return out;
-    }
-  }])
   .controller('ProfileCtrl', function ($scope,$routeParams, $http, Auth, Phased, FURL,amMoment,$location) {
     ga('send', 'pageview', '/profile');
 

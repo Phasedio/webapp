@@ -10,9 +10,9 @@ angular.module('webappApp')
       Auth.logout();
       $location.path('/login');
     }
-    $scope.getTasks = function(){
-      
-    }
+    // $scope.getTasks = function(id){
+    //
+    // }
     // $scope.canAddMembers = function(){
     //   var k = Object.keys(Phased.team.members);
     //   $scope.numMembers = k.length;
