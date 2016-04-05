@@ -714,7 +714,7 @@ angular.module('webappApp')
     	}
 
     	// get projects
-    	FBRef.child(teamAddr + '/projects').once('value', function(snap) {
+    	FBRef.child(teamAddr + '/projects').once('value', function getTeamProjects(snap) {
     		var data = snap.val();
     		PhasedProvider.team.projects = data || [];
     		if (!data) return;
@@ -744,7 +744,7 @@ angular.module('webappApp')
 			// get statuses
       FBRef.child(teamAddr + '/statuses')
       .limitToLast(STATUS_LIMIT)
-      .once('value', function(snap) {
+      .once('value', function getTeamStatuses(snap) {
         var data = snap.val();
 
         PhasedProvider.team.statuses = data || []; // need to do this here bc FB doesn't store empty vals
@@ -1308,16 +1308,16 @@ angular.module('webappApp')
     * deregistration when switching teams.
     *
     */
-    var watchProjects = function() {
+    var watchProjects = function watchProjects() {
       var projAddr = 'team/' + PhasedProvider.team.uid + '/projects',
         projectsRef = FBRef.child(projAddr),
         cb;
 
       // observe when tasks are added to or removed from a card
-      var watchAllTasks = function(cardID, colID, projID, cardRef) {
+      var watchAllTasks = function watchAllTasks(cardID, colID, projID, cardRef) {
         var cb = '';
-        cb = cardRef.child('tasks').on('child_added', function(snap){
-        	$rootScope.$evalAsync(function(){
+        cb = cardRef.child('tasks').on('child_added', function tasksChildAdded(snap){
+        	$rootScope.$evalAsync(function tasksChildAddedCB(){
 	          var taskID = snap.key();
 	          PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID] = snap.val();
 	          PhasedProvider.get.tasks[taskID] = PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID];
@@ -1332,8 +1332,8 @@ angular.module('webappApp')
           callback : cb
         });
 
-        cb = cardRef.child('tasks').on('child_removed', function(snap){
-        	$rootScope.$evalAsync(function(){
+        cb = cardRef.child('tasks').on('child_removed', function tasksChildRemoved(snap){
+        	$rootScope.$evalAsync(function tasksChildRemovedCB(){
 	          delete PhasedProvider.get.tasks[snap.key()];
 	          delete PhasedProvider.team.projects[projID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[snap.key()];
 	          $rootScope.$broadcast('Phased:taskDeleted');
@@ -1346,13 +1346,13 @@ angular.module('webappApp')
           callback : cb
         });
       }
-      var watchOneTask = function(taskID) {
+      var watchOneTask = function watchOneTask(taskID) {
         var thisTaskAddr = DEFAULTS.projectID + '/columns/' + DEFAULTS.columnID + '/cards/' + DEFAULTS.cardID + '/tasks/' + taskID;
         var taskRef = projectsRef.child(thisTaskAddr);
         var cb = '';
 
-        cb = taskRef.on('child_changed', function(snap) {
-        	$rootScope.$evalAsync(function(){
+        cb = taskRef.on('child_changed', function taskChildChanged(snap) {
+        	$rootScope.$evalAsync(function taskChildChangedCB(){
           	PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID][snap.key()] = snap.val();
           });
         });
@@ -1362,8 +1362,8 @@ angular.module('webappApp')
           callback : cb
         });
 
-        cb = taskRef.on('child_added', function(snap){
-        	$rootScope.$evalAsync(function(){
+        cb = taskRef.on('child_added', function taskChildAdded(snap){
+        	$rootScope.$evalAsync(function taskChildAddedCB(){
           	PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID][snap.key()] = snap.val();
           });
         });
@@ -1373,8 +1373,8 @@ angular.module('webappApp')
           callback : cb
         });
 
-        cb = taskRef.on('child_removed', function(snap){
-        	$rootScope.$evalAsync(function(){
+        cb = taskRef.on('child_removed', function taskChildRemoved(snap){
+        	$rootScope.$evalAsync(function taskChildRemovedCB(){
           	delete PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID][snap.key()];
           });
         });
@@ -1389,7 +1389,7 @@ angular.module('webappApp')
       	_totalTasks = Object.keys(PhasedProvider.get.tasks).length;
       // we have all the tasks, but we need to tell when all tasks have been
       // loaded with child_added so that Phased:setup is broadcast after their own Phased:taskAdded
-      var maybeDoAfterProjects = function() {
+      var maybeDoAfterProjects = function maybeDoAfterProjects() {
       	_loadedTasks++;
       	// this condition will be true when the very last task has been called
       	if (!PHASED_PROJECTS_SET_UP && _loadedTasks == _totalTasks) {
