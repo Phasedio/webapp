@@ -53,7 +53,7 @@ angular.module('webappApp', [
       $rootScope.$on('Phased:statusesComplete', function(){
         $rootScope.phasedStatusesComplete = true;
       });
-        
+
         // simple scroll-to-top fn
         // shouldn't need this (should just use href="#"),
         // but angular is interrupting local anchors
@@ -330,7 +330,10 @@ angular.module('webappApp', [
       var filtered = [];
       for (var i in items) {
         items[i].key = i;
-        items[i].lastUpdated = items[i].currentStatus.time;
+        if (items[i].currentStatus) {
+          items[i].lastUpdated = items[i].currentStatus.time;
+        }
+
         filtered.push(items[i]);
       }
       filtered.sort(function (a, b) {

@@ -33,7 +33,7 @@ angular.module('webappApp')
 
     //bootstrap opt-in func;
 
-    //setTimeout(function(){ Phased.doAsync() }, 2000);
+    setTimeout(function(){ Phased.doAsync() }, 2000);
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
 
@@ -111,7 +111,7 @@ angular.module('webappApp')
 
       //console.log('status:', status);
       // push to db
-      
+
       Phased.addStatus(status);
 
 
