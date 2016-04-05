@@ -391,6 +391,11 @@ angular.module('webappApp')
       // var res = pattern.exec(text);
       //console.log(res);
     }
-
+    $scope.$on('Phased:inviteSuccess', function() {
+      toaster.pop('success', "Success!", "Invite sent!");
+    });
+    $scope.$on('Phased:inviteFailed', function() {
+      toaster.pop('error', "Error!", "Invite failed! Please ensure the email is valid");
+    });
 
   });

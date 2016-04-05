@@ -2023,7 +2023,7 @@ angular.module('webappApp')
     var doAddMember = function(args) {
       console.log(args);
       ga('send', 'event', 'Team', 'Member invited');
-      $http.post('./api/registration/inviteTEST', {
+      $http.post('./api/registration/invite', {
         invitedEmail: args.newMember.email,
         inviterEmail : PhasedProvider.user.email,
         inviterName : PhasedProvider.user.name,
@@ -2040,15 +2040,19 @@ angular.module('webappApp')
               body : [],
               type : PhasedProvider.NOTIF_TYPE_ID.USER_JOINED
             });
+            $rootScope.$broadcast('Phased:inviteSuccess');
           } else if (data.invited) {
             console.log('User was invited to join Phased');
+            $rootScope.$broadcast('Phased:inviteSuccess');
           }
         } else {
           console.log('err', data);
+          $rootScope.$broadcast('Phased:inviteFailed');
         }
       },
       function(data){
         console.log('err', data);
+        $rootScope.$broadcast('Phased:inviteFailed');
       });
     }
 

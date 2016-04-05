@@ -168,6 +168,7 @@ exports.invite = function(req, res) {
 	console.log(req.body);
 	var invitedEmail = req.body.invitedEmail,
 		teamID = req.body.team,
+		teamName = req.body.teamName,
 		inviterEmail = req.body.inviterEmail,
 		inviterName = req.body.inviterName;
 
@@ -210,6 +211,20 @@ exports.invite = function(req, res) {
           var PIWID = Object.keys(users)[0];
           // already in PIW, add our team and wait for user
           FBRef.child('profile-in-waiting/' + PIWID + '/teams').push(teamID);
+					var args = {
+						invitedEmail: invitedEmail,
+						teamID : teamID,
+						teamName : teamName,
+						inviterEmail : inviterEmail,
+						inviterName : inviterName
+					};
+
+					sendInvite(args); // Email user notification
+
+					res.send({
+	        	success : true,
+	        	invited : true
+	        });
         } else {
           // newly add to PIW
           var PIWData = {
@@ -219,9 +234,18 @@ exports.invite = function(req, res) {
             'inviteName': inviterName
           };
           FBRef.child('profile-in-waiting').push(PIWData);
-          FBRef.child('profile-in-waiting2').push(PIWData); // for Zapier
+          //FBRef.child('profile-in-waiting2').push(PIWData); // for Zapier
+					var args = {
+						invitedEmail: invitedEmail,
+						teamID : teamID,
+						teamName : teamName,
+						inviterEmail : inviterEmail,
+						inviterName : inviterName
+					};
 
-	        res.send({
+					sendInvite(args); // Email user notification
+
+					res.send({
 	        	success : true,
 	        	invited : true
 	        });
