@@ -36,8 +36,18 @@ angular.module('webappApp')
     }
 
     $scope.$on('Phased:setup', function() {
+      if (!Phased.team.uid) {
+        $location.path('/onboarding');
+      }
       getUserTasks();
+
       // $scope.$digest(); // instead of apply; only affects current scope instead of rootscope
+    });
+
+    $scope.$on('Phased:meta', function(){
+      if (!Phased.team.uid) {
+        $location.path('/onboarding');
+      }
     });
 
     // $scope.canAddMembers = function(){
@@ -61,29 +71,5 @@ angular.module('webappApp')
     //   $location.path('/profile/' + uid);
     // }
     //
-    // /**
-    // *
-    // * Add team modal
-    // *
-    // */
-    // $scope.$on('Phased:meta', function(){
-    //   if (!Phased.team.uid) {
-    //     $location.path('/onboarding');
-    //   }
-    // });
-    //
-    // $scope.addTeam = function(teamName) {
-    //   Phased.addTeam(teamName, function success() {
-    //     $('#addTeamModal').modal('hide');
-    //     toaster.pop('success', 'Success', 'Welcome to Phased, ' + teamName);
-    //   }, function error(teamName) {
-    //     toaster.pop('error', 'Error', teamName + ' already exists. Please ask the team administrator for an invitation to join.');
-    //   });
-    // }
-    //
-    // $scope.addMembers = function(newMember) {
-    //   $('#addMemberModal').modal('toggle');
-    //   mixpanel.track("Sent Invite");
-    //   Phased.addMember(newMember);
-    // };
+    
 });

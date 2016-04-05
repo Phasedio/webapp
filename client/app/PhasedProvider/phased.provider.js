@@ -477,7 +477,15 @@ angular.module('webappApp')
 	    	}
 	    });
     }
-
+    PhasedProvider.doAsync = function() {
+      for (var i in req_callbacks) {
+        req_callbacks[i].callback(req_callbacks[i].args || undefined);
+      }
+      PHASED_SET_UP = true;
+      PhasedProvider.SET_UP = true;
+      console.log('Phased:setup');
+			$rootScope.$broadcast('Phased:setup');
+    };
     /**
     *
     * registerAfterMeta
@@ -523,7 +531,7 @@ angular.module('webappApp')
       PhasedProvider.TEAM_SET_UP = true;
       $rootScope.$broadcast('Phased:teamComplete');
       maybeFinalizeSetUp(); // this should definitely fail but will cue a digest if needed
-    } 
+    }
 
     /**
     *
@@ -2015,11 +2023,12 @@ angular.module('webappApp')
     var doAddMember = function(args) {
       console.log(args);
       ga('send', 'event', 'Team', 'Member invited');
-      $http.post('./api/registration/invite', {
+      $http.post('./api/registration/inviteTEST', {
         invitedEmail: args.newMember.email,
         inviterEmail : PhasedProvider.user.email,
         inviterName : PhasedProvider.user.name,
-        team : PhasedProvider.team.uid
+        team : PhasedProvider.team.uid,
+        teamName : PhasedProvider.team.name
       })
       .then(function(res) {
       	var data = res.data;
@@ -2459,6 +2468,7 @@ angular.module('webappApp')
     */
 
     var _addStatus = function(newStatus) {
+      console.log('hey');
       registerAsync(doAddStatus, newStatus);
     }
 
@@ -2467,18 +2477,25 @@ angular.module('webappApp')
       ga('send', 'event', 'Status', 'Status added');
 
       // clean
+      console.log('hey');
       newStatus.user = _Auth.user.uid;
+      console.log('hey');
       newStatus = cleanStatus(newStatus);
+      console.log('hey');
       if (!newStatus) return;
-
+      console.log('hey');
       newStatus.time = new Date().getTime();
-
+console.log('hey');
       // publish to stream
       var teamRef = FBRef.child('team/' + PhasedProvider.team.uid);
+      console.log('hey');
       teamRef.child('members/' + PhasedProvider.user.uid + '/currentStatus').set(newStatus);
+      console.log('hey');
       var newStatusRef = teamRef.child('statuses').push(newStatus, function(err){
         // after DB is updated, issue a notification to all users
+        console.log('hey');
         if (!err) {
+          console.log('hey');
           issueNotification({
             title : [{ userID : _Auth.user.uid }],
             body : [{ string : newStatus.name }],
@@ -2828,11 +2845,11 @@ angular.module('webappApp')
 
     /**
     *
-    *	gets n statuses for the team, starting at the time of the last status 
+    *	gets n statuses for the team, starting at the time of the last status
     *	in memory. To be called when a new "page" of statuses needs to be
     *	loaded in (eg, at the bottom of a lazy-loaded list).
     *
-    *	NB: oldest status age (timestamp) is updated whenever old statuses are 
+    *	NB: oldest status age (timestamp) is updated whenever old statuses are
     *	loaded (page init and here).
     *
     *	NB: instead of debouncing this until after PHASED_STATUSES_SET_UP,
@@ -2841,7 +2858,7 @@ angular.module('webappApp')
     *	1. gets n of the team's statuses older than oldest status in memory
     *	2. joins with current statuses
     *
-    *	args: 
+    *	args:
     *		n 	// number of statuses to load (defaults to STATUS_LIMIT)
     *
     */
@@ -2868,7 +2885,7 @@ angular.module('webappApp')
     		// add to our list (no dupes possible)
     		_.assign(PhasedProvider.team.statuses, data);
     		$rootScope.$apply();
-    		
+
     		// update oldest status time
     		for (var i in data) {
     			if (data[i].time < oldestStatusTime)

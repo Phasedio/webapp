@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  
+
 
   .controller('FeedCtrl', function ($scope, $http, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
 
@@ -35,6 +35,7 @@ angular.module('webappApp')
 
     //bootstrap opt-in func;
 
+    setTimeout(function(){ Phased.doAsync() }, 2000);
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
     $scope.$on('Phased:changedStatus', function(){
@@ -53,6 +54,7 @@ angular.module('webappApp')
     });
 
     $scope.addTask = function(update) {
+      console.log('hey');
       ga('send', 'event', 'Update', 'submited');
       mixpanel.track("Updated Status");
 
@@ -62,9 +64,9 @@ angular.module('webappApp')
     		alert('Your update is too long!');
         return;
     	}
-
+      console.log('hey');
 	    var taskPrefix = '';
-
+      console.log('hey');
 	    var status = {
 	      name: taskPrefix + update.name,
 	      // time: new Date().getTime(), // added in PhasedProvider.makeTaskForDB (internal fn)
@@ -92,6 +94,7 @@ angular.module('webappApp')
 
       //console.log('status:', status);
       // push to db
+      console.log('hey');
       Phased.addStatus(status);
 
 
@@ -391,5 +394,24 @@ angular.module('webappApp')
       return count
     }
     //$scope.countActiveTasks = countActiveTasks();
+
+
+    /**
+    *
+    * Add team modal
+    *
+    */
+
+
+    // $scope.addTeam = function(teamName) {
+    //   Phased.addTeam(teamName, function success() {
+    //     $('#addTeamModal').modal('hide');
+    //     toaster.pop('success', 'Success', 'Welcome to Phased, ' + teamName);
+    //   }, function error(teamName) {
+    //     toaster.pop('error', 'Error', teamName + ' already exists. Please ask the team administrator for an invitation to join.');
+    //   });
+    // }
+
+    
 
   });

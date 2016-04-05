@@ -7,6 +7,8 @@ var config = require('../../config/environment');
 var Firebase = require('firebase');
 var FBRef = require('../../components/phasedFBRef').getRef();
 var stripe = require('stripe')('sk_live_nKZ1ouWkI3WuiVGK2hIvZUH1');
+var mandrill = require('mandrill-api/mandrill');
+var mandrill_client = new mandrill.Mandrill('B0N7XKd4RDy6Q7nWP2eFAA');
 
 exports.index = function(req, res) {
 	res.json([]);
@@ -98,6 +100,48 @@ var defaultTeam = {
 *		3. if user in neither, create profile-in-waiting
 *
 */
+
+exports.inviteEmail = function(req, res) {
+	var invitedEmail = req.body.invitedEmail,
+		teamID = req.body.team,
+		teamName = req.body.teamName,
+		inviterEmail = req.body.inviterEmail,
+		inviterName = req.body.inviterName;
+
+	var template_name = "you-re-invited-1";
+	var template_content = [{
+		"name": "team-name",
+		"content": teamName
+	},
+	{
+		"name": "inviter-name",
+		"content": inviterName
+	}];
+
+	var message = {
+
+		"subject": "Invited",
+		"to": [{
+					 "email": invitedEmail,
+					 "type": "to"
+			 }],
+		"from_name": inviterName + " via Phased",
+	};
+
+	mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+    console.log(result);
+
+	}, function(e) {
+	    // Mandrill returns the error as an object with name and message keys
+	    console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+	    // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	});
+	res.send({
+		success : true,
+		invited : true
+	});
+
+};
 
 exports.invite = function(req, res) {
 	console.log(req.body);
