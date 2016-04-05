@@ -21,7 +21,7 @@ angular.module('webappApp', [
   'sly'
 ])
 .constant('FURL', 'https://phaseddev.firebaseio.com/')
-.run(['$rootScope', '$location', function runPhased($rootScope, $location) {
+.run(['$rootScope', '$location', '$window', function runPhased($rootScope, $location, $window) {
       $rootScope.$on("$routeChangeError", function(event, next, previous, error) {
         // We can catch the error thrown when the $requireAuth promise is rejected
         // and redirect the user back to the home page
@@ -53,6 +53,14 @@ angular.module('webappApp', [
       $rootScope.$on('Phased:statusesComplete', function(){
         $rootScope.phasedStatusesComplete = true;
       });
+        
+        // simple scroll-to-top fn
+        // shouldn't need this (should just use href="#"),
+        // but angular is interrupting local anchors
+        $rootScope.goToTop = function(e) {
+          e.preventDefault();
+          $window.scrollTo(0, 0);
+        }
   }])
 
   .config(function configRoutesOtherwise($routeProvider, $locationProvider) {

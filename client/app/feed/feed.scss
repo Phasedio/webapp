@@ -87,7 +87,7 @@
 	font-style: italic;
 	width: 247.5px; // one third of .row
 	transition: opacity 500ms;
-	z-index: -1;
+	z-index: 1;
 	.at-top & {
 		opacity: 0;
 	}
