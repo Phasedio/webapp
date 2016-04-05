@@ -2,35 +2,19 @@
 <section>
   <div class="container">
     <div class="row">
-      <div class="col-sm-12">
-        <div class="box feed__members">
-          <ul >
-            <li sly-repeat="item in team.members | orderObjectBy: 'lastOnline':true" class="clearfix">
-
-              <div class="feed__members__name">
-                {{item.name}}
-              </div>
-              <div class="online" ng-if="item.presence == 1">
+      <div class="col-sm-12 clearfix">
 
 
-              </div>
-              <div class="offline" ng-if="item.presence != 1">
-                <span class="hidden-sm" am-time-ago="item.lastOnline"></span>
-
-              </div>
-            </li>
-          </ul>
-
-          <button type="button" class="btn btn-success btn-block" name="button">Add member</button>
-        </div>
-
-        <div class="box member__box" sly-repeat="item in team.members | orderObjectBy: 'lastOnline':true" class="clearfix">
+        <div class="box member__box" ng-repeat="item in team.members " class="clearfix">
           <header>
             <img ng-src="{{::item.pic}}" alt="{{::item.name}}" width="35px"/>
-            <h2>{{item.name}}</h2>
+            <h3>{{item.name}}</h3>
           </header>
-          <div class="">
-
+          <div class="member__box__tasks">
+            <h6 align="center">To-Do list</h6>
+            <ul>
+              <li ng-repeat="task in getTasks[item.key]">{{taskList[task].name}} </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -99,7 +83,7 @@
                   Switch to team...
                 </h5>
                 <ul>
-                  <li sly-repeat="otherTeam in Phased.user.teams">
+                  <li ng-repeat="otherTeam in Phased.user.teams">
                     <a href="#" ng-click="Phased.switchTeam(otherTeam.id)">{{otherTeam.name}}</a>
                   </li>
                 </ul>
