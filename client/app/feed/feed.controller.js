@@ -33,7 +33,7 @@ angular.module('webappApp')
 
     //bootstrap opt-in func;
 
-    setTimeout(function(){ Phased.doAsync() }, 2000);
+    //setTimeout(function(){ Phased.doAsync() }, 2000);
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
 
@@ -71,7 +71,7 @@ angular.module('webappApp')
     }
 
     $scope.addTask = function(update) {
-      console.log('hey');
+
       ga('send', 'event', 'Update', 'submited');
       mixpanel.track("Updated Status");
 
@@ -81,9 +81,9 @@ angular.module('webappApp')
     		alert('Your update is too long!');
         return;
     	}
-      console.log('hey');
+
 	    var taskPrefix = '';
-      console.log('hey');
+
 	    var status = {
 	      name: taskPrefix + update.name,
 	      // time: new Date().getTime(), // added in PhasedProvider.makeTaskForDB (internal fn)
@@ -111,7 +111,7 @@ angular.module('webappApp')
 
       //console.log('status:', status);
       // push to db
-      console.log('hey');
+      
       Phased.addStatus(status);
 
 

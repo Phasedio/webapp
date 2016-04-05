@@ -2472,7 +2472,7 @@ angular.module('webappApp')
     */
 
     var _addStatus = function(newStatus) {
-      console.log('hey');
+
       registerAsync(doAddStatus, newStatus);
     }
 
@@ -2481,25 +2481,25 @@ angular.module('webappApp')
       ga('send', 'event', 'Status', 'Status added');
 
       // clean
-      console.log('hey');
+
       newStatus.user = _Auth.user.uid;
-      console.log('hey');
+
       newStatus = cleanStatus(newStatus);
-      console.log('hey');
+
       if (!newStatus) return;
-      console.log('hey');
+
       newStatus.time = new Date().getTime();
-console.log('hey');
+
       // publish to stream
       var teamRef = FBRef.child('team/' + PhasedProvider.team.uid);
-      console.log('hey');
+
       teamRef.child('members/' + PhasedProvider.user.uid + '/currentStatus').set(newStatus);
-      console.log('hey');
+
       var newStatusRef = teamRef.child('statuses').push(newStatus, function(err){
         // after DB is updated, issue a notification to all users
-        console.log('hey');
+
         if (!err) {
-          console.log('hey');
+          
           issueNotification({
             title : [{ userID : _Auth.user.uid }],
             body : [{ string : newStatus.name }],
