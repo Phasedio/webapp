@@ -14,7 +14,7 @@
 							<li ng-repeat="item in team.members | orderObjectBy: 'lastOnline':true" class="clearfix">
 								<img ng-src="{{::item.pic}}" alt="{{::item.name}}" width="35px"/>
 								<div class="feed__members__name">
-									{{item.name}}
+									{{::item.name}}
 								</div>
 								<div class="online" ng-if="item.presence == 1">
 
@@ -42,7 +42,7 @@
 								<input type="text" class="inputArea" ng-click="showExtras = true" name="name" ng-focus="submitTip = true" ng-blur="submitTip = false" autocomplete="off" placeholder="What are you up to?" ng-model="task.name" ng-trim="false">
 
 							</div>
-							<div class="status__meta" ng-show="showExtras">
+							<div class="status__meta" sly-show="showExtras" sly-prevent-evaluation-when-hidden>
 								<div class="meta__left">
 									<button type="button" class="btn" name="button" ng-click="moreCat()" data-toggle="tooltip" data-placement="bottom" data-delay="{'show':500,'hide':100}" title="Add Category"><i class="fa fa-tag"></i></button>
 									<button type="button" class="btn" ng-class="{btn__active : selectedTask.name}" name="button" ng-click="moreTasks()" data-toggle="tooltip" data-placement="bottom" data-delay="{'show':500,'hide':100}" title="Add Task"><i class="fa fa-tasks"></i> <small>{{selectedTask.name | limitTo:15}}</small></button>
@@ -62,7 +62,8 @@
 					<div class="feed__container">
 
 						<div
-							ng-show="filterFeed == 'recent'"
+							sly-show="filterFeed == 'recent'"
+							sly-prevent-evaluation-when-hidden
 							sly-repeat="item in team.statuses | orderObjectBy : 'time' : true "
 							class="member__activity type-{{meta.status.TYPE[item.type]}} source-{{meta.status.SOURCE[item.source]}}"
 							>
@@ -119,7 +120,12 @@
 						<div ng-if="filterFeed == 'recent'" status-lazy-loader></div>
 
 						<!-- members -->
-						<div class="member__activity " ng-show="filterFeed == 'members'" sly-repeat="item in team.members | orderMembers : 'lastUpdated' : true  ">
+						<div
+							class="member__activity "
+							sly-show="filterFeed == 'members'"
+							sly-prevent-evaluation-when-hidden
+							ng-repeat="item in team.members | orderMembers : 'lastUpdated' : true"
+							>
 							<div class="activity__person clearfix">
 								<img ng-src="{{::$parent.team.members[item.key].pic}}" alt="{{::$parent.team.members[item.key].name}}" />
 								<div class="activity__info">
@@ -155,7 +161,7 @@
 
 						</div>
 						<!-- add member -->
-						<div class="member__activity " ng-show="filterFeed == 'members'">
+						<div class="member__activity " sly-show="filterFeed == 'members'">
 							<button class="btn btn-block btn-success" data-toggle="modal" data-target="#addMemberModal">Add Member</button>
 
 						</div>
