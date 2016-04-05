@@ -35,7 +35,7 @@
                 <div class="member-background">
                   <div
                     class="member-item clickable"
-                    ng-repeat="member in team.members | orderBy: 'name'"
+                    sly-repeat="member in team.members | orderBy: 'name'"
                     ng-click="goToUser(member.uid)"
                     >
                     <img src="{{member.pic}}">

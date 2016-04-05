@@ -8,7 +8,7 @@
 		</p>
 	</div>
 	<a
-		ng-repeat="item in menu"
+		sly-repeat="item in menu"
 		class="navItem"
 		ng-href="{{item.link}}"
 		ng-class="{ active: isActive(item.link) }" 

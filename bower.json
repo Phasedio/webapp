@@ -21,7 +21,8 @@
     "AngularJS-Toaster": "angularjs-toaster#~0.4.16",
     "angular-ui-calendar": "~1.0.1",
     "phoneformat": "phoneformat.js#~1.0.3",
-    "angular-inview": "^1.5.7"
+    "angular-inview": "^1.5.7",
+    "sfly-scalyr": "^1.0.6"
   },
   "devDependencies": {
     "angular-mocks": ">=1.2.*",

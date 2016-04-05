@@ -11,7 +11,7 @@
 
         <div ng-if="Phased.user.teams">
           <h3>Please select a team to join</h3>
-          <li ng-repeat="otherTeam in Phased.user.teams">
+          <li sly-repeat="otherTeam in Phased.user.teams">
             <a href="#" ng-click="switchTeam(otherTeam.id)">{{::otherTeam.name}}</a>
           </li>
         </div>

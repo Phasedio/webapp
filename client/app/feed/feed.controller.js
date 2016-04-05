@@ -2,11 +2,9 @@
 
 angular.module('webappApp')
 
-
-  .controller('FeedCtrl', function ($scope, $http, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
+  .controller('FeedCtrl', function feedCtrl($scope, $http, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
 
     ga('send', 'pageview', '/feed');
-    console.log(Phased);
     $scope.thisP = Phased.PRESENCE;
     $scope.selectedCategory = '';
     $scope.showExtras = false;
@@ -28,7 +26,7 @@ angular.module('webappApp')
     $scope.atTop = true;
 
 
-		angular.element($window).bind('scroll', _.debounce(function() {
+		angular.element($window).bind('scroll', _.debounce(function scrollHandler() {
     	$scope.atTop = $window.pageYOffset < 100;
     	$scope.$digest();
     }, 200));
@@ -38,6 +36,22 @@ angular.module('webappApp')
     setTimeout(function(){ Phased.doAsync() }, 2000);
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
+
+    // get number of active tasks assigned to userID
+    var countActiveTasks = function countActiveTasks() {
+      var count = 0;
+      var thing = [];
+      _.forEach(Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks, function(value, key){
+        if((value.status == 0 || value.status == 2) && value.assigned_to == Phased.user.uid){
+          count++;
+          value.id = key;
+          thing.push(value);
+        }
+      });
+      $scope.getUserTasks = thing;
+
+      return count
+    }
     $scope.$on('Phased:changedStatus', function(){
       if ($scope.statusComment) {
         console.log($scope.statusComment);
@@ -48,10 +62,13 @@ angular.module('webappApp')
     //Print blank lines in for task area
     $scope.taskTable = [1,2,3,4,5];
 
-    $scope.$on('Phased:setup', function() {
+    if (Phased.SET_UP)
       $scope.countActiveTasks = countActiveTasks();
-      // $scope.$digest(); // instead of apply; only affects current scope instead of rootscope
-    });
+    else {
+      $scope.$on('Phased:setup', function() {
+        $scope.countActiveTasks = countActiveTasks();
+      });
+    }
 
     $scope.addTask = function(update) {
       console.log('hey');
@@ -375,43 +392,5 @@ angular.module('webappApp')
       //console.log(res);
     }
 
-
-
-
-    // get number of active tasks assigned to userID
-    function countActiveTasks(){
-      var count = 0;
-      var thing = [];
-      _.forEach(Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks, function(value, key){
-        if((value.status == 0 || value.status == 2) && value.assigned_to == Phased.user.uid){
-          count++;
-          value.id = key;
-          thing.push(value);
-        }
-      });
-      $scope.getUserTasks = thing;
-
-      return count
-    }
-    //$scope.countActiveTasks = countActiveTasks();
-
-
-    /**
-    *
-    * Add team modal
-    *
-    */
-
-
-    // $scope.addTeam = function(teamName) {
-    //   Phased.addTeam(teamName, function success() {
-    //     $('#addTeamModal').modal('hide');
-    //     toaster.pop('success', 'Success', 'Welcome to Phased, ' + teamName);
-    //   }, function error(teamName) {
-    //     toaster.pop('error', 'Error', teamName + ' already exists. Please ask the team administrator for an invitation to join.');
-    //   });
-    // }
-
-    
 
   });

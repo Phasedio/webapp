@@ -17,14 +17,11 @@ angular.module('webappApp', [
   'angularMoment',
   'ngAnimate',
   'toaster',
-  'angular-inview'
+  'angular-inview',
+  'sly'
 ])
-.config(function () {
-    //stripeProvider.setPublishableKey('pk_live_FPvARdIWeOzOfW8TGqtFd9QN');
-  })
 .constant('FURL', 'https://phaseddev.firebaseio.com/')
-.run(['$rootScope', '$location', function ($rootScope, $location) {
-
+.run(['$rootScope', '$location', '$window', function runPhased($rootScope, $location, $window) {
       $rootScope.$on("$routeChangeError", function(event, next, previous, error) {
         // We can catch the error thrown when the $requireAuth promise is rejected
         // and redirect the user back to the home page
@@ -34,7 +31,6 @@ angular.module('webappApp', [
       });
 
       $rootScope.$on("$routeChangeSuccess", function(e, next) {
-        console.log('route changed', next.$$route.originalPath);
         $rootScope.route = next.$$route.originalPath.split('/')[1];
       });
 
@@ -57,10 +53,17 @@ angular.module('webappApp', [
       $rootScope.$on('Phased:statusesComplete', function(){
         $rootScope.phasedStatusesComplete = true;
       });
-
+        
+        // simple scroll-to-top fn
+        // shouldn't need this (should just use href="#"),
+        // but angular is interrupting local anchors
+        $rootScope.goToTop = function(e) {
+          e.preventDefault();
+          $window.scrollTo(0, 0);
+        }
   }])
 
-  .config(function ($routeProvider, $locationProvider) {
+  .config(function configRoutesOtherwise($routeProvider, $locationProvider) {
     $routeProvider
       .otherwise({
         redirectTo: '/'
@@ -73,7 +76,7 @@ angular.module('webappApp', [
   *
   * (preface statusID with ! to filter out statuses)
   */
-  .filter('filterTaskByStatus', function() {
+  .filter('filterTaskByStatus', function filterTaskByStatus() {
     return function(input, statusID) {
       if (!input) return input;
       if (!statusID) return input;
@@ -107,7 +110,7 @@ angular.module('webappApp', [
   *
   * (preface statusID with ! to filter out statuses)
   */
-  .filter('filterTaskByCategory', function() {
+  .filter('filterTaskByCategory', function filterTaskByCategory() {
     return function(input, catID) {
       if (!input) return input;
       if (!catID) return input;
@@ -141,7 +144,7 @@ angular.module('webappApp', [
   *
   * (preface direction with ! to filter out users)
   */
-  .filter('filterTaskByAssignment', function() {
+  .filter('filterTaskByAssignment', function filterTaskByAssignment() {
     return function(input, direction, uid) {
       if (!input) return input;
       if (!direction) return input;
@@ -194,7 +197,7 @@ angular.module('webappApp', [
   * address this
   *
   */
-  .filter('orderObjectBy', function() {
+  .filter('orderObjectBy', function orderObjectBy() {
     return function(items, field, reverse) {
       var filtered = [];
       for (var i in items) {
@@ -214,7 +217,7 @@ angular.module('webappApp', [
   * (lookup allows for easier text changes later)
   *
   */
-  .filter('historyType', ['Phased', function(Phased) {
+  .filter('historyType', ['Phased', function historyType(Phased) {
     return function(input) {
       var types = {};
       types[Phased.task.HISTORY_ID.CREATED] = "Task created";
@@ -237,7 +240,7 @@ angular.module('webappApp', [
   *
   * (preface statusID with ! to filter out statuses)
   */
-  .filter('filterTaskByStatus', function() {
+  .filter('filterTaskByStatus', function filterTaskByStatus() {
     return function(input, statusID) {
       if (!input) return input;
       if (!statusID) return input;
@@ -271,7 +274,7 @@ angular.module('webappApp', [
   *
   * (preface statusID with ! to filter out statuses)
   */
-  .filter('filterTaskByCategory', function() {
+  .filter('filterTaskByCategory', function filterTaskByCategory() {
     return function(input, catID) {
       if (!input) return input;
       if (!catID) return input;
@@ -308,7 +311,7 @@ angular.module('webappApp', [
   * address this
   *
   */
-  .filter('orderObjectBy', function() {
+  .filter('orderObjectBy', function orderObjectBy() {
     return function(items, field, reverse) {
       var filtered = [];
       for (var i in items) {
@@ -322,14 +325,14 @@ angular.module('webappApp', [
       return filtered;
     };
   })
-  .filter('orderMembers', function() {
+  .filter('orderMembers', function orderMembers() {
     return function(items, field, reverse) {
       var filtered = [];
       for (var i in items) {
-      items[i].key = i;
-      items[i].lastUpdated = items[i].currentStatus.time;
-      filtered.push(items[i]);
-    }
+        items[i].key = i;
+        items[i].lastUpdated = items[i].currentStatus.time;
+        filtered.push(items[i]);
+      }
       filtered.sort(function (a, b) {
         return (a[field] > b[field] ? 1 : -1);
       });
@@ -337,7 +340,7 @@ angular.module('webappApp', [
       return filtered;
     };
   })
-  .filter('tel', function() {
+  .filter('tel', function tel() {
     return function(tel) {
       var res = formatLocal('CA', tel);
       return res || tel;
@@ -346,7 +349,7 @@ angular.module('webappApp', [
   /*
     Basically a length property that will also count objects
   */
-  .filter('length', function(){
+  .filter('length', function length(){
     return function(input) {
       return Object.keys(input).length;
     }
@@ -354,7 +357,7 @@ angular.module('webappApp', [
   /*
     Gets updates for a user
   */
-  .filter('updatesFor', function() {
+  .filter('updatesFor', function updatesFor() {
     return function(input, uid) {
       var out = {};
       // for each status
@@ -373,7 +376,7 @@ angular.module('webappApp', [
     1. sets after and before vars depending on period
     2. checks each update's time attribute to see if it's between them
   */
-  .filter('updatesForTime', function() {
+  .filter('updatesForTime', function updatesForTime() {
     // get midnight timestamp outside of returned function so we don't have to do the calculation each digest
     var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
     var midnight = new Date(today[2],today[1],today[0]).getTime();
@@ -410,7 +413,7 @@ angular.module('webappApp', [
   /*
     gets a list of incomplete tasks assigned to a user
   */
-  .filter('backlogFor', ['Phased', function(Phased) {
+  .filter('backlogFor', ['Phased', function backlogFor(Phased) {
     return function(input, uid) {
       var out = {};
 
@@ -429,7 +432,7 @@ angular.module('webappApp', [
   /*
     gets a list of tasks assigned to a user
   */
-  .filter('tasksFor', function() {
+  .filter('tasksFor', function tasksFor() {
     return function(input, uid) {
       var out = {};
 
@@ -446,7 +449,7 @@ angular.module('webappApp', [
   /*
     gets a list of tasks completed within a specified period ('today', 'week', or 'ever')
   */
-  .filter('tasksCompletedForTime', ['Phased', function(Phased) {
+  .filter('tasksCompletedForTime', ['Phased', function tasksCompletedForTime(Phased) {
     var today = [new Date().getDate(),new Date().getMonth(),new Date().getFullYear()];
     var midnight = new Date(today[2],today[1],today[0]).getTime();
     var tomorrow = midnight + 86400000;
@@ -480,7 +483,7 @@ angular.module('webappApp', [
       return out;
     }
   }])
-  .filter('hostname', function ($document) {
+  .filter('hostname', function hostname($document) {
   	return function (input) {
   		var parser = document.createElement('a');
   		parser.href = input;
