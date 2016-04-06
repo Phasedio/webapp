@@ -24,6 +24,7 @@ angular.module('webappApp')
     $scope.deleteHolder = '';
     $scope.editHolder = '';
     $scope.atTop = true;
+    console.log(Phased);
 
 
 		angular.element($window).bind('scroll', _.debounce(function scrollHandler() {
@@ -33,7 +34,7 @@ angular.module('webappApp')
 
     //bootstrap opt-in func;
 
-    setTimeout(function(){ Phased.doAsync() }, 2000);
+    setTimeout(function(){ Phased.doAsync() }, 3000);
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
 

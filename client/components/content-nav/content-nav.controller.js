@@ -1,11 +1,12 @@
 angular.module('webappApp')
   .controller('ContentNavCtrl', function ($scope, $location, Auth, Phased, FURL) {
     $scope.showAdmin = false;
+    $scope.user = Phased.user;
     $scope.menu = [
     {
       'title': 'Feed',
       'icon': 'rss',
-      'link': '/feed'
+      'link': '/'
     },
     {
       'title': 'To-Do',
@@ -15,7 +16,7 @@ angular.module('webappApp')
     {
       'title': 'Team',
       'icon': 'users',
-      'link': '/'
+      'link': '/team'
     },
     {
       'title': 'Profile',
@@ -35,7 +36,7 @@ angular.module('webappApp')
         $scope.$on('Phased:setup', showAdminLink);
         return;
       }
-
+      $scope.user = Phased.user;
       var myRole = Phased.team.members[Auth.user.uid].role;
       if (myRole == Phased.ROLE_ID.ADMIN || myRole == Phased.ROLE_ID.OWNER)
         $scope.showAdmin = true;
