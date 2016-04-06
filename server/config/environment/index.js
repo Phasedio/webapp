@@ -46,7 +46,8 @@ var all = {
 	  	'/api/slack/auth',
 	  	'/api/slack/slash',
 	  	'/api/hooks/',
-      '/api/registration/register'
+      '/api/registration/register',
+      '/api/downloads'
   	],
 
   // MongoDB connection options
