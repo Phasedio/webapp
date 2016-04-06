@@ -172,6 +172,9 @@ p{
   border-radius: 3px;
   background-color: #fff;
 }
+.box-lg{
+  max-width: 590px;
+}
 
 .button-phased{
   border-color:#084D54;
@@ -617,5 +620,8 @@ div[ng-include*="sidebar.html"] {
   .box{
     max-width: 496px;
 		margin: 0 auto;
+  }
+  .box-lg{
+    max-width: 590px;
   }
 }
