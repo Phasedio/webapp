@@ -11,7 +11,7 @@ angular.module('webappApp', [
   'ngRoute',
   'ui.bootstrap',
   'ui.calendar',
-  // 'angular-stripe',
+  'angular-stripe',
   'credit-cards',
   'firebase',
   'angularMoment',
@@ -21,6 +21,9 @@ angular.module('webappApp', [
   'sly'
 ])
 .constant('FURL', 'https://phaseddev.firebaseio.com/')
+.config(function (stripeProvider) {
+  stripeProvider.setPublishableKey('pk_live_FPvARdIWeOzOfW8TGqtFd9QN');
+})
 .run(['$rootScope', '$location', '$window', function runPhased($rootScope, $location, $window) {
       $rootScope.$on("$routeChangeError", function(event, next, previous, error) {
         // We can catch the error thrown when the $requireAuth promise is rejected

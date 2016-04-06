@@ -1,10 +1,10 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('BillingCtrl', function ($scope, $http, stripe, Auth, FURL,Phased,$location) {
+  .controller('BillingCtrl', function ($scope,stripe, $http, Auth, FURL,Phased,$location) {
 
 
-
+    //Stripe.setPublishableKey('pk_test_6pRNASCoBOKtIshFeQd4XMUh');
     ga('send', 'pageview', '/billing');
     var ref = new Firebase(FURL);
     $scope.Phased = Phased;
