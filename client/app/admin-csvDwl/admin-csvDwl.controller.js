@@ -114,6 +114,7 @@ angular.module('webappApp')
 
 
           $scope.returnValues[x] = a;
+          $scope.$apply();
 
         });
       }else{
@@ -131,6 +132,7 @@ angular.module('webappApp')
 
 
           $scope.returnValues[x] = a;
+          $scope.$apply();
 
         });
       }
