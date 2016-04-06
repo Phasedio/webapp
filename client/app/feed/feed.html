@@ -12,21 +12,24 @@
 					<div class="box feed__members">
 						<ul >
 							<li ng-repeat="item in team.members | orderObjectBy: 'lastOnline':true" class="clearfix">
-								<img ng-src="{{::item.pic}}" alt="{{::item.name}}" width="35px"/>
-								<div class="feed__members__name">
-									{{::item.name}}
-								</div>
-								<div class="online" ng-if="item.presence == 1">
+								<a ng-href="/profile/{{::item.uid}}" class="feed__members__link clearfix">
+									<img ng-src="{{::item.pic}}" alt="{{::item.name}}" width="35px"/>
+									<div class="feed__members__name">
+										{{::item.name}}
+									</div>
+									<div class="online" ng-if="item.presence == 1">
 
 
-								</div>
-								<div class="offline" ng-if="item.presence != 1">
-									<span class="hidden-sm" am-time-ago="item.lastOnline"></span>
+									</div>
+									<div class="offline" ng-if="item.presence != 1">
+										<span class="hidden-sm" am-time-ago="item.lastOnline"></span>
 
-								</div>
+									</div>
+								</a>
+
 							</li>
 						</ul>
-						<button type="button" class="btn btn-success btn-block" name="button" data-toggle="modal" data-target="#addMemberModal">Add member</button>
+						<button type="button" class="btn btn__phased__fb btn-block" name="button" data-toggle="modal" data-target="#addMemberModal">Add member</button>
 					</div>
 				</div>
 

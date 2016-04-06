@@ -176,6 +176,27 @@ p{
   max-width: 590px;
 }
 
+
+.btn__phased__fb{
+  font-size: 12px;
+  line-height: 22px;
+  padding: 0 16px;
+  vertical-align: baseline;
+  background-color: #2fc3b5;
+
+  color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, .2);
+  -webkit-font-smoothing: antialiased;
+  font-weight: bold;
+
+  text-align: center;
+  border: 1px solid;
+  border-color: #2fc3b5 #2AADA1 #29AB9F;
+  border-radius: 2px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
+  border-radius: 2px;
+}
+
 .button-phased{
   border-color:#084D54;
   background:transparent;
