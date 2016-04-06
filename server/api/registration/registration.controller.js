@@ -196,7 +196,16 @@ exports.invite = function(req, res) {
       // 1. add to team
       FBRef.child('profile/' + userID + '/teams').push(teamID); // add to user's teams
       FBRef.child('team/' + teamID + '/members/' + userID).update({role : 0}); // add to this team
+			var args = {
+				invitedEmail: invitedEmail,
+				teamID : teamID,
+				teamName : teamName,
+				inviterEmail : inviterEmail,
+				inviterName : inviterName
+			};
 
+			sendInvite(args); // Email user notification
+			
       res.send({
       	success : true,
       	added : true,

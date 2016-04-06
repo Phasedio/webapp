@@ -9,10 +9,11 @@ angular.module('webappApp')
     $scope.creatingTeam = false;
     $scope.showThis = 'addteam';
 
+
     console.log(Phased.user.email);
     console.log(Phased.user.name);
     console.log(Phased.team.uid);
-
+    //$scope.showThis = 'addMembers';
 
     // First form
     $scope.addTeam = function(teamName) {
@@ -33,6 +34,7 @@ angular.module('webappApp')
     //Second form
 
     $scope.inviteMembers = function(invite1,invite2,invite3) {
+      console.log(invite1,invite2,invite3);
       if($scope.addMembers.$valid){
         // mixpanel.track("Sent Invite");
         if(invite1){

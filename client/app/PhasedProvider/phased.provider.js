@@ -2499,7 +2499,7 @@ angular.module('webappApp')
         // after DB is updated, issue a notification to all users
 
         if (!err) {
-          
+
           issueNotification({
             title : [{ userID : _Auth.user.uid }],
             body : [{ string : newStatus.name }],
