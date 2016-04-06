@@ -391,6 +391,37 @@ angular.module('webappApp')
       // var res = pattern.exec(text);
       //console.log(res);
     }
+
+
+
+
+    //Tasks
+
+    $scope.setCompleted = function(task) {
+      console.log(task);
+      mixpanel.track("Complete Task");
+      var nameReset = task.name;
+      var status = task;
+      status.name = "Has completed task : " +status.name;
+      status.task = {
+        project : '0A',
+        column : '0A',
+        card : '0A',
+        id : task.key,
+        name : nameReset
+      }
+      Phased.addStatus(status);
+      task.name = nameReset;
+      Phased.setTaskStatus(task.key, Phased.task.STATUS_ID.COMPLETE);
+      toaster.pop('success', "Task Complete!", "Great work!");
+
+    }
+
+    $scope.sendToTask = function(project,column,card,key){
+
+      $location.path('/tasks/'+ project +'/'+ column +'/'+ card +'/'+ key);
+    }
+
     $scope.$on('Phased:inviteSuccess', function() {
       toaster.pop('success', "Success!", "Invite sent!");
     });

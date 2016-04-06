@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  
+
   .controller('TasksCtrl', function ($scope, $http, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig,$location) {
     ga('send', 'pageview', '/tasks');
 
@@ -34,6 +34,7 @@ angular.module('webappApp')
 
 
     $scope.setCompleted = function(task) {
+      console.log(task);
       mixpanel.track("Complete Task");
       var nameReset = task.name;
       var status = task;
@@ -332,6 +333,7 @@ angular.module('webappApp')
 
     $scope.setTaskCompleted = function(task) {
       mixpanel.track("Complete Task");
+      console.log(task);
       var nameReset = task.name;
       var status = task;
       status.name = "Has completed task : " +status.name;

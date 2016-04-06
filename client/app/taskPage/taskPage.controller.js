@@ -48,17 +48,20 @@ angular.module('webappApp')
 
     //grabs any statuses that are on the task
     function getStatuses(task){
-      $scope.taskStatuses = $scope.taskStatuses || [];
-      for (var i in task.statuses) {
-        if (task.statuses.hasOwnProperty(i)) {
-          console.log(i);
-          var item = task.statuses[i];
-          FBRef.child('team').child(Phased.user.curTeam).child('statuses').child(item).once('value',function(snap){
-            console.log(snap.val());
-            $scope.taskStatuses.push(snap.val());
-          });
+      if (task) {
+        $scope.taskStatuses = $scope.taskStatuses || [];
+        for (var i in task.statuses) {
+          if (task.statuses.hasOwnProperty(i)) {
+            console.log(i);
+            var item = task.statuses[i];
+            FBRef.child('team').child(Phased.user.curTeam).child('statuses').child(item).once('value',function(snap){
+              console.log(snap.val());
+              $scope.taskStatuses.push(snap.val());
+            });
+          }
         }
       }
+
     }
 
     // moves task into my to_me if unassigned,
