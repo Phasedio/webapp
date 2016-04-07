@@ -58,6 +58,14 @@
 }
 .task__details{
   float: right;
+  .fa{
+    color:#aaa;
+  }
+  &:hover{
+    .fa{
+      color:#2fc2a3;
+    }
+  }
 }
 
 
