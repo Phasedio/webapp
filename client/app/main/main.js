@@ -3,7 +3,7 @@
 angular.module('webappApp')
   .config(function ($routeProvider) {
     $routeProvider
-      .when('/', {
+      .when('/team', {
         templateUrl: 'app/main/main.html',
         controller: 'MainCtrl',
         resolve: {

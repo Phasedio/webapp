@@ -45,10 +45,13 @@ angular.module('webappApp')
 			- Phased:meta -- all metadata has been loaded
 			- Phased:member -- a single member has been loaded
 			- Phased:memberChanged -- a single member has changed
+			- Phased:teamComplete -- all team metadata is loaded
 			- Phased:membersComplete -- all team members have been loaded
 			- Phased:projectsComplete -- all projects are fully loaded (including col/card/task data)
 			- Phased:statusesComplete -- all statuses are loaded
+			- Phased:newStatus -- a new status is added
 			- Phased:changedStatus -- a status has changed
+			- Phased:deletedStatus -- a status has been deleted
 
 			- Phased:PaymentInfo -- team payment info (and Phased.viewType) has changed
 			- Phased:notification -- the current user has received a notification
@@ -91,6 +94,7 @@ angular.module('webappApp')
 
       // FLAGS
       PHASED_SET_UP = false, // set to true after team is set up and other fb calls can be made
+      PHASED_TEAM_SET_UP = false,
       PHASED_MEMBERS_SET_UP = false, // set to true after member data has all been loaded
       PHASED_META_SET_UP = false, // set to true after static meta values are loaded
       PHASED_PROJECTS_SET_UP = false, // set to true after the initial data has been loaded (incl col/card/task)
@@ -100,23 +104,27 @@ angular.module('webappApp')
       WATCH_PRESENCE = false, // set in setWatchPresence in config; whether to update user's presence
       WATCH_INTEGRATIONS = false, // set in setWatchIntegrations in config; whether to monitor integration data
       WEBHOOKS_LIVE = { // switches for individual webhooks, so that eg Github hooks can be live while Google is in dev
-      	GITHUB : true,
-      	GOOGLE : true
+      	GITHUB : false,
+      	GOOGLE : false
       },
 
       // ASYNC CALLBACKS
       req_callbacks = [], // filled with operations to complete when PHASED_SET_UP
+      req_after_team = [],
       req_after_members = [], // filled with operations to complete after members are in
       req_after_meta = [], // filled with operations to complete after meta are in
       req_after_projects = [], // "" for after projects
       req_after_statuses = [], // "" for after statuses
       membersRetrieved = 0, // incremented with each member's profile gathered
+      oldestStatusTime = new Date().getTime(), // date of the oldest status in memory; used for pagination
 
       // INTERNAL "CONSTANTS"
+      BOUNCE_ROUTES = {}, // routes for different view types to bounce to
       WEBHOOK_HOSTNAME = { // host names for our own webhook endpoints (with trailing slash)
       	LIVE : 'https://app.phased.io/',
       	DEV : 'http://93aa8d5a.ngrok.io/'
       },
+      STATUS_LIMIT = 30, // limit to how many statuses to load
       NOTIF_LIMIT = 30; // limit to how many notifications to keep in memory
 
 
@@ -190,6 +198,14 @@ angular.module('webappApp')
 
           HISTORY : {},
           HISTORY_ID : {}
+        },
+
+        // STATUS
+        status : {
+        	SOURCE : {},
+        	SOURCE_ID : {},
+        	TYPE : {},
+        	TYPE_ID : {}
         },
 
         // ROLE
@@ -283,6 +299,9 @@ angular.module('webappApp')
       $location = _location;
       // register functions listed after this in the script...
 
+      // ensure user and team have right privileges
+      PhasedProvider.maybeBounceUser = _maybeBounceUser;
+
       // add member and team
       PhasedProvider.addMember = _addMember;
       PhasedProvider.changeMemberRole = _changeMemberRole;
@@ -313,6 +332,9 @@ angular.module('webappApp')
       // NOTIFS
       PhasedProvider.markNotifAsRead = _markNotifAsRead;
       PhasedProvider.markAllNotifsAsRead = _markAllNotifsAsRead;
+
+      // PAGINATED STATUSES FOR USER
+      PhasedProvider.getStatusesPage = _getStatusesPage;
 
       // INTEGRATIONS
       // GITHUB
@@ -375,6 +397,16 @@ angular.module('webappApp')
         WATCH_INTEGRATIONS = true;
     }
 
+    // sets BOUNCE_ROUTES for different viewTypes
+    // pass FALSE not to bounce for team pay statuses
+    // otherwise, pass an object so that
+    // BOUNCE_ROUTES[viewType] == '/routeForThatView'
+    // eg,
+    // BOUNCE_ROUTES['problem'] == '/team-expired'
+    this.setBounceRoutes = function(newRoutes) {
+  		BOUNCE_ROUTES = newRoutes;
+    }
+
 
     /*
     **
@@ -423,6 +455,7 @@ angular.module('webappApp')
       }
       PHASED_SET_UP = true;
       PhasedProvider.SET_UP = true;
+      console.log('Phased:setup');
 			$rootScope.$broadcast('Phased:setup');
     }
 
@@ -433,16 +466,26 @@ angular.module('webappApp')
     *
     */
     var maybeFinalizeSetUp = function() {
-    	if (  !PHASED_SET_UP
-	    		&& PHASED_META_SET_UP
-	    		&& PHASED_MEMBERS_SET_UP
-	    		&& PHASED_PROJECTS_SET_UP
-	    		&& PHASED_STATUSES_SET_UP
-    		) {
-				doAsync();
-    	}
+    	$rootScope.$evalAsync(function(){
+	    	if (  !PHASED_SET_UP
+		    		&& PHASED_META_SET_UP
+		    		&& PHASED_MEMBERS_SET_UP
+		    		&& PHASED_PROJECTS_SET_UP
+		    		&& PHASED_STATUSES_SET_UP
+	    		) {
+	    		doAsync();
+	    	}
+	    });
     }
-
+    PhasedProvider.doAsync = function() {
+      for (var i in req_callbacks) {
+        req_callbacks[i].callback(req_callbacks[i].args || undefined);
+      }
+      PHASED_SET_UP = true;
+      PhasedProvider.SET_UP = true;
+      console.log('Phased:setup');
+			$rootScope.$broadcast('Phased:setup');
+    };
     /**
     *
     * registerAfterMeta
@@ -464,6 +507,30 @@ angular.module('webappApp')
       PhasedProvider.META_SET_UP = true;
 			$rootScope.$broadcast('Phased:meta');
       maybeFinalizeSetUp();
+    }
+
+    /**
+    *
+    * registerAfterTeam
+    * called after team data is in from server
+    *	(team metadata but not members' individual data)
+    *
+    */
+    var registerAfterTeam = function(callback, args) {
+      if (PHASED_TEAM_SET_UP)
+        callback(args);
+      else
+        req_after_team.push({callback : callback, args : args });
+    }
+
+    var doAfterTeam = function() {
+      for (var i in req_after_team) {
+        req_after_team[i].callback(req_after_team[i].args || undefined);
+      }
+      PHASED_TEAM_SET_UP = true;
+      PhasedProvider.TEAM_SET_UP = true;
+      $rootScope.$broadcast('Phased:teamComplete');
+      maybeFinalizeSetUp(); // this should definitely fail but will cue a digest if needed
     }
 
     /**
@@ -588,6 +655,12 @@ angular.module('webappApp')
           HISTORY_ID : data.card.HISTORY_ID
         };
 
+        // STATUS
+        PhasedProvider.status.SOURCE = data.status.SOURCE;
+        PhasedProvider.status.SOURCE_ID = data.status.SOURCE_ID;
+        PhasedProvider.status.TYPE = data.status.TYPE;
+        PhasedProvider.status.TYPE_ID = data.status.TYPE_ID;
+
         // ROLE
         PhasedProvider.ROLE = data.ROLE;
         PhasedProvider.ROLE_ID = data.ROLE_ID;
@@ -613,21 +686,48 @@ angular.module('webappApp')
     *
     */
     var initializeTeam = function() {
-      FBRef.child('team/' + PhasedProvider.team.uid).once('value', function(snap) {
-        var data = snap.val();
+    	var teamID = PhasedProvider.team.uid,
+    		teamAddr = 'team/' + teamID,
+    		simpleProps = ['name', 'members', 'category', 'repos', 'slack', 'billing'],
+    		loaded = [];
 
-        PhasedProvider.team.name = data.name;
-        PhasedProvider.team.members = data.members;
-        PhasedProvider.team.teamLength = Object.keys(data.members).length;
-        PhasedProvider.team.statuses = data.statuses || []; // need to do this here bc FB doesn't store empty vals
-        PhasedProvider.team.projects = data.projects || [];
-        PhasedProvider.team.project_archive = data.project_archive;
-        PhasedProvider.team.categoryObj = data.category;
-        PhasedProvider.team.categorySelect = objToArray(data.category); // adds key prop
-        PhasedProvider.team.repos = data.repos;
-        PhasedProvider.team.slack = data.slack;
+    	// due to the current data structure, it's easier to make many small calls
+    	// than one big call (thanks to statuses being at the same root as name, repos, etc)
+    	for (var i in simpleProps) {
+    		(function getSimpleProp(prop) {
+    			FBRef.child(teamAddr + '/' + prop).once('value', function(snap){
+    				var data = snap.val();
+    				PhasedProvider.team[prop] = data;
 
-        // set up references in .get[objectName] to their respective objects
+    				if (prop == 'members') {
+    					PhasedProvider.team.teamLength = Object.keys(data).length;
+    					// get profile details for team members
+			        for (var id in PhasedProvider.team.members) {
+			          initializeMember(id);
+			        }
+						} else if (prop == 'category') {
+							delete PhasedProvider.team.category; // not actually using that key
+							PhasedProvider.team.categoryObj = data;
+							PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
+    				}
+
+    				// check/broadcast team set up
+    				loaded.push(prop);
+    				if (loaded.length == simpleProps.length) {
+    					// we're all loaded
+    					doAfterTeam();
+    				}
+    			});
+    		})(simpleProps[i]);
+    	}
+
+    	// get projects
+    	FBRef.child(teamAddr + '/projects').once('value', function getTeamProjects(snap) {
+    		var data = snap.val();
+    		PhasedProvider.team.projects = data || [];
+    		if (!data) return;
+
+    		// set up references in .get[objectName] to their respective objects
         // this allows us to have an unordered collection of, eg, all tasks, to gather data
         // (this is similar to how .assignments.all used to work)
         for (var i in PhasedProvider.team.projects) {
@@ -643,24 +743,28 @@ angular.module('webappApp')
             PhasedProvider.get.tasks[j] = PhasedProvider.get.cards[i].tasks[j];
         }
 
-        // statuses are all in
-        doAfterStatuses();
-
         // if we're only gathering the project data once, broadcast that it's in
         if (!WATCH_PROJECTS) {
         	doAfterProjects();
         }
+    	});
 
-        // get profile details for team members
-        for (var id in PhasedProvider.team.members) {
-          initializeMember(id);
-        }
+			// get statuses
+      FBRef.child(teamAddr + '/statuses')
+      .limitToLast(STATUS_LIMIT)
+      .once('value', function getTeamStatuses(snap) {
+        var data = snap.val();
 
+        PhasedProvider.team.statuses = data || []; // need to do this here bc FB doesn't store empty vals
+        // find oldest status time and save val for pagination
+        for (var i in PhasedProvider.team.statuses) {
+    			if (PhasedProvider.team.statuses[i].time < oldestStatusTime)
+    				oldestStatusTime = PhasedProvider.team.statuses[i].time;
+    		}
+        // statuses are all in
+        doAfterStatuses();
         // monitor team for changes
         watchTeam();
-
-        // get billing info
-        checkPlanStatus(data.billing.stripeid, data.billing.subid);
       });
     }
 
@@ -785,29 +889,28 @@ angular.module('webappApp')
             }
 
             if (data.status == "active") {
-
               //Show thing for active
               PhasedProvider.viewType = 'active';
 
             } else if (data.status == "trialing") {
               //Show thing for problem with account
               PhasedProvider.viewType = 'trialing';
-
             } else if (data.status == 'past_due' || data.status == 'unpaid') {
               //Show thing for problem with account
               PhasedProvider.viewType = 'problem';
-
             } else if (data.status == 'canceled') {
               //Show thing for problem with canceled
               PhasedProvider.viewType = 'canceled';
-
             }
+
+            _maybeBounceTeam()
             $rootScope.$broadcast('Phased:PaymentInfo');
           }, function(data){
             console.log(data);
           });
       } else {
         PhasedProvider.viewType = 'notPaid';
+        _maybeBounceTeam();
       }
     }
 
@@ -829,7 +932,8 @@ angular.module('webappApp')
     */
     var watchTeam = function() {
       var teamKey = 'team/' + PhasedProvider.team.uid,
-        cb = ''; // set to callback for each FBRef.on()
+        cb = '', // set to callback for each FBRef.on()
+        now = new Date().getTime();
 
       // name
       cb = FBRef.child(teamKey + '/name').on('value', function(snap){
@@ -845,12 +949,19 @@ angular.module('webappApp')
 
       // statuses
       // adds the status if it's not already there
-      cb = FBRef.child(teamKey + '/statuses').on('child_added', function(snap){
+      cb = FBRef.child(teamKey + '/statuses')
+      .orderByChild('time').startAt(now)
+      .on('child_added', function(snap){
         var key = snap.key();
-        if (!(key in PhasedProvider.team.statuses))
-          PhasedProvider.team.statuses[key] = snap.val();
-
-        $rootScope.$broadcast('Phased:newStatus');
+        console.log('got', key);
+        if (!(key in PhasedProvider.team.statuses)) {
+        	console.log('scheduled', key);
+        	$rootScope.$evalAsync(function() {
+        		console.log('adding', key);
+	          PhasedProvider.team.statuses[key] = snap.val();
+	        	$rootScope.$broadcast('Phased:newStatus');
+	        });
+        }
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -860,10 +971,31 @@ angular.module('webappApp')
       });
 
       // update status on change
-      cb = FBRef.child(teamKey + '/statuses').on('child_changed', function(snap){
+      cb = FBRef.child(teamKey + '/statuses')
+      .limitToLast(STATUS_LIMIT)
+      .on('child_changed', function(snap) {
         var key = snap.key();
-        PhasedProvider.team.statuses[key] = snap.val();
-        $rootScope.$broadcast('Phased:changedStatus');
+        $rootScope.$evalAsync(function(){
+	        PhasedProvider.team.statuses[key] = snap.val();
+	        $rootScope.$broadcast('Phased:changedStatus');
+	      });
+      });
+
+      PhasedProvider.team._FBHandlers.push({
+        address : teamKey + '/statuses',
+        eventType : 'child_changed',
+        callback : cb
+      });
+
+      // update status on change
+      cb = FBRef.child(teamKey + '/statuses')
+      .limitToLast(STATUS_LIMIT)
+      .on('child_removed', function(snap) {
+        var key = snap.key();
+        $rootScope.$evalAsync(function(){
+	        delete PhasedProvider.team.statuses[key];
+	        $rootScope.$broadcast('Phased:deletedStatus');
+        });
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -876,8 +1008,10 @@ angular.module('webappApp')
       // category (doesn't need memory references)
       cb = FBRef.child(teamKey + '/category').on('value', function(snap) {
         var data = snap.val();
-        PhasedProvider.team.categoryObj = data;
-        PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
+        $rootScope.$evalAsync(function(){
+        	PhasedProvider.team.categoryObj = data;
+       		PhasedProvider.team.categorySelect = objToArray(data); // adds key prop
+        });
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -888,7 +1022,9 @@ angular.module('webappApp')
 
       // repos
       cb = FBRef.child(teamKey + '/repos').on('value', function(snap){
-      	PhasedProvider.team.repos = snap.val();
+      	$rootScope.$evalAsync(function() {
+      		PhasedProvider.team.repos = snap.val();
+      	});
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -900,7 +1036,9 @@ angular.module('webappApp')
 
       // slack
       cb = FBRef.child(teamKey + '/slack').on('value', function(snap){
-      	PhasedProvider.team.slack = snap.val();
+      	$rootScope.$evalAsync(function(){
+	      	PhasedProvider.team.slack = snap.val();
+	      });
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -913,7 +1051,9 @@ angular.module('webappApp')
       // billing
       cb = FBRef.child(teamKey + '/billing').on('value', function(snap){
         var billing = snap.val();
-        checkPlanStatus(billing.stripeid, billing.subid);
+        $rootScope.$evalAsync(function() {
+        	checkPlanStatus(billing.stripeid, billing.subid);
+        });
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -925,19 +1065,25 @@ angular.module('webappApp')
 
       // members
       cb = FBRef.child(teamKey + '/members').on('child_changed', function(snap) {
-        var memberID = snap.key(),
-          data = snap.val();
+      	$rootScope.$evalAsync(function() {
+	        var memberID = snap.key(),
+	          data = snap.val();
 
-        // if new member, initialize
-        if (!(memberID in PhasedProvider.team.members)) {
-          initializeMember(memberID);
-        }
+	        // if new member, initialize
+	        if (!(memberID in PhasedProvider.team.members)) {
+	          initializeMember(memberID);
+	        }
 
-        // update all keys as needed
-        for (var key in data) {
-          PhasedProvider.team.members[memberID][key] = data[key];
-        }
-        $rootScope.$broadcast('Phased:memberChanged');
+	        // update all keys as needed
+	        for (var key in data) {
+	          PhasedProvider.team.members[memberID][key] = data[key];
+	        }
+
+	        // update teamLength
+	        PhasedProvider.team.teamLength = Object.keys(PhasedProvider.team.members).length;
+
+	        $rootScope.$broadcast('Phased:memberChanged');
+	      });
       });
 
       PhasedProvider.team._FBHandlers.push({
@@ -1041,20 +1187,22 @@ angular.module('webappApp')
         var notifAddress = 'notif/' + PhasedProvider.team.uid + '/' + PhasedProvider.user.uid;
         var cb = FBRef.child(notifAddress)
         	.limitToLast(NOTIF_LIMIT)
-          .on('value', function(data) {
-            var notifications = data.val();
+          .on('value', function(snap) {
+          	$rootScope.$evalAsync(function(){
+	            var notifications = snap.val();
 
-            // format titles and bodies
-            for (var id in notifications) {
-              notifications[id].title = stringify(notifications[id].title);
-              notifications[id].body = stringify(notifications[id].body);
-              notifications[id].key = id;
-            }
-            // update stream
-            PhasedProvider.notif.stream = notifications;
+	            // format titles and bodies
+	            for (var id in notifications) {
+	              notifications[id].title = stringify(notifications[id].title);
+	              notifications[id].body = stringify(notifications[id].body);
+	              notifications[id].key = id;
+	            }
+	            // update stream
+	            PhasedProvider.notif.stream = notifications;
 
-            // issue notification event
-            $rootScope.$broadcast('Phased:notification');
+	            // issue notification event
+	            $rootScope.$broadcast('Phased:notification');
+	          });
           });
 
         // stash for deregistering
@@ -1168,194 +1316,23 @@ angular.module('webappApp')
     * deregistration when switching teams.
     *
     */
-    var watchProjects = function() {
+    var watchProjects = function watchProjects() {
       var projAddr = 'team/' + PhasedProvider.team.uid + '/projects',
         projectsRef = FBRef.child(projAddr),
         cb;
 
-      // sets up watchers for a single project
-      var watchOneProject = function(projID) {
-        var projRef = projectsRef.child(projID);
-
-        // then watch own children
-        cb = projRef.on('child_changed', function(snap) {
-          var key = snap.key();
-          if (key != 'columns') // don't directly update the columns key
-            PhasedProvider.team.projects[projID][key] = snap.val();
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + projID,
-          eventType : 'child_changed',
-          callback : cb
-        });
-
-        cb = projRef.on('child_added', function(snap){
-          var key = snap.key()
-          PhasedProvider.team.projects[projID][key] = snap.val();
-          // watch columns after they're added
-          if (key == 'columns')
-            watchAllColumns(projID, projRef);
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + projID,
-          eventType : 'child_added',
-          callback : cb
-        });
-
-        cb = projRef.on('child_removed', function(snap){
-          delete PhasedProvider.team.projects[projID][snap.key()];
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + projID,
-          eventType : 'child_removed',
-          callback : cb
-        });
-      }
-
-      // observe when cards are added to or removed from a col
-      var watchAllColumns = function(projID, projRef) {
-        cb = projRef.child('columns').on('child_added', function(snap){
-          var colID = snap.key();
-          PhasedProvider.team.projects[projID].columns[colID] = snap.val();
-          PhasedProvider.get.columns[colID] = PhasedProvider.team.projects[projID].columns[colID];
-          watchOneColumn(colID, projID);
-          $rootScope.$broadcast('Phased:columnAdded');
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projRef.child('columns').key(),
-          eventType : 'child_added',
-          callback : cb
-        });
-
-        cb = projRef.child('columns').on('child_removed', function(snap){
-          delete PhasedProvider.get.columns[snap.key()];
-          delete PhasedProvider.team.projects[projID].columns[snap.key()];
-          $rootScope.$broadcast('Phased:columnDeleted');
-        });
-
-        PhasedProvider.team._FBHandlers.push({
-          address : projRef.child('columns').key(),
-          eventType : 'child_removed',
-          callback : cb
-        });
-      }
-      var watchOneColumn = function(colID, projID) {
-        var thisColAddr = projID + '/columns/' + colID;
-        var colRef = projectsRef.child(thisColAddr);
-
-        // then watch own children
-        cb = colRef.on('child_changed', function(snap) {
-          var key = snap.key();
-          if (key != 'cards') // don't directly update the cards key
-            PhasedProvider.team.projects[projID].columns[colID][key] = snap.val();
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisColAddr,
-          eventType : 'child_changed',
-          callback : cb
-        });
-
-        cb = colRef.on('child_added', function(snap){
-          var key = snap.key()
-          PhasedProvider.team.projects[projID].columns[colID][key] = snap.val();
-          // watch cards after they're added
-          if (key == 'cards')
-            watchAllCards(colID, projID, colRef);
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisColAddr,
-          eventType : 'child_added',
-          callback : cb
-        });
-
-        cb = colRef.on('child_removed', function(snap){
-          delete PhasedProvider.team.projects[projID].columns[colID][snap.key()];
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisColAddr,
-          eventType : 'child_removed',
-          callback : cb
-        });
-      }
-
-      // observe when cards are added to or removed from a col
-      var watchAllCards = function(colID, projID, colRef) {
-        var cb = '';
-        cb = colRef.child('cards').on('child_added', function(snap){
-          var cardID = snap.key();
-          PhasedProvider.team.projects[projID].columns[colID].cards[cardID] = snap.val();
-          PhasedProvider.get.cards[cardID] = PhasedProvider.team.projects[projID].columns[colID].cards[cardID];
-          watchOneCard(cardID, colID, projID);
-          $rootScope.$broadcast('Phased:cardAdded');
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : colRef.child('cards').key(),
-          eventType : 'child_added',
-          callback : cb
-        });
-
-        cb = colRef.child('cards').on('child_removed', function(snap){
-          delete PhasedProvider.get.cards[cardID];
-          delete PhasedProvider.team.projects[projID].columns[colID].cards[snap.key()];
-          $rootScope.$broadcast('Phased:cardDeleted');
-        });
-
-        PhasedProvider.team._FBHandlers.push({
-          address : colRef.child('cards').key(),
-          eventType : 'child_removed',
-          callback : cb
-        });
-      }
-      var watchOneCard = function(cardID, colID, projID) {
-        var thisCardAddr = projID + '/columns/' + colID + '/cards/' + cardID;
-        var cardRef = projectsRef.child(thisCardAddr);
-
-        // then watch own children
-        cb = cardRef.on('child_changed', function(snap) {
-          var key = snap.key();
-          if (key != 'tasks') // don't directly update the tasks key
-            PhasedProvider.team.projects[projID].columns[colID].cards[cardID][key] = snap.val();
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisCardAddr,
-          eventType : 'child_changed',
-          callback : cb
-        });
-
-        cb = cardRef.on('child_added', function(snap){
-          var key = snap.key()
-          PhasedProvider.team.projects[projID].columns[colID].cards[cardID][key] = snap.val();
-          // watch tasks when they are added
-          if (key == 'tasks') {
-            watchAllTasks(cardID, colID, projID, cardRef);
-          }
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisCardAddr,
-          eventType : 'child_added',
-          callback : cb
-        });
-
-        cb = cardRef.on('child_removed', function(snap){
-          delete PhasedProvider.team.projects[projID].columns[colID].cards[cardID][snap.key()];
-        });
-        PhasedProvider.team._FBHandlers.push({
-          address : projAddr + '/' + thisCardAddr,
-          eventType : 'child_removed',
-          callback : cb
-        });
-      }
-
       // observe when tasks are added to or removed from a card
-      var watchAllTasks = function(cardID, colID, projID, cardRef) {
+      var watchAllTasks = function watchAllTasks(cardID, colID, projID, cardRef) {
         var cb = '';
-        cb = cardRef.child('tasks').on('child_added', function(snap){
-          var taskID = snap.key();
-          PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID] = snap.val();
-          PhasedProvider.get.tasks[taskID] = PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID];
-          watchOneTask(taskID, cardID, colID, projID);
-          $rootScope.$broadcast('Phased:taskAdded');
-          maybeDoAfterProjects();
+        cb = cardRef.child('tasks').on('child_added', function tasksChildAdded(snap){
+        	$rootScope.$evalAsync(function tasksChildAddedCB(){
+	          var taskID = snap.key();
+	          PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID] = snap.val();
+	          PhasedProvider.get.tasks[taskID] = PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID];
+	          watchOneTask(taskID, DEFAULTS.cardID, DEFAULTS.columnID, DEFAULTS.projectID);
+	          $rootScope.$broadcast('Phased:taskAdded');
+	          maybeDoAfterProjects();
+	        });
         });
         PhasedProvider.team._FBHandlers.push({
           address : cardRef.child('tasks').key(),
@@ -1363,10 +1340,12 @@ angular.module('webappApp')
           callback : cb
         });
 
-        cb = cardRef.child('tasks').on('child_removed', function(snap){
-          delete PhasedProvider.get.tasks[snap.key()];
-          delete PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[snap.key()];
-          $rootScope.$broadcast('Phased:taskDeleted');
+        cb = cardRef.child('tasks').on('child_removed', function tasksChildRemoved(snap){
+        	$rootScope.$evalAsync(function tasksChildRemovedCB(){
+	          delete PhasedProvider.get.tasks[snap.key()];
+	          delete PhasedProvider.team.projects[projID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[snap.key()];
+	          $rootScope.$broadcast('Phased:taskDeleted');
+	        });
         });
 
         PhasedProvider.team._FBHandlers.push({
@@ -1375,13 +1354,15 @@ angular.module('webappApp')
           callback : cb
         });
       }
-      var watchOneTask = function(taskID, cardID, colID, projID) {
-        var thisTaskAddr = projID + '/columns/' + colID + '/cards/' + cardID + '/tasks/' + taskID;
+      var watchOneTask = function watchOneTask(taskID) {
+        var thisTaskAddr = DEFAULTS.projectID + '/columns/' + DEFAULTS.columnID + '/cards/' + DEFAULTS.cardID + '/tasks/' + taskID;
         var taskRef = projectsRef.child(thisTaskAddr);
         var cb = '';
 
-        cb = taskRef.on('child_changed', function(snap) {
-          PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID][snap.key()] = snap.val();
+        cb = taskRef.on('child_changed', function taskChildChanged(snap) {
+        	$rootScope.$evalAsync(function taskChildChangedCB(){
+          	PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID][snap.key()] = snap.val();
+          });
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisTaskAddr,
@@ -1389,8 +1370,10 @@ angular.module('webappApp')
           callback : cb
         });
 
-        cb = taskRef.on('child_added', function(snap){
-          PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID][snap.key()] = snap.val();
+        cb = taskRef.on('child_added', function taskChildAdded(snap){
+        	$rootScope.$evalAsync(function taskChildAddedCB(){
+          	PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID][snap.key()] = snap.val();
+          });
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisTaskAddr,
@@ -1398,8 +1381,10 @@ angular.module('webappApp')
           callback : cb
         });
 
-        cb = taskRef.on('child_removed', function(snap){
-          delete PhasedProvider.team.projects[projID].columns[colID].cards[cardID].tasks[taskID][snap.key()];
+        cb = taskRef.on('child_removed', function taskChildRemoved(snap){
+        	$rootScope.$evalAsync(function taskChildRemovedCB(){
+          	delete PhasedProvider.team.projects[DEFAULTS.projectID].columns[DEFAULTS.columnID].cards[DEFAULTS.cardID].tasks[taskID][snap.key()];
+          });
         });
         PhasedProvider.team._FBHandlers.push({
           address : projAddr + '/' + thisTaskAddr,
@@ -1412,7 +1397,7 @@ angular.module('webappApp')
       	_totalTasks = Object.keys(PhasedProvider.get.tasks).length;
       // we have all the tasks, but we need to tell when all tasks have been
       // loaded with child_added so that Phased:setup is broadcast after their own Phased:taskAdded
-      var maybeDoAfterProjects = function() {
+      var maybeDoAfterProjects = function maybeDoAfterProjects() {
       	_loadedTasks++;
       	// this condition will be true when the very last task has been called
       	if (!PHASED_PROJECTS_SET_UP && _loadedTasks == _totalTasks) {
@@ -1420,33 +1405,8 @@ angular.module('webappApp')
       	}
       }
 
-      // watch projects
-      var cb = '';
-      cb = projectsRef.on('child_added', function(snap){
-        // add project
-        PhasedProvider.team.projects[snap.key()] = snap.val();
-        // watch project
-        watchOneProject(snap.key());
-        $rootScope.$broadcast('Phased:projectAdded');
-      });
-
-      PhasedProvider.team._FBHandlers.push({
-        address : projAddr,
-        eventType : 'child_added',
-        callback : cb
-      });
-
-      cb = projectsRef.on('child_removed', function(snap){
-        // remove project
-        delete PhasedProvider.team.projects[snap.key()];
-        $rootScope.$broadcast('Phased:projectDeleted');
-      });
-
-      PhasedProvider.team._FBHandlers.push({
-        address : projAddr,
-        eventType : 'child_removed',
-        callback : cb
-      });
+      var cardRef = FBRef.child('team/' + PhasedProvider.team.uid + '/projects/' + DEFAULTS.projectID + '/columns/' + DEFAULTS.columnID + '/cards/' + DEFAULTS.cardID);
+      watchAllTasks(DEFAULTS.cardID, DEFAULTS.columnID, DEFAULTS.projectID, cardRef);
     }
 
 
@@ -1988,7 +1948,12 @@ angular.module('webappApp')
         }
       };
 
-      return cleanObjectShallow(newStatus, config);
+      var newStatus = cleanObjectShallow(newStatus, config);
+
+      newStatus.type = PhasedProvider.status.TYPE_ID.UPDATE;
+      newStatus.source = PhasedProvider.status.SOURCE_ID.WEBAPP;
+
+      return newStatus;
     }
 
     // remove an item from an array
@@ -2062,7 +2027,8 @@ angular.module('webappApp')
         invitedEmail: args.newMember.email,
         inviterEmail : PhasedProvider.user.email,
         inviterName : PhasedProvider.user.name,
-        team : PhasedProvider.team.uid
+        team : PhasedProvider.team.uid,
+        teamName : PhasedProvider.team.name
       })
       .then(function(res) {
       	var data = res.data;
@@ -2074,15 +2040,19 @@ angular.module('webappApp')
               body : [],
               type : PhasedProvider.NOTIF_TYPE_ID.USER_JOINED
             });
+            $rootScope.$broadcast('Phased:inviteSuccess');
           } else if (data.invited) {
             console.log('User was invited to join Phased');
+            $rootScope.$broadcast('Phased:inviteSuccess');
           }
         } else {
           console.log('err', data);
+          $rootScope.$broadcast('Phased:inviteFailed');
         }
       },
       function(data){
         console.log('err', data);
+        $rootScope.$broadcast('Phased:inviteFailed');
       });
     }
 
@@ -2443,6 +2413,49 @@ angular.module('webappApp')
 
 
     /**
+    *
+    *	bounces user to / if they aren't admin or owner
+    *
+    *	an agressive function. Will try to bounce user as soon as
+    *	it knows what role the user is.
+    */
+
+    var _maybeBounceUser = function() {
+    	// try to do immediately if user's role is set
+    	if (!!PhasedProvider.team.members[PhasedProvider.user.uid] &&
+    		typeof PhasedProvider.team.members[PhasedProvider.user.uid].role !== 'undefined')
+    		doMaybeBounceUser();
+
+    	// also schedule for when data comes in
+    	registerAsync(doMaybeBounceUser);
+
+    	// also do whenever user's role may have changed
+    	$rootScope.$on('Phased:memberChanged', doMaybeBounceUser);
+    }
+
+    var doMaybeBounceUser = function() {
+    	var myRole = PhasedProvider.team.members[_Auth.user.uid].role;
+    	if (myRole != PhasedProvider.ROLE_ID.ADMIN && myRole != PhasedProvider.ROLE_ID.OWNER)
+    		$location.path('/');
+    }
+
+    /**
+    *
+    *	bounces a user to the respective route depending on their
+    *	team's pay status
+    *
+    */
+    var _maybeBounceTeam = function() {
+    	if (
+	    		BOUNCE_ROUTES && // we're using bounce routes
+	    		PhasedProvider.viewType in BOUNCE_ROUTES && // the view type requires a bounce route
+	    		$location.path() != BOUNCE_ROUTES[PhasedProvider.viewType] // we're not already at that route
+    		)
+    		$location.path(BOUNCE_ROUTES[PhasedProvider.viewType]);
+    }
+
+
+    /**
 
       Data functions
       Things like adding statuses, assignments, projects, etc.
@@ -2459,6 +2472,7 @@ angular.module('webappApp')
     */
 
     var _addStatus = function(newStatus) {
+
       registerAsync(doAddStatus, newStatus);
     }
 
@@ -2467,18 +2481,25 @@ angular.module('webappApp')
       ga('send', 'event', 'Status', 'Status added');
 
       // clean
+
       newStatus.user = _Auth.user.uid;
+
       newStatus = cleanStatus(newStatus);
+
       if (!newStatus) return;
 
       newStatus.time = new Date().getTime();
 
       // publish to stream
       var teamRef = FBRef.child('team/' + PhasedProvider.team.uid);
+
       teamRef.child('members/' + PhasedProvider.user.uid + '/currentStatus').set(newStatus);
+
       var newStatusRef = teamRef.child('statuses').push(newStatus, function(err){
         // after DB is updated, issue a notification to all users
+
         if (!err) {
+
           issueNotification({
             title : [{ userID : _Auth.user.uid }],
             body : [{ string : newStatus.name }],
@@ -2489,11 +2510,10 @@ angular.module('webappApp')
       });
 
       // if the status had a task attached to it then submit the status id to the task
-      if(newStatus.task){
+      if (newStatus.task) {
         console.log('I have a task');
         var postID = newStatusRef.key();
         teamRef.child('projects/' + newStatus.task.project +'/columns/'+newStatus.task.column +'/cards/'+ newStatus.task.card +'/tasks/'+newStatus.task.id+'/statuses').push(postID);
-
       }
 
       //Send status to server for URL parsing.
@@ -2509,7 +2529,6 @@ angular.module('webappApp')
             teamRef.child('statuses').child(statusRef).child('attachment').set(data);
           }
         });
-
     }
 
 
@@ -2826,6 +2845,60 @@ angular.module('webappApp')
           });
         }
       });
+    }
+
+    /**
+    *
+    *	gets n statuses for the team, starting at the time of the last status
+    *	in memory. To be called when a new "page" of statuses needs to be
+    *	loaded in (eg, at the bottom of a lazy-loaded list).
+    *
+    *	NB: oldest status age (timestamp) is updated whenever old statuses are
+    *	loaded (page init and here).
+    *
+    *	NB: instead of debouncing this until after PHASED_STATUSES_SET_UP,
+    *	it is simply not completed unless the call itself happens after statuses are in.
+    *
+    *	1. gets n of the team's statuses older than oldest status in memory
+    *	2. joins with current statuses
+    *
+    *	args:
+    *		n 	// number of statuses to load (defaults to STATUS_LIMIT)
+    *
+    */
+    var _getStatusesPage = function(n) {
+    	var args = {
+    		n : n
+    	}
+
+    	if (PHASED_STATUSES_SET_UP) {
+    		doGetStatusesPage(args);
+    	}
+    }
+
+    var doGetStatusesPage = function(args) {
+    	var n = args.n || STATUS_LIMIT;
+
+    	// 1. get teams statuses since end time
+    	FBRef.child('team/' + PhasedProvider.team.uid + '/statuses')
+    	.orderByChild('time').endAt(oldestStatusTime).limitToLast(n)
+    	.once('value', function(snap) {
+
+        $rootScope.$evalAsync(function getStatusesPageCallback(){
+      		var data = snap.val();
+      		if (!data) return; // not an error if empty: we got all of the statuses requested (there were none)
+
+      		// add to our list (no dupes possible)
+      		_.assign(PhasedProvider.team.statuses, data);
+
+      		// update oldest status time
+      		for (var i in data) {
+      			if (data[i].time < oldestStatusTime)
+      				oldestStatusTime = data[i].time;
+      		}
+        });
+
+    	});
     }
 
     /*
@@ -3301,6 +3374,15 @@ angular.module('webappApp')
     PhasedProvider.setWatchNotifications(true);
     PhasedProvider.setWatchPresence(true);
     PhasedProvider.setWatchIntegrations(true);
+
+    // pass an object so that
+    // BOUNCE_ROUTES[viewType] == '/routeForThatView'
+    // eg,
+    // BOUNCE_ROUTES['problem'] == '/team-expired'
+    PhasedProvider.setBounceRoutes({
+    	problem : '/team-expired',
+    	canceled : '/switchteam'
+    });
 
     // configure phasedProvider as a callback to AuthProvider
     AuthProvider.setDoAfterAuth(PhasedProvider.init);

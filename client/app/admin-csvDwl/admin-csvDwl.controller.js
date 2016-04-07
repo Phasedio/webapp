@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('AdminCsvDwlCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location) {
+  .controller('AdminCsvDwlCtrl', function ($scope, $http, Auth, Phased, FURL,amMoment, $location) {
     ga('send', 'pageview', '/admin');
 
     var FBRef = new Firebase(FURL);
@@ -9,25 +9,6 @@ angular.module('webappApp')
     $scope.myID = Auth.user.uid;
     $scope.team = Phased.team;
     $scope.Phased = Phased;
-
-    // bounce users if team has problems
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
-      var teamCheck = Phased.viewType;
-      console.log(teamCheck);
-      if (teamCheck == 'problem'){
-        $location.path('/team-expired');
-      }else if (teamCheck == 'canceled') {
-        $location.path('/switchteam');
-      }
-
-    }
-    $scope.$on('Phased:PaymentInfo', checkTeam);
-    checkTeam();
 
     //form vars
 
@@ -133,6 +114,7 @@ angular.module('webappApp')
 
 
           $scope.returnValues[x] = a;
+          $scope.$apply();
 
         });
       }else{
@@ -150,6 +132,7 @@ angular.module('webappApp')
 
 
           $scope.returnValues[x] = a;
+          $scope.$apply();
 
         });
       }

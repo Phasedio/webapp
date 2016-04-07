@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('TeamExpiredCtrl', function ($scope, $http, stripe, Auth, FURL,Phased,$location) {
+  .controller('TeamExpiredCtrl', function ($scope, $http, Auth, FURL,Phased,$location) {
     $scope.message = 'Hello';
     console.log(Phased);
     $scope.ccSubmited = false;
@@ -42,7 +42,7 @@ angular.module('webappApp')
           else {
             $scope.ccSubmited = false;
             alert("error!\n"+err.message+"\n Please contact support if you need help!");
-            
+
             console.log('Other error occurred, possibly with your API', err.message);
           }
         });

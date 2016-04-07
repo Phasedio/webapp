@@ -5,7 +5,8 @@
 'use strict';
 
 // Set default node environment to development
-//process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+// process.env.NODE_ENV = process.env.NODE_ENV || 'test'; // for testing sessions, webhooks, & api routes
+//process.env.NODE_ENV = 'development';
 process.env.NODE_ENV = process.env.NODE_ENV || 'production';
 
 var express = require('express');
@@ -16,7 +17,9 @@ var http = require('http');
 var server = http.createServer(app);
 require('./config/express')(app);
 require('./routes')(app);
-require('./components/gcal').init(); // start google calendar scheduled statuses
+require('./components/phased').init(); // set up phased abstractions
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test')
+	require('./components/gcal').init(); // start google calendar scheduled statuses
 
 
 // Start server

@@ -1,170 +1,8 @@
 'use strict';
 
 angular.module('webappApp')
-  /**
-  * filters tasks by status
-  *
-  * (preface statusID with ! to filter out statuses)
-  */
-  .filter('filterTaskByStatus', function() {
-    return function(input, statusID) {
-      if (!input) return input;
-      if (!statusID) return input;
-      var expected = ('' + statusID).toLowerCase(); // compare lowercase strings
-      var result = {}; // output obj
 
-      if (expected[0] === '!') {
-        expected = expected.slice(1); // remove leading !
-        // negative filter -- filter out tasks with status
-        angular.forEach(input, function(value, key) {
-          var actual = ('' + value.status).toLowerCase(); // current task's status
-          if (actual !== expected) {
-            result[key] = value; // preserves index
-          }
-        });
-      } else {
-        // only include tasks with status
-        angular.forEach(input, function(value, key) {
-          var actual = ('' + value.status).toLowerCase(); // current task's status
-          if (actual === expected) {
-            result[key] = value; // preserves index
-          }
-        });
-      }
-
-      return result;
-    }
-  })
-  /**
-  * filters tasks by category
-  *
-  * (preface statusID with ! to filter out statuses)
-  */
-  .filter('filterTaskByCategory', function() {
-    return function(input, catID) {
-      if (!input) return input;
-      if (!catID) return input;
-      var expected = ('' + catID).toLowerCase(); // compare lowercase strings
-      var result = {}; // output obj
-
-      if (expected[0] === '!') {
-        expected = expected.slice(1); // remove leading !
-        // negative filter -- filter out tasks with cat
-        angular.forEach(input, function(value, key) {
-          var actual = ('' + value.cat).toLowerCase(); // current task's cat
-          if (actual !== expected) {
-            result[key] = value; // preserves index
-          }
-        });
-      } else {
-        // only include tasks with cat
-        angular.forEach(input, function(value, key) {
-          var actual = ('' + value.cat).toLowerCase(); // current task's cat
-          if (actual === expected) {
-            result[key] = value; // preserves index
-          }
-        });
-      }
-
-      return result;
-    }
-  })
-  /**
-  * filters tasks by assignment
-  *
-  * (preface direction with ! to filter out users)
-  */
-  .filter('filterTaskByAssignment', function() {
-    return function(input, direction, uid) {
-      if (!input) return input;
-      if (!direction) return input;
-      // direction must be "to" or "by" AND have uid OR be "unassigned" or "delegated"
-      if (
-        !( (direction == 'to' || direction == 'by') && typeof uid !== 'undefined' )
-        && (direction != 'unassigned' && direction != 'delegated')
-        )
-        return input;
-
-      var result = {}; // output obj
-
-      if (direction[0] === '!') {
-        direction = direction.slice(1); // remove leading !
-        // negative filter -- filter out tasks with uid
-        angular.forEach(input, function(value, key) {
-          if (direction == 'to' && uid != value.assigned_to) {
-            result[key] = value;
-          } else if (direction == 'by' && uid != value.assigned_by) {
-            result[key] = value;
-          } else if (direction == 'delegated' && !((value.assigned_by != value.assigned_to) && !(value.unassigned)) ) { // delegated if assigned to a different person
-            result[key] = value;
-          } else if (direction == 'unassigned' && !(value.unassigned)) {
-            result[key] = value;
-          }
-        });
-      } else {
-        // only include tasks with uid
-        angular.forEach(input, function(value, key) {
-          if (direction == 'to' && uid == value.assigned_to) {
-            result[key] = value;
-          } else if (direction == 'by' && uid == value.assigned_by) {
-            result[key] = value;
-          } else if (direction == 'delegated' && (value.assigned_by != value.assigned_to) && !(value.unassigned) ) { // delegated if assigned to a different person
-            result[key] = value;
-          } else if (direction == 'unassigned' && value.unassigned) {
-            result[key] = value;
-          }
-        });
-      }
-
-      return result;
-    }
-  })
-  /**
-  *
-  * allows ordering an object as if it were an array,
-  * at the cost of being able to access its original index
-  * Adds a property 'key' with the original index to
-  * address this
-  *
-  */
-  .filter('orderObjectBy', function() {
-    return function(items, field, reverse) {
-      var filtered = [];
-      for (var i in items) {
-        items[i].key = i;
-        filtered.push(items[i]);
-      }
-      filtered.sort(function (a, b) {
-        return (a[field] > b[field] ? 1 : -1);
-      });
-      if(reverse) filtered.reverse();
-      return filtered;
-    };
-  })
-  /**
-  *
-  * change a task history change code to plain text
-  * (lookup allows for easier text changes later)
-  *
-  */
-  .filter('historyType', ['Phased', function(Phased) {
-    return function(input) {
-      var types = {};
-      types[Phased.task.HISTORY_ID.CREATED] = "Task created";
-      types[Phased.task.HISTORY_ID.ARCHIVED] = "Task archived";
-      types[Phased.task.HISTORY_ID.UNARCHIVED] = "Task unarchived";
-      types[Phased.task.HISTORY_ID.NAME] = "Task name changed";
-      types[Phased.task.HISTORY_ID.DESCRIPTION] = "Task description changed";
-      types[Phased.task.HISTORY_ID.ASSIGNEE] = "Task assignee changed";
-      types[Phased.task.HISTORY_ID.DEADLINE] = "Task deadline changed";
-      types[Phased.task.HISTORY_ID.CATEGORY] = "Task category changed";
-      types[Phased.task.HISTORY_ID.PRIORITY] = "Task priority changed";
-      types[Phased.task.HISTORY_ID.STATUS] = "Task status changed";
-
-      return types[input] || input; // fail gracefully
-    }
-  }])
-  .controller('TasksCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig,$location) {
+  .controller('TasksCtrl', function ($scope, $http, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig,$location) {
     ga('send', 'pageview', '/tasks');
 
     $scope.viewType = Phased.viewType;
@@ -175,23 +13,6 @@ angular.module('webappApp')
     var FBRef = new Firebase(FURL);
 
     $('.dropdown-toggle').dropdown();
-
-    // bounce users if team has problems
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
-      var teamCheck = Phased.viewType;
-      if (teamCheck == 'problem'){
-        $location.path('/team-expired');
-      }else if (teamCheck == 'canceled') {
-        $location.path('/switchteam');
-      }
-    }
-    $scope.$on('Phased:PaymentInfo', checkTeam);
-    checkTeam();
 
     $scope.activeAssignmentID = Phased.user.uid;
 
@@ -206,6 +27,31 @@ angular.module('webappApp')
     $scope.taskDescript = 'hidden'; //hide the task description till the user does something
     $scope.taskInfo = {}; // Task information for the description area
 
+    $scope.sendToTask = function(project,column,card,key){
+
+      $location.path('/tasks/'+ project +'/'+ column +'/'+ card +'/'+ key);
+    }
+
+
+    $scope.setCompleted = function(task) {
+      console.log(task);
+      mixpanel.track("Complete Task");
+      var nameReset = task.name;
+      var status = task;
+      status.name = "Has completed task : " +status.name;
+      status.task = {
+        project : '0A',
+        column : '0A',
+        card : '0A',
+        id : task.key,
+        name : nameReset
+      }
+      Phased.addStatus(status);
+      task.name = nameReset;
+      Phased.setTaskStatus(task.key, Phased.task.STATUS_ID.COMPLETE);
+      toaster.pop('success', "Task Complete!", "Great work!");
+
+    }
 
     $scope.selectTask = function(task){
       mixpanel.track("Open Task Details");
@@ -487,6 +333,7 @@ angular.module('webappApp')
 
     $scope.setTaskCompleted = function(task) {
       mixpanel.track("Complete Task");
+      console.log(task);
       var nameReset = task.name;
       var status = task;
       status.name = "Has completed task : " +status.name;

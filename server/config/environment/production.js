@@ -36,7 +36,7 @@ module.exports = {
   	CLIENT_ID : '313573711545-p9bo68ve6d5oih51datnkv1i8vrumipq.apps.googleusercontent.com',
   	CLIENT_SECRET : 'vanRqrxMPnlZ2qNpEp4bwDTW',
   	REDIRECT_URL : 'https://app.phased.io/api/google/auth2',
-  	CALENDAR_EVENTS_WEBHOOK_URL: 'https://app.phased.io/hooks/google/events'
+  	CALENDAR_EVENTS_WEBHOOK_URL: 'https://app.phased.io/api/hooks/google/events/'
   },
   slack : {
   	CLIENT_ID : '9715671828.29433898465',

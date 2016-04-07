@@ -1,0 +1,19 @@
+.status-lazy-loader {
+	font-size: 0.8em;
+	text-align: center;
+	color: #8a8a8a;
+	font-style: italic;
+
+	p {
+		margin-bottom: 0;
+	}
+
+	&:after {
+		content: " ";
+		display: inline-block;
+		height: 2em;
+		width: 2em;
+		background: url('../assets/images/loader-balls.gif') no-repeat;
+    background-size: contain;
+	}
+}

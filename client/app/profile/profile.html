@@ -1,20 +1,20 @@
 
+<div ng-include="'components/content-nav/content-nav.html'"></div>
 <section class="container-fluid">
   <div class="row">
-    <div ng-include="'components/sidebar/sidebar.html'"></div>
     <div class="content__area">
-      <div ng-include="'components/content-nav/content-nav.html'"></div>
+
       <div class="col-xs-10">
         <div class="profile-holder transparent">
           <div class="col-xs-6 profile-user">
-            <img src="{{currentUser.gravatar}}" alt="" height="40px" width="40px" />
-            <h2>{{currentUser.name}}</h2>
+            <img ng-src="{{::currentUser.gravatar}}" alt="" height="40px" width="40px" />
+            <h2>{{::currentUser.name}}</h2>
           </div>
           <div class="col-xs-6 profile-user">
             <ul>
-              <li><span>updates</span><span>{{team.statuses | updatesFor : currentUserID | length}}</span></li>
-              <li><span>email</span><span>{{currentUser.email}}</span></li>
-              <li><span>tel</span><span>{{currentUser.tel | tel}}</span></li>
+              <li><span>updates</span><span>{{::team.statuses | updatesFor : currentUserID | length}}</span></li>
+              <li><span>email</span><span>{{::currentUser.email}}</span></li>
+              <li><span>tel</span><span>{{::currentUser.tel | tel}}</span></li>
               <!-- <li><span>slack</span><span>@brian</span></li> -->
 
             </ul>
@@ -53,19 +53,20 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr ng-repeat="item in team.statuses | orderObjectBy : 'time':true " ng-if="item.user == currentUser.uid">
+                    <tr sly-repeat="item in team.statuses | orderObjectBy : 'time':true " ng-if="item.user == currentUser.uid">
                       <td>
-                        {{item.name}}
+                        {{::item.name}}
                       </td>
                       <td>
-                        {{$parent.team.categoryObj[item.cat].name}}
+                        {{::$parent.team.categoryObj[item.cat].name}}
                       </td>
                       <td>
-                        <span>{{item.time | amDateFormat:'MM.DD.YYYY HH:mm:ss'}}</span>
+                        <span>{{::item.time | amDateFormat:'MM.DD.YYYY HH:mm:ss'}}</span>
                       </td>
                     </tr>
                   </tbody>
                 </table>
+                <div status-lazy-loader></div>
                 <h6 ng-show="team.history.length == 0" align="center"> No updates for time period</h6>
               </div>
             </div>
@@ -91,19 +92,19 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr ng-repeat="item in phased.get.tasks | backlogFor : currentUserID | orderObjectBy : 'time'">
+                    <tr sly-repeat="item in phased.get.tasks | backlogFor : currentUserID | orderObjectBy : 'time'">
                       <td>
-                        {{item.name}}
+                        {{::item.name}}
                       </td>
                       <td>
-                        {{phased.task.PRIORITY[item.priority]}}
+                        {{::phased.task.PRIORITY[item.priority]}}
                       </td>
                       <td>
-                         <span ng-if="item.deadline">{{item.deadline | amDateFormat:'MMM d '}}</span>
+                         <span ng-if="item.deadline">{{::item.deadline | amDateFormat:'MMM d '}}</span>
                          <span ng-if="!item.deadline">Not Set</span>
                       </td>
                       <td>
-                        {{phased.task.STATUS[item.status]}}
+                        {{::phased.task.STATUS[item.status]}}
                       </td>
                     </tr>
                   </tbody>
@@ -161,7 +162,7 @@
             <div role="tabpanel" class="tab-pane" id="settings" ng-if="isSelf">
   						<div class = "row">
   			        <div class="col-xs-12">
-  			          <img style="height: 120px; width: 120px; border-radius: 50%;margin: 0 auto; display:block;" src="{{currentUser.gravatar}}">
+  			          <img style="height: 120px; width: 120px; border-radius: 50%;margin: 0 auto; display:block;" ng-src="{{::currentUser.gravatar}}">
 
   			        </div>
   			        <div class="col-xs-12">
@@ -182,15 +183,15 @@
               <div class="login login-drk" style="background:transparent;">
                 <div class="item item-input item-stacked-label">
                   <label class="input-label" for="name">name</label>
-                  <input class="loginInput" type="text" id="name" ng-model="update.name" placeholder="{{currentUser.name}}">
+                  <input class="loginInput" type="text" id="name" ng-model="update.name" placeholder="{{::currentUser.name}}">
                 </div>
   							<div class="item item-input item-stacked-label">
                   <label class="input-label" for="tel">tel</label>
-                  <input class="loginInput" type="tel" id="tel" ng-model="update.tel" placeholder="{{currentUser.tel | tel}}">
+                  <input class="loginInput" type="tel" id="tel" ng-model="update.tel" placeholder="{{::currentUser.tel | tel}}">
                 </div>
                 <div class="item item-input item-stacked-label">
                   <label class="input-label" for="email">email</label>
-                  <input class="loginInput" type="email" id="email" ng-model="update.email" placeholder="{{currentUser.email}}">
+                  <input class="loginInput" type="email" id="email" ng-model="update.email" placeholder="{{::currentUser.email}}">
                 </div>
 
                 <div class="item item-input item-stacked-label">
@@ -223,10 +224,10 @@
   								<h5>Calendars</h5>
   								<ul>
   									<li
-  										ng-repeat="cal in calendarList"
+  										sly-repeat="cal in calendarList"
   										class="calendar-item"
   										ng-class="{ 'registered-calendar' : isCalRegistered(cal) }">
-  										<a 
+  										<a
   											href="#"
   											ng-click="toggleCalRegistered(cal, $event)">
   											<span

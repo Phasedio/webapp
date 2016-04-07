@@ -10,12 +10,10 @@ angular.module('webappApp')
     $scope.showThis = 'addteam';
 
 
-    $scope.$on('Phased:meta', function(){$scope.Phased = Phased; $scope.$apply();});
-    $scope.$on('Phased:setup', function(){ $scope.Phased = Phased; $scope.$apply();});
     console.log(Phased.user.email);
     console.log(Phased.user.name);
     console.log(Phased.team.uid);
-
+    //$scope.showThis = 'addMembers';
 
     // First form
     $scope.addTeam = function(teamName) {
@@ -25,7 +23,7 @@ angular.module('webappApp')
 
         $scope.showThis = 'addMembers';
         $scope.creatingTeam = false;
-        $scope.$apply();
+        $scope.$digest();
         // $('#addTeamModal').modal('hide');
         // toaster.pop('success', 'Success', 'Welcome to Phased, ' + teamName);
       }, function error(teamName) {
@@ -36,6 +34,7 @@ angular.module('webappApp')
     //Second form
 
     $scope.inviteMembers = function(invite1,invite2,invite3) {
+      console.log(invite1,invite2,invite3);
       if($scope.addMembers.$valid){
         // mixpanel.track("Sent Invite");
         if(invite1){

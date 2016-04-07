@@ -1,14 +1,53 @@
 'use strict';
 
+var config = require('../../config/environment');
+
 // Firebase business
 // copied from pushserver
-var Firebase = require("firebase");
-var FirebaseTokenGenerator = require("firebase-token-generator");
-
-var FBRef = new Firebase("https://phaseddev.firebaseio.com/");
-var tokenGenerator = new FirebaseTokenGenerator("0ezGAN4NOlR9NxVR5p2P1SQvSN4c4hUStlxdnohh");
-var token = tokenGenerator.createToken({uid: "registration-server",isReg: true });
+var Firebase = require('firebase');
+var FBRef = require('../../components/phasedFBRef').getRef();
 var stripe = require('stripe')('sk_live_nKZ1ouWkI3WuiVGK2hIvZUH1');
+var mandrill = require('mandrill-api/mandrill');
+var mandrill_client = new mandrill.Mandrill('B0N7XKd4RDy6Q7nWP2eFAA');
+
+
+function sendInvite(args){
+	var invitedEmail = args.invitedEmail,
+		teamID = args.teamID,
+		teamName = args.teamName,
+		inviterEmail = args.inviterEmail,
+		inviterName = args.inviterName;
+
+	var template_name = "you-re-invited-1";
+	var template_content = [{
+		"name": "team-name",
+		"content": teamName
+	},
+	{
+		"name": "inviter-name",
+		"content": inviterName
+	}];
+
+	var message = {
+
+		"subject": "Invited",
+		"to": [{
+					 "email": invitedEmail,
+					 "type": "to"
+			 }],
+		"from_name": inviterName + " via Phased",
+	};
+
+	mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+    console.log(result);
+
+	}, function(e) {
+	    // Mandrill returns the error as an object with name and message keys
+	    console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+	    // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	});
+}
+
 
 exports.index = function(req, res) {
 	res.json([]);
@@ -101,10 +140,35 @@ var defaultTeam = {
 *
 */
 
+exports.inviteEmail = function(req, res) {
+	var invitedEmail = req.body.invitedEmail,
+		teamID = req.body.team,
+		teamName = req.body.teamName,
+		inviterEmail = req.body.inviterEmail,
+		inviterName = req.body.inviterName;
+
+	var args = {
+		invitedEmail: invitedEmail,
+		teamID : teamID,
+		teamName : teamName,
+		inviterEmail : inviterEmail,
+		inviterName : inviterName
+	};
+
+	sendInvite(args);
+
+	res.send({
+		success : true,
+		invited : true
+	});
+
+};
+
 exports.invite = function(req, res) {
 	console.log(req.body);
 	var invitedEmail = req.body.invitedEmail,
 		teamID = req.body.team,
+		teamName = req.body.teamName,
 		inviterEmail = req.body.inviterEmail,
 		inviterName = req.body.inviterName;
 
@@ -122,58 +186,82 @@ exports.invite = function(req, res) {
 	}
 
 
-	// 0. Authenticate request
-	FBRef.authWithCustomToken(token, function(error, authData) {
-		if (error) {
-			res.send(error);
-			return;
-		}
+  invitedEmail = invitedEmail.toLowerCase(); // Change text to lowercase regardless of user input.
 
-    invitedEmail = invitedEmail.toLowerCase(); // Change text to lowercase regardless of user input.
+  FBRef.child("profile").orderByChild("email").equalTo(invitedEmail).once('value',function(snap){
+    var users = snap.val();
 
-    FBRef.child("profile").orderByChild("email").equalTo(invitedEmail).once('value',function(snap){
-      var users = snap.val();
+    if (users) {
+      var userID = Object.keys(users)[0];
+      // 1. add to team
+      FBRef.child('profile/' + userID + '/teams').push(teamID); // add to user's teams
+      FBRef.child('team/' + teamID + '/members/' + userID).update({role : 0}); // add to this team
+			var args = {
+				invitedEmail: invitedEmail,
+				teamID : teamID,
+				teamName : teamName,
+				inviterEmail : inviterEmail,
+				inviterName : inviterName
+			};
 
-      if (users) {
-        var userID = Object.keys(users)[0];
-        // 1. add to team
-        FBRef.child('profile/' + userID + '/teams').push(teamID); // add to user's teams
-        FBRef.child('team/' + teamID + '/members/' + userID).update({role : 0}); // add to this team
+			sendInvite(args); // Email user notification
+			
+      res.send({
+      	success : true,
+      	added : true,
+      	userID : userID
+      });
+    } else {
+      // 2. check if in profile-in-waiting
+      FBRef.child("profile-in-waiting").orderByChild("email").equalTo(invitedEmail).once('value',function(snap){
+        var users = snap.val();
 
-        res.send({
-        	success : true,
-        	added : true,
-        	userID : userID
-        });
-      } else {
-        // 2. check if in profile-in-waiting
-        FBRef.child("profile-in-waiting").orderByChild("email").equalTo(invitedEmail).once('value',function(snap){
-          var users = snap.val();
+        if (users) {
+          var PIWID = Object.keys(users)[0];
+          // already in PIW, add our team and wait for user
+          FBRef.child('profile-in-waiting/' + PIWID + '/teams').push(teamID);
+					var args = {
+						invitedEmail: invitedEmail,
+						teamID : teamID,
+						teamName : teamName,
+						inviterEmail : inviterEmail,
+						inviterName : inviterName
+					};
 
-          if (users) {
-            var PIWID = Object.keys(users)[0];
-            // already in PIW, add our team and wait for user
-            FBRef.child('profile-in-waiting/' + PIWID + '/teams').push(teamID);
-          } else {
-            // newly add to PIW
-            var PIWData = {
-              'teams' : { 0 : teamID},
-              'email' : invitedEmail,
-              'inviteEmail': inviterEmail,
-              'inviteName': inviterName
-            };
-            FBRef.child('profile-in-waiting').push(PIWData);
-            FBRef.child('profile-in-waiting2').push(PIWData); // for Zapier
+					sendInvite(args); // Email user notification
 
-		        res.send({
-		        	success : true,
-		        	invited : true
-		        });
-          }
-        });
-      }
-    }, function(err){ console.log(err) });
-	});
+					res.send({
+	        	success : true,
+	        	invited : true
+	        });
+        } else {
+          // newly add to PIW
+          var PIWData = {
+            'teams' : { 0 : teamID},
+            'email' : invitedEmail,
+            'inviteEmail': inviterEmail,
+            'inviteName': inviterName
+          };
+          FBRef.child('profile-in-waiting').push(PIWData);
+          //FBRef.child('profile-in-waiting2').push(PIWData); // for Zapier
+					var args = {
+						invitedEmail: invitedEmail,
+						teamID : teamID,
+						teamName : teamName,
+						inviterEmail : inviterEmail,
+						inviterName : inviterName
+					};
+
+					sendInvite(args); // Email user notification
+
+					res.send({
+	        	success : true,
+	        	invited : true
+	        });
+        }
+      });
+    }
+  }, function(err){ console.log(err) });
 }
 
 /**
@@ -187,94 +275,86 @@ exports.register = function(req, res) {
 	user = JSON.parse(user);
 	console.log('user', user);
 
-	// 0. authenticate request
-	FBRef.authWithCustomToken(token, function(error, authData) {
-		if (error) {
-			res.send(error);
-			return;
-		}
-
-		// 1. create Firebase user
-		FBRef.createUser({email: user.email, password: user.password}, function(err, data) {
-	    if (err) {
-	    	console.dir(err);
-	    	res.send(err);
-	      switch (err.code) {
-					case 'EMAIL_TAKEN':
-						// toaster.pop('error', 'Error', user.email + ' is already registered.');
-						break;
-						default :
-						// toaster.pop('error', 'Error', 'Could not register user.');
+	// 1. create Firebase user
+	FBRef.createUser({email: user.email, password: user.password}, function(err, data) {
+    if (err) {
+    	console.dir(err);
+    	res.send(err);
+      switch (err.code) {
+				case 'EMAIL_TAKEN':
+					// toaster.pop('error', 'Error', user.email + ' is already registered.');
 					break;
+					default :
+					// toaster.pop('error', 'Error', 'Could not register user.');
+				break;
+      }
+    } else {
+      console.log('no errors, creating profile');
+      var uid = data.uid; // stash UID
+			/**
+			*   Create a new profile for a user coming to the site
+			*
+			*   1. check if profile-in-waiting has been set up by some team admin
+			*       1B - if so, add to those teams
+			*   2. create profile
+			*
+			*/
+      // 1.
+		  FBRef.child('profile-in-waiting').orderByChild('email').equalTo(user.email).once('value', function(snap){
+	      var data = snap.val();
+	      var profile = {
+	        name: user.name,
+	        email: user.email,
+	        gravatar: get_gravatar(user.email, 40),
+	        newUser : true
+	      };
+
+	      if (data) {
+					// get profile-in-waiting (PIW)
+					var PIWID = Object.keys(data)[0];
+					var PIW = data[PIWID];
+
+					// 1B.
+					profile.teams = PIW.teams; // add to user's own teams
+					for (var i in PIW.teams) {
+					  // add to team member list
+					  FBRef.child('team/' + PIW.teams[i] + '/members/' + uid).update({
+					    role: 0 // member
+					  });
+					}
 	      }
-	    } else {
-	      console.log('no errors, creating profile');
-	      var uid = data.uid; // stash UID
-				/**
-				*   Create a new profile for a user coming to the site
-				*
-				*   1. check if profile-in-waiting has been set up by some team admin
-				*       1B - if so, add to those teams
-				*   2. create profile
-				*
-				*/
-	      // 1.
-			  FBRef.child('profile-in-waiting').orderByChild('email').equalTo(user.email).once('value', function(snap){
-		      var data = snap.val();
-		      var profile = {
-		        name: user.name,
-		        email: user.email,
-		        gravatar: get_gravatar(user.email, 40),
-		        newUser : true
-		      };
 
-		      if (data) {
-						// get profile-in-waiting (PIW)
-						var PIWID = Object.keys(data)[0];
-						var PIW = data[PIWID];
-
-						// 1B.
-						profile.teams = PIW.teams; // add to user's own teams
-						for (var i in PIW.teams) {
-						  // add to team member list
-						  FBRef.child('team/' + PIW.teams[i] + '/members/' + uid).update({
-						    role: 0 // member
-						  });
-						}
-		      }
-
-		      // 2. create profile and remove PIW
-		      FBRef.child('profile/' + uid).set(profile, function(err){
-		      	if (!err) {
-		          if (PIWID) {
-		              FBRef.child('profile-in-waiting/' + PIWID).remove();
-		          }
-		          console.log('success, profile created');
-		          res.send({
-		          	success: true,
-		          	message : 'User and profile created'
-		          });
-		        } else {
-		        	res.send(err);
-		        	FBRef.removeUser(user, function(err){
-		        		if (err) {
-		        			console.log('error removing user');
-		        			console.log(err);
-		        		} else
-		        			console.log('user removed');
-		        	})
-		        }
-		      });
-			  }, function(err){
-		      console.log(err);
-		      res.send({
-		      	success: false,
-		      	err: err
-		      });
-			  });
-	    }
-	  });
-	});
+	      // 2. create profile and remove PIW
+	      FBRef.child('profile/' + uid).set(profile, function(err){
+	      	if (!err) {
+	          if (PIWID) {
+	              FBRef.child('profile-in-waiting/' + PIWID).remove();
+	          }
+	          console.log('success, profile created');
+	          res.send({
+	          	success: true,
+	          	message : 'User and profile created'
+	          });
+	        } else {
+	        	res.send(err);
+	        	FBRef.removeUser(user, function(err){
+	        		if (err) {
+	        			console.log('error removing user');
+	        			console.log(err);
+	        		} else
+	        			console.log('user removed');
+	        	})
+	        }
+	      });
+		  }, function(err){
+	      console.log(err);
+	      res.send({
+	      	success: false,
+	      	err: err
+	      });
+		  });
+    }
+  });
 }
 
 
@@ -282,7 +362,7 @@ exports.removeMember = function(req, res) {
 
 	var teamID = req.body.team;
 	var memberID = req.body.member.uid;
-	console.log(teamID,memberID); 
+	console.log(teamID,memberID);
 
 
 	//remove member id from members in team
@@ -333,96 +413,83 @@ exports.registerTeam = function(req, res) {
 		email = req.body.email,
 		userID = req.body.userID;
 
-	// 0. Authenticate request
-	FBRef.authWithCustomToken(token, function(error, authData) {
-		if (error) {
-			res.send(error);
-			return;
-		}
-		console.log(authData);
+	// get team with specified name
+  FBRef.child('team').orderByChild('name').equalTo(teamName).once('value', function(snap) {
+    var existingTeams = snap.val(),
+      newTeamRef = '',
+      newTeamKey = '',
+      newRole = 2; // owner
 
-		// get team with specified name
-    FBRef.child('team').orderByChild('name').equalTo(teamName).once('value', function(snap) {
-      var existingTeams = snap.val(),
-        newTeamRef = '',
-        newTeamKey = '',
-        newRole = 2; // owner
+    // if it doesn't exist, make it
+    if (!existingTeams) {
+      defaultTeam.name = teamName;
+      newTeamRef = FBRef.child('team').push(defaultTeam);
+      newTeamKey = newTeamRef.key();
+    } else {
+    	// bail since the team exists
+    	res.send({
+    		err : 'TEAM_EXISTS'
+    	});
+    	return;
+    }
+		// Add team to sub and start trial
 
-      // if it doesn't exist, make it
-      if (!existingTeams) {
-        defaultTeam.name = teamName;
-        newTeamRef = FBRef.child('team').push(defaultTeam);
-        newTeamKey = newTeamRef.key();
-      } else {
-      	// bail since the team exists
-      	res.send({
-      		err : 'TEAM_EXISTS'
-      	});
-      	return;
-      }
-			// Add team to sub and start trial
-
-			FBRef.child('profile/' + userID).once('value',function(snap){
-				snap = snap.val();
-				if(snap){
-					stripe.customers.create({
-						description: 'Pays for team: ' + newTeamKey,
-						email : snap.email,
-						plan: "basic",
-					}, function(err, customer) {
-						// asynchronously called
-						if (err) {
-								 // bad things
-										console.log(err);
-										res.send({err:err});
-						} else {
-								// successful charge
-								 console.log(customer.id);
-								 console.log(customer.subscriptions.data[0].id);
-								 console.log(snap.email);
-								 console.log(userID);
-								 FBRef.authWithCustomToken(token, function(error, authData) {
-									 FBRef.child('team').child(newTeamKey).child('billing').set({
-										 "name": userID,
-										 "email": snap.email,
-										 "plan": "basic",
-										 "stripeid": customer.id,
-										 "subid" : customer.subscriptions.data[0].id
-									 });
-								 })
-
-						 }
-					});
-				}
-			});
+		FBRef.child('profile/' + userID).once('value',function(snap){
+			snap = snap.val();
+			if(snap){
+				stripe.customers.create({
+					description: 'Pays for team: ' + newTeamKey,
+					email : snap.email,
+					plan: "basic",
+				}, function(err, customer) {
+					// asynchronously called
+					if (err) {
+						// bad things
+						console.log(err);
+						res.send({err:err});
+					} else {
+						// successful charge
+						console.log(customer.id);
+						console.log(customer.subscriptions.data[0].id);
+						console.log(snap.email);
+						console.log(userID);
+						FBRef.child('team').child(newTeamKey).child('billing').set({
+							"name": userID,
+							"email": snap.email,
+							"plan": "basic",
+							"stripeid": customer.id,
+							"subid" : customer.subscriptions.data[0].id
+						});
+					 }
+				});
+			}
+		});
 
 
 
-
-      // add to new team
-      newTeamRef.child('members/' + userID).update({
-        role : newRole
-      });
-
-      // add to my list of teams if not already in it
-      FBRef.child('profile/' + userID + '/teams').orderByValue().equalTo(newTeamKey).once('value', function(snap){
-        if (!snap.val()) {
-          FBRef.child('profile/' + userID + '/teams').push(newTeamKey, function(err){
-          	if (!err)
-		        	res.send({
-		        		success:true,
-		        		teamID : newTeamKey
-		        	});
-          });
-        } else {
-        	res.send({
-        		success:true,
-        		teamID : newTeamKey
-        	});
-        }
-      });
+    // add to new team
+    newTeamRef.child('members/' + userID).update({
+      role : newRole
     });
-	});
+
+    // add to my list of teams if not already in it
+    FBRef.child('profile/' + userID + '/teams').orderByValue().equalTo(newTeamKey).once('value', function(snap){
+      if (!snap.val()) {
+        FBRef.child('profile/' + userID + '/teams').push(newTeamKey, function(err){
+        	if (!err)
+	        	res.send({
+	        		success:true,
+	        		teamID : newTeamKey
+	        	});
+        });
+      } else {
+      	res.send({
+      		success:true,
+      		teamID : newTeamKey
+      	});
+      }
+    });
+  });
 }
 
 
