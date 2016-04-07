@@ -26,6 +26,20 @@ angular.module('webappApp')
     $scope.atTop = true;
     console.log(Phased);
 
+    $scope.$on('Phased:setup', function() {
+      if (!Phased.team.uid) {
+        $location.path('/onboarding');
+      }
+      getUserTasks();
+
+      // $scope.$digest(); // instead of apply; only affects current scope instead of rootscope
+    });
+
+    $scope.$on('Phased:meta', function(){
+      if (!Phased.team.uid) {
+        $location.path('/onboarding');
+      }
+    });
 
 		angular.element($window).bind('scroll', _.debounce(function scrollHandler() {
     	$scope.atTop = $window.pageYOffset < 100;
