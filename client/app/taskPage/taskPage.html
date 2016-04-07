@@ -1,102 +1,68 @@
 
 <div ng-include="'components/content-nav/content-nav.html'"></div>
-<section class="container-fluid">
-  <div class="row">
-    <div class="content__area">
-      <div class="col-xs-12">
-        <a href="/tasks">back to to-do list</a>
-        <div class="taskPage__details box" >
+<section class="container">
+  <div class="row ">
+    <div class="col-xs-12 ">
+      <a href="/tasks">back to to-do list</a>
+      <div class="box__color task__detail">
+        <div class="task-header">
+          <h2 ng-hide="edit">{{taskInfo.name}}</h2>
+          <div class="task__edit " ng-show="edit">
 
-          <div class="task ">
-            <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
-              <button class="btn btn-phased-blue " ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
-              <button type="button" class="btn btn-phased-blue " name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED" ng-click="broadcastTask(taskInfo)">  Working on  <i class="fa fa-lg fa-share"></i></button>
-              <button class="btn btn-phased-blue " ng-if="taskInfo.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
+            <textarea class="task__title h3" ng-model="taskInfo.name" ng-blur="taskEditName(taskInfo.key,taskInfo.name)"></textarea>
+          </div>
+          <div class="task__meta clearfix">
+            <div class="task__meta__item task__meta__assigned">
+              <h6 class="muted__header">Assigned</h6>
+              <img ng-hide="edit" ng-if="taskInfo.assigned_to" ng-src="{{team.members[taskInfo.assigned_to].pic}}" width="30px" height="30px">
 
-              <!-- <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button> -->
-              <!-- <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName == 'archive'" ng-click="moveFromArchive(taskInfo.key);">unarchive</button> -->
-            </div>
-            <div class="task-header">
-              <label for="">Task title</label>
-              <textarea class="task__title h3" ng-model="taskInfo.name" ng-blur="taskEditName(taskInfo.key,taskInfo.name)"></textarea>
-              <ul class="task-meta-bar">
-                <li class="task-meta-bar-item ">
-                  <p ng-if="taskInfo.unassigned">Assign task to </p>
-                  <div class="dropdown">
-                    <button id="dLabel" type="button" class="btn btn-transparent no-padding" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      <img ng-if="taskInfo.assigned_to" ng-src="{{team.members[taskInfo.assigned_to].pic}}" width="35px" height="35px"> {{team.members[taskInfo.assigned_to].name}}
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="dLabel">
-                      <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo.key,member.uid)"><img src="{{member.pic}}" width="35px" height="35px"> <p>
-                        {{member.name}}
-                      </p></a></li>
-                    </ul>
-                  </div>
-                </li>
-
-                <li class="task-meta-bar-item added-padding">
-                  <p align="center" ng-if="taskInfo.deadline" ng-click="open($event)"><i class="fa fa-calendar-o cal__btn"></i> <span>{{taskInfo.deadline | date : 'MMM dd'}}</span></p>
-                  <p align="center" ng-if="!taskInfo.deadline" ng-click="open($event)"><i class="fa fa-calendar-o cal__btn"></i> <span>No due date</span></p>
-                  <p class="input-group">
-                    <input type="text" class="form-control hidden"  uib-datepicker-popup="{{format}}" ng-model="taskInfo.deadline" ng-change="taskEditDate(taskInfo.key,taskInfo.deadline)" init-date="dt" is-open="status.opened" min-date="minDate" max-date="maxDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" ng-required="true" close-text="Close" />
-                  </p>
-                </li>
-
-              </ul>
+              <div ng-show="edit" class="dropdown">
+                <button id="dLabel" type="button" class="btn btn-transparent no-padding" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <img ng-if="taskInfo.assigned_to" ng-src="{{team.members[taskInfo.assigned_to].pic}}" width="30px" height="30px">
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dLabel">
+                  <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo.key,member.uid)"><img src="{{member.pic}}" width="30px" height="30px"> <p>
+                    {{member.name}}
+                  </p></a></li>
+                </ul>
+              </div>
 
             </div>
-
+            <div class="task__meta__item task__meta__due">
+              <h6 class="muted__header">Due Date</h6>
+              <p  ng-if="taskInfo.deadline" ng-click="open($event)"><i class="fa fa-calendar-o cal__btn"></i> <span>{{taskInfo.deadline | date : 'MMM dd'}}</span></p>
+              <p  class="muted__header" ng-if="!taskInfo.deadline" ng-click="open($event)"><i class="fa fa-calendar-o cal__btn"></i> <span>No due date</span></p>
+              <p class="input-group">
+                      <input type="text" class="form-control hidden"  uib-datepicker-popup="{{format}}" ng-model="taskInfo.deadline" ng-change="taskEditDate(taskInfo.key,taskInfo.deadline)" init-date="dt" is-open="status.opened" min-date="minDate" max-date="maxDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" ng-required="true" close-text="Close" />
+                    </p>
+            </div>
+            <div class="task__meta__item task__meta__status">
+              <h6 class="muted__header">Status</h6>
+              <p  > <span>{{phased.task.STATUS[taskInfo.status]}}</span></p>
+            </div>
+          </div>
+          <div class="task__discript" ng-hide="edit">
+            {{taskInfo.description}}
+            <h5 class="muted__header" align="center" ng-if="!taskInfo.description">Click edit to add description</h5>
+          </div>
+          <div class="task__edit " ng-show="edit">
             <label for="">Task description</label>
-            <textarea class="task__title" ng-model="taskInfo.description" ng-blur="taskEditDesc(taskInfo.key,taskInfo.description)" placeholder="Enter description..."></textarea>
+            <textarea class="task__title task__discript__editor" ng-model="taskInfo.description" ng-blur="taskEditDesc(taskInfo.key,taskInfo.description)" placeholder="Enter description..."></textarea>
+          </div>
 
-            <p>Assigned by: {{team.members[taskInfo.assigned_by].name}}</p>
-
-            <!-- <div class="dropdown">
-              <p id="dLabel1" class="clickable" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Category: {{team.categoryObj[taskInfo.cat].name}} <span class="caret"></span>
-
-              </p>
-              <ul class="dropdown-menu" aria-labelledby="dLabel1">
-                <li ng-repeat="(key, category) in team.categoryObj">
-                  <a href="#" ng-click="changeCategory(taskInfo.key, key)">
-                    <p>
-                     {{category.name }}
-                    </p>
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div class="dropdown">
-              <p id="dLabel2" class="clickable"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Priority : {{Phased.task.PRIORITY[taskInfo.priority]}} <span class="caret"></span>
-
-              </p>
-              <ul class="dropdown-menu" aria-labelledby="dLabel2">
-                <li sly-repeat="priority in Phased.task.PRIORITY_ID | orderBy">
-                  <a href="#" ng-click="changePriority(taskInfo.key, priority)">
-                    <p>
-                     {{ Phased.task.PRIORITY[priority] }}
-                    </p>
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <p>
-              Status: {{Phased.task.STATUS[taskInfo.status]}}
-            </p> -->
-
-
-
-
+          <div class="task__archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
+            <button class="btn btn-phased-blue " ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
+            <button type="button" class="btn btn-phased-blue " name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED" ng-click="broadcastTask(taskInfo)">  Working on  <i class="fa fa-lg fa-share"></i></button>
+            <button class="btn btn-phased-blue " ng-if="taskInfo.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
+            <button class="btn btn-phased-blue "  ng-click="editMode()"><span ng-if="!edit">Edit</span><span ng-if="edit">Save</span> <i class="fa fa-play"></i></button>
 
 
           </div>
-          <!-- STATUS HISTORY -->
-          <div class="" ng-if="taskStatuses">
-            <h4>Status History</h4>
 
-            <div class="member__activity " sly-repeat="item in taskStatuses | orderBy: 'time'">
+          <div class="task__statues">
+            <h3>Status History</h3>
+
+            <div class="member__activity " ng-repeat="item in taskStatuses | orderBy: 'time'">
               <div class="activity__person">
                 <img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
                 <div class="activity__info">
@@ -120,40 +86,13 @@
               </div>
 
             </div>
+            <h4 class="muted__header" ng-if="taskStatuses != {}">No Status Activity</h4>
           </div>
 
-          <!-- TASK HISTORY -->
-          <!-- <div class="ph-card" ng-if="taskInfo.history">
-            <h4>Task History</h4>
-            <div sly-repeat="moment in taskInfo.history | orderObjectBy : 'time' : true">
-              <h5>{{moment.type | historyType}} <small>{{moment.time | date : 'short'}}</small></h5>
-
-
-              <p ng-if="moment.type == Phased.task.HISTORY_ID.ASSIGNEE">Assigned by {{team.members[moment.snapshot.assigned_by].name}}</p>
-              <p ng-if="moment.type == Phased.task.HISTORY_ID.ASSIGNEE">Assigned to {{team.members[moment.snapshot.assigned_to].name}}</p>
-
-
-              <p ng-if="moment.type == Phased.task.HISTORY_ID.PRIORITY">
-                to {{Phased.task.PRIORITY[moment.snapshot.priority]}}
-              </p>
-
-
-              <p ng-if="moment.type == Phased.task.HISTORY_ID.STATUS">
-                to {{Phased.task.STATUS[moment.snapshot.status]}}
-              </p>
-
-
-              <p ng-if="moment.type == Phased.task.HISTORY_ID.CATEGORY">
-                to {{team.categoryObj[moment.snapshot.cat].name}}
-              </p>
-            </div>
-          </div> -->
         </div>
       </div>
 
-
     </div>
-
 
   </div>
 
