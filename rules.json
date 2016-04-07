@@ -1,5 +1,7 @@
 {
   "rules": {
+    ".read" :  "auth.uid === 'phased-server'",
+    ".write" :  "auth.uid === 'phased-server'",
     "meta" : {
       ".read" : "auth.uid != null",
       ".write" : false
@@ -39,7 +41,7 @@
           ".write" : "auth.uid == 'gcal-server'"
         },
         "calendars" : {
-          ".read" : "auth.uid == 'gcal-server'", // only the gcal-server can get the whole list
+          ".read" : "auth.uid.endsWith('-server')", // only the server can get the whole list
           "$uid" : {
             "$teamID" : {
               /*
@@ -52,10 +54,20 @@
             }
           }
         }
+      },
+      "slack" : {
+        /*
+          Only the server can see this business (so far)
+        */
+        ".read" : "auth.uid == 'slack-server'",
+        ".write" : "auth.uid == 'slack-server'",
+        "users" : {
+          ".indexOn": ".value"
+        }
       }
     },
     "profile": {
-      ".read" : "auth.uid == 'registration-server' || auth.uid == 'gcal-server'",
+      ".read" : "auth.uid == 'registration-server' || auth.uid == 'gcal-server' || auth.uid == 'slack-server'",
       ".indexOn" : "email",
 			"$uid": {
 			  /*
@@ -126,8 +138,8 @@
       }
     },
     "team": {
-      ".read" : "auth.uid == 'registration-server' || auth.uid == 'notif-server' || auth.uid == 'hook-server'",
-      ".write" : "auth.uid == 'registration-server' || auth.uid == 'hook-server'",
+      ".read" : "auth.uid == 'registration-server' || auth.uid == 'notif-server' || auth.uid == 'hook-server' || auth.uid == 'slack-server'",
+      ".write" : "auth.uid == 'registration-server' || auth.uid == 'hook-server' || auth.uid == 'slack-server'",
       ".indexOn" : "name",
       "$teamID" : {
         // anyone on the team can read the data; so can the server
@@ -141,7 +153,7 @@
           */
           ".write" :  "data.parent().child('members/' + auth.uid).exists() || 
             (root.child('userMappings/' + auth.uid).exists() && data.parent().child('members/' + root.child('userMappings/' + auth.uid).val()).exists()) ||
-            auth.uid === 'gcal-server'",
+            auth.uid === 'gcal-server' || auth.uid == 'slack-server'",
           ".indexOn" : "time"
         },
         "projects": {
@@ -166,6 +178,7 @@
                     "deadline" : {},
                     "priority" : {},
                     "tasks" : {
+                      ".indexOn" : "time",
                       "$taskID" : {
                         "name" : {},
                         "created_by" : {},
@@ -176,6 +189,7 @@
                         "status" : {},
                         "cat" : {},
                         "history" : {
+                          ".indexOn" : "time",
                           "$histID" : {
                             "time" : {},
                             "type" : {},
@@ -258,11 +272,11 @@
                 write : if user is admin or owner
                 validate: must be one of the keys of meta/ROLE
               */
-              ".write" : "data.parent().parent().child(auth.uid + '/role').val() === root.child('meta/ROLE_ID/ADMIN').val() || 
-                          data.parent().parent().child( root.child('userMappings/' + auth.uid).val() + '/role').val() === root.child('meta/ROLE_ID/ADMIN').val() || 
+              ".write" : "auth.uid === 'registration-server' ||
+                          data.parent().parent().child(auth.uid + '/role').val() === root.child('meta/ROLE_ID/ADMIN').val() || 
                           data.parent().parent().child(auth.uid + '/role').val() === root.child('meta/ROLE_ID/OWNER').val() ||
-                          data.parent().parent().child( root.child('userMappings/' + auth.uid).val() + '/role').val() === root.child('meta/ROLE_ID/OWNER').val() ||
-                          auth.uid === 'registration-server'",
+                          data.parent().parent().child( root.child('userMappings/' + auth.uid).val() + '/role').val() === root.child('meta/ROLE_ID/ADMIN').val() || 
+                          data.parent().parent().child( root.child('userMappings/' + auth.uid).val() + '/role').val() === root.child('meta/ROLE_ID/OWNER').val()",
               ".validate" : "root.child('meta/ROLE/' + newData.val()).exists()"
             },
             "currentStatus" : {

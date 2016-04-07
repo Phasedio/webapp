@@ -32,9 +32,11 @@ var all = {
     session: 'webapp-secret'
   },
 
+  FB_TOKEN_UID: 'phased-server',
+
   // List of user roles
   userRoles: ['guest', 'user', 'admin'],
-  
+
   // routes which do not require a FB token to access
   // NB: GET requests (other than to api routes) are allowed by default
   // NB: route can be anywhere in req.path
@@ -43,7 +45,9 @@ var all = {
 	  	'/api/google/auth2',
 	  	'/api/slack/auth',
 	  	'/api/slack/slash',
-	  	'/api/hooks/'
+	  	'/api/hooks/',
+      '/api/registration/register',
+      '/api/downloads'
   	],
 
   // MongoDB connection options

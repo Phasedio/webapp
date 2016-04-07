@@ -1,10 +1,10 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('BillingCtrl', function ($scope, $http, stripe, Auth, FURL,Phased,$location) {
+  .controller('BillingCtrl', function ($scope,stripe, $http, Auth, FURL,Phased,$location) {
 
 
-
+    //Stripe.setPublishableKey('pk_test_6pRNASCoBOKtIshFeQd4XMUh');
     ga('send', 'pageview', '/billing');
     var ref = new Firebase(FURL);
     $scope.Phased = Phased;
@@ -18,40 +18,7 @@ angular.module('webappApp')
   	// };
 
     // bounce users without Admin or Owner permissions
-    var checkRole = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkRole);
-        return;
-      }
-
-      var myRole = Phased.team.members[Auth.user.uid].role;
-      if (myRole != Phased.ROLE_ID.ADMIN && myRole != Phased.ROLE_ID.OWNER)
-        $location.path('/');
-    }
-    checkRole();
-
-    $scope.$on('Phased:memberChanged', checkRole);
-
-
-    // bounce users if team has problems
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
-      var teamCheck = Phased.viewType;
-      console.log(teamCheck);
-      if (teamCheck == 'problem'){
-        $location.path('/team-expired');
-      }else if (teamCheck == 'canceled') {
-        $location.path('/switchteam');
-      }
-
-    }
-    $scope.$on('Phased:PaymentInfo', checkTeam);
-    checkTeam();
+    Phased.maybeBounceUser();
 
 
     $scope.removeTeam = function () {
@@ -101,39 +68,6 @@ angular.module('webappApp')
         }
       });
   };
-  $scope.checkPlanStatus = function(teamData){
-    console.log('wohohohohoo');
-    var team = teamData;
-    console.log(team);
-    if(team.billing){
-      $scope.billinInfo = team.billing;
-      console.log('wohohohohoo');
-      $http.post('./api/pays/find',{customer:team.billing.stripeid}).success(function(data){
-        console.log(data);
-        if(data.err){
-          console.log(data.err);
-        }
-        if(data.status == "active"){
-          //Show thing for active
-          $scope.viewType = 'active';
-
-        }else if(data.status == 'past_due' || data.status == 'unpaid'){
-          //Show thing for problem with account
-          $scope.viewType = 'problem';
-        }else if(data.status == 'canceled'){
-          //Show thing for problem with canceled
-          $scope.viewType = 'notPaid';
-        }
-        console.log($scope.viewType);
-        //$scope.$apply();
-      }).error(function(data){
-        console.log(data);
-      });
-    }else{
-      $scope.viewType = 'notPaid';
-      $scope.$apply();
-    }
-  }
 
   // $scope.init = function(){
   //   ref.child('profile').child(Auth.user.uid).once('value',function(data){

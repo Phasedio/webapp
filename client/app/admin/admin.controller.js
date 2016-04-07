@@ -1,57 +1,17 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('AdminCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment, $location, toaster) {
+  .controller('AdminCtrl', function ($scope, $http, Auth, Phased, FURL,amMoment, $location, toaster) {
     ga('send', 'pageview', '/admin');
 
     $scope.viewType = Phased.viewType;
     $scope.team = Phased.team;
     console.log(Phased.team);
     $scope.Phased = Phased;
-    $scope.numMembers =0;
 
-    // bounce users without Admin or Owner permissions
-    var checkRole = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkRole);
-        return;
-      }
-      $scope.canAddMembers = function(){
-        var k = Object.keys(Phased.team.members);
-        console.log(k);
-        $scope.numMembers = k.length;
-        if(k.length <= 10){
-          return true;
-        }else{
-          return false;
-        }
-      };
-
-      var myRole = Phased.team.members[Auth.user.uid].role;
-      if (myRole != Phased.ROLE_ID.ADMIN && myRole != Phased.ROLE_ID.OWNER)
-        $location.path('/');
-    }
-    checkRole();
-
-    // bounce users if team has problems
-    var checkTeam = function(){
-      // do only after Phased is set up
-      if (!Phased.SET_UP) {
-        $scope.$on('Phased:setup', checkTeam);
-        return;
-      }
-      var teamCheck = Phased.viewType;
-      if (teamCheck == 'problem'){
-        $location.path('/team-expired');
-      }else if (teamCheck == 'canceled') {
-        $location.path('/switchteam');
-      }
-
-    }
-    checkTeam();
-
-    $scope.$on('Phased:memberChanged', checkRole);
+    // checks user's priv immediately, when it loads, and when it changes
+    // bounces accordingly
+    Phased.maybeBounceUser();
 
     $scope.changeRole = function(member, oldRole) {
       console.log(member,oldRole);

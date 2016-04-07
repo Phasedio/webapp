@@ -117,6 +117,28 @@ body{
   color:$darkBlack;
   -webkit-font-smoothing:antialiased;
 }
+h1,h2,h3,.semi__lower{
+  font-family: 'open_sanssemibold';
+  color:$boldText;
+}
+
+h4,h5,h6,.semi{
+  font-family: 'open_sanssemibold';
+  color:$boldText;
+  text-transform: uppercase;
+}
+
+
+p{
+  font-family: 'open_sansregular';
+  //color:$textColor;
+  //font-size: 12px;
+}
+.semi-bold{
+  font-family: 'open_sanssemibold';
+  color:$boldText;
+  text-transform: uppercase;
+}
 
 .clickable{
   cursor: pointer;
@@ -138,6 +160,43 @@ body{
     left: 12px;
     color: #fff;
 }
+
+.box{
+  display: block;
+  padding: 12px;
+  max-width: 496px;
+  width: 100%;
+  margin-bottom: 20px;
+  border: 1px solid;
+  border-color: #e5e6e9 #dfe0e4 #d0d1d5;
+  border-radius: 3px;
+  background-color: #fff;
+}
+.box-lg{
+  max-width: 590px;
+}
+
+
+.btn__phased__fb{
+  font-size: 12px;
+  line-height: 22px;
+  padding: 0 16px;
+  vertical-align: baseline;
+  background-color: #2fc3b5;
+
+  color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, .2);
+  -webkit-font-smoothing: antialiased;
+  font-weight: bold;
+
+  text-align: center;
+  border: 1px solid;
+  border-color: #2fc3b5 #2AADA1 #29AB9F;
+  border-radius: 2px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
+  border-radius: 2px;
+}
+
 .button-phased{
   border-color:#084D54;
   background:transparent;
@@ -209,24 +268,50 @@ body{
 }
 
 .btn-drop-chevron{
-  padding: 5px; 
+  padding: 5px;
   padding-top: 0;
   background: transparent;
 }
+
+// // loader styles
+// body:not(.route-login) {
+//   &:not(.phasedSetup) {
+//     .ng-view {
+//       &:after {
+//         // centered text
+//         // content: "Phasing...";
+//         // display: block;
+//         // position: absolute;
+//         // top: 50%;
+//         // right: 0;
+//         // left: 0;
+//         // text-align: center;
+//
+//         // loader gif
+//         content: " ";
+//         display: block;
+//         position: absolute;
+//         top: 0;
+//         right: 0;
+//         bottom: 0;
+//         left: 0;
+//         background: url('/assets/images/loader-ball.gif') no-repeat center center;
+//       }
+//       & > section {
+//         display: none;
+//       }
+//     }
+//   }
+// }
+
 // navbar
 .navbar{
-  height:64px;
-  margin-bottom:15px;
-  background: #2fc2a3;
-  padding-top:0;
-  padding-bottom:0;
-  border-bottom: none;
-  border-radius: 0;
+
   li{
     font-family: 'open_sansregular';
     //text-transform: uppercase;
     color:$liteBlack;
-    font-size: 20px;
+    font-size: 14px;
     letter-spacing: 0.92px;
     line-height: 15px;
   }
@@ -413,6 +498,7 @@ div[ng-include*="sidebar.html"] {
 @import 'team-expired/team-expired.scss';
 @import 'modal/modal.scss';
 @import 'notifications/notifications.scss';
+@import 'status-lazy-loader/status-lazy-loader.scss';
 // endinjector
 @import 'addcategory/addcategory.scss';
 @import 'billing/billing.scss';
@@ -489,21 +575,21 @@ div[ng-include*="sidebar.html"] {
       color: #fff;
   }
 }
-// .ion{
-//       width: 41.5%;
-//     }
-//     .navItem{
-//       text-align: center;
-//     }
-//   }
 
-//}
 
-@media (max-width: 969px) {
-  //side navbar-nav
-  [ng-include*="sidebar.html"] {
-  	width: 75px; // match
+
+
+
+@media (min-width: 992px) {
+  .container{
+    width:1190px;
   }
+  .box{
+    max-width: 496px;
+		margin: 0 auto;
+  }
+}
+
   .sideMenu{
     width: 75px;
     .brand__area{
@@ -531,5 +617,32 @@ div[ng-include*="sidebar.html"] {
       top: 50rem;
       left: 4px;
       color: #fff;
+  }
+
+
+
+
+@media (min-width: 992px) {
+  .container{
+    width:1190px;
+  }
+
+  .dashboard {
+    float: left;
+    width: 290px;
+    padding:0 !important;
+  }
+  .content-main {
+    float: left;
+    padding:0 !important;
+    width: 590px;
+    margin: 0 10px;
+  }
+  .box{
+    max-width: 496px;
+		margin: 0 auto;
+  }
+  .box-lg{
+    max-width: 590px;
   }
 }

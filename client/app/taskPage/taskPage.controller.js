@@ -1,13 +1,13 @@
 'use strict';
 
 angular.module('webappApp')
-  .controller('TaskPageCtrl', function ($scope, $http, stripe, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig,$routeParams,$location) {
+  .controller('TaskPageCtrl', function ($scope, $http, Auth, Phased, FURL,amMoment,toaster,uiCalendarConfig,$routeParams,$location) {
     $scope.message = 'Hello';
 
 
     $scope.phased = Phased;
     $scope.team = Phased.team;
-    $scope.assignments = Phased.assignments;
+    $scope.assignments = Phased.get.tasks;
     $scope.archive = Phased.archive;
     $scope.taskInfo = {}; // Task information for the description area
     $scope.today = new Date().getTime(); // min date for deadline datepicker
@@ -33,81 +33,35 @@ angular.module('webappApp')
       },
       FBRef = new Firebase(FURL);
 
-
-      // bounce users if team has problems
-      var checkTeam = function(){
-        // do only after Phased is set up
-        if (!Phased.SET_UP) {
-          $scope.$on('Phased:setup', checkTeam);
-          return;
-        }
-        var teamCheck = Phased.viewType;
-        console.log(teamCheck);
-        if (teamCheck == 'problem'){
-          $location.path('/team-expired');
-        }else if (teamCheck == 'canceled') {
-          $location.path('/switchteam');
-        }
-
-      }
-      $scope.$on('Phased:PaymentInfo', checkTeam);
-      checkTeam();
-
-    function init(){
-      // get route peram and try to assign it
-      console.log($scope.assignments);
-      //check if phased is set up
-      // if(Phased.assignments){
-      //   if($routeParams.taskID && Phased.assignments.all[$routeParams.taskID]){
-      //     $scope.taskInfo = Phased.assignments.all[$routeParams.taskID];
-      //     console.log($scope.taskInfo);
-      //
-      //   }else{
-      //     //fail - send user to tasks page
-      //     //alert("failed")
-      //     //$location.path("/tasks")
-      //   }
-      // }
-      if(Phased.SET_UP){
-        $scope.taskInfo = Phased.team.projects[$routeParams.project].columns[$routeParams.column].cards[$routeParams.card].tasks[$routeParams.taskID];
+    function init() {
+      // get route param and try to assign it
+      if (Phased.PROJECTS_SET_UP) {
+        $scope.taskInfo = Phased.get.tasks[$routeParams.taskID]; // easy / lite syntax (same object reference)
         getStatuses($scope.taskInfo);
+      } else {
+				// If this was deep linked to then wait for the provider to get set up
+				$scope.$on('Phased:projectsComplete', init);
       }
-
     }
-
-    // If this was deep linked to then wait for the provider to get set up
-    $scope.$on('Phased:setup', function() {
-
-      // if($routeParams.taskID && Phased.assignments.all[$routeParams.taskID]){
-      //   $scope.taskInfo = Phased.assignments.all[$routeParams.taskID];
-      //   console.log($scope.taskInfo);
-      //
-      // }else{
-      //   //fail - send user to tasks page
-      //   alert("failed")
-      //   //$location.path("/tasks")
-      // }
-      init();
-      $scope.$apply();
-    });
-
-
     init();
 
 
-    //grabs any statues that are on the task
+    //grabs any statuses that are on the task
     function getStatuses(task){
-      $scope.taskInfo.statues = [];
-      for (var i in task.statuses) {
-        if (task.statuses.hasOwnProperty(i)) {
-          console.log(i);
-          var item = task.statuses[i];
-          FBRef.child('team').child(Phased.user.curTeam).child('statuses').child(item).once('value',function(snap){
-            console.log(snap.val());
-            $scope.taskInfo.statues.push(snap.val());
-          });
+      if (task) {
+        $scope.taskStatuses = $scope.taskStatuses || [];
+        for (var i in task.statuses) {
+          if (task.statuses.hasOwnProperty(i)) {
+            console.log(i);
+            var item = task.statuses[i];
+            FBRef.child('team').child(Phased.user.curTeam).child('statuses').child(item).once('value',function(snap){
+              console.log(snap.val());
+              $scope.taskStatuses.push(snap.val());
+            });
+          }
         }
       }
+
     }
 
     // moves task into my to_me if unassigned,
@@ -141,36 +95,44 @@ angular.module('webappApp')
 
     // Broadcasts that user is working on Task
     $scope.broadcastTask = function(task) {
-      Phased.activateTask(task.key);
+      mixpanel.track("Broadcast Task");
+      console.log(task);
+      Phased.activateTask(task.key, task, "Is working on task: ");
       toaster.pop('success', "Success!", "Your task was posted");
     }
 
     // Edit name
     $scope.taskEditName = function(taskID, newName) {
-      Phased.editTaskName(taskID, newName);
+      var taskID = $routeParams.taskID;
+      Phased.setTaskName(taskID, newName);
     }
 
     // edit description
     $scope.taskEditDesc = function(taskID, desc) {
-      Phased.editTaskDesc(taskID, desc);
+      var taskID = $routeParams.taskID;
+      Phased.setTaskDesc(taskID, desc);
     }
 
     // Edit assigned user
     $scope.taskEditAssigned = function(taskObj, userID) {
-      Phased.editTaskAssignee(taskObj, userID);
+      var taskID = $routeParams.taskID;
+      Phased.setTaskAssignee(taskObj, userID);
     }
     // Edits date of deadline or clears it
     $scope.taskEditDate = function(taskID, date) {
-      Phased.editTaskDeadline(taskID, date);
+      var taskID = $routeParams.taskID;
+      Phased.setTaskDeadline(taskID, date);
     }
 
     // change category
     $scope.changeCategory = function(taskID, catKey) {
-      Phased.editTaskCategory(taskID, catKey);
+      var taskID = $routeParams.taskID;
+      Phased.setTaskCategory(taskID, catKey);
     }
     // change priority
     $scope.changePriority = function(taskID, priorityKey) {
-      Phased.editTaskPriority(taskID, priorityKey);
+      var taskID = $routeParams.taskID;
+      Phased.setTaskPriority(taskID, priorityKey);
     }
 
 

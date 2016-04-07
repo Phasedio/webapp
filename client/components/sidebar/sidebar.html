@@ -3,12 +3,12 @@
 	<div class="brand__area">
 		<h2 class="brand__title" align="center">Phased</h2>
 		<img class="brand__img" src="assets/images/phased-logo.svg" height="50" width="50px" />
-		<p ng-if="isTrial" class="trialing">
+		<p ng-if="phased.viewType == trialing" class="trialing">
 			trial version
 		</p>
 	</div>
 	<a
-		ng-repeat="item in menu"
+		sly-repeat="item in menu"
 		class="navItem"
 		ng-href="{{item.link}}"
 		ng-class="{ active: isActive(item.link) }" 

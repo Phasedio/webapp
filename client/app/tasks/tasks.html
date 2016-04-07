@@ -1,289 +1,33 @@
 
+<div ng-include="'components/content-nav/content-nav.html'"></div>
 <section class="container-fluid">
   <div class="row">
-    <div ng-include="'components/sidebar/sidebar.html'"></div>
-    <div class="content__area">
-      <div ng-include="'components/content-nav/content-nav.html'"></div>
-
-      <div class="task__area">
-        <div class="task__list">
-          <div class="task__add">
-            <!-- <select ng-model="filterView" ng-change="setFilter(filterView)" ng-init="filterView = 'me'">
-              <option value="me">My Tasks</option>
-              <option value="all">All Tasks</option>
-              <option value="me_complete">My Completed Tasks</option>
-            </select> -->
-            <form id="todo-form" ng-submit="addTodo()">
-              <p>Add a task</p>
-              <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
-            </form>
-          </div>
-
-          <div class="dropdown">
-            <button class="btn btn-block btn-default  dropdown-toggle no__boarder__radius no__border__side" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-              {{currentFilter}}
-              <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-              <li><a href="#" ng-click="setFilter('me')">My Tasks</a></li>
-              <li><a href="#" ng-click="setFilter('all')">All Tasks</a></li>
-              <li><a href="#" ng-click="setFilter('me_complete')">My Completed Tasks</a></li>
-            </ul>
-          </div>
-
-          <ul>
-            <li class="task__item" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks |
-            orderObjectBy : 'time' : true" ng-if="getFilter(assignment)" ng-click="selectTask(assignment)">
-              <div class="task__item__title">
-                <h4>{{assignment.name}}</h4>
-              </div>
-              <div class="">
-                <p>
-                  {{Phased.task.STATUS[assignment.status]}} {{assignment.deadline | date : 'd MMM yy'}}
-                </p>
-              </div>
-							<!-- <div ng-click="selectTask(assignment)">
-								{{assignment.name}} <small>{{Phased.task.STATUS[assignment.status]}}</small>
-							</div>
-
-							<div>
-                <div class="task-meta">
-                  <div class="task-due" ng-click="selectTask(assignment)">
-                    {{assignment.deadline | date : 'd MMM yy'}}
-                  </div>
-                  <div class="task-assigned" ng-click="selectTask(assignment)">
-                    <img
-                      ng-if="!assignment.unassigned"
-                      ng-src="{{team.members[assignment.assigned_to].pic}}"
-                      width="25px"
-                      height="25px"
-                      />
-                  </div>
-                  <div class="task-quick-action">
-                    <button type="button" class="btn btn-phased-blue btn-circle" uib-tooltip="Post as status" name="button" ng-if="assignment.status != Phased.task.STATUS_ID.ASSIGNED" ng-click="broadcastTask(assignment)"><i class="fa fa-lg fa-share"></i></button>
-                    <button class="btn btn-phased-blue btn-circle" uib-tooltip="Start task" ng-if="assignment.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(assignment)"><i class="fa fa-play" ></i></button>
-                  </div>
-                </div>
-
-							</div> -->
-						</li>
-          </ul>
+    <div class="col-xs-12">
+      <div class="task__holder">
+        <div class="task__filters">
+          <h3>Your To-Do List</h3>
         </div>
-
-        <div class="task__details"  ng-show="taskInfo.assigned_by">
-          <div class="" ng-class="taskDescript">
-      			<div class="task ">
-
-              <div class="task-header">
-                <ul class="task-meta-bar">
-                  <li class="task-meta-bar-item ">
-                    <p ng-if="taskInfo.unassigned">Assign task to </p>
-                    <div class="dropdown">
-                      <button id="dLabel" type="button" class="btn btn-transparent no-padding" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <img ng-if="taskInfo.assigned_to" src="{{team.members[taskInfo.assigned_to].pic}}" width="35px" height="35px"> {{team.members[taskInfo.assigned_to].name}}
-                      </button>
-                      <ul class="dropdown-menu" aria-labelledby="dLabel">
-                        <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo.key,member.uid)"><img src="{{member.pic}}" width="35px" height="35px"> <p>
-                          {{member.name}}
-                        </p></a></li>
-                      </ul>
-                    </div>
-                  </li>
-
-                  <li class="task-meta-bar-item added-padding">
-                    <p align="center" ng-if="taskInfo.deadline" ng-click="open($event)"><i class="fa fa-calendar-o cal__btn"></i> <span>{{taskInfo.deadline | date : 'MMM dd'}}</span></p>
-                    <p align="center" ng-if="!taskInfo.deadline" ng-click="open($event)"><i class="fa fa-calendar-o cal__btn"></i> <span>No due date</span></p>
-                    <p class="input-group">
-                      <input type="text" class="form-control hidden"  uib-datepicker-popup="{{format}}" ng-model="taskInfo.deadline" ng-change="taskEditDate(taskInfo.key,taskInfo.deadline)" init-date="dt" is-open="status.opened" min-date="minDate" max-date="maxDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" ng-required="true" close-text="Close" />
-                    </p>
-                  </li>
-
-                </ul>
-                <textarea class="task-title h3" ng-model="taskInfo.name" ng-blur="taskEditName(taskInfo.key,taskInfo.name)"></textarea>
-
-
-              </div>
-
-
-              <textarea class="task-title" ng-model="taskInfo.description" ng-blur="taskEditDesc(taskInfo.key,taskInfo.description)" placeholder="Enter description..."></textarea>
-
-              <p>Assigned by: {{team.members[taskInfo.assigned_by].name}}</p>
-
-              <div class="dropdown">
-                <p id="dLabel1" class="clickable" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  Category: {{team.categoryObj[taskInfo.cat].name}} <span class="caret"></span>
-
-                </p>
-                <ul class="dropdown-menu" aria-labelledby="dLabel1">
-                  <li ng-repeat="(key, category) in team.categoryObj">
-                    <a href="#" ng-click="changeCategory(taskInfo.key, key)">
-                      <p>
-                       {{category.name }}
-                      </p>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div class="dropdown">
-                <p id="dLabel2" class="clickable"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  Priority : {{ Phased.task.PRIORITY[taskInfo.priority] }} <span class="caret"></span>
- 
-                </p>
-                <ul class="dropdown-menu" aria-labelledby="dLabel2">
-                  <li ng-repeat="priority in Phased.task.PRIORITY_ID | orderBy">
-                    <a href="#" ng-click="changePriority(taskInfo.key, priority)">
-                      <p>
-                       {{ Phased.task.PRIORITY[priority] }}
-                      </p>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-              <p>
-                Status: {{Phased.task.STATUS[taskInfo.status]}}
-              </p>
-
-              <div class="task-archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
-                <button type="button" class="btn btn-phased-blue btn-block" name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED" ng-click="broadcastTask(taskInfo)">  post as status  <i class="fa fa-lg fa-share"></i></button>
-                <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
-                <button class="btn btn-phased-blue btn-block" ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
-                <!-- <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName != 'archive'" ng-click="moveToArchive(taskInfo.key);">archive <i class="fa fa-lg fa-trash-o"></i></button> -->
-                <!-- <button class="btn btn-phased-blue btn-block" ng-if="activeStreamName == 'archive'" ng-click="moveFromArchive(taskInfo.key);">unarchive</button> -->
-              </div>
-
-
-
-
-      			</div>
-            <!-- STATUS HISTORY -->
-            <div class="" ng-if="taskInfo.statues">
-              <h4>Status History</h4>
-              <!-- <div class="" ng-repeat="item in taskInfo.statues">
-                {{item.name}}
-              </div> -->
-              <div class="member__activity " ng-repeat="item in taskInfo.statues | orderBy: 'time'">
-  							<div class="activity__person">
-  								<img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
-  								<div class="activity__info">
-                    <h5 class="">
-  										<a href="/profile/{{item.user}}">{{$parent.team.members[item.user].name}}</a>
-  										<span class="" ng-if="item.task.name">
-  											<small>
-  												<i class="fa fa-tasks"></i>
-  												<!-- <span role="presentation" aria-hidden="true"> · </span> -->
-  												{{item.task.name | limitTo:50}}
-  											</small>
-
-  										</span>
-  								</h5>
-  									<p class="activity__meta"><span am-time-ago="item.time"></span></p>
-  								</div>
-  							</div>
-
-  							<div class="activity__content">
-  								<p class="">{{item.name}}</p>
-  							</div>
-
-  						</div>
+        <div class="list-group">
+          <a href="#" class="list-group-item clearfix" sly-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
+            <div class="task__complete" ng-click="setCompleted(assignment)">
+              <i class="fa fa-check"></i>
             </div>
-
-            <!-- TASK HISTORY -->
-            <div class="ph-card" ng-if="taskInfo.history">
-              <h4>Task History</h4>
-              <div ng-repeat="moment in taskInfo.history | orderObjectBy : 'time' : true">
-                <h5>{{moment.type | historyType}} <small>{{moment.time | date : 'short'}}</small></h5>
-
-                <!-- assigned -->
-                <p ng-if="moment.type == Phased.task.HISTORY_ID.ASSIGNEE">Assigned by {{team.members[moment.snapshot.assigned_by].name}}</p>
-                <p ng-if="moment.type == Phased.task.HISTORY_ID.ASSIGNEE">Assigned to {{team.members[moment.snapshot.assigned_to].name}}</p>
-
-                <!-- priority -->
-                <p ng-if="moment.type == Phased.task.HISTORY_ID.PRIORITY">
-                  to {{Phased.task.PRIORITY[moment.snapshot.priority]}}
-                </p>
-
-                <!-- status -->
-                <p ng-if="moment.type == Phased.task.HISTORY_ID.STATUS">
-                  to {{Phased.task.STATUS[moment.snapshot.status]}}
-                </p>
-
-                <!-- category -->
-                <p ng-if="moment.type == Phased.task.HISTORY_ID.CATEGORY">
-                  to {{team.categoryObj[moment.snapshot.cat].name}}
-                </p>
-              </div>
+            <div class="task__name" ng-click="sendToTask('0A','0A','0A',assignment.key)">
+              {{assignment.name}}
             </div>
-      		</div>
+            <div class="task__details">
+              <i class="fa fa-ellipsis-h"></i>
+            </div>
+          </a>
+        </div>
+        <div class="task__add">
+          <form id="todo-form" ng-submit="addTodo()">
+            <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
+          </form>
         </div>
       </div>
-
-
     </div>
-    <!-- TASK STREAM -->
-    <!-- <div class="task-stream" ng-class="tasklistSize">
-
-			<div class=" ph-card task-list">
-        <div class="task-filter">
-          <button class="btn btn-phased-blue add-new-task" ng-click="addAssignmentModal();">New task</button>
-          <div class="styled-select">
-            <select ng-model="filterView" ng-change="setFilter(filterView)" ng-init="filterView = 'me'">
-              <option value="me">My Tasks</option>
-              <option value="all">All Tasks</option>
-              <option value="me_complete">My Completed Tasks</option>
-            </select>
-          </div>
-        </div>
-        <form id="todo-form" ng-submit="addTodo()">
-          <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
-        </form>
-
-
-				<table class="table table-hover">
-					<tbody> -->
-            <!-- for this ng-repeat to work, it has to be based on team or possibly Phased; if we start
-            with it on projects['0A'], it will watch before it's loaded and will thus be looking just at undefined rather than a property that could change -->
-						<!-- <tr class="task" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks |
-            filterTaskByStatus : activeStatusFilter |
-            filterTaskByCategory : activeCategoryFilter |
-            filterTaskByAssignment : activeAssignmentDirection : activeAssignmentID |
-            orderObjectBy : 'time' : true" > -->
-            <!-- <tr class="task" ng-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks |
-            orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
-							<td ng-click="selectTask(assignment)">
-								{{assignment.name}} <small>{{Phased.task.STATUS[assignment.status]}}</small>
-							</td>
-
-							<td>
-                <div class="task-meta">
-                  <div class="task-due" ng-click="selectTask(assignment)">
-                    {{assignment.deadline | date : 'd MMM yy'}}
-                  </div>
-                  <div class="task-assigned" ng-click="selectTask(assignment)">
-                    <img
-                      ng-if="!assignment.unassigned"
-                      ng-src="{{team.members[assignment.assigned_to].pic}}"
-                      width="25px"
-                      height="25px"
-                      />
-                  </div>
-                  <div class="task-quick-action">
-                    <button type="button" class="btn btn-phased-blue btn-circle" uib-tooltip="Post as status" name="button" ng-if="assignment.status != Phased.task.STATUS_ID.ASSIGNED" ng-click="broadcastTask(assignment)"><i class="fa fa-lg fa-share"></i></button>
-                    <button class="btn btn-phased-blue btn-circle" uib-tooltip="Start task" ng-if="assignment.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(assignment)"><i class="fa fa-play" ></i></button>
-                  </div>
-                </div>
-
-							</td>
-						</tr>
-
-					</tbody>
-				</table>
-			</div>
-    </div> -->
-
-
   </div>
-
 </section>
 
 <!-- add task -->
@@ -304,7 +48,7 @@
 
           <label for="priority">Priority</label>
           <select ng-model="newTask.priority" id="priority">
-            <option ng-repeat="priority in Phased.task.PRIORITY_ID" value="{{priority}}">{{Phased.task.PRIORITY[priority]}}</option>
+            <option ng-repeat="priority in Phased.task.PRIORITY_ID" value="{{::priority}}">{{::Phased.task.PRIORITY[priority]}}</option>
           </select>
 
           <label for="deadline">Deadline</label>

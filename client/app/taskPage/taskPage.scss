@@ -1,0 +1,64 @@
+.taskPage__details {}
+
+.task-header {
+  .task-meta-bar {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    //overflow: auto;
+    height: 40px;
+    margin-bottom: 12px;
+  }
+  .task-meta-bar-item {
+    display: inline-block;
+    margin-right: 5px;
+  }
+  .dropdown-menu {
+    li {
+      img,
+      p {
+        display: inline-block;
+      }
+    }
+  }
+}
+
+.task__title{
+  border: none;
+  width: 100%;
+  resize: none;
+}
+
+.task-meta-bar-item {
+  border: 1px solid transparent;
+  cursor: pointer;
+  border-radius: 1000px;
+  margin-right: 20px;
+  float: left;
+  .cal__btn {
+    -webkit-box-align: center;
+    align-items: center;
+    border: 1px solid #B9BCC0;
+    border-radius: 50%;
+    font-size: 1.33333em;
+    line-height: 2.2em;
+    vertical-align: -15%;
+    //height: 16px;
+    //width: 16px;
+    padding: 0 10px;
+    -webkit-box-sizing: border-box;
+    color: #B9BCC0;
+    transition: border 200ms,box-shadow 200ms,color 200ms;
+  }
+  &:hover {
+    //border-color:$liteBlack;
+    border-color: transparentize(#2fc2a3, 0.1);
+  }
+  p,
+  .dropdown {
+    display: inline-block;
+  }
+  p {
+    margin-bottom: 0;
+  }
+}
