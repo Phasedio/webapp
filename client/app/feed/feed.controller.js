@@ -30,7 +30,7 @@ angular.module('webappApp')
       if (!Phased.team.uid) {
         $location.path('/onboarding');
       }
-      getUserTasks();
+      //getUserTasks();
 
       // $scope.$digest(); // instead of apply; only affects current scope instead of rootscope
     });

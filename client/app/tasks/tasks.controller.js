@@ -458,6 +458,13 @@ angular.module('webappApp')
     return '';
   };
 
+
+  $scope.deleteTask = function(project,column,card,key){
+    FBRef.child('team').child(Phased.user.curTeam).child("projects/0A/columns/0A/cards/0A/tasks").child(key).set(null);
+    toaster.pop('success', "Task deleted!","");
+    console.log('done');
+  }
+
     //---
 
     /**

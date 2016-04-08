@@ -1,4 +1,17 @@
-.taskPage__details {}
+.task__detail{
+  min-height: 600px;
+  max-width: 730px;
+  margin: 0 auto;
+  padding: 0 47px;
+  textarea{
+    border: 1px solid #000;
+  }
+}
+
+.task__meta__item{
+  float: left;
+  margin: 4px 28px 1pc 0;
+}
 
 .task-header {
   .task-meta-bar {
@@ -29,6 +42,26 @@
   resize: none;
 }
 
+.task__discript{
+  min-height: 250px;
+  white-space: pre-line;
+
+}
+.task__discript__editor{
+  min-height: 250px;
+}
+.task__archive{
+  margin-top: 20px;
+
+}
+
+.task__statues{
+  padding-bottom: 50px;
+}
+
+.task__meta__due{
+  cursor: pointer;
+}
 .task-meta-bar-item {
   border: 1px solid transparent;
   cursor: pointer;

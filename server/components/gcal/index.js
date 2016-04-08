@@ -66,7 +66,7 @@ var _ = require('lodash');
 var FBRef = require('../../components/phasedFBRef').getRef();
 var Phased = require('../../components/phased');
 
-// Google API business 
+// Google API business
 // ====
 var OAuth2 = google.auth.OAuth2;
 var GCal = google.calendar('v3');
@@ -94,10 +94,10 @@ var masterJob, // set in init
 	usersList = {}, // usersList[userID] = true
 
 	// webhookChannelTokens is a list of webhook tokens indexed by their channel IDs.
-	// this is validated against whenever the webhook is hit to make sure the data 
+	// this is validated against whenever the webhook is hit to make sure the data
 	// we're expecting is there.
 	webhookChannelTokens = {},
-	
+
 	// time at which statuses should be posted for all day events. IN GMT!!! 24h, HH:MM:SS
 	// maybe a better solution to this. (ie, get timezone from calendar)
 	DAY_START_TIME = '12:00:00'; // 8AM EST
@@ -139,7 +139,7 @@ module.exports = {
 	*
 	* google doesn't give any new information about the event
 	*	so we have to make another request to the server to update
-	*	the entire fracking calendar. 
+	*	the entire fracking calendar.
 	*
 	*/
 	eventPush : function(req, res) {
@@ -195,7 +195,7 @@ var doMasterJob = function() {
 		FBRef.child('integrations/google/calendars/' + userID).off(); // remove all event handlers
 	}
 	usersList = {}; // clear user list
-	eventJobList = {}; // clear job list; 
+	eventJobList = {}; // clear job list;
 	webhookChannelTokens = {}; // clear webhook tokens
 
 	// 3. get this party started
@@ -270,7 +270,7 @@ var onUserRemoved = function(snap) {
 *	register all new calendars for the team
 *
 *	- checks if each calendar is registered
-*	- if it's not, 
+*	- if it's not,
 *		1. schedules posts for all of its events
 *		2. then watches for deregistration
 *
@@ -303,7 +303,7 @@ var registerCalsForTeam = function(_oa2Client, cals, userID, teamID) {
 *	- ensures	that the calendar FBKey is listed in eventJobList
 *		even if there are no events this cycle
 *	A if event is in the future, schedule its post
-*	B if the event started between making the request and receiving the 
+*	B if the event started between making the request and receiving the
 *		info, post immediately
 *	C otherwise, the event may have already been posted and we do nothing
 */
@@ -342,12 +342,12 @@ var onCalAdded = function(_oa2Client, calID, calFBKey, userID, teamID, webhookAl
 				var job = schedule.scheduleJob(jobStart,
 					doEventJob.bind(null, thisEvent, userID, teamID, {calFBKey : calFBKey, eventID : thisEvent.id}) // bind data to callback (see https://github.com/node-schedule/node-schedule#date-based-scheduling)
 				);
-				
+
 				if (job != null) {
 					// stash job for future cancelling
 					eventJobList[calFBKey][thisEvent.id] = job;
 				}
-			} 
+			}
 			// post immediately if event started between making the request and receiving the info (and a 1sec grace margin)
 			else if (jobStart.getTime() > (gCalRequestStartTime.getTime() - 1000)) {
 				// console.log('doing immediate post for "' + thisEvent.summary + '"', jobStart.toString(), gCalRequestStartTime.toString());
@@ -383,7 +383,7 @@ var onCalRemoved = function(calFBKey) {
 	delete eventJobList[calFBKey];
 	// console.log('cal removed, ' +  Object.keys(eventJobList).length + ' registered cals', calFBKey);
 }
- 
+
 /*
 *	post status a update for the event
 *	delete event job from list after it's done
@@ -394,8 +394,8 @@ var doEventJob = function(event, userID, teamID, jobKeys) {
 		name : 'Event: ' + event.summary,
 		time : new Date().getTime(),
 		user : userID,
-		type : Phased.meta.status.TYPE.CALENDAR_EVENT,
-		source: Phased.meta.status.SOURCE.GOOGLE_CALENDAR
+		type : Phased.meta.status.TYPE_ID.CALENDAR_EVENT,
+		source: Phased.meta.status.SOURCE_ID.GOOGLE_CALENDAR
 	};
 
 	FBRef.child('team/' + teamID + '/statuses').push(status, function(err) {
@@ -422,7 +422,7 @@ var doEventJob = function(event, userID, teamID, jobKeys) {
 */
 var registerWebhookForCalendar = function(_oa2Client, calID, calFBKey, userID, teamID) {
 	var nextInvocation = masterJob.pendingInvocations()[0].fireDate;
-	
+
 	// token will be embedded to the webhook registration as a query string
 	// so we can use this metadata when the webhook is hit
 	var token = {
@@ -460,7 +460,7 @@ var registerWebhookForCalendar = function(_oa2Client, calID, calFBKey, userID, t
 *
 * Sets the google oauth2 client credentials
 *	for a Phased user (by ther UID)
-*	
+*
 *	returns a promise
 *	passes the fulfill method an authorized oauth2Client
 *

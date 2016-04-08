@@ -18,7 +18,7 @@ angular.module('webappApp')
     $scope.taskStatusID = Phased.TASK_STATUS_ID;
     $scope.taskHistType = Phased.TASK_HISTORY_CHANGES;
     $scope.myID = Auth.user.uid;
-
+    $scope.edit = false;
 
 
     var StatusID = {
@@ -63,7 +63,13 @@ angular.module('webappApp')
       }
 
     }
-
+    $scope.editMode = function(){
+      if ($scope.edit) {
+        $scope.edit = false;
+      }else{
+        $scope.edit = true;
+      }
+    }
     // moves task into my to_me if unassigned,
     // then starts it
     $scope.startTask = function(task) {
@@ -164,6 +170,7 @@ angular.module('webappApp')
   $scope.maxDate = new Date(2020, 5, 22);
 
   $scope.open = function($event) {
+    console.log('test');
     $scope.status.opened = true;
   };
 

@@ -128,6 +128,10 @@ h4,h5,h6,.semi{
   text-transform: uppercase;
 }
 
+.muted__header{
+  text-transform: none !important;
+  color:#8c8c8c;
+}
 
 p{
   font-family: 'open_sansregular';
@@ -174,6 +178,12 @@ p{
 }
 .box-lg{
   max-width: 590px;
+}
+.box__color{
+  border: 1px solid;
+  border-color: #e5e6e9 #dfe0e4 #d0d1d5;
+  border-radius: 3px;
+  background-color: #fff;
 }
 
 

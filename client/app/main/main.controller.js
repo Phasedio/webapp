@@ -20,7 +20,7 @@ angular.module('webappApp')
         var userTasks = [];
         var user = key;
         _.forEach(Phased.get.tasks, function(value, key) {
-          if (value.assigned_to == user && userTasks.length < 5) {
+          if (value.assigned_to == user && userTasks.length < 5 && value.status != Phased.task.STATUS_ID.COMPLETE) {
             userTasks.push(key);
 
           }
@@ -50,26 +50,6 @@ angular.module('webappApp')
       }
     });
 
-    // $scope.canAddMembers = function(){
-    //   var k = Object.keys(Phased.team.members);
-    //   $scope.numMembers = k.length;
-    //   if(k.length <= 10){
-    //     return true;
-    //   }else{
-    //     return false;
-    //   }
-    // };
-    //
 
-    //
-    // /**
-    // *
-    // * goToMemeber(uid)
-    // * sends user to profile of user
-    // */
-    // $scope.goToUser = function(uid){
-    //   $location.path('/profile/' + uid);
-    // }
-    //
-    
+
 });
