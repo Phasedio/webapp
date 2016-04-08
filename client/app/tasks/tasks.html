@@ -3,40 +3,29 @@
 <section class="container">
   <div class="row">
     <div class="hidden-xs col-sm-4 dashboard">
-      <!-- <div class="feed__team__name box ">
-        <h3>Select a list</h3>
-      </div>
-      <div class="box feed__members">
-        <ul >
-          <li ng-repeat="item in team.members | orderObjectBy: 'lastOnline':true" class="clearfix">
-            <a href="" class="feed__members__link clearfix">
-              <img ng-src="{{::item.pic}}" alt="{{::item.name}}" width="35px"/>
-              <div class="feed__members__name">
-                {{::item.name}}
-              </div>
-              <div class="online" ng-if="item.presence == 1">
 
-
-              </div>
-              <div class="offline" ng-if="item.presence != 1">
-                <span class="hidden-sm" am-time-ago="item.lastOnline"></span>
-
-              </div>
-            </a>
-
-          </li>
-        </ul>
-        <button type="button" class="btn btn__phased__fb btn-block" name="button" data-toggle="modal" data-target="#addMemberModal">Add member</button>
-      </div> -->
     </div>
     <div class="col-xs-12 col-sm-8 col-md-5  content-main">
       <div class="task__holder">
         <div class="task__filters">
-          <h3>Your To-Do List</h3>
+          <h3>
+            <div class="btn-group">
+              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span ng-if="filtersToShow === 'me'">Your</span><span ng-if="filtersToShow === 'someone'">{{team.members[userFilter].name}}'s</span> <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <li ng-repeat="item in team.members "><a href="#" ng-click="setFilter('someone'); setUserFilter(item.uid);">{{::item.name}}</a></li>
+
+              </ul>
+            </div>
+            <!-- <span ng-if="filtersToShow === 'me'">Your</span>
+            <span ng-if="filtersToShow === 'someone'">{{team.members[userFilter].name}}</span>  -->
+            To-Do List
+          </h3>
         </div>
         <div class="list-group">
           <a href="#" class="list-group-item clearfix" sly-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true" ng-if="getFilter(assignment)">
-            <div class="task__complete" ng-click="setCompleted(assignment)">
+            <div class="task__complete" ng-click="setCompleted(assignment)" ng-if="filtersToShow != 'someone'">
               <i class="fa fa-check"></i>
             </div>
             <div class="task__name" ng-click="sendToTask('0A','0A','0A',assignment.key)">
@@ -54,8 +43,8 @@
           </a>
         </div>
         <div class="task__add">
-          <form id="todo-form" ng-submit="addTodo()">
-            <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
+          <form id="todo-form" ng-submit="addTodo(userFilter)">
+            <input id="new-todo" class="new-todo" placeholder="{{actionPlaceholder}}" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
           </form>
         </div>
       </div>
