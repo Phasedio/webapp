@@ -1,8 +1,35 @@
 
 <div ng-include="'components/content-nav/content-nav.html'"></div>
-<section class="container-fluid">
+<section class="container">
   <div class="row">
-    <div class="col-xs-12">
+    <div class="hidden-xs col-sm-4 dashboard">
+      <!-- <div class="feed__team__name box ">
+        <h3>Select a list</h3>
+      </div>
+      <div class="box feed__members">
+        <ul >
+          <li ng-repeat="item in team.members | orderObjectBy: 'lastOnline':true" class="clearfix">
+            <a href="" class="feed__members__link clearfix">
+              <img ng-src="{{::item.pic}}" alt="{{::item.name}}" width="35px"/>
+              <div class="feed__members__name">
+                {{::item.name}}
+              </div>
+              <div class="online" ng-if="item.presence == 1">
+
+
+              </div>
+              <div class="offline" ng-if="item.presence != 1">
+                <span class="hidden-sm" am-time-ago="item.lastOnline"></span>
+
+              </div>
+            </a>
+
+          </li>
+        </ul>
+        <button type="button" class="btn btn__phased__fb btn-block" name="button" data-toggle="modal" data-target="#addMemberModal">Add member</button>
+      </div> -->
+    </div>
+    <div class="col-xs-12 col-sm-8 col-md-5  content-main">
       <div class="task__holder">
         <div class="task__filters">
           <h3>Your To-Do List</h3>
@@ -14,6 +41,12 @@
             </div>
             <div class="task__name" ng-click="sendToTask('0A','0A','0A',assignment.key)">
               {{assignment.name}}
+              <div class="task__meta__icons">
+                <span ><i class="fa fa-rss"></i> {{Phased.task.STATUS[assignment.status]}}</span>
+                <span ng-if="assignment.description"><i class="fa fa-align-left" ></i></span>
+                <span ng-if="assignment.deadline"><i class="fa fa-calendar"></i> {{assignment.deadline | date : 'MMM dd'}}</span>
+
+              </div>
             </div>
             <div class="task__details" ng-click="deleteTask('0A','0A','0A',assignment.key)">
               <i class="fa fa-times"></i>

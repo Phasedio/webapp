@@ -53,7 +53,7 @@
 }
 .task__name{
   width: 75%;
-  padding-bottom: 2rem;
+  padding-bottom: 0.5rem;
   font-size: 12px;
 }
 .task__details{
@@ -68,6 +68,11 @@
   }
 }
 
+.task__meta__icons{
+  span{
+    margin-right: 5px;
+  }
+}
 
 /*
 *
