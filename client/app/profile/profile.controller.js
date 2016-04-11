@@ -228,4 +228,18 @@ angular.module('webappApp')
         }
       }
     };
+
+
+
+    $scope.enableNotifs = function(){
+      if (!Phased.team.members[Auth.user.uid].notif) {
+
+        new Firebase(FURL).child('team').child(Phased.team.uid).child('members').child(Auth.user.uid).child('notif').set(true);
+        // notification not enabled. Set notif to true
+      }else{
+        new Firebase(FURL).child('team').child(Phased.team.uid).child('members').child(Auth.user.uid).child('notif').set(null);
+        // turn notif off
+      }
+    }
+
 });

@@ -2,6 +2,61 @@
 var config = require('../../config/environment');
 var FBRef = require('../../components/phasedFBRef').getRef();
 var moment = require('moment');
+var mandrill = require('mandrill-api/mandrill');
+var mandrill_client = new mandrill.Mandrill('B0N7XKd4RDy6Q7nWP2eFAA');
+
+
+//email templates
+function sendNewTaskNotif(args){
+	var issueUser = args.title[1].userID,
+		teamID = args.teamID,
+		inviterUser = args.title[3].userID,
+		taskName = args.body[0].string;
+		FBRef.child('profile').child(issueUser).once('value',function(snap){
+			if(snap){
+				issueUser = snap.val();
+				FBRef.child('profile').child(inviterUser).once('value',function(snap){
+					if(snap){
+						inviterUser = snap.val();
+
+						// Now send email.
+						var template_name = "new-task-assigned-to-you";
+						var template_content = [{
+							"name": "issuerName",
+							"content": inviterUser.name
+						},
+						{
+							"name": "taskName",
+							"content": taskName
+						}];
+
+						var message = {
+
+							"subject": "New task assigned to you",
+							"to": [{
+										 "email": issueUser.email,
+										 "type": "to"
+								 }],
+							"from_name": inviterUser.name + " via Phased",
+						};
+
+						mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+					    console.log(result);
+
+						}, function(e) {
+						    // Mandrill returns the error as an object with name and message keys
+						    console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+						    // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+						});
+				}
+
+		});
+	}
+});
+}
+
+
+
 
 exports.index = function(req, res) {
 	res.json([]);
@@ -104,6 +159,11 @@ exports.issueNotification = function(req, res) {
 				FBRef.child('notif/' + team + '/' + id).push(cleanNotif);
 		}
 
+		if (cleanNotif.type == 1) {
+			// send a email for task assigned to you.
+			cleanNotif.team = team;
+			sendNewTaskNotif(cleanNotif);
+		}
 		res.send({
 			success : true
 		});
@@ -112,6 +172,11 @@ exports.issueNotification = function(req, res) {
 			err : 'FB err: ' + err
 		});
 	});
+
+
+	//decide if i should send an email.
+
+
 }
 
 /**
