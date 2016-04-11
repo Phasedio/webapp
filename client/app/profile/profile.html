@@ -1,258 +1,237 @@
 
 <div ng-include="'components/content-nav/content-nav.html'"></div>
-<section class="container-fluid">
+<section class="container">
   <div class="row">
-    <div class="content__area">
 
-      <div class="col-xs-10">
-        <div class="profile-holder transparent">
-          <div class="col-xs-6 profile-user">
-            <img ng-src="{{::currentUser.gravatar}}" alt="" height="40px" width="40px" />
-            <h2>{{::currentUser.name}}</h2>
-          </div>
-          <div class="col-xs-6 profile-user">
-            <ul>
-              <li><span>updates</span><span>{{::team.statuses | updatesFor : currentUserID | length}}</span></li>
-              <li><span>email</span><span>{{::currentUser.email}}</span></li>
-              <li><span>tel</span><span>{{::currentUser.tel | tel}}</span></li>
-              <!-- <li><span>slack</span><span>@brian</span></li> -->
+    <div class="hidden-xs col-sm-4 dashboard">
+      <div class="feed__team__name box profile__identity clearfix">
+        <img ng-src="{{::currentUser.gravatar}}" alt=""  />
+        <h3>{{::currentUser.name}}</h3>
+        <ul>
+          <!-- <li><span>updates</span><span>{{team.statuses | updatesFor : currentUserID | length}}</span></li> -->
+          <li><span>email</span><span><a href="mailto:{{::currentUser.email}}">{{::currentUser.email}}</a></span></li>
+          <li><span>tel</span><span><a href="tel:{{::currentUser.tel}}">{{::currentUser.tel | tel}}</a></span></li>
+          <!-- <li><span>slack</span><span>@brian</span></li> -->
+        </ul>
+        <ul ng-if="currentUser.aliases">
+          <li ng-if="currentUser.aliases.github"><span>github</span><span><a href="https://github.com/{{::currentUser.aliases.github[0]}}">{{::currentUser.aliases.github[0]}}</a></span></li>
+        </ul>
+      </div>
 
-            </ul>
-          </div>
+    </div>
+
+    <div class="col-xs-12 col-sm-8 col-md-5  content-main ">
+      <div class="box__color profile__info">
+        <div class="profile-nav">
+          <ul class="" role="tablist" id="myTabs">
+            <li role="presentation" class="active"><a href="#history" aria-controls="home" role="tab" data-toggle="tab">History</a></li>
+            <li><a href="#backlog" aria-controls="home" role="tab" data-toggle="tab">Tasks</a></li>
+            <li><a href="#settings" aria-controls="home" role="tab" data-toggle="tab" ng-if="isSelf">edit</a></li>
+            <li><a href="#google-calendar" aria-controls="home" role="tab" data-toggle="tab" ng-if="isSelf">Google Calendar</a></li>
+          </ul>
         </div>
-        <div class="profile-holder">
-          <div class="profile-nav">
-            <ul class="" role="tablist" id="myTabs">
-              <li role="presentation" class="active"><a href="#history" aria-controls="home" role="tab" data-toggle="tab">History</a></li>
-              <li><a href="#backlog" aria-controls="home" role="tab" data-toggle="tab">Tasks</a></li>
-              <li><a href="#stats" aria-controls="home" role="tab" data-toggle="tab">Stats</a></li>
-              <li><a href="#settings" aria-controls="home" role="tab" data-toggle="tab">edit</a></li>
-              <li><a href="#google-calendar" aria-controls="home" role="tab" data-toggle="tab">Google Calendar</a></li>
-            </ul>
+
+
+        <!-- Tab panes -->
+        <div class="tab-content">
+          <div role="tabpanel" class="tab-pane active" id="history">
+
+            <!-- HISTORY -->
+            <div class="profile-history">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>
+                      Task
+                    </th>
+                    <th>
+                      Category
+                    </th>
+                    <th>
+                      Time
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr sly-repeat="item in team.statuses | orderObjectBy : 'time':true " ng-if="item.user == currentUser.uid">
+                    <td>
+                      {{::item.name}}
+                    </td>
+                    <td>
+                      {{::$parent.team.categoryObj[item.cat].name}}
+                    </td>
+                    <td>
+                      <span>{{::item.time | amDateFormat:'MM.DD.YYYY HH:mm:ss'}}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div status-lazy-loader></div>
+              <h6 ng-show="team.history.length == 0" align="center"> No updates for time period</h6>
+            </div>
           </div>
 
-
-          <!-- Tab panes -->
-          <div class="tab-content">
-            <div role="tabpanel" class="tab-pane active" id="history">
-
-              <!-- HISTORY -->
-              <div class="profile-history">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>
-                        Task
-                      </th>
-                      <th>
-                        Category
-                      </th>
-                      <th>
-                        Time
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr sly-repeat="item in team.statuses | orderObjectBy : 'time':true " ng-if="item.user == currentUser.uid">
-                      <td>
-                        {{::item.name}}
-                      </td>
-                      <td>
-                        {{::$parent.team.categoryObj[item.cat].name}}
-                      </td>
-                      <td>
-                        <span>{{::item.time | amDateFormat:'MM.DD.YYYY HH:mm:ss'}}</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <div status-lazy-loader></div>
-                <h6 ng-show="team.history.length == 0" align="center"> No updates for time period</h6>
-              </div>
+          <!-- BACKLOG -->
+          <div role="tabpanel" class="tab-pane" id="backlog">
+            <div class="profile-backlog">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>
+                      Task
+                    </th>
+                    <th>
+                      Priority
+                    </th>
+                    <th>
+                      Due
+                    </th>
+                    <th>
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr sly-repeat="item in phased.get.tasks | backlogFor : currentUserID | orderObjectBy : 'time'">
+                    <td>
+                      {{::item.name}}
+                    </td>
+                    <td>
+                      {{::phased.task.PRIORITY[item.priority]}}
+                    </td>
+                    <td>
+                       <span ng-if="item.deadline">{{::item.deadline | amDateFormat:'MMM d '}}</span>
+                       <span ng-if="!item.deadline">Not Set</span>
+                    </td>
+                    <td>
+                      {{::phased.task.STATUS[item.status]}}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-
-            <!-- BACKLOG -->
-            <div role="tabpanel" class="tab-pane" id="backlog">
-              <div class="profile-backlog">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>
-                        Task
-                      </th>
-                      <th>
-                        Priority
-                      </th>
-                      <th>
-                        Due
-                      </th>
-                      <th>
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr sly-repeat="item in phased.get.tasks | backlogFor : currentUserID | orderObjectBy : 'time'">
-                      <td>
-                        {{::item.name}}
-                      </td>
-                      <td>
-                        {{::phased.task.PRIORITY[item.priority]}}
-                      </td>
-                      <td>
-                         <span ng-if="item.deadline">{{::item.deadline | amDateFormat:'MMM d '}}</span>
-                         <span ng-if="!item.deadline">Not Set</span>
-                      </td>
-                      <td>
-                        {{::phased.task.STATUS[item.status]}}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-  					<!-- Stats -->
-            <div role="tabpanel" class="tab-pane" id="stats">
-  						<div class="row">
-  			        <div class="col-xs-6">
-  								<div>
-  									<h5>Total Updates</h5>
-  									<h1>{{team.statuses | updatesFor : currentUserID | length}}</h1>
-  								</div>
-  							</div>
-  							<div class="col-xs-6">
-  								<div>
-  									<h5>Total Tasks completed</h5>
-  									<h1>{{phased.get.tasks | tasksFor : currentUserID | tasksCompletedForTime : 'ever' | length}}</h1>
-  								</div>
-  							</div>
-  						</div>
-  						<div class="row">
-  			        <div class="col-xs-6">
-  								<div>
-  									<h5>Total Updates this week</h5>
-  									<h1>{{phased.team.statuses | updatesFor : currentUserID | updatesForTime : 'week' | length}}</h1>
-  								</div>
-  							</div>
-  							<div class="col-xs-6">
-  								<div>
-  									<h5>Total Tasks completed this week</h5>
-  									<h1>{{phased.get.tasks | tasksFor : currentUserID | tasksCompletedForTime : 'week' | length}}</h1>
-  								</div>
-  							</div>
-  						</div>
-  						<div class="row">
-  			        <div class="col-xs-6">
-  								<div>
-  									<h5>Total Updates today</h5>
-  									<h1>{{team.statuses | updatesFor : currentUserID | updatesForTime : 'today' | length}}</h1>
-  								</div>
-  							</div>
-  							<div class="col-xs-6">
-  								<div>
-  									<h5>Total Tasks completed today</h5>
-  									<h1>{{phased.get.tasks | tasksFor : currentUserID | tasksCompletedForTime : 'today' | length}}</h1>
-  								</div>
-  							</div>
-  						</div>
-
-
-  					</div>
-            <!-- EDIT -->
-            <div role="tabpanel" class="tab-pane" id="settings" ng-if="isSelf">
-  						<div class = "row">
-  			        <div class="col-xs-12">
-  			          <img style="height: 120px; width: 120px; border-radius: 50%;margin: 0 auto; display:block;" ng-src="{{::currentUser.gravatar}}">
-
-  			        </div>
-  			        <div class="col-xs-12">
-
-                  <div class="" style=" width: 120px; margin: 0 auto; display:block;">
-                    <input class="" type="file" accept="image/*" capture="camera" id="file-upload" ng-model="fileUp" ng-change="handleFileSelect(fileUp)"><br>
-    			          <button ng-click="changeImage()" class="btn btn-phased-blue btn-block ">Change Image</button>
-                    <p>
-                      <small>Photos under 2 MBs please!</small>
-                    </p>
-                  </div>
-
-
-  			        </div>
-        			</div>
-  						<form name="updateForm" ng-submit="updateUser(update)" novalidate>
-
-              <div class="login login-drk" style="background:transparent;">
-                <div class="item item-input item-stacked-label">
-                  <label class="input-label" for="name">name</label>
-                  <input class="loginInput" type="text" id="name" ng-model="update.name" placeholder="{{::currentUser.name}}">
-                </div>
-  							<div class="item item-input item-stacked-label">
-                  <label class="input-label" for="tel">tel</label>
-                  <input class="loginInput" type="tel" id="tel" ng-model="update.tel" placeholder="{{::currentUser.tel | tel}}">
-                </div>
-                <div class="item item-input item-stacked-label">
-                  <label class="input-label" for="email">email</label>
-                  <input class="loginInput" type="email" id="email" ng-model="update.email" placeholder="{{::currentUser.email}}">
-                </div>
-
-                <div class="item item-input item-stacked-label">
-                  <label class="input-label" for="oldpassword">old password</label>
-                  <input class="loginInput" type="password" id='oldpassword' ng-model="update.oldPass" placeholder="">
-                </div>
-                <div class="item item-input item-stacked-label">
-                  <label class="input-label" for="newpassword">new password</label>
-                  <input class="loginInput" type="password" id='newpassword' ng-model="update.newPass" placeholder="">
-                </div>
-                <div class="item">
-                  <input type="submit" class="btn btn-phased-blue btn-block " value="Update Account">
-                </div>
-              </div>
-            	</form>
-  						<button class="btn btn-phased-blue btn-block " ng-click="logout()">logout</button>
-  					</div>
-
-  					<!-- GOOGLE CAL -->
-  					<div role="tabpanel" class="tab-pane" id="google-calendar" ng-if="isSelf">
-  						<div class="google-calendar">
-  							<p ng-if="!phased.user.googleAuth">
-  								<a href="#" ng-click="startGoogleAuth($event)">Authenticate with Google</a> to automatically post status updates when an event on a calendar begins (for example, for every event on a company "meetings" calendar). <em>This will only take effect for this team; to manage your calendar status updates for another team, switch to that team.</em>
-  							</p>
-  							<p ng-if="!calendarList">
-  								<a href="#" ng-click="getCals($event)">Get calendars</a>
-  							</p>
-
-  							<div ng-if="calendarList">
-  								<h5>Calendars</h5>
-  								<ul>
-  									<li
-  										sly-repeat="cal in calendarList"
-  										class="calendar-item"
-  										ng-class="{ 'registered-calendar' : isCalRegistered(cal) }">
-  										<a
-  											href="#"
-  											ng-click="toggleCalRegistered(cal, $event)">
-  											<span
-  												class="block"
-  												style="background-color:{{cal.backgroundColor}};"
-  											></span>
-  											{{cal.summary}}
-  										</a>
-  									</li>
-  								</ul>
-  							</div>
-  						</div>
-  					</div>
-  					<!-- end GOOGLE CAL -->
-
-
           </div>
 
+          <!-- EDIT -->
+          <div role="tabpanel" class="tab-pane" id="settings" ng-if="isSelf">
+            <div class = "row">
+              <div class="col-xs-12">
+                <img style="height: 120px; width: 120px; border-radius: 50%;margin: 0 auto; display:block;" ng-src="{{::currentUser.gravatar}}">
 
+              </div>
+              <div class="col-xs-12">
+
+                <div class="" style=" width: 120px; margin: 0 auto; display:block;">
+                  <input class="" type="file" accept="image/*" capture="camera" id="file-upload" ng-model="fileUp" ng-change="handleFileSelect(fileUp)"><br>
+                  <button ng-click="changeImage()" class="btn btn-phased-blue btn-block ">Change Image</button>
+                  <p>
+                    <small>Photos under 2 MBs please!</small>
+                  </p>
+                </div>
+
+
+              </div>
+            </div>
+            <form name="updateForm" ng-submit="updateUser(update)" novalidate>
+
+            <div class="login login-drk" style="background:transparent;">
+              <div class="item item-input item-stacked-label">
+                <label class="input-label" for="name">name</label>
+                <input class="loginInput" type="text" id="name" ng-model="update.name" placeholder="{{::currentUser.name}}">
+              </div>
+              <div class="item item-input item-stacked-label">
+                <label class="input-label" for="tel">tel</label>
+                <input class="loginInput" type="tel" id="tel" ng-model="update.tel" placeholder="{{::currentUser.tel | tel}}">
+              </div>
+              <div class="item item-input item-stacked-label">
+                <label class="input-label" for="email">email</label>
+                <input class="loginInput" type="email" id="email" ng-model="update.email" placeholder="{{::currentUser.email}}">
+              </div>
+
+              <div class="item item-input item-stacked-label">
+                <label class="input-label" for="oldpassword">old password</label>
+                <input class="loginInput" type="password" id='oldpassword' ng-model="update.oldPass" placeholder="">
+              </div>
+              <div class="item item-input item-stacked-label">
+                <label class="input-label" for="newpassword">new password</label>
+                <input class="loginInput" type="password" id='newpassword' ng-model="update.newPass" placeholder="">
+              </div>
+              <div class="item">
+                <input type="submit" class="btn btn-phased-blue btn-block " value="Update Account">
+              </div>
+            </div>
+            </form>
+            <button class="btn btn-phased-blue btn-block " ng-click="logout()">logout</button>
+          </div>
+
+          <!-- GOOGLE CAL -->
+          <div role="tabpanel" class="tab-pane" id="google-calendar" ng-if="isSelf">
+            <div class="google-calendar">
+              <p ng-if="!phased.user.googleAuth">
+                <a href="#" ng-click="startGoogleAuth($event)">Authenticate with Google</a> to automatically post status updates when an event on a calendar begins (for example, for every event on a company "meetings" calendar). <em>This will only take effect for this team; to manage your calendar status updates for another team, switch to that team.</em>
+              </p>
+              <p ng-if="!calendarList">
+                <a href="#" ng-click="getCals($event)">Get calendars</a>
+              </p>
+
+              <div ng-if="calendarList">
+                <h5>Calendars</h5>
+                <ul>
+                  <li
+                    sly-repeat="cal in calendarList"
+                    class="calendar-item"
+                    ng-class="{ 'registered-calendar' : isCalRegistered(cal) }">
+                    <a
+                      href="#"
+                      ng-click="toggleCalRegistered(cal, $event)">
+                      <span
+                        class="block"
+                        style="background-color:{{cal.backgroundColor}};"
+                      ></span>
+                      {{cal.summary}}
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!-- end GOOGLE CAL -->
+
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- <div class="col-xs-10">
+      <div class="profile-holder transparent">
+        <div class="col-xs-6 profile-user">
+          <img ng-src="{{::currentUser.gravatar}}" alt="" height="40px" width="40px" />
+          <h2>{{::currentUser.name}}</h2>
+        </div>
+        <div class="col-xs-6 profile-user">
 
         </div>
       </div>
-    </div>
+      <div class="profile-holder">
+        <div class="profile-nav">
+          <ul class="" role="tablist" id="myTabs">
+            <li role="presentation" class="active"><a href="#history" aria-controls="home" role="tab" data-toggle="tab">History</a></li>
+            <li><a href="#backlog" aria-controls="home" role="tab" data-toggle="tab">Tasks</a></li>
+            <li><a href="#stats" aria-controls="home" role="tab" data-toggle="tab">Stats</a></li>
+            <li><a href="#settings" aria-controls="home" role="tab" data-toggle="tab">edit</a></li>
+            <li><a href="#google-calendar" aria-controls="home" role="tab" data-toggle="tab">Google Calendar</a></li>
+          </ul>
+        </div>
 
 
+
+
+
+
+      </div>
+    </div> -->
   </div>
 
 </section>

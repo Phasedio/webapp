@@ -1,9 +1,39 @@
-.hero-img{
-  position: absolute;
-  width: 100%;
-  height:500px;
-  top:0;
+
+.profile__info{
+  padding: 12px;
 }
+
+.profile__identity{
+  img{
+    width:100px;
+    height: 100px;
+    margin: 0 auto;
+    display: block;
+  }
+  h3{
+    text-align: center;
+  }
+  ul{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  li{
+    overflow: auto;
+    span:nth-child(1){
+      float: left;
+    }
+    span:nth-child(2){
+      float: right;
+      text-align: right;
+    }
+  }
+
+}
+
+
+
+/// OLD STYLES
 .profile-holder{
   &:nth-child(1){
     margin-top: 50px;

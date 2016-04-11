@@ -41,6 +41,7 @@ angular.module('webappApp')
 			Phased.getGoogleCalendars(function(res) {
 				$scope.calendarList = res;
 			});
+      console.log($scope.currentUser);
 		}
 		initProfileUser();
 
