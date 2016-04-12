@@ -2493,7 +2493,7 @@ angular.module('webappApp')
       // publish to stream
       var teamRef = FBRef.child('team/' + PhasedProvider.team.uid);
 
-      teamRef.child('members/' + PhasedProvider.user.uid + '/currentStatus').set(newStatus);
+      teamRef.child('members/' + PhasedProvider.user.uid + '/currentStatus').set(newStatus); // REMOVE AFTER APRIL 22 2016
 
       var newStatusRef = teamRef.child('statuses').push(newStatus, function(err){
         // after DB is updated, issue a notification to all users
@@ -2508,7 +2508,8 @@ angular.module('webappApp')
           });
         }
       });
-
+      var statuesID = newStatusRef.key();
+      teamRef.child('members/' + PhasedProvider.user.uid ).child('currentStatusID').set(statuesID);
       // if the status had a task attached to it then submit the status id to the task
       if (newStatus.task) {
         console.log('I have a task');

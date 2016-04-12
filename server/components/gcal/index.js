@@ -398,7 +398,7 @@ var doEventJob = function(event, userID, teamID, jobKeys) {
 		source: Phased.meta.status.SOURCE_ID.GOOGLE_CALENDAR
 	};
 
-	FBRef.child('team/' + teamID + '/statuses').push(status, function(err) {
+	var newStatusRef = FBRef.child('team/' + teamID + '/statuses').push(status, function(err) {
 		if (!err) {
 			// console.log('posted');
 			FBRef.child('team/' + teamID + '/members/' + userID + '/currentStatus').set(status, function(){
@@ -406,6 +406,10 @@ var doEventJob = function(event, userID, teamID, jobKeys) {
 			});
 		}
 	});
+
+	var x = newStatusRef.key();
+	FBRef.child('team/' + teamID + '/members/' + userID + '/currentStatusID').set(x);
+
 }
 
 
