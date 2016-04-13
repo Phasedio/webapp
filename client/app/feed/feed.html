@@ -226,7 +226,7 @@
 
 						<div class="comment__message clearfix" ng-repeat="item in statusComment.comments">
 							<div class="comment__id">
-								<img src="{{team.members[item.user].pic}}" alt="" />
+								<img ng-src="{{team.members[item.user].pic}}" alt="" />
 							</div>
 							<div class="comment__msg">
 								<p class="comment__name">

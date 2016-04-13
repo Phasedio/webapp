@@ -21,7 +21,7 @@
                   <img ng-if="taskInfo.assigned_to" ng-src="{{team.members[taskInfo.assigned_to].pic}}" width="30px" height="30px">
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dLabel">
-                  <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo.key,member.uid)"><img src="{{member.pic}}" width="30px" height="30px"> <p>
+                  <li ng-repeat="member in team.members"><a href="#" ng-click="taskEditAssigned(taskInfo.key,member.uid)"><img ng-src="{{member.pic}}" width="30px" height="30px"> <p>
                     {{member.name}}
                   </p></a></li>
                 </ul>
@@ -64,7 +64,7 @@
 
             <div class="member__activity " ng-repeat="item in taskStatuses | orderBy: 'time'">
               <div class="activity__person">
-                <img src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
+                <img ng-src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
                 <div class="activity__info">
                   <h5 class="">
                     <a href="/profile/{{item.user}}">{{$parent.team.members[item.user].name}}</a>
