@@ -146,6 +146,11 @@ exports.issueNotification = function(req, res) {
 		}
 	}
 
+	res.send({
+		success : true,
+		message : 'sending notification'
+	});
+
 	// 2. get team members
 
 	// get users from FB
@@ -164,13 +169,8 @@ exports.issueNotification = function(req, res) {
 			cleanNotif.team = team;
 			sendNewTaskNotif(cleanNotif);
 		}
-		res.send({
-			success : true
-		});
 	}, function failure(err){
-		res.send({
-			err : 'FB err: ' + err
-		});
+		console.log(err);
 	});
 
 
@@ -212,6 +212,11 @@ exports.cleanNotifications = function(req, res) {
 		return;
 	}
 
+	// send a nice response
+	res.send({
+		success : true,
+		message : 'cleaning notifications...'
+	});
 
 	// 1. get timestamp (currently one month ago)
 	var aDate = moment().subtract(1, 'month');
@@ -230,11 +235,6 @@ exports.cleanNotifications = function(req, res) {
 			FBRef.child(notifAddr + '/' + key).remove();
 			i++;
 		}
-		// send a nice response
-		res.send({
-			success : true,
-			message : 'removed ' + i + ' notifs before ' + aDate.format()
-		});
 		return;
 	});
 }
