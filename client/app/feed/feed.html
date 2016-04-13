@@ -3,9 +3,9 @@
 <section ng-class="{'at-top' : atTop}">
 	<div class="">
 
-		<div class="container">
+		<div class="container limit__900">
 			<div class="row">
-				<div class="hidden-xs col-sm-4 dashboard">
+				<!-- <div class="hidden-xs col-sm-4 dashboard">
 					<div class="feed__team__name box ">
 						<h3>{{team.name}}</h3>
 					</div>
@@ -31,7 +31,7 @@
 						</ul>
 						<button type="button" class="btn btn__phased__fb btn-block" name="button" data-toggle="modal" data-target="#addMemberModal">Add member</button>
 					</div>
-				</div>
+				</div> -->
 
 				<div class="feed__toplink hidden-xs col-sm-4 dashboard">
 					<a href="#" ng-click="goToTop($event)">back to top</a>
@@ -66,57 +66,58 @@
 
 						<div
 						ng-show="filterFeed == 'recent'"
-						ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 "
-							class="member__activity type-{{meta.status.TYPE[item.type]}} source-{{meta.status.SOURCE[item.source]}}"
+						ng-repeat="item in team.members | orderMembersPlus : 'lastUpdated':true "
+							class="member__activity "
 							>
-							<div class="activity__person clearfix">
-								<img ng-src="{{::$parent.team.members[item.user].pic}}" alt="{{::$parent.team.members[item.user].name}}" />
+							<div class="activity__person clearfix" >
+								<img ng-src="{{::item.pic}}" alt="{{::item.name}}" />
 								<div class="activity__info">
-									<h5 class="">
-										<a ng-href="/profile/{{::item.user}}">{{::$parent.team.members[item.user].name}}</a>
-										<span class="activity__tag" ng-if="item.task.name">
-											<a ng-href="/tasks/{{::item.task.project}}/{{::item.task.column}}/{{::item.task.card}}/{{::item.task.id}}">
+									<h5 >
+										<a ng-href="/profile/{{::item.user}}">{{::item.name}}</a>
+										<span class="activity__tag" ng-show="team.statuses[item.currentStatusID].task.name">
+											<a ng-href="/tasks/{{::team.statuses[item.currentStatusID].task.project}}/{{::team.statuses[item.currentStatusID].task.column}}/{{::team.statuses[item.currentStatusID].task.card}}/{{::team.statuses[item.currentStatusID].task.id}}">
 												<small>
 													<i class="fa fa-tasks"></i>
-													{{::item.task.name | limitTo:50}}
+													{{team.statuses[item.currentStatusID].task.name | limitTo:50}}
 												</small>
 											</a>
 										</span>
 									</h5>
 									<p class="activity__meta">
-										<span am-time-ago="item.time"></span>
+										<span am-time-ago="team.statuses[item.currentStatusID].time"></span>
 									</p>
 								</div>
-								<div class="activity__options" ng-if="item.user == myID">
+								<div class="activity__options" ng-if="team.statuses[item.currentStatusID].user == myID">
 									<div class="btn-group">
 										<button type="button" class="btn btn-drop-chevron dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 											<i class="fa fa-angle-down"></i>
 										</button>
 										<ul class="dropdown-menu">
-											<li><a href="#" data-toggle="modal" data-target="#editModal" ng-click="editStatusSelected(item)">Edit status</a></li>
+											<li><a href="#" data-toggle="modal" data-target="#editModal" ng-click="editStatusSelected(team.statuses[item.currentStatusID])">Edit status</a></li>
 											<li ng-if="item.user == myID" role="separator" class="divider"></li>
-											<li ng-if="item.user == myID"><a href="#" data-toggle="modal" data-target="#deleteModal" ng-click="deleteSelected(item)">Delete Status</a></li>
+											<li ng-if="item.user == myID"><a href="#" data-toggle="modal" data-target="#deleteModal" ng-click="deleteSelected(team.statuses[item.currentStatusID])">Delete Status</a></li>
 										</ul>
 									</div>
 								</div>
 							</div>
 
 							<div class="activity__content">
-								<p class="">{{::item.name}}</p>
+								<p class="" ng-if="team.statuses[item.currentStatusID]">{{team.statuses[item.currentStatusID].name}}</p>
+								<p class="" ng-if="!team.statuses[item.currentStatusID]">💤</p>
 
 							</div>
 							<div class="activity__attachment" ng-if="item.attachment">
 								<a class="" ng-href="{{::item.attachment.url}}" target="_blank">
-									<h5>{{::item.attachment.title | limitTo:50 }}</h5>
+									<h5>{{::team.statuses[item.currentStatusID].attachment.title | limitTo:50 }}</h5>
 									<p>
-										{{::item.attachment.discript}}
+										{{::team.statuses[item.currentStatusID].attachment.discript}}
 									</p>
 								</a>
 							</div>
 
 							<div class="activity__int">
-								<button type="button" class="btn activity__int__btn activity__int__like" ng-class="{active : item.likes[myID]}" name="button" ng-click="likeStatus(item)" data-toggle="tooltip" data-placement="bottom" title="{{showLikers(item.likes)}}"><i class="fa fa-thumbs-o-up"></i> Like <span class="badge" ng-if="countInts(item.likes) > 0">{{countInts(item.likes)}}</span></button>
-								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(item)"><i class="fa fa-comment-o"></i> Comment <span class="badge" ng-if="countInts(item.comments) > 0">{{countInts(item.comments)}}</span></button>
+								<button type="button" class="btn activity__int__btn activity__int__like" ng-class="{active : team.statuses[item.currentStatusID].likes[myID]}" name="button" ng-click="likeStatus(team.statuses[item.currentStatusID])" data-toggle="tooltip" data-placement="bottom" title="{{showLikers(team.statuses[item.currentStatusID].likes)}}"><i class="fa fa-thumbs-o-up"></i> Like <span class="badge" ng-if="countInts(team.statuses[item.currentStatusID].likes) > 0">{{countInts(team.statuses[item.currentStatusID].likes)}}</span></button>
+								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(team.statuses[item.currentStatusID])"><i class="fa fa-comment-o"></i> Comment <span class="badge" ng-if="countInts(team.statuses[item.currentStatusID].comments) > 0">{{countInts(team.statuses[item.currentStatusID].comments)}}</span></button>
 							</div>
 						</div>
 						<div ng-if="filterFeed == 'recent'" status-lazy-loader></div>
