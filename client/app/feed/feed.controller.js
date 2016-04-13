@@ -1,6 +1,32 @@
 'use strict';
 
+
+
+
 angular.module('webappApp')
+  .filter('orderMembersPlus', function orderMembers(Phased) {
+    return function(items, field, reverse) {
+      var filtered = [];
+      for (var i in items) {
+        items[i].key = i;
+        if (items[i].currentStatusID) {
+          if(Phased.team.statuses[items[i].currentStatusID]){
+            items[i].lastUpdated = Phased.team.statuses[items[i].currentStatusID].time;
+          }
+        }else if (items[i].currentStatus) {
+          items[i].lastUpdated = items[i].currentStatus.time;
+        }
+
+
+        filtered.push(items[i]);
+      }
+      filtered.sort(function (a, b) {
+        return (a[field] > b[field] ? 1 : -1);
+      });
+      if(reverse) filtered.reverse();
+      return filtered;
+    };
+  })
 
   .controller('FeedCtrl', function feedCtrl($scope, $http, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
 
@@ -52,21 +78,6 @@ angular.module('webappApp')
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
 
-    // get number of active tasks assigned to userID
-    var countActiveTasks = function countActiveTasks() {
-      var count = 0;
-      var thing = [];
-      _.forEach(Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks, function(value, key){
-        if((value.status == 0 || value.status == 2) && value.assigned_to == Phased.user.uid){
-          count++;
-          value.id = key;
-          thing.push(value);
-        }
-      });
-      $scope.getUserTasks = thing;
-
-      return count
-    }
     $scope.$on('Phased:changedStatus', function(){
       if ($scope.statusComment) {
         console.log($scope.statusComment);
@@ -74,14 +85,19 @@ angular.module('webappApp')
       }
     });
 
+    // var getLatest = function(){
+    //
+    // }
+
     //Print blank lines in for task area
     $scope.taskTable = [1,2,3,4,5];
 
     if (Phased.SET_UP)
-      $scope.countActiveTasks = countActiveTasks();
+      //$scope.countActiveTasks = countActiveTasks();
+      console.log('here');
     else {
       $scope.$on('Phased:setup', function() {
-        $scope.countActiveTasks = countActiveTasks();
+        //$scope.countActiveTasks = countActiveTasks();
       });
     }
 

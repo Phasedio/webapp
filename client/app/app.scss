@@ -117,6 +117,10 @@ body{
   color:$darkBlack;
   -webkit-font-smoothing:antialiased;
 }
+.limit__900{
+  width: 900px !important;
+  margin:0 auto;
+}
 h1,h2,h3,.semi__lower{
   font-family: 'open_sanssemibold';
   color:$boldText;
