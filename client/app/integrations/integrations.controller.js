@@ -28,6 +28,7 @@ angular.module('webappApp')
 		e.preventDefault();
 		Auth.githubLogin(function(gh) {
 			$scope.github = Auth.user.github;
+			$scope.$digest();
 		});
 	}
 
