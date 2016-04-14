@@ -164,7 +164,7 @@ exports.issueNotification = function(req, res) {
 				FBRef.child('notif/' + team + '/' + id).push(cleanNotif);
 		}
 
-		if (cleanNotif.type == 1 && meta) {
+		if (cleanNotif.type == 1 && meta.assignedBy) {
 			// send a email for task assigned to you.
 			sendNewTaskNotif(meta.assignedBy, meta.assignedTo, team, meta.taskName);
 		}
