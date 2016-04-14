@@ -6,7 +6,7 @@ angular.module('webappApp')
     ga('send', 'pageview', '/tasks');
 
     $scope.viewType = Phased.viewType;
-    $scope.myID = Auth.user.uid;
+    $scope.user = Phased.user;
     $scope.currentFilter = 'My Tasks';
     $scope.actionPlaceholder = "What needs to be done?";
 
@@ -280,7 +280,7 @@ angular.module('webappApp')
       var status = {
         name: newTask.name,
         cat : newTask.category ? newTask.category : '',
-        assigned_by : $scope.myID,
+        assigned_by : Phased.user.uid,
         status: Phased.task.STATUS_ID.ASSIGNED,
         priority : parseInt($scope.newTask.priority)
       };
@@ -318,7 +318,7 @@ angular.module('webappApp')
   			}
         var status = {
           name: newTodo.name,
-          assigned_by : $scope.myID,
+          assigned_by : Phased.user.uid,
           status: Phased.task.STATUS_ID.ASSIGNED,
           priority : Phased.task.PRIORITY_ID.MEDIUM,
           assigned_to : uid
@@ -337,10 +337,10 @@ angular.module('webappApp')
   			}
         var status = {
           name: newTodo.name,
-          assigned_by : $scope.myID,
+          assigned_by : Phased.user.uid,
           status: Phased.task.STATUS_ID.ASSIGNED,
           priority : Phased.task.PRIORITY_ID.MEDIUM,
-          assigned_to : $scope.myID
+          assigned_to : Phased.user.uid
         };
 
         Phased.addTask(status);
