@@ -151,6 +151,10 @@ p{
 .clickable{
   cursor: pointer;
 }
+.clear__background{
+  background: transparent !important;
+  border: none !important;
+}
 .no-padding{
   padding:0!important;
 }
