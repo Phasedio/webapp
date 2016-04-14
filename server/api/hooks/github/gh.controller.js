@@ -73,7 +73,7 @@ exports.repoPush = function(req, res) {
 			return;
 		}
 
-		// 2. check all members
+		// 2. check all members 
 		var thePusher = false; // user ID
 		for (var i in team.members) {
 			if ('aliases' in team.members[i] && 'github' in team.members[i].aliases) {
