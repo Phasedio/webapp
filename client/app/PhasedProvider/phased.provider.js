@@ -3047,8 +3047,11 @@ angular.module('webappApp')
     }
 
     var doGetAllGHRepoHooks = function(callback) {
-    	if (!('github' in _Auth.user))
-    		return console.warn('Cannot perform GitHub interaction for non-authenticated user.');
+    	if (!('github' in _Auth.user)) {
+    		console.warn('Cannot perform GitHub interaction for non-authenticated user.');
+        callback(false);
+        return;
+      }
 
     	for (var i in PhasedProvider.team.repos) {
     		(function(_i) {
