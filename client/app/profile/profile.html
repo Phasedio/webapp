@@ -20,7 +20,7 @@
 
     </div>
 
-    <div class="col-xs-12 col-sm-8 col-md-5  content-main ">
+    <div class="col-xs-12 col-sm-8 col-md-5  ">
       <div class="box__color profile__info">
         <div class="profile-nav">
           <ul class="" role="tablist" id="myTabs">
@@ -36,39 +36,62 @@
         <div class="tab-content">
           <div role="tabpanel" class="tab-pane active" id="history">
 
-            <!-- HISTORY -->
-            <div class="profile-history">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>
-                      Task
-                    </th>
-                    <th>
-                      Category
-                    </th>
-                    <th>
-                      Time
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr sly-repeat="item in team.statuses | orderObjectBy : 'time':true " ng-if="item.user == currentUser.uid">
-                    <td>
-                      {{::item.name}}
-                    </td>
-                    <td>
-                      {{::$parent.team.categoryObj[item.cat].name}}
-                    </td>
-                    <td>
-                      <span>{{::item.time | amDateFormat:'MM.DD.YYYY HH:mm:ss'}}</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <div status-lazy-loader></div>
-              <h6 ng-show="team.history.length == 0" align="center"> No updates for time period</h6>
-            </div>
+            <div
+						ng-show="filterFeed == 'recent'"
+						ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 "
+							class="member__activity type-{{meta.status.TYPE[item.type]}} source-{{meta.status.SOURCE[item.source]}}"
+              ng-if="item.user == currentUser.uid"
+							>
+							<div class="activity__person clearfix">
+								<img ng-src="{{::$parent.team.members[item.user].pic}}" alt="{{::$parent.team.members[item.user].name}}" />
+								<div class="activity__info">
+									<h5 class="">
+										<a ng-href="/profile/{{::item.user}}">{{::$parent.team.members[item.user].name}}</a>
+										<span class="activity__tag" ng-if="item.task.name">
+											<a ng-href="/tasks/{{::item.task.project}}/{{::item.task.column}}/{{::item.task.card}}/{{::item.task.id}}">
+												<small>
+													<i class="fa fa-tasks"></i>
+													{{::item.task.name | limitTo:50}}
+												</small>
+											</a>
+										</span>
+									</h5>
+									<p class="activity__meta">
+										<span am-time-ago="item.time"></span>
+									</p>
+								</div>
+								<div class="activity__options" ng-if="item.user == myID">
+									<div class="btn-group">
+										<button type="button" class="btn btn-drop-chevron dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+											<i class="fa fa-angle-down"></i>
+										</button>
+										<ul class="dropdown-menu">
+											<li><a href="#" data-toggle="modal" data-target="#editModal" ng-click="editStatusSelected(item)">Edit status</a></li>
+											<li ng-if="item.user == myID" role="separator" class="divider"></li>
+											<li ng-if="item.user == myID"><a href="#" data-toggle="modal" data-target="#deleteModal" ng-click="deleteSelected(item)">Delete Status</a></li>
+										</ul>
+									</div>
+								</div>
+							</div>
+
+							<div class="activity__content">
+								<p class="">{{::item.name}}</p>
+
+							</div>
+							<div class="activity__attachment" ng-if="item.attachment">
+								<a class="" ng-href="{{::item.attachment.url}}" target="_blank">
+									<h5>{{::item.attachment.title | limitTo:50 }}</h5>
+									<p>
+										{{::item.attachment.discript}}
+									</p>
+								</a>
+							</div>
+
+							<div class="activity__int">
+								<button type="button" class="btn activity__int__btn activity__int__like" ng-class="{active : item.likes[myID]}" name="button" ng-click="likeStatus(item)" data-toggle="tooltip" data-placement="bottom" title="{{showLikers(item.likes)}}"><i class="fa fa-thumbs-o-up"></i> Like <span class="badge" ng-if="countInts(item.likes) > 0">{{countInts(item.likes)}}</span></button>
+								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(item)"><i class="fa fa-comment-o"></i> Comment <span class="badge" ng-if="countInts(item.comments) > 0">{{countInts(item.comments)}}</span></button>
+							</div>
+						</div>
           </div>
 
           <!-- BACKLOG -->
