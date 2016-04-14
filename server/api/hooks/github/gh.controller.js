@@ -105,9 +105,11 @@ exports.repoPush = function(req, res) {
 		};
 
 		console.log('updating status: ' + statusText);
-		FBRef.child('team/' + teamID + '/statuses').push(newStatus);
+		var newStatusRef = FBRef.child('team/' + teamID + '/statuses').push(newStatus);
 		if (thePusher)
 			FBRef.child('team/' + teamID + '/members/' + thePusher + '/currentStatus').set(newStatus);
+			var x = newStatusRef.key();
+			FBRef.child('team/' + teamID + '/members/' + thePusher + '/currentStatusID').set(x);
 		console.log('status updated');
 
 		// 4. issue notification — TODO

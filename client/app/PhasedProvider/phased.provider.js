@@ -1162,6 +1162,7 @@ angular.module('webappApp')
             if (obj[j].userID == PhasedProvider.user.uid) // use "you" for current user
               out += 'you';
             else
+              
               out += PhasedProvider.team.members[obj[j].userID].name;
           }
         }
@@ -2639,7 +2640,7 @@ angular.module('webappApp')
     /*
     *
     * A user completes a task
-    * 
+    *
     * 1. set task status to complete
     * 2. update own status
     *
