@@ -37,7 +37,10 @@
 							<button type="button" class="btn" ng-class="{active:filterFeed == 'members'}" name="button" ng-click="changeFilter('members')"><i class="fa fa-users"></i> By members</button>
 						</div> -->
 					</div>
+
 					<div class="feed__container">
+						<button type="button" class="btn btn__phased__fb btn-block" name="button" data-toggle="modal" data-target="#addMemberModal" style="margin-bottom:12px;">Add member</button>
+
 						<div class="list-group">
 		          <a
 		          class="list-group-item member__activity clearfix"
@@ -57,11 +60,12 @@
 									</p>
 									<p class="activity__name" ng-if="team.statuses[item.currentStatusID]">{{team.statuses[item.currentStatusID].name}} </p>
 									<p class="activity__name" ng-if="!team.statuses[item.currentStatusID]">💤 </p>
-									<p style="margin-bottom:0;" ng-show="team.statuses[item.currentStatusID].task.name">
+									<p style="margin-bottom:0;" ng-if="team.statuses[item.currentStatusID].task.name">
 										<small>
 											<i class="fa fa-tasks"></i>
 											 in task {{team.statuses[item.currentStatusID].task.name | limitTo:50}}
 										</small>
+									<p>
 
 								</div>
 							</div>

@@ -40,7 +40,7 @@
 						ng-show="filterFeed == 'recent'"
 						ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 "
 							class="member__activity profile__card type-{{meta.status.TYPE[item.type]}} source-{{meta.status.SOURCE[item.source]}}"
-              ng-if="item.user == currentUser.uid"
+              ng-if="item.user == currentUserID"
 							>
 							<div class="activity__person clearfix">
 								<img ng-src="{{::$parent.team.members[item.user].pic}}" alt="{{::$parent.team.members[item.user].name}}" />
