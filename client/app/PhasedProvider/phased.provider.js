@@ -788,6 +788,8 @@ angular.module('webappApp')
       // 1. gather all data once
       FBRef.child('profile/' + id).once('value', function(snap){
         var data = snap.val();
+        if (!data) return; // don't initiate ghost members
+        
         PhasedProvider.team.members[id] = PhasedProvider.team.members[id] || {};
 
         // 2. apply data
