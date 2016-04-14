@@ -95,8 +95,10 @@ angular.module('webappApp')
       Phased.getArchiveFor(address);
     }
 
-    $scope.setTaskCompleted = function(assignmentID) {
-      Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
+    $scope.setTaskCompleted = function(task) {
+      mixpanel.track("Complete task");
+      Phased.completeTask(task.key, task, "Has completed task: ");
+      toaster.pop('success', 'Success!', "You completed a task!");
     }
 
     // Broadcasts that user is working on Task

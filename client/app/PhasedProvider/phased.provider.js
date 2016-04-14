@@ -327,6 +327,7 @@ angular.module('webappApp')
       PhasedProvider.setTaskPriority = _setTaskPriority;
       // activating / shuffling
       PhasedProvider.activateTask = _activateTask;
+      PhasedProvider.completeTask = _completeTask;
       PhasedProvider.takeTask = _takeTask;
 
       // NOTIFS
@@ -789,7 +790,7 @@ angular.module('webappApp')
       FBRef.child('profile/' + id).once('value', function(snap){
         var data = snap.val();
         if (!data) return; // don't initiate ghost members
-        
+
         PhasedProvider.team.members[id] = PhasedProvider.team.members[id] || {};
 
         // 2. apply data
@@ -2623,6 +2624,36 @@ angular.module('webappApp')
 
       ga('send', 'event', 'Update', 'submitted');
       ga('send', 'event', 'Task', 'activated');
+    }
+
+    /*
+    *
+    * A user completes a task
+    * 
+    * 1. set task status to complete
+    * 2. update own status
+    *
+    */
+    var _completeTask = function(taskID, task, prefix) {
+      var args = {
+        task : task,
+        prefix: prefix,
+        taskID : taskID
+      }
+      registerAsync(doCompleteTask, args);
+    }
+
+    var doCompleteTask = function(args) {
+      var task = angular.copy( args.task ),
+        taskID = args.taskID,
+        prefix = args.prefix || '';
+
+      _setTaskStatus(taskID, PhasedProvider.task.STATUS_ID.COMPLETE);
+      task.name = prefix + task.name;
+      _addStatus(task);
+
+      ga('send', 'event', 'Update', 'submitted');
+      ga('send', 'event', 'Task', 'completed');
     }
 
     /**
