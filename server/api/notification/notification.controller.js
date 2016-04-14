@@ -13,8 +13,8 @@ function sendNewTaskNotif(args){
 		inviterUser = args.title[3].userID,
 		taskName = args.body[0].string;
 		FBRef.child('profile').child(issueUser).once('value',function(snap){
-			if(snap){
-				issueUser = snap.val();
+			issueUser = snap.val();
+			if(issueUser) {
 				FBRef.child('profile').child(inviterUser).once('value',function(snap){
 					if(snap){
 						inviterUser = snap.val();
