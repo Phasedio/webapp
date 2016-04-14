@@ -83,7 +83,7 @@
 
           <!-- this should default to unassigned -->
           <select ng-options="key as member.name for (key, member) in team.members" ng-model="newTask.assignee" id="assignee" ng-disabled="newTask.unassigned"></select>
-          <a href="#" ng-click="newTask.assignee = myID">Assign me</a>
+          <a href="#" ng-click="newTask.assignee = user.uid">Assign me</a>
           <label for="unassigned">Unassigned</label>
           <input type="checkbox" ng-model="newTask.unassigned" />
 
