@@ -1,74 +1,72 @@
+<div ng-include="'components/content-nav/content-nav.html'"></div>
 
-<div class="container-fluid" >
+<div class="container" >
 	<div class="row">
-		<div ng-include="'components/sidebar/sidebar.html'"></div>
-		<div class="content__area">
-			<div ng-include="'components/content-nav/content-nav.html'"></div>
-			<div class="col-xs-10" >
-				<div class="ph-card ">
-					<h1>ADMIN</h1>
-					<ul class="nav nav-pills">
-						<li role="presentation"><a href="/admin">Member Roles</a></li>
-						<li role="presentation"><a href="/admin/export">Export Data</a></li>
-						<li role="presentation"><a href="/billing">Billing</a></li>
-						<li role="presentation" class="active"><a href="#">Integrations</a></li>
-					</ul>
-				</div>
-				<div class="row">
-					<div class="col-xs-12">
-						<div class="ph-card">
-							<div class="panel panel-default">
-								<!-- Default panel contents -->
-								<div class="panel-heading">Slack</div>
-								<div class="panel-body">
-									<div ng-if="Phased.team.slack">
-										<p>Team <strong>{{::Phased.team.slack.teamName}}</strong> linked.</p>
-									</div>
-									<!-- add to slack button -->
-									<div ng-if="!Phased.team.slack">
-										<a href="https://slack.com/oauth/authorize?scope=commands,users:read&client_id=9715671828.29433898465">
-											<img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
-										</a>
-									</div>
+		<div class="col-xs-10" >
+			<div class="ph-card ">
+
+				<ul class="nav nav-pills">
+					<li role="presentation"><a href="/admin">Member Roles</a></li>
+					<li role="presentation"><a href="/admin/export">Export Data</a></li>
+					<li role="presentation"><a href="/billing">Billing</a></li>
+					<li role="presentation" class="active"><a href="#">Integrations</a></li>
+				</ul>
+			</div>
+			<div class="row">
+				<div class="col-xs-12">
+					<div class="ph-card">
+						<div class="panel panel-default">
+							<!-- Default panel contents -->
+							<div class="panel-heading">Slack</div>
+							<div class="panel-body">
+								<div ng-if="Phased.team.slack">
+									<p>Team <strong>{{::Phased.team.slack.teamName}}</strong> linked.</p>
 								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-xs-12">
-						<div class="ph-card">
-							<div class="panel panel-default">
-								<!-- Default panel contents -->
-								<div class="panel-heading">Github</div>
-								<div class="panel-body">
-									<h3 ng-if="!Phased.team.repos">No Linked Repositories</h3>
-									<h3 ng-if="Phased.team.repos">Linked Repositories:</h3>
-									<ul>
-										<li ng-repeat="repo in Phased.team.repos">
-											<p><a ng-href="{{::repo.url}}">{{::repo.fullName}}</a> registered at {{::repo.hook.created_at | date : 'short'}} <br/>
-											<a href="#" ng-click="toggleGHHookActive(repo.hook, repo.id)"><span ng-if="repo.hook.active">Deactivate</span><span ng-if="!repo.hook.active">Activate</span></a> &middot; <a href="#" ng-click="deleteGHHook(repo.hook, repo.id)">Unlink</a></p>
-										</li>
-									</ul>
-									<a
-										ng-if="github"
-										href="#"
-										data-toggle="modal"
-										data-target="#choose-repo"
-										ng-click="showGHRepos($event)">
-										Add a repo</a>
-									<a
-										ng-if="!github"
-										href="#"
-										ng-click="startGHAuth($event)">
-										Click to log in with GitHub</a>
+								<!-- add to slack button -->
+								<div ng-if="!Phased.team.slack">
+									<a href="https://slack.com/oauth/authorize?scope=commands,users:read&client_id=9715671828.29433898465">
+										<img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
+									</a>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
+			<div class="row">
+				<div class="col-xs-12">
+					<div class="ph-card">
+						<div class="panel panel-default">
+							<!-- Default panel contents -->
+							<div class="panel-heading">Github</div>
+							<div class="panel-body">
+								<h3 ng-if="!Phased.team.repos">No Linked Repositories</h3>
+								<h3 ng-if="Phased.team.repos">Linked Repositories:</h3>
+								<ul>
+									<li ng-repeat="repo in Phased.team.repos">
+										<p><a ng-href="{{::repo.url}}">{{::repo.fullName}}</a> registered at {{::repo.hook.created_at | date : 'short'}} <br/>
+										<a href="#" ng-click="toggleGHHookActive(repo.hook, repo.id)"><span ng-if="repo.hook.active">Deactivate</span><span ng-if="!repo.hook.active">Activate</span></a> &middot; <a href="#" ng-click="deleteGHHook(repo.hook, repo.id)">Unlink</a></p>
+									</li>
+								</ul>
+								<a
+									ng-if="github"
+									href="#"
+									data-toggle="modal"
+									data-target="#choose-repo"
+									ng-click="showGHRepos($event)">
+									Add a repo</a>
+								<a
+									ng-if="!github"
+									href="#"
+									ng-click="startGHAuth($event)">
+									Click to log in with GitHub</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
+
 	</div>
 </div>
 

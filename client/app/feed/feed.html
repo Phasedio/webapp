@@ -5,41 +5,9 @@
 
 		<div class="container limit__900">
 			<div class="row">
-				<!-- <div class="hidden-xs col-sm-4 dashboard">
-					<div class="feed__team__name box ">
-						<h3>{{team.name}}</h3>
-					</div>
-					<div class="box feed__members">
-						<ul >
-							<li ng-repeat="item in team.members | orderObjectBy: 'lastOnline':true" class="clearfix">
-								<a ng-href="/profile/{{::item.uid}}" class="feed__members__link clearfix">
-									<img ng-src="{{::item.pic}}" alt="{{::item.name}}" width="35px"/>
-									<div class="feed__members__name">
-										{{::item.name}}
-									</div>
-									<div class="online" ng-if="item.presence == 1">
 
-
-									</div>
-									<div class="offline" ng-if="item.presence != 1">
-										<span class="hidden-sm" am-time-ago="item.lastOnline"></span>
-
-									</div>
-								</a>
-
-							</li>
-						</ul>
-						<button type="button" class="btn btn__phased__fb btn-block" name="button" data-toggle="modal" data-target="#addMemberModal">Add member</button>
-					</div>
-				</div> -->
 				<div class="col-lg-3 visible-lg dashboard" ng-controller="TasksCtrl" >
 					<div class="task__holder" >
-		        <!-- <div class="task__add">
-		          <form id="todo-form" ng-submit="addTodo()">
-		            <p>Add a task</p>
-		            <input id="new-todo" class="new-todo" placeholder="What needs to be done?" ng-model="newTodo" ng-disabled="saving" autofocus autocomplete="off">
-		          </form>
-		        </div> -->
 						<div class="task__lable box clearfix">
 							<h3>To-do's</h3>
 							<a href="/tasks">add more</a>
@@ -56,9 +24,7 @@
 		            <div class="task__name" ng-click="sendToTask('0A','0A','0A',assignment.key)">
 		              {{assignment.name}}
 		            </div>
-		            <!-- <div class="task__details">
-		              <i class="fa fa-ellipsis-h"></i>
-		            </div> -->
+
 		          </a>
 		        </div>
 		      </div>
@@ -106,20 +72,13 @@
 								<div class="activity__info">
 									<h5 >
 										<p >{{::item.name}} <small><span am-time-ago="team.statuses[item.currentStatusID].time"></span> </small></p>
-										<!-- <span class="activity__tag" ng-show="team.statuses[item.currentStatusID].task.name">
-											<p >
-												<small>
-													<i class="fa fa-tasks"></i>
-													{{team.statuses[item.currentStatusID].task.name | limitTo:50}}
-												</small>
-											</p>
-										</span> -->
+
 									</h5>
 									<p class="activity__meta">
-										<!-- <span am-time-ago="team.statuses[item.currentStatusID].time"></span> -->
+
 									</p>
-									<p class="activity__name" ng-if="team.statuses[item.currentStatusID]">{{team.statuses[item.currentStatusID].name}}</p>
-									<p class="activity__name" ng-if="!team.statuses[item.currentStatusID]">💤</p>
+									<p class="activity__name" ng-if="team.statuses[item.currentStatusID]">{{team.statuses[item.currentStatusID].name}} </p>
+									<p class="activity__name" ng-if="!team.statuses[item.currentStatusID]">💤 </p>
 									<p style="margin-bottom:0;" ng-show="team.statuses[item.currentStatusID].task.name">
 										<small>
 											<i class="fa fa-tasks"></i>
