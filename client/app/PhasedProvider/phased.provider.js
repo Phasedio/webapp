@@ -105,7 +105,7 @@ angular.module('webappApp')
       WATCH_INTEGRATIONS = false, // set in setWatchIntegrations in config; whether to monitor integration data
       WEBHOOKS_LIVE = { // switches for individual webhooks, so that eg Github hooks can be live while Google is in dev
       	GITHUB : true,
-      	GOOGLE : false
+      	GOOGLE : true
       },
 
       // ASYNC CALLBACKS
@@ -1162,7 +1162,7 @@ angular.module('webappApp')
             if (obj[j].userID == PhasedProvider.user.uid) // use "you" for current user
               out += 'you';
             else
-              
+
               out += PhasedProvider.team.members[obj[j].userID].name;
           }
         }
