@@ -242,4 +242,77 @@ angular.module('webappApp')
       }
     }
 
+
+
+    //feed controls
+
+    $scope.likeStatus = function(item){
+      mixpanel.track("Liked Status");
+      var ref = new Firebase(FURL);
+      //check if user has liked status
+      if (item.likes) {
+        if (item.likes[Phased.user.uid]) {
+          //remove like;
+          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(null);
+
+        }else{
+          //push like to status
+          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+
+        }
+      }else{
+        //push like to status
+        ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+
+      }
+
+
+    }
+
+    $scope.countInts = function(likes){
+      if(likes){
+        return Object.keys(likes).length;
+      }else{
+        return "";
+      }
+
+    }
+    $scope.showLikers = function(likes){
+      if(likes){
+        var keys = Object.keys(likes);
+        var str = "";
+        for (var i = 0; i < keys.length; i++) {
+           str += Phased.team.members[keys[i]].name + "\n";
+        }
+        return str;
+      }
+
+
+    }
+
+
+    //Comments
+
+    $scope.getCommentStatus = function(status){
+      $scope.statusComment = status;
+    }
+    $scope.postComment = function(comment){
+      mixpanel.track("Posted Comment");
+      if (comment) {
+        var status = $scope.statusComment;
+        var ref = new Firebase(FURL);
+
+        var comment = {
+  	      name: comment,
+  	      time: new Date().getTime(),
+  	      user: Auth.user.uid,
+
+  	    };
+        ref.child('team').child(Phased.team.uid).child('statuses').child(status.key).child('comments').push(comment);
+        $scope.comment ="";
+
+      }
+    }
+
+
 });

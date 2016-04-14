@@ -21,8 +21,8 @@
     </div>
 
     <div class="col-xs-12 col-sm-8 col-md-5  ">
-      <div class="box__color profile__info">
-        <div class="profile-nav">
+      <div class=" profile__info">
+        <div class="profile-nav box__color">
           <ul class="" role="tablist" id="myTabs">
             <li role="presentation" class="active"><a href="#history" aria-controls="home" role="tab" data-toggle="tab">History</a></li>
             <li><a href="#backlog" aria-controls="home" role="tab" data-toggle="tab">Tasks</a></li>
@@ -39,7 +39,7 @@
             <div
 						ng-show="filterFeed == 'recent'"
 						ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 "
-							class="member__activity type-{{meta.status.TYPE[item.type]}} source-{{meta.status.SOURCE[item.source]}}"
+							class="member__activity profile__card type-{{meta.status.TYPE[item.type]}} source-{{meta.status.SOURCE[item.source]}}"
               ng-if="item.user == currentUser.uid"
 							>
 							<div class="activity__person clearfix">

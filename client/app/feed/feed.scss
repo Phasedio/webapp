@@ -144,6 +144,9 @@
   .activity__person{
     margin-bottom: 11px;
   }
+	.activity__name{
+		font-size: 18px;
+	}
   img{
     height: 40px;
     width: 40px;
@@ -167,6 +170,7 @@
   }
   p{
     margin-top: 0;
+		margin-bottom: 3px;
     font-size: 12px;
     color: #555;
   }

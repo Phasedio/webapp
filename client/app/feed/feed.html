@@ -98,8 +98,9 @@
 		          <a
 		          class="list-group-item member__activity clearfix"
 							ng-repeat="item in team.members | orderMembersPlus : 'lastUpdated':true "
-							ng-href="/profile/{{::item.user}}"
+							ng-href="/profile/{{item.key}}"
 		          >
+
 							<div class="activity__person clearfix" >
 								<img ng-src="{{::item.pic}}" alt="{{::item.name}}" />
 								<div class="activity__info">
@@ -117,12 +118,13 @@
 									<p class="activity__meta">
 										<!-- <span am-time-ago="team.statuses[item.currentStatusID].time"></span> -->
 									</p>
-									<p class="" ng-if="team.statuses[item.currentStatusID]">{{team.statuses[item.currentStatusID].name}}</p>
-									<p class="" ng-if="!team.statuses[item.currentStatusID]">💤</p>
-									<p>
-										<i class="fa fa-thumbs-o-up" ng-if="countInts(item.likes) > 0"></i>  <span class="badge" >{{countInts(item.likes)}}</span>
-										<i class="fa fa-comment-o" ng-if="countInts(item.comments) > 0"></i> <span class="badge" >{{countInts(item.comments)}}</span>
-									</p>
+									<p class="activity__name" ng-if="team.statuses[item.currentStatusID]">{{team.statuses[item.currentStatusID].name}}</p>
+									<p class="activity__name" ng-if="!team.statuses[item.currentStatusID]">💤</p>
+									<p style="margin-bottom:0;" ng-show="team.statuses[item.currentStatusID].task.name">
+										<small>
+											<i class="fa fa-tasks"></i>
+											 in task {{team.statuses[item.currentStatusID].task.name | limitTo:50}}
+										</small>
 
 								</div>
 							</div>
