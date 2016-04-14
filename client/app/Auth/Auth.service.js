@@ -290,45 +290,45 @@ angular.module('webappApp')
             }
         };
 
-				/**
-				*
-				* Provider Auth Success
-				*
-				*	Called on a successful provider login
-				*	Sets up the appropriate user mappings and team/member[uid] alias
-				* (currently only allows one alias per provider)
-				*
-		    *	1 stash userMapping[newUID] = oldUID (only works if 'authenticating' == profile/oldUID/mappings[newProvider])
-		    *	2 stash profile/oldUID/mappings[newProvider] = newUID
-		    *	3 stash alias to team if Auth.curTeam is set
-		    *
-				*/
-				var providerAuthSuccess = function(authData, success, fail) {
-					var newUID = authData.uid,
-					oldUID = Auth.user.uid;
-					Auth.user[authData.provider] = authData[authData.provider];
-					// 1.
-					ref.child('userMappings/' + newUID).set(oldUID, function(err){
-						if (err) return fail(err);
-						// 2.
-						ref.child('profile/' + oldUID + '/mappings/' + authData.provider + '/').set(newUID, function(err){
-							if (err) return fail(err);
-							if (typeof success == "function") return success(authData);
-						})
-					});
+		/**
+		*
+		* Provider Auth Success
+		*
+		*	Called on a successful provider login
+		*	Sets up the appropriate user mappings and team/member[uid] alias
+		* (currently only allows one alias per provider)
+		*
+	    *	1 stash userMapping[newUID] = oldUID (only works if 'authenticating' == profile/oldUID/mappings[newProvider])
+	    *	2 stash profile/oldUID/mappings[newProvider] = newUID
+	    *	3 stash alias to team if Auth.curTeam is set
+	    *
+		*/
+		var providerAuthSuccess = function(authData, success, fail) {
+			var newUID = authData.uid,
+			oldUID = Auth.user.uid;
+			Auth.user[authData.provider] = authData[authData.provider];
+			// 1.
+			ref.child('userMappings/' + newUID).set(oldUID, function(err){
+				if (err) return fail(err);
+				// 2.
+				ref.child('profile/' + oldUID + '/mappings/' + authData.provider + '/').set(newUID, function(err){
+					if (err) return fail(err);
+					if (typeof success == "function") return success(authData);
+				})
+			});
 
-					// 3.
-					if (Auth.currentTeam) {
-						var aliasKey = '';
-						if (authData.provider == 'github')
-							aliasKey = 'username';
-						else if (authData.provider == 'google')
-							aliasKey = 'id';
+			// 3.
+			if (Auth.currentTeam) {
+				var aliasKey = '';
+				if (authData.provider == 'github')
+					aliasKey = 'username';
+				else if (authData.provider == 'google')
+					aliasKey = 'id';
 
-						ref.child('team/' + Auth.currentTeam + '/members/' + oldUID + '/aliases/' + authData.provider + '/0')
-							.set(authData[authData.provider][aliasKey]);
-					}
-				}
+				ref.child('team/' + Auth.currentTeam + '/members/' + oldUID + '/aliases/' + authData.provider + '/0')
+					.set(authData[authData.provider][aliasKey]);
+			}
+		}
 
         /**
         *   INIT
@@ -339,11 +339,11 @@ angular.module('webappApp')
         // if logging out (or session timeout!), go to /login
         // else do nothing
         auth.$onAuth(function(authData) {
-						// attach FB token to Authorization header
-						if (authData)
-							$http.defaults.headers.post.Authorization = 'Bearer ' + authData.token;
-						else
-							delete $http.defaults.headers.post.Authorization;
+			// attach FB token to Authorization header
+			if (authData)
+				$http.defaults.headers.post.Authorization = 'Bearer ' + authData.token;
+			else
+				delete $http.defaults.headers.post.Authorization;
 
             var path = '';
             // if not authenticated, go to /login
