@@ -5,7 +5,6 @@ var Phased = require('../../../components/phased');
 
 var GHClientID = '84542af1ca986f17bd26';
 var GHClientSecret = '8f6d49d7be3e358ec229c97967055ce9551e122d';
-var auth1RedirectURI = 'http://localhost:9000/api/gh/auth2';
 var scope = 'repo';
 var state = 'd7b6f8537c577945a06b1e916ad2c0bb'; // md5 of 'Phased.io'
 
