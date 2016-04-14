@@ -6,29 +6,7 @@
 		<div class="container limit__900">
 			<div class="row">
 
-				<div class="col-lg-3 visible-lg dashboard" ng-controller="TasksCtrl" >
-					<div class="task__holder" >
-						<div class="task__lable box clearfix">
-							<h3>To-do's</h3>
-							<a href="/tasks">add more</a>
-						</div>
-		        <div class="list-group">
-		          <a href="#"
-		          class="list-group-item clearfix"
-		          sly-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true"
-		          ng-if="getFilter(assignment)"
-		          >
-		            <div class="task__complete" ng-click="setCompleted(assignment)">
-		              <i class="fa fa-check"></i>
-		            </div>
-		            <div class="task__name" ng-click="sendToTask('0A','0A','0A',assignment.key)">
-		              {{assignment.name}}
-		            </div>
 
-		          </a>
-		        </div>
-		      </div>
-				</div>
 
 				<div class="feed__toplink hidden-xs col-sm-4 dashboard">
 					<a href="#" ng-click="goToTop($event)">back to top</a>
@@ -100,6 +78,30 @@
 						</div>
 					</div>
 
+				</div>
+
+				<div class="col-lg-3 visible-lg dashboard" ng-controller="TasksCtrl" >
+					<div class="task__holder" >
+						<div class="task__lable box clear__background clearfix">
+							<h3>To-do's</h3>
+							<a href="/tasks">add more</a>
+						</div>
+		        <div class="list-group">
+		          <a href="#"
+		          class="list-group-item clear__background clearfix"
+		          sly-repeat="assignment in team.projects['0A'].columns['0A'].cards['0A'].tasks | orderObjectBy : 'time' : true"
+		          ng-if="getFilter(assignment)"
+		          >
+		            <div class="task__complete" ng-click="setCompleted(assignment)">
+		              <i class="fa fa-check"></i>
+		            </div>
+		            <div class="task__name" ng-click="sendToTask('0A','0A','0A',assignment.key)">
+		              {{assignment.name}}
+		            </div>
+
+		          </a>
+		        </div>
+		      </div>
 				</div>
 
 
