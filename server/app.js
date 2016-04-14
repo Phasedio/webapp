@@ -6,9 +6,9 @@
 
 // Set default node environment to development
 // process.env.NODE_ENV = process.env.NODE_ENV || 'test'; // for testing sessions, webhooks, & api routes
-process.env.NODE_ENV = 'development';
-//process.env.NODE_ENV = process.env.NODE_ENV || 'production';
-//githubtest
+//process.env.NODE_ENV = 'development';
+process.env.NODE_ENV = process.env.NODE_ENV || 'production';
+
 
 var express = require('express');
 var config = require('./config/environment');
