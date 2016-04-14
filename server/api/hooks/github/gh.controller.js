@@ -100,8 +100,8 @@ exports.repoPush = function(req, res) {
 			name: statusText,
 			time: pushEvent.pushed_at || new Date().getTime(),
 			user: thePusher, // ID or false
-			type: Phased.meta.status.TYPE.REPO_PUSH,
-			source: Phased.meta.status.SOURCE.GITHUB
+			type: Phased.meta.status.TYPE_ID.REPO_PUSH,
+			source: Phased.meta.status.SOURCE_ID.GITHUB
 		};
 
 		console.log('updating status: ' + statusText);
