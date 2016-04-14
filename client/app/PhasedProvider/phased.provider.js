@@ -1443,11 +1443,12 @@ angular.module('webappApp')
     * }
     *
     */
-    var issueNotification = function(notification) {
+    var issueNotification = function(notification, meta) {
       $http.post('./api/notification/issue', {
         user: _Auth.user.uid,
         team : _Auth.currentTeam,
-        notification : JSON.stringify(notification)
+        notification : JSON.stringify(notification),
+        meta : JSON.stringify(meta || {})
       }).then(function(res) {
         	var data = res.data;
             if (res.status == 200 && data.success) {
@@ -1468,7 +1469,7 @@ angular.module('webappApp')
     *
     */
     var issueTaskHistoryNotification = function(data) {
-      var streamItem = {};
+      var streamItem = {}, meta = {};
       switch (data.type) {
         /**
         *   TASK CREATED
@@ -1493,6 +1494,11 @@ angular.module('webappApp')
                 { string : ' by ' },
                 { userID : data.snapshot.assigned_by }
               ];
+              meta = {
+                assignedBy : data.snapshot.assigned_by,
+                assignedTo : data.snapshot.assigned_to,
+                taskName : data.snapshot.name
+              }
           } else if (data.snapshot.assigned_by == data.snapshot.assigned_to) { // 2
             streamItem.title = [
               { userID : data.snapshot.assigned_by },
@@ -1566,6 +1572,11 @@ angular.module('webappApp')
             body : [{ string : data.snapshot.name }],
             cat : data.snapshot.cat,
             type : PhasedProvider.NOTIF_TYPE_ID.ASSIGNMENT_ASSIGNED
+          };
+          meta = {
+          	assignedBy : data.snapshot.assigned_by,
+          	assignedTo : data.snapshot.assigned_to,
+          	taskName : data.snapshot.name
           }
           break;
         /**
@@ -1640,7 +1651,7 @@ angular.module('webappApp')
           break;
       }
 
-      issueNotification(streamItem);
+      issueNotification(streamItem, meta);
     }
 
     /**
@@ -2502,7 +2513,6 @@ angular.module('webappApp')
         // after DB is updated, issue a notification to all users
 
         if (!err) {
-
           issueNotification({
             title : [{ userID : _Auth.user.uid }],
             body : [{ string : newStatus.name }],

@@ -7,11 +7,10 @@ var mandrill_client = new mandrill.Mandrill('B0N7XKd4RDy6Q7nWP2eFAA');
 
 
 //email templates
-function sendNewTaskNotif(args){
-	var issueUser = args.title[1].userID,
-		teamID = args.teamID,
-		inviterUser = args.title[3].userID,
-		taskName = args.body[0].string;
+function sendNewTaskNotif(assignedBy, assignedTo, teamID, taskName){
+	var issueUser = assignedBy,
+		inviterUser = assignedTo;
+
 		FBRef.child('profile').child(issueUser).once('value',function(snap){
 			issueUser = snap.val();
 			if(issueUser) {
@@ -75,6 +74,7 @@ exports.index = function(req, res) {
 exports.issueNotification = function(req, res) {
 	var user = req.body.user,
 		team = req.body.team,
+		meta = JSON.parse(req.body.meta),
 		notification = JSON.parse(req.body.notification);
 
 	console.log('issuing notification');
@@ -164,10 +164,9 @@ exports.issueNotification = function(req, res) {
 				FBRef.child('notif/' + team + '/' + id).push(cleanNotif);
 		}
 
-		if (cleanNotif.type == 1) {
+		if (cleanNotif.type == 1 && meta) {
 			// send a email for task assigned to you.
-			cleanNotif.team = team;
-			sendNewTaskNotif(cleanNotif);
+			sendNewTaskNotif(meta.assignedBy, meta.assignedTo, team, meta.taskName);
 		}
 	}, function failure(err){
 		console.log(err);
