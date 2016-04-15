@@ -750,6 +750,12 @@ angular.module('webappApp')
         if (!WATCH_PROJECTS || Object.keys(PhasedProvider.get.tasks).length < 1) {
         	doAfterProjects();
         }
+
+        // maybe watch projects
+        // (can't be else of above statement because we might not watch if team has 0 tasks)
+        // has to be called here to be after tasks are loaded
+        if (WATCH_PROJECTS)
+          watchProjects();
     	});
 
 			// get statuses
@@ -1093,10 +1099,6 @@ angular.module('webappApp')
         eventType : 'child_changed',
         callback : cb
       });
-
-      // projects
-      if (WATCH_PROJECTS)
-        watchProjects();
     }
 
     /*
@@ -1398,6 +1400,7 @@ angular.module('webappApp')
 
       var _loadedTasks = 0,
       	_totalTasks = Object.keys(PhasedProvider.get.tasks).length;
+        
       // we have all the tasks, but we need to tell when all tasks have been
       // loaded with child_added so that Phased:setup is broadcast after their own Phased:taskAdded
       var maybeDoAfterProjects = function maybeDoAfterProjects() {
