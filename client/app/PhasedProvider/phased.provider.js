@@ -115,7 +115,6 @@ angular.module('webappApp')
       req_after_meta = [], // filled with operations to complete after meta are in
       req_after_projects = [], // "" for after projects
       req_after_statuses = [], // "" for after statuses
-      membersRetrieved = 0, // incremented with each member's profile gathered
       oldestStatusTime = new Date().getTime(), // date of the oldest status in memory; used for pagination
 
       // INTERNAL "CONSTANTS"
@@ -143,6 +142,7 @@ angular.module('webappApp')
     * returned by this.$get
     */
     var PhasedProvider = {
+        _membersRetrieved : 0, // incremented with each member's profile gathered
         SET_UP : false, // exposed duplicate of PHASED_SET_UP
         META_SET_UP : false,
         MEMBERS_SET_UP : false,
@@ -478,7 +478,7 @@ angular.module('webappApp')
 	    	}
 	    });
     }
-    
+
     /**
     *
     * registerAfterMeta
@@ -850,8 +850,8 @@ angular.module('webappApp')
         $rootScope.$broadcast('Phased:member');
 
         // L3. and L4. (once all members are in)
-        membersRetrieved++;
-        if (membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
+        PhasedProvider._membersRetrieved++;
+        if (PhasedProvider._membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
           doAfterMembers();
         }
       });
