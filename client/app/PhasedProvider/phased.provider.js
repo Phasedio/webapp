@@ -478,15 +478,7 @@ angular.module('webappApp')
 	    	}
 	    });
     }
-    PhasedProvider.doAsync = function() {
-      for (var i in req_callbacks) {
-        req_callbacks[i].callback(req_callbacks[i].args || undefined);
-      }
-      PHASED_SET_UP = true;
-      PhasedProvider.SET_UP = true;
-      console.log('Phased:setup');
-			$rootScope.$broadcast('Phased:setup');
-    };
+    
     /**
     *
     * registerAfterMeta
@@ -962,11 +954,8 @@ angular.module('webappApp')
       .orderByChild('time').startAt(now)
       .on('child_added', function(snap){
         var key = snap.key();
-        console.log('got', key);
         if (!(key in PhasedProvider.team.statuses)) {
-        	console.log('scheduled', key);
         	$rootScope.$evalAsync(function() {
-        		console.log('adding', key);
 	          PhasedProvider.team.statuses[key] = snap.val();
 	        	$rootScope.$broadcast('Phased:newStatus');
 	        });
@@ -2054,7 +2043,6 @@ angular.module('webappApp')
       .then(function(res) {
       	var data = res.data;
         if (data.success) {
-          console.log('success', data);
           if (data.added) {
             issueNotification({
               title : [{userID : data.userID}, {string : ' has joined your team'}],
@@ -2063,7 +2051,6 @@ angular.module('webappApp')
             });
             $rootScope.$broadcast('Phased:inviteSuccess');
           } else if (data.invited) {
-            console.log('User was invited to join Phased');
             $rootScope.$broadcast('Phased:inviteSuccess');
           }
         } else {
@@ -2536,7 +2523,6 @@ angular.module('webappApp')
       teamRef.child('members/' + PhasedProvider.user.uid ).child('currentStatusID').set(statuesID);
       // if the status had a task attached to it then submit the status id to the task
       if (newStatus.task) {
-        console.log('I have a task');
         var postID = newStatusRef.key();
         teamRef.child('projects/' + newStatus.task.project +'/columns/'+newStatus.task.column +'/cards/'+ newStatus.task.card +'/tasks/'+newStatus.task.id+'/statuses').push(postID);
       }
