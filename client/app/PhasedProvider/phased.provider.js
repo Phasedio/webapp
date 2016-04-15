@@ -1231,7 +1231,7 @@ angular.module('webappApp')
     *
     */
     var watchPresence = function() {
-      if (!('uid' in PhasedProvider.team)) {
+      if (!('uid' in PhasedProvider.team) || typeof PhasedProvider.team.uid != 'string') {
         console.log('Cannot watch presence for user not on a team');
         return;
       }
