@@ -2,10 +2,32 @@
 <section>
   <div class="container">
     <div class="row">
-      <div class="col-sm-12 clearfix">
+      <div class="col-sm-6 clearfix">
 
+        <div class="panel panel-default team__panel" ng-repeat="item in team.members ">
+          <div class="panel-heading">
+            <img ng-src="{{::item.pic}}" alt="{{::item.name}}" width="25px" />
+            <h3 class="panel-title">{{item.name}}</h3>
+          </div>
+          <div class="panel-body">
 
-        <div class="box member__box" ng-repeat="item in team.members " class="clearfix">
+            <table class="table">
+              <tbody>
+                <tr ng-repeat="task in getTasks[item.key]">
+                  <td>
+                    {{taskList[task].name}}
+                  </td>
+
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- <ul>
+              <li ng-repeat="task in getTasks[item.key]">{{taskList[task].name}} </li>
+            </ul> -->
+          </div>
+        </div>
+        <!-- <div class="box member__box" ng-repeat="item in team.members " class="clearfix">
           <header>
             <img ng-src="{{::item.pic}}" alt="{{::item.name}}" width="45px"/>
             <h3>{{item.name}}</h3>
@@ -16,86 +38,9 @@
               <li ng-repeat="task in getTasks[item.key]">{{taskList[task].name}} </li>
             </ul>
           </div>
-        </div>
+        </div> -->
       </div>
-      <!-- <button class="btn btn-phased-blue btn-block " ng-click="logout()">logout</button> -->
 
-      <!-- <div class="content__area">
-
-        <div class="col-xs-10">
-          <div class="row">
-            <div class="col-xs-12">
-
-              <div class="member-holder">
-                <div class="member-title">
-                  <h2>Members</h2>
-
-                </div>
-
-                <div class="member-background">
-                  <div
-                    class="member-item clickable"
-                    sly-repeat="member in team.members | orderBy: 'name'"
-                    ng-click="goToUser(member.uid)"
-                    >
-                    <img src="{{member.pic}}">
-                    <h4 align="center">{{member.name}}</h4>
-                    <p ng-if="Phased.PRESENCE[member.presence] == 'offline' && member.lastOnline" align="center"><small>Last seen <span am-time-ago="member.lastOnline"></span></small></p>
-                    <p ng-if="Phased.PRESENCE[member.presence] == 'online'" align="center" style="color:lightgreen; font-weight:bold"><small>ONLINE</small></p>
-
-                  </div>
-                  <div
-                    class="member-item clickable"
-                    data-toggle="modal"
-                    data-target="#addMemberModal"
-                    >
-                    <div class="member__add__member">
-                      <p>+</p>
-                    </div>
-                    <h4 align="center">Add member</h4>
-                    <p align="center">
-                      <small>Bring a new member on!</small>
-                    </p>
-
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-xs-12">
-
-
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-xs-6">
-              <div class="ph-card" style="margin-top:40px">
-                <h5 align="center" >
-                  <a href="team/addcategory">Add / Change a Category</a>
-                </h5>
-              </div>
-            </div>
-            <div class="col-xs-6">
-              <div class="ph-card" style="margin-top:40px">
-                <h5 align="center">
-                  Switch to team...
-                </h5>
-                <ul>
-                  <li ng-repeat="otherTeam in Phased.user.teams">
-                    <a href="#" ng-click="Phased.switchTeam(otherTeam.id)">{{otherTeam.name}}</a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-         <div class="row">
-
-
-         </div>
-        </div>
-      </div> -->
 
     </div>
 

@@ -530,7 +530,12 @@ div[ng-include*="sidebar.html"] {
 @import 'tasks/tasks.scss';
 @import 'modal/modal.scss';
 // endinjector
-
+.navbar{
+  min-height: 45px;
+}
+.navbar-brand{
+  padding-top: 10px;
+}
 
 .ph-update-area{
   width: 82%;

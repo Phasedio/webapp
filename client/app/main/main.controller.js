@@ -12,7 +12,7 @@ angular.module('webappApp')
       $location.path('/login');
     }
     $scope.getTasks = {}
-
+    setTimeout(function(){ Phased.doAsync() }, 3000);
     function getUserTasks(){
       var members = {};
       _.forEach(Phased.team.members, function(value, key) {
