@@ -2179,6 +2179,10 @@ angular.module('webappApp')
         // go online and set new handler for current team
         watchPresence();
       }
+
+      if (WATCH_INTEGRATIONS) {
+      	watchGoogleCalendars();
+      }
     }
 
     /**
