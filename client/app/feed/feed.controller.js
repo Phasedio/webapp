@@ -1,8 +1,4 @@
 'use strict';
-
-
-
-
 angular.module('webappApp')
   .filter('orderMembersPlus', function orderMembers(Phased) {
     return function(items, field, reverse) {
@@ -29,9 +25,7 @@ angular.module('webappApp')
       return filtered;
     };
   })
-
   .controller('FeedCtrl', function feedCtrl($scope, $http, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
-
     ga('send', 'pageview', '/feed');
     $scope.thisP = Phased.PRESENCE;
     $scope.selectedCategory = '';
@@ -41,10 +35,10 @@ angular.module('webappApp')
     $scope.team = Phased.team;
     $scope.activeStream = Phased.assignments.to_me;
     $scope.activeStatusFilter = '!1'; // not completed tasks
-    $scope.taskPriorities = Phased.TASK_PRIORITIES; // in new task modal
-    $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
-    $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
-    $scope.taskStatusID = Phased.TASK_STATUS_ID;
+    $scope.taskPriorities = Phased.task.PRIORITY; // in new task modal
+    $scope.taskStatuses = []; // in new task modal
+    $scope.taskPriorityID = Phased.task.PRIORITY_ID;
+    $scope.taskStatusID = Phased.task.STATUS_ID;
     $scope.meta = {
     	status : Phased.status
     }
@@ -52,15 +46,11 @@ angular.module('webappApp')
     $scope.deleteHolder = '';
     $scope.editHolder = '';
     $scope.atTop = true;
-    console.log(Phased);
 
     $scope.$on('Phased:setup', function() {
       if (!Phased.team.uid) {
         $location.path('/onboarding');
       }
-      //getUserTasks();
-
-      // $scope.$digest(); // instead of apply; only affects current scope instead of rootscope
     });
 
     $scope.$on('Phased:meta', function(){
@@ -75,8 +65,6 @@ angular.module('webappApp')
     }, 200));
 
     //bootstrap opt-in func;
-
-    setTimeout(function(){ Phased.doAsync() }, 3000);
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
 
@@ -86,10 +74,6 @@ angular.module('webappApp')
         $scope.statusComment = Phased.team.statuses[$scope.statusComment.key];
       }
     });
-
-    // var getLatest = function(){
-    //
-    // }
 
     //Print blank lines in for task area
     $scope.taskTable = [1,2,3,4,5];
@@ -181,11 +165,11 @@ angular.module('webappApp')
       Phased.activateTask(task.key);
 
       $scope.activeStream = Phased.assignments.to_me;
-      $scope.activeStatusFilter = Phased.TASK_STATUS_ID.ASSIGNED;
+      $scope.activeStatusFilter = Phased.task.STATUS_ID.ASSIGNED;
     }
 
     $scope.setTaskCompleted = function(assignmentID) {
-      Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
+      Phased.setAssignmentStatus(assignmentID, Phased.task.STATUS_ID.COMPLETE);
     }
 
     $scope.selectedTask = {};

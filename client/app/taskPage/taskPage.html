@@ -51,10 +51,10 @@
           </div>
 
           <div class="task__archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
-            <button class="btn btn-phased-blue " ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
-            <button type="button" class="btn btn-phased-blue " name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED" ng-click="broadcastTask(taskInfo)">  Working on  <i class="fa fa-lg fa-share"></i></button>
-            <button class="btn btn-phased-blue " ng-if="taskInfo.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
-            <button class="btn btn-phased-blue "  ng-click="editMode()"><span ng-if="!edit">Edit</span><span ng-if="edit">Save</span> <i class="fa fa-play"></i></button>
+            <button class="btn btn__phased__fb " ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
+            <button type="button" class="btn btn__phased__fb " name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED" ng-click="broadcastTask(taskInfo)">  Working on  <i class="fa fa-lg fa-share"></i></button>
+            <button class="btn btn__phased__fb " ng-if="taskInfo.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
+            <button class="btn btn__phased__fb "  ng-click="editMode()"><span ng-if="!edit">Edit</span><span ng-if="edit">Save</span> <i class="fa fa-play"></i></button>
 
 
           </div>
@@ -63,7 +63,7 @@
             <h3>Status History</h3>
 
             <div class="member__activity " ng-repeat="item in taskStatuses | orderBy: 'time'">
-              <div class="activity__person">
+              <div class="activity__person clearfix">
                 <img ng-src="{{$parent.team.members[item.user].pic}}" alt="{{$parent.team.members[item.user].name}}" />
                 <div class="activity__info">
                   <h5 class="">
@@ -86,7 +86,7 @@
               </div>
 
             </div>
-            <h4 class="muted__header" ng-if="taskStatuses != {}">No Status Activity</h4>
+            <h4 class="muted__header" ng-if="taskStatuses.length == 0">No Status Activity</h4>
           </div>
 
         </div>

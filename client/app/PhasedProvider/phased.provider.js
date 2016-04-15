@@ -115,7 +115,6 @@ angular.module('webappApp')
       req_after_meta = [], // filled with operations to complete after meta are in
       req_after_projects = [], // "" for after projects
       req_after_statuses = [], // "" for after statuses
-      membersRetrieved = 0, // incremented with each member's profile gathered
       oldestStatusTime = new Date().getTime(), // date of the oldest status in memory; used for pagination
 
       // INTERNAL "CONSTANTS"
@@ -143,6 +142,7 @@ angular.module('webappApp')
     * returned by this.$get
     */
     var PhasedProvider = {
+        _membersRetrieved : 0, // incremented with each member's profile gathered
         SET_UP : false, // exposed duplicate of PHASED_SET_UP
         META_SET_UP : false,
         MEMBERS_SET_UP : false,
@@ -456,7 +456,7 @@ angular.module('webappApp')
       }
       PHASED_SET_UP = true;
       PhasedProvider.SET_UP = true;
-      console.log('Phased:setup');
+      console.log('Phased:setup', PhasedProvider);
 			$rootScope.$broadcast('Phased:setup');
     }
 
@@ -478,15 +478,7 @@ angular.module('webappApp')
 	    	}
 	    });
     }
-    PhasedProvider.doAsync = function() {
-      for (var i in req_callbacks) {
-        req_callbacks[i].callback(req_callbacks[i].args || undefined);
-      }
-      PHASED_SET_UP = true;
-      PhasedProvider.SET_UP = true;
-      console.log('Phased:setup');
-			$rootScope.$broadcast('Phased:setup');
-    };
+
     /**
     *
     * registerAfterMeta
@@ -691,6 +683,10 @@ angular.module('webappApp')
     		teamAddr = 'team/' + teamID,
     		simpleProps = ['name', 'members', 'category', 'repos', 'slack', 'billing'],
     		loaded = [];
+      PhasedProvider._membersRetrieved = 0;
+      PHASED_STATUSES_SET_UP = PhasedProvider.STATUSES_SET_UP = false;
+      PHASED_PROJECTS_SET_UP = PhasedProvider.PROJECTS_SET_UP = false;
+      PHASED_MEMBERS_SET_UP = PhasedProvider.MEMBERS_SET_UP = false;
 
     	// due to the current data structure, it's easier to make many small calls
     	// than one big call (thanks to statuses being at the same root as name, repos, etc)
@@ -725,8 +721,13 @@ angular.module('webappApp')
     	// get projects
     	FBRef.child(teamAddr + '/projects').once('value', function getTeamProjects(snap) {
     		var data = snap.val();
-    		PhasedProvider.team.projects = data || [];
-    		if (!data) return;
+    		PhasedProvider.team.projects = data || {};
+    		if (!data) {
+    			if (!WATCH_PROJECTS) doAfterProjects();
+    			return;
+    		}
+
+    		PhasedProvider.team.projects['0A'].columns['0A'].cards['0A'].tasks = PhasedProvider.team.projects['0A'].columns['0A'].cards['0A'].tasks || {};
 
     		// set up references in .get[objectName] to their respective objects
         // this allows us to have an unordered collection of, eg, all tasks, to gather data
@@ -744,10 +745,17 @@ angular.module('webappApp')
             PhasedProvider.get.tasks[j] = PhasedProvider.get.cards[i].tasks[j];
         }
 
-        // if we're only gathering the project data once, broadcast that it's in
-        if (!WATCH_PROJECTS) {
+        // if we're only gathering the project data once, or if there are no tasks
+        // finish this part of setup
+        if (!WATCH_PROJECTS || Object.keys(PhasedProvider.get.tasks).length < 1) {
         	doAfterProjects();
         }
+
+        // maybe watch projects
+        // (can't be else of above statement because we might not watch if team has 0 tasks)
+        // has to be called here to be after tasks are loaded
+        if (WATCH_PROJECTS)
+          watchProjects();
     	});
 
 			// get statuses
@@ -848,8 +856,8 @@ angular.module('webappApp')
         $rootScope.$broadcast('Phased:member');
 
         // L3. and L4. (once all members are in)
-        membersRetrieved++;
-        if (membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
+        PhasedProvider._membersRetrieved++;
+        if (PhasedProvider._membersRetrieved == PhasedProvider.team.teamLength && !PHASED_MEMBERS_SET_UP) {
           doAfterMembers();
         }
       });
@@ -956,11 +964,8 @@ angular.module('webappApp')
       .orderByChild('time').startAt(now)
       .on('child_added', function(snap){
         var key = snap.key();
-        console.log('got', key);
         if (!(key in PhasedProvider.team.statuses)) {
-        	console.log('scheduled', key);
         	$rootScope.$evalAsync(function() {
-        		console.log('adding', key);
 	          PhasedProvider.team.statuses[key] = snap.val();
 	        	$rootScope.$broadcast('Phased:newStatus');
 	        });
@@ -1094,10 +1099,6 @@ angular.module('webappApp')
         eventType : 'child_changed',
         callback : cb
       });
-
-      // projects
-      if (WATCH_PROJECTS)
-        watchProjects();
     }
 
     /*
@@ -1231,7 +1232,7 @@ angular.module('webappApp')
     *
     */
     var watchPresence = function() {
-      if (!('uid' in PhasedProvider.team)) {
+      if (!('uid' in PhasedProvider.team) || typeof PhasedProvider.team.uid != 'string') {
         console.log('Cannot watch presence for user not on a team');
         return;
       }
@@ -1399,6 +1400,7 @@ angular.module('webappApp')
 
       var _loadedTasks = 0,
       	_totalTasks = Object.keys(PhasedProvider.get.tasks).length;
+
       // we have all the tasks, but we need to tell when all tasks have been
       // loaded with child_added so that Phased:setup is broadcast after their own Phased:taskAdded
       var maybeDoAfterProjects = function maybeDoAfterProjects() {
@@ -2048,7 +2050,6 @@ angular.module('webappApp')
       .then(function(res) {
       	var data = res.data;
         if (data.success) {
-          console.log('success', data);
           if (data.added) {
             issueNotification({
               title : [{userID : data.userID}, {string : ' has joined your team'}],
@@ -2057,7 +2058,6 @@ angular.module('webappApp')
             });
             $rootScope.$broadcast('Phased:inviteSuccess');
           } else if (data.invited) {
-            console.log('User was invited to join Phased');
             $rootScope.$broadcast('Phased:inviteSuccess');
           }
         } else {
@@ -2125,6 +2125,7 @@ angular.module('webappApp')
     *
     * switches current user's active team
     * optionally calls a callback
+    * broadcasts Phased:switchedTeam
     */
 
     var _switchTeam = function(teamID, callback) {
@@ -2136,6 +2137,9 @@ angular.module('webappApp')
     }
 
     var doSwitchTeam = function(args) {
+      // set SET_UP to false to trigger doAsync
+      PHASED_SET_UP = PhasedProvider.SET_UP = false;
+
       // stash team
       var oldTeam = typeof PhasedProvider.team.uid == 'string' ? PhasedProvider.team.uid + '' : false;
 
@@ -2178,6 +2182,10 @@ angular.module('webappApp')
         }
         // go online and set new handler for current team
         watchPresence();
+      }
+
+      if (WATCH_INTEGRATIONS) {
+      	watchGoogleCalendars();
       }
     }
 
@@ -2526,7 +2534,6 @@ angular.module('webappApp')
       teamRef.child('members/' + PhasedProvider.user.uid ).child('currentStatusID').set(statuesID);
       // if the status had a task attached to it then submit the status id to the task
       if (newStatus.task) {
-        console.log('I have a task');
         var postID = newStatusRef.key();
         teamRef.child('projects/' + newStatus.task.project +'/columns/'+newStatus.task.column +'/cards/'+ newStatus.task.card +'/tasks/'+newStatus.task.id+'/statuses').push(postID);
       }
