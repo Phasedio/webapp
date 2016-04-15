@@ -456,7 +456,7 @@ angular.module('webappApp')
       }
       PHASED_SET_UP = true;
       PhasedProvider.SET_UP = true;
-      console.log('Phased:setup');
+      console.log('Phased:setup', PhasedProvider);
 			$rootScope.$broadcast('Phased:setup');
     }
 
@@ -721,7 +721,7 @@ angular.module('webappApp')
     	// get projects
     	FBRef.child(teamAddr + '/projects').once('value', function getTeamProjects(snap) {
     		var data = snap.val();
-    		PhasedProvider.team.projects = data || [];
+    		PhasedProvider.team.projects = data || {};
     		if (!data) {
     			if (!WATCH_PROJECTS) doAfterProjects();
     			return;
@@ -1400,7 +1400,7 @@ angular.module('webappApp')
 
       var _loadedTasks = 0,
       	_totalTasks = Object.keys(PhasedProvider.get.tasks).length;
-        
+
       // we have all the tasks, but we need to tell when all tasks have been
       // loaded with child_added so that Phased:setup is broadcast after their own Phased:taskAdded
       var maybeDoAfterProjects = function maybeDoAfterProjects() {
@@ -2125,6 +2125,7 @@ angular.module('webappApp')
     *
     * switches current user's active team
     * optionally calls a callback
+    * broadcasts Phased:switchedTeam
     */
 
     var _switchTeam = function(teamID, callback) {

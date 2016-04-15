@@ -46,15 +46,11 @@ angular.module('webappApp')
     $scope.deleteHolder = '';
     $scope.editHolder = '';
     $scope.atTop = true;
-    console.log(Phased);
 
     $scope.$on('Phased:setup', function() {
       if (!Phased.team.uid) {
         $location.path('/onboarding');
       }
-      //getUserTasks();
-
-      // $scope.$digest(); // instead of apply; only affects current scope instead of rootscope
     });
 
     $scope.$on('Phased:meta', function(){
@@ -69,8 +65,6 @@ angular.module('webappApp')
     }, 200));
 
     //bootstrap opt-in func;
-
-    // setTimeout(function(){ Phased.doAsync() }, 3000);
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
 
@@ -80,10 +74,6 @@ angular.module('webappApp')
         $scope.statusComment = Phased.team.statuses[$scope.statusComment.key];
       }
     });
-
-    // var getLatest = function(){
-    //
-    // }
 
     //Print blank lines in for task area
     $scope.taskTable = [1,2,3,4,5];
