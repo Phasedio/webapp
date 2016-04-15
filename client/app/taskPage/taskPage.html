@@ -51,10 +51,10 @@
           </div>
 
           <div class="task__archive" ng-if="taskInfo.user == myID || taskInfo.assignee == myID || taskInfo.assigned_to == myID">
-            <button class="btn btn-phased-blue " ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
-            <button type="button" class="btn btn-phased-blue " name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED" ng-click="broadcastTask(taskInfo)">  Working on  <i class="fa fa-lg fa-share"></i></button>
-            <button class="btn btn-phased-blue " ng-if="taskInfo.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
-            <button class="btn btn-phased-blue "  ng-click="editMode()"><span ng-if="!edit">Edit</span><span ng-if="edit">Save</span> <i class="fa fa-play"></i></button>
+            <button class="btn btn__phased__fb " ng-if="taskInfo.status != Phased.task.STATUS_ID.COMPLETE" ng-click="setTaskCompleted(taskInfo)">complete <i class="fa fa-lg fa-check-circle-o"></i></button>
+            <button type="button" class="btn btn__phased__fb " name="button" ng-if="taskInfo.status != Phased.task.STATUS_ID.ASSIGNED" ng-click="broadcastTask(taskInfo)">  Working on  <i class="fa fa-lg fa-share"></i></button>
+            <button class="btn btn__phased__fb " ng-if="taskInfo.status == Phased.task.STATUS_ID.ASSIGNED" ng-click="startTask(taskInfo)">Start <i class="fa fa-play"></i></button>
+            <button class="btn btn__phased__fb "  ng-click="editMode()"><span ng-if="!edit">Edit</span><span ng-if="edit">Save</span> <i class="fa fa-play"></i></button>
 
 
           </div>
