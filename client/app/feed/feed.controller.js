@@ -70,7 +70,7 @@ angular.module('webappApp')
 
     //bootstrap opt-in func;
 
-    setTimeout(function(){ Phased.doAsync() }, 3000);
+    // setTimeout(function(){ Phased.doAsync() }, 3000);
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
 

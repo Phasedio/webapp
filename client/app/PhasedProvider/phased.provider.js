@@ -726,7 +726,12 @@ angular.module('webappApp')
     	FBRef.child(teamAddr + '/projects').once('value', function getTeamProjects(snap) {
     		var data = snap.val();
     		PhasedProvider.team.projects = data || [];
-    		if (!data) return;
+    		if (!data) {
+    			if (!WATCH_PROJECTS) doAfterProjects();
+    			return;
+    		}
+
+    		PhasedProvider.team.projects['0A'].columns['0A'].cards['0A'].tasks = PhasedProvider.team.projects['0A'].columns['0A'].cards['0A'].tasks || {};
 
     		// set up references in .get[objectName] to their respective objects
         // this allows us to have an unordered collection of, eg, all tasks, to gather data
@@ -744,8 +749,9 @@ angular.module('webappApp')
             PhasedProvider.get.tasks[j] = PhasedProvider.get.cards[i].tasks[j];
         }
 
-        // if we're only gathering the project data once, broadcast that it's in
-        if (!WATCH_PROJECTS) {
+        // if we're only gathering the project data once, or if there are no tasks
+        // finish this part of setup
+        if (!WATCH_PROJECTS || Object.keys(PhasedProvider.get.tasks).length < 1) {
         	doAfterProjects();
         }
     	});
