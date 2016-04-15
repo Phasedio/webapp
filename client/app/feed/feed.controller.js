@@ -15,6 +15,8 @@ angular.module('webappApp')
           }
         }else if (items[i].currentStatus) {
           items[i].lastUpdated = items[i].currentStatus.time;
+        }else{
+          items[i].lastUpdated = 0;
         }
 
 
