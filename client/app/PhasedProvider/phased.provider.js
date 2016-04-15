@@ -683,6 +683,10 @@ angular.module('webappApp')
     		teamAddr = 'team/' + teamID,
     		simpleProps = ['name', 'members', 'category', 'repos', 'slack', 'billing'],
     		loaded = [];
+      PhasedProvider._membersRetrieved = 0;
+      PHASED_STATUSES_SET_UP = PhasedProvider.STATUSES_SET_UP = false;
+      PHASED_PROJECTS_SET_UP = PhasedProvider.PROJECTS_SET_UP = false;
+      PHASED_MEMBERS_SET_UP = PhasedProvider.MEMBERS_SET_UP = false;
 
     	// due to the current data structure, it's easier to make many small calls
     	// than one big call (thanks to statuses being at the same root as name, repos, etc)
@@ -2129,6 +2133,9 @@ angular.module('webappApp')
     }
 
     var doSwitchTeam = function(args) {
+      // set SET_UP to false to trigger doAsync
+      PHASED_SET_UP = PhasedProvider.SET_UP = false;
+
       // stash team
       var oldTeam = typeof PhasedProvider.team.uid == 'string' ? PhasedProvider.team.uid + '' : false;
 
