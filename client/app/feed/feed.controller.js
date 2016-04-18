@@ -86,7 +86,9 @@ angular.module('webappApp')
         //$scope.countActiveTasks = countActiveTasks();
       });
     }
-
+    $scope.goTo = function(location){
+      $location.path(location);
+    }
     $scope.addTask = function(update) {
 
       ga('send', 'event', 'Update', 'submited');
