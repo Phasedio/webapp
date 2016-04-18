@@ -237,3 +237,44 @@ exports.cleanNotifications = function(req, res) {
 		return;
 	});
 }
+
+/**
+*
+*	Issues a like message to user emails
+*
+*
+*/
+exports.like = function(req, res) {
+	var user = req.body.user,
+		likedUser = req.body.likedUser
+	var template_name = "liketemplate";
+	var template_content = [{
+		"name": "likerName",
+		"content": user.name
+	}];
+
+	var message = {
+
+		"subject": likedUser.name + " has liked your status",
+		"to": [{
+					 "email": user.email,
+					 "type": "to"
+			 }],
+		"from_name": likedUser.name + " via Phased",
+	};
+
+	mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+		console.log(result);
+
+	}, function(e) {
+			// Mandrill returns the error as an object with name and message keys
+			console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+			// A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	});
+
+	res.send({
+		success : true,
+		message : 'like sent'
+	});
+
+};

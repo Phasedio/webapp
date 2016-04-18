@@ -258,14 +258,35 @@ angular.module('webappApp')
         }else{
           //push like to status
           ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
-
+          likeNotif(item.user, Phased.user.uid);
         }
       }else{
         //push like to status
         ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+        likeNotif(item.user, Phased.user.uid);
 
       }
 
+
+    }
+
+    function likeNotif(user,likedUser){
+
+      if (user != likedUser) {
+        // not self loving post
+        var u1 = {}, u2 = {};
+        u1.name = Phased.team.members[user].name;
+        u1.email = Phased.team.members[user].email;
+
+        u2.name = Phased.team.members[likedUser].name;
+        u2.email = Phased.team.members[likedUser].email;
+
+        console.log(u1,u2);
+        $http.post('./api/notification/like', {user: u1,likedUser:u2})
+          .then(function(res){
+            console.log(res);
+          });
+      }
 
     }
 
