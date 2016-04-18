@@ -289,23 +289,25 @@ angular.module('webappApp')
     }
 
 
-    $scope.likeStatus = function(item){
+    $scope.likeStatus = function(item,key){
+      console.log(item);
+      console.log(key);
       mixpanel.track("Liked Status");
       var ref = new Firebase(FURL);
       //check if user has liked status
       if (item.likes) {
         if (item.likes[Phased.user.uid]) {
           //remove like;
-          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(null);
+          ref.child('team').child(Phased.team.uid).child('statuses').child(key).child('likes').child(Phased.user.uid).set(null);
 
         }else{
           //push like to status
-          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+          ref.child('team').child(Phased.team.uid).child('statuses').child(key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
           likeNotif(item.user, Phased.user.uid);
         }
       }else{
         //push like to status
-        ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+        ref.child('team').child(Phased.team.uid).child('statuses').child(key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
         likeNotif(item.user, Phased.user.uid);
 
       }
@@ -357,8 +359,9 @@ angular.module('webappApp')
 
     //Comments
 
-    $scope.getCommentStatus = function(status){
+    $scope.getCommentStatus = function(status,key){
       $scope.statusComment = status;
+      $scope.statusComment.key = key;
     }
     $scope.postComment = function(comment){
       mixpanel.track("Posted Comment");
@@ -373,12 +376,29 @@ angular.module('webappApp')
 
   	    };
         ref.child('team').child(Phased.team.uid).child('statuses').child(status.key).child('comments').push(comment);
+        commentNotif(Phased.user.uid,status,comment);
         $scope.comment ="";
 
       }
     }
 
+    function commentNotif(user,status,comment){
+      if (user != status.user) {
+        // not self loving post
+        var u1 = {}, u2 = {};
+        u1.name = Phased.team.members[Phased.user.uid].name;
+        u1.email = Phased.team.members[Phased.user.uid].email;
 
+        u2.name = Phased.team.members[status.user].name;
+        u2.email = Phased.team.members[status.user].email;
+
+        console.log(u1,u2);
+        $http.post('./api/notification/comment', {commentingUser: u1,statusOwner:u2,message:comment.name,status:status.name})
+          .then(function(res){
+            console.log(res);
+          });
+      }
+    }
 
     //change feed filter
     $scope.filterFeed = 'recent';

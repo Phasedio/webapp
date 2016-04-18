@@ -278,3 +278,51 @@ exports.like = function(req, res) {
 	});
 
 };
+/**
+*
+*	Issues a like message to user emails
+*
+*
+*/
+exports.comment = function(req, res) {
+	var commentingUser = req.body.commentingUser,
+		statusOwner = req.body.statusOwner,
+		message = req.body.message,
+		status = req.body.status;
+	var template_name = "new-comment";
+	var template_content = [{
+		"name": "ogStatus",
+		"content": status
+	},{
+		"name": "commentUser",
+		"content": commentingUser.name
+	},{
+		"name": "commentText",
+		"content": message
+	}];
+
+	var message = {
+
+		"subject": commentingUser.name + " has commented your status",
+		"to": [{
+					 "email": statusOwner.email,
+					 "type": "to"
+			 }],
+		"from_name": commentingUser.name + " via Phased",
+	};
+
+	mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+		console.log(result);
+
+	}, function(e) {
+			// Mandrill returns the error as an object with name and message keys
+			console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+			// A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	});
+
+	res.send({
+		success : true,
+		message : 'like sent'
+	});
+
+};

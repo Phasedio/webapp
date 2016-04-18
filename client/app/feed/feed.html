@@ -72,8 +72,8 @@
 
 							</div>
 							<div class="activity__int " ng-if="team.statuses[item.currentStatusID]">
-								<button type="button" class="btn activity__int__btn activity__int__like" ng-class="{active : team.statuses[item.currentStatusID].likes[myID]}" name="button" ng-click="likeStatus(team.statuses[item.currentStatusID])" data-toggle="tooltip" data-placement="bottom" title="{{showLikers(team.statuses[item.currentStatusID].likes)}}"><i class="fa fa-thumbs-o-up"></i> Like <span class="badge" ng-if="countInts(team.statuses[item.currentStatusID].likes) > 0">{{countInts(team.statuses[item.currentStatusID].likes)}}</span></button>
-								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(team.statuses[item.currentStatusID])"><i class="fa fa-comment-o"></i> Comment <span class="badge" ng-if="countInts(team.statuses[item.currentStatusID].comments) > 0">{{countInts(team.statuses[item.currentStatusID].comments)}}</span></button>
+								<button type="button" class="btn activity__int__btn activity__int__like" ng-class="{active : team.statuses[item.currentStatusID].likes[myID]}" name="button" ng-click="likeStatus(team.statuses[item.currentStatusID],item.currentStatusID)" data-toggle="tooltip" data-placement="bottom" title="{{showLikers(team.statuses[item.currentStatusID].likes)}}"><i class="fa fa-thumbs-o-up"></i> Like <span class="badge" ng-if="countInts(team.statuses[item.currentStatusID].likes) > 0">{{countInts(team.statuses[item.currentStatusID].likes)}}</span></button>
+								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(team.statuses[item.currentStatusID],item.currentStatusID)"><i class="fa fa-comment-o"></i> Comment <span class="badge" ng-if="countInts(team.statuses[item.currentStatusID].comments) > 0">{{countInts(team.statuses[item.currentStatusID].comments)}}</span></button>
 							</div>
 							</a>
 						</div>

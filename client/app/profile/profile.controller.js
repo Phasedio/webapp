@@ -330,10 +330,28 @@ angular.module('webappApp')
 
   	    };
         ref.child('team').child(Phased.team.uid).child('statuses').child(status.key).child('comments').push(comment);
+
         $scope.comment ="";
+        commentNotif(Phased.user.uid,status,comment);
 
       }
     }
+    function commentNotif(user,status,comment){
+      if (user != status.user) {
+        // not self loving post
+        var u1 = {}, u2 = {};
+        u1.name = Phased.team.members[Phased.user.uid].name;
+        u1.email = Phased.team.members[Phased.user.uid].email;
 
+        u2.name = Phased.team.members[status.user].name;
+        u2.email = Phased.team.members[status.user].email;
+
+        console.log(u1,u2);
+        $http.post('./api/notification/comment', {commentingUser: u1,statusOwner:u2,message:comment.name,status:status.name})
+          .then(function(res){
+            console.log(res);
+          });
+      }
+    }
 
 });
