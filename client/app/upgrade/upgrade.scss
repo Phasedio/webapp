@@ -1,0 +1,85 @@
+
+.feature__green{
+  color:#2BB456;
+}
+.feature__red{
+  color:#EA3556;
+}
+.feature__yellow{
+  color:#FF741B;
+}
+.feature__blue{
+  color:#179DBA;
+}
+
+.upgrade__features{
+  ul{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li{
+    display: inline-block;
+    float: left;
+    width: 185px;
+    height: 130px;
+    padding: 20px;
+    font-size: 15px;
+    line-height: 26px;
+    vertical-align: top;
+    text-align: center;
+  }
+  .upgrade__features__icon{
+    text-align: center;
+  }
+  .upgrade__features__text{
+
+  }
+}
+
+.upgrade__cost{
+  display: inline-block;
+  float: left;
+  width: 33.333%;
+  height: 170px;
+  padding: 20px;
+  background-color: #2BB456;
+  color:#fff;
+  h1,h2,h3,h4,h5,h6{
+    color:#fff;
+  }
+}
+.upgrade__slider{
+  background-color: #189F49;
+}
+
+.upgrade__credit__card{
+  width: 390px;
+margin: auto;
+}
+.upgrade__total{
+  text-align: center;
+  h4{
+    text-transform: none;
+  }
+}
+
+.upgrade__price__selected{
+  margin-top: 12px;
+  button{
+    width: 90px;
+    display: block;
+    margin:0 auto;
+  }
+}
+.upgrade__navigation{
+  width: 300px;
+  display: block;
+  margin: 0 auto;
+  text-align: center;
+  a{
+    display: block;
+    margin-top:12px;
+
+  }
+}

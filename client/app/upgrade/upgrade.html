@@ -1,0 +1,201 @@
+<div class="container">
+  <div class="row">
+    <div class="col-xs-12 col-sm-8 col-sm-offset-2">
+      <h1 align="center">Upgrade to premium</h1>
+      <div class="upgrade__features" ng-hide="ccShow">
+        <ul class="clearfix">
+          <li class="feature__green">
+            <div class="upgrade__features__icon">
+              <i class="fa fa-check fa-2x" aria-hidden="true"></i>
+            </div>
+            <div class="upgrade__features__text">
+              Unimited Tasks
+            </div>
+          </li>
+          <li class="feature__red">
+            <div class="upgrade__features__icon">
+              <i class="fa fa-share-alt fa-2x" aria-hidden="true"></i>
+            </div>
+            <div class="upgrade__features__text">
+              Unlimited Intigrations Support
+            </div>
+          </li>
+          <li class="feature__yellow">
+            <div class="upgrade__features__icon">
+              <i class="fa fa-mobile fa-2x" aria-hidden="true"></i>
+            </div>
+            <div class="upgrade__features__text">
+              Companion Apps
+            </div>
+          </li>
+          <li class="feature__blue">
+            <div class="upgrade__features__icon">
+              <i class="fa fa-cogs fa-2x" aria-hidden="true"></i>
+            </div>
+            <div class="upgrade__features__text">
+              User Administration &amp; Backups
+            </div>
+          </li>
+
+        </ul>
+      </div>
+      <div class="upgrade__headline" ng-hide="ccShow">
+        <h2 class="upgrade__headline__text " align="center">
+          Choose your plan size
+        </h2>
+      </div>
+      <div class="upgrade__choice clearfix" ng-hide="ccShow">
+        <div class="upgrade__cost upgrade__slider" >
+          <p>
+            <small>Your team is currently</small>
+          </p>
+          <h2>{{team}} <small style="color:#fff;">(Trialing)</small></h2>
+          <p>
+            <small>members</small>
+          </p>
+
+        </div>
+        <form class="upgrade__cost " name="upgrade__price">
+          <p>
+            <small>Purchase</small>
+          </p>
+          <h2 >{{numUsers}}</h2>
+          <p style="">
+            <small>members</small>
+          </p>
+          <input id="slider1" type="range" ng-init="numUsers = 10" ng-model="numUsers" min="5" max="60" step="5" />
+          <p style="margin-top:0;" align="center">
+            <small>slide to increase</small>
+          </p>
+
+        </form>
+        <div class="upgrade__cost ">
+          <p>
+            <small>how much does Phased cost?</small>
+          </p>
+          <h2>$10.00</h2>
+          <p>
+            <small>Per member / Per month</small>
+          </p>
+        </div>
+      </div>
+      <div class="upgrade__credit__card" ng-show="ccShow">
+        <div class="upgrade__total">
+          <p>
+            <small>Enter your payment information to upgrade phased.io.</small>
+          </p>
+          <h3>
+            {{numUsers }} Members
+          </h3>
+          <h4>
+            ${{numUsers * 10}}.00 per month
+          </h4>
+
+        </div>
+        <form name="ccForm" ng-submit="charge(card)" novalidate>
+          <div class="form-group">
+            <label for="card-number">Card Number</label>
+            <input type="text" class="form-control" id="cardNumber" ng-class="{'red-border' : ccForm.$submitted && ccForm.ccNumber.$error.required}" cc-number cc-format name="ccNumber" ng-model="card.number" required>
+            <div ng-show="ccForm.$submitted || ccForm.ccNumber.$touched">
+              <div ng-show="ccForm.ccNumber.$error.ccNumber">Please enter a valid payment card</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cvc">CVC</label>
+            <input type="text" class="form-control" id="cvc" placeholder="000" cc-cvc cc-type="ccForm.ccNumber.$ccType" ng-class="{'red-border' : ccForm.$submitted && ccForm.ccCvc.$error.required}" name="ccCvc" ng-model="card.cvc" required>
+          </div>
+          <div class="form-group">
+            <label for="card-number">Expiration</label>
+            <div class="row" cc-exp>
+              <div class="col-xs-3">
+                <input
+                placeholder="MM"
+                type="text"
+                class="form-control"
+                cc-exp-month
+                name="ccExpMonth"
+                ng-class="{'red-border' : ccForm.$submitted && ccForm.ccExpMonth.$error.required}"
+                ng-model="card.exp_month"
+                required>
+              </div>
+              <div class="col-xs-3">
+                <input
+                placeholder="YY"
+                type="text"
+                class="form-control"
+                cc-exp-year
+                ng-class="{'red-border' : ccForm.$submitted && ccForm.ccExpYear.$error.required}"
+                name="ccExpYear"
+                ng-model="card.exp_year"
+                required>
+              </div>
+            </div>
+          </div>
+
+            <button type="submit" class="btn btn__phased__fb " name="button"><span ng-show="!ccSubmited">Purchase</span> <span ng-show="ccSubmited"><i class="fa fa-circle-o-notch fa-spin" style="color:#fff;"></i></span></button>
+            <div class="">
+              <p>
+                <a href="" ng-click="ccShow = false;"><i class="fa fa-angle-left" aria-hidden="true"></i> Change team size</a>
+              </p>
+            </div>
+
+        </form>
+      </div>
+      <div class="upgrade__price__selected" ng-hide="ccShow">
+        <button type="button" name="button" class="btn btn__phased__fb" ng-click="ccShow = true;">Checkout</button>
+      </div>
+      <div class="upgrade__headline">
+        <h3 class="upgrade__headline__text " align="center">
+          Frequently Asked Questions
+        </h3>
+      </div>
+      <div class="clearfix">
+        <div class="pull-left">
+          <div class="upgrade_faq">
+            <h4>Question?</h4>
+            <p>
+              Answer.
+            </p>
+          </div>
+          <div class="upgrade_faq">
+            <h4>Question?</h4>
+            <p>
+              Answer.
+            </p>
+          </div>
+          <div class="upgrade_faq">
+            <h4>Question?</h4>
+            <p>
+              Answer.
+            </p>
+          </div>
+        </div>
+        <div class="pull-right">
+          <div class="upgrade_faq">
+            <h4>Question?</h4>
+            <p>
+              Answer.
+            </p>
+          </div>
+          <div class="upgrade_faq">
+            <h4>Question?</h4>
+            <p>
+              Answer.
+            </p>
+          </div>
+          <div class="upgrade_faq">
+            <h4>Question?</h4>
+            <p>
+              Answer.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="upgrade__navigation">
+        <h6>Have more questions?</h6>
+        <button type="button" name="button" class="btn btn-info">Ask us anything</button>
+        <a href="/"><i class="fa fa-angle-left" aria-hidden="true"></i> Return to Phased</a>
+      </div>
+    </div>
+  </div>
+</div>

@@ -4,6 +4,7 @@ var _ = require('lodash');
 var config = require('../../config/environment');
 var FBRef = require('../../components/phasedFBRef').getRef();
 var stripe = require('stripe')('sk_live_nKZ1ouWkI3WuiVGK2hIvZUH1');
+//var stripe = require('stripe')('sk_test_XCwuQhHhSTCGrbXl12ubBE8Y');
 
 
 // Get list of pays

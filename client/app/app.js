@@ -23,6 +23,7 @@ angular.module('webappApp', [
 .constant('FURL', 'https://phaseddev.firebaseio.com/')
 .config(function (stripeProvider) {
   stripeProvider.setPublishableKey('pk_live_FPvARdIWeOzOfW8TGqtFd9QN');
+  //stripeProvider.setPublishableKey('pk_test_WFDUVuvY0pcVHTnquFTLvTSX');
 })
 .run(['$rootScope', '$location', '$window', function runPhased($rootScope, $location, $window) {
       $rootScope.$on("$routeChangeError", function(event, next, previous, error) {
