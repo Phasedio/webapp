@@ -8,37 +8,55 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="#">Phased</a>
+      <a class="navbar-brand" href="#"><img src="assets/images/phased.png" alt="" width="30px" /></a>
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
         <li
-      		sly-repeat="item in menu"
       		class="navItem"
-      		ng-class="{ active: isActive(item.link) }"
-      		ng-click="item.function">
-          <a ng-href="{{::item.link}}">
-        		<span>{{::item.title}}</span>
+      		ng-class="{ active: isActive('/') }"
+      		>
+          <a ng-href="/">
+        		<i class="fa fa-home" aria-hidden="true" ></i><span class="hidden-sm"> Home</span>
           </a>
 
       	</li>
         <li
-      		ng-if="showAdmin">
-          <a ng-href="/admin">
-        		<span>Admin</span>
+      		class="navItem"
+      		ng-class="{ active: isActive('/task') }"
+      		>
+          <a ng-href="/tasks">
+        		<i class="fa fa-check" aria-hidden="true" ></i><span class="hidden-sm"> To-Do</span>
           </a>
+
       	</li>
+
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-users" aria-hidden="true" ></i> {{teamName}} <span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/team"><i class="fa fa-users" aria-hidden="true" ></i> Team</a></li>
+            <li><a href="/profile"><i class="fa fa-user" aria-hidden="true" ></i> Profile</a></li>
+            <li role="separator" class="divider" ng-if="showAdmin"></li>
+            <li
+          		ng-if="showAdmin">
+              <a ng-href="/admin">
+            		<i class="fa fa-cog" aria-hidden="true"></i><span class="hidden-sm"> Admin</span>
+              </a>
+          	</li>
+          </ul>
+        </li>
+
       </ul>
       <ul class="nav navbar-nav navbar-right">
 
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{user.name}} <span class="caret"></span></a>
           <ul class="dropdown-menu">
-            <!-- <li><a href="#">Switch Teams</a></li>
-            <li><a href="#">Something else here</a></li>
-            <li role="separator" class="divider"></li> -->
+            <li><a href="/switchteam">Switch Teams</a></li>
+            <!-- <li><a href="#">Something else here</a></li> -->
+            <li role="separator" class="divider"></li>
             <li><a href="" ng-click="logout()">Logout</a></li>
           </ul>
         </li>

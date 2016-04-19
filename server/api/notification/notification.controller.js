@@ -2,6 +2,60 @@
 var config = require('../../config/environment');
 var FBRef = require('../../components/phasedFBRef').getRef();
 var moment = require('moment');
+var mandrill = require('mandrill-api/mandrill');
+var mandrill_client = new mandrill.Mandrill('B0N7XKd4RDy6Q7nWP2eFAA');
+
+
+//email templates
+function sendNewTaskNotif(assignedBy, assignedTo, teamID, taskName){
+	var issueUser = assignedBy,
+		inviterUser = assignedTo;
+
+		FBRef.child('profile').child(issueUser).once('value',function(snap){
+			issueUser = snap.val();
+			if(issueUser) {
+				FBRef.child('profile').child(inviterUser).once('value',function(snap){
+					if(snap){
+						inviterUser = snap.val();
+
+						// Now send email.
+						var template_name = "new-task-assigned-to-you";
+						var template_content = [{
+							"name": "issuerName",
+							"content": inviterUser.name
+						},
+						{
+							"name": "taskName",
+							"content": taskName
+						}];
+
+						var message = {
+
+							"subject": "New task assigned to you",
+							"to": [{
+										 "email": issueUser.email,
+										 "type": "to"
+								 }],
+							"from_name": inviterUser.name + " via Phased",
+						};
+
+						mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+					    console.log(result);
+
+						}, function(e) {
+						    // Mandrill returns the error as an object with name and message keys
+						    console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+						    // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+						});
+				}
+
+		});
+	}
+});
+}
+
+
+
 
 exports.index = function(req, res) {
 	res.json([]);
@@ -20,6 +74,7 @@ exports.index = function(req, res) {
 exports.issueNotification = function(req, res) {
 	var user = req.body.user,
 		team = req.body.team,
+		meta = JSON.parse(req.body.meta),
 		notification = JSON.parse(req.body.notification);
 
 	console.log('issuing notification');
@@ -91,6 +146,11 @@ exports.issueNotification = function(req, res) {
 		}
 	}
 
+	res.send({
+		success : true,
+		message : 'sending notification'
+	});
+
 	// 2. get team members
 
 	// get users from FB
@@ -104,14 +164,18 @@ exports.issueNotification = function(req, res) {
 				FBRef.child('notif/' + team + '/' + id).push(cleanNotif);
 		}
 
-		res.send({
-			success : true
-		});
+		if (cleanNotif.type == 1 && meta.assignedBy) {
+			// send a email for task assigned to you.
+			sendNewTaskNotif(meta.assignedBy, meta.assignedTo, team, meta.taskName);
+		}
 	}, function failure(err){
-		res.send({
-			err : 'FB err: ' + err
-		});
+		console.log(err);
 	});
+
+
+	//decide if i should send an email.
+
+
 }
 
 /**
@@ -147,6 +211,11 @@ exports.cleanNotifications = function(req, res) {
 		return;
 	}
 
+	// send a nice response
+	res.send({
+		success : true,
+		message : 'cleaning notifications...'
+	});
 
 	// 1. get timestamp (currently one month ago)
 	var aDate = moment().subtract(1, 'month');
@@ -165,11 +234,95 @@ exports.cleanNotifications = function(req, res) {
 			FBRef.child(notifAddr + '/' + key).remove();
 			i++;
 		}
-		// send a nice response
-		res.send({
-			success : true,
-			message : 'removed ' + i + ' notifs before ' + aDate.format()
-		});
 		return;
 	});
 }
+
+/**
+*
+*	Issues a like message to user emails
+*
+*
+*/
+exports.like = function(req, res) {
+	var user = req.body.user,
+		likedUser = req.body.likedUser
+	var template_name = "liketemplate";
+	var template_content = [{
+		"name": "likerName",
+		"content": user.name
+	}];
+
+	var message = {
+
+		"subject": likedUser.name + " has liked your status",
+		"to": [{
+					 "email": user.email,
+					 "type": "to"
+			 }],
+		"from_name": likedUser.name + " via Phased",
+	};
+
+	mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+		console.log(result);
+
+	}, function(e) {
+			// Mandrill returns the error as an object with name and message keys
+			console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+			// A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	});
+
+	res.send({
+		success : true,
+		message : 'like sent'
+	});
+
+};
+/**
+*
+*	Issues a like message to user emails
+*
+*
+*/
+exports.comment = function(req, res) {
+	var commentingUser = req.body.commentingUser,
+		statusOwner = req.body.statusOwner,
+		message = req.body.message,
+		status = req.body.status;
+	var template_name = "new-comment";
+	var template_content = [{
+		"name": "ogStatus",
+		"content": status
+	},{
+		"name": "commentUser",
+		"content": commentingUser.name
+	},{
+		"name": "commentText",
+		"content": message
+	}];
+
+	var message = {
+
+		"subject": commentingUser.name + " has commented your status",
+		"to": [{
+					 "email": statusOwner.email,
+					 "type": "to"
+			 }],
+		"from_name": commentingUser.name + " via Phased",
+	};
+
+	mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+		console.log(result);
+
+	}, function(e) {
+			// Mandrill returns the error as an object with name and message keys
+			console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+			// A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	});
+
+	res.send({
+		success : true,
+		message : 'like sent'
+	});
+
+};

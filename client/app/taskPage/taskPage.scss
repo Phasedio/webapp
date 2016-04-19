@@ -57,7 +57,17 @@
 
 .task__statues{
   padding-bottom: 50px;
+  .member__activity {
+    margin: 2em 0;
+    .activity__person {
+      margin-bottom: 0;
+    }
+    .activity__content {
+      padding-left: 48px; // img + margin
+    }
+  }
 }
+
 
 .task__meta__due{
   cursor: pointer;

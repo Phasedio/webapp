@@ -5,7 +5,6 @@ var Phased = require('../../../components/phased');
 
 var GHClientID = '84542af1ca986f17bd26';
 var GHClientSecret = '8f6d49d7be3e358ec229c97967055ce9551e122d';
-var auth1RedirectURI = 'http://localhost:9000/api/gh/auth2';
 var scope = 'repo';
 var state = 'd7b6f8537c577945a06b1e916ad2c0bb'; // md5 of 'Phased.io'
 
@@ -74,7 +73,7 @@ exports.repoPush = function(req, res) {
 			return;
 		}
 
-		// 2. check all members
+		// 2. check all members 
 		var thePusher = false; // user ID
 		for (var i in team.members) {
 			if ('aliases' in team.members[i] && 'github' in team.members[i].aliases) {
@@ -101,14 +100,16 @@ exports.repoPush = function(req, res) {
 			name: statusText,
 			time: pushEvent.pushed_at || new Date().getTime(),
 			user: thePusher, // ID or false
-			type: Phased.meta.status.TYPE.REPO_PUSH,
-			source: Phased.meta.status.SOURCE.GITHUB
+			type: Phased.meta.status.TYPE_ID.REPO_PUSH,
+			source: Phased.meta.status.SOURCE_ID.GITHUB
 		};
 
 		console.log('updating status: ' + statusText);
-		FBRef.child('team/' + teamID + '/statuses').push(newStatus);
+		var newStatusRef = FBRef.child('team/' + teamID + '/statuses').push(newStatus);
 		if (thePusher)
 			FBRef.child('team/' + teamID + '/members/' + thePusher + '/currentStatus').set(newStatus);
+			var x = newStatusRef.key();
+			FBRef.child('team/' + teamID + '/members/' + thePusher + '/currentStatusID').set(x);
 		console.log('status updated');
 
 		// 4. issue notification — TODO

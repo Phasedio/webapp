@@ -28,6 +28,14 @@
   }
 }
 
+.team__panel{
+  .panel-heading{
+    img,h3{
+      display: inline-block;
+    }
+  }
+}
+
 @media (min-width: 992px){
   .member__box{
     margin: 0!important;

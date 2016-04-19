@@ -1,9 +1,31 @@
 'use strict';
-
 angular.module('webappApp')
+  .filter('orderMembersPlus', function orderMembers(Phased) {
+    return function(items, field, reverse) {
+      var filtered = [];
+      for (var i in items) {
+        items[i].key = i;
+        if (items[i].currentStatusID) {
+          if(Phased.team.statuses[items[i].currentStatusID]){
+            items[i].lastUpdated = Phased.team.statuses[items[i].currentStatusID].time;
+          }
+        }else if (items[i].currentStatus) {
+          items[i].lastUpdated = items[i].currentStatus.time;
+        }else{
+          items[i].lastUpdated = 0;
+        }
 
+
+        filtered.push(items[i]);
+      }
+      filtered.sort(function (a, b) {
+        return (a[field] > b[field] ? 1 : -1);
+      });
+      if(reverse) filtered.reverse();
+      return filtered;
+    };
+  })
   .controller('FeedCtrl', function feedCtrl($scope, $http, Auth, Phased, FURL, amMoment, $location, toaster, $route, $window) {
-
     ga('send', 'pageview', '/feed');
     $scope.thisP = Phased.PRESENCE;
     $scope.selectedCategory = '';
@@ -13,10 +35,10 @@ angular.module('webappApp')
     $scope.team = Phased.team;
     $scope.activeStream = Phased.assignments.to_me;
     $scope.activeStatusFilter = '!1'; // not completed tasks
-    $scope.taskPriorities = Phased.TASK_PRIORITIES; // in new task modal
-    $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
-    $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
-    $scope.taskStatusID = Phased.TASK_STATUS_ID;
+    $scope.taskPriorities = Phased.task.PRIORITY; // in new task modal
+    $scope.taskStatuses = []; // in new task modal
+    $scope.taskPriorityID = Phased.task.PRIORITY_ID;
+    $scope.taskStatusID = Phased.task.STATUS_ID;
     $scope.meta = {
     	status : Phased.status
     }
@@ -24,15 +46,11 @@ angular.module('webappApp')
     $scope.deleteHolder = '';
     $scope.editHolder = '';
     $scope.atTop = true;
-    console.log(Phased);
 
     $scope.$on('Phased:setup', function() {
       if (!Phased.team.uid) {
         $location.path('/onboarding');
       }
-      //getUserTasks();
-
-      // $scope.$digest(); // instead of apply; only affects current scope instead of rootscope
     });
 
     $scope.$on('Phased:meta', function(){
@@ -47,26 +65,9 @@ angular.module('webappApp')
     }, 200));
 
     //bootstrap opt-in func;
-
-    setTimeout(function(){ Phased.doAsync() }, 3000);
     //angular.element($('[data-toggle="tooltip"]')).tooltip();
 
 
-    // get number of active tasks assigned to userID
-    var countActiveTasks = function countActiveTasks() {
-      var count = 0;
-      var thing = [];
-      _.forEach(Phased.team.projects['0A'].columns['0A'].cards['0A'].tasks, function(value, key){
-        if((value.status == 0 || value.status == 2) && value.assigned_to == Phased.user.uid){
-          count++;
-          value.id = key;
-          thing.push(value);
-        }
-      });
-      $scope.getUserTasks = thing;
-
-      return count
-    }
     $scope.$on('Phased:changedStatus', function(){
       if ($scope.statusComment) {
         console.log($scope.statusComment);
@@ -78,13 +79,16 @@ angular.module('webappApp')
     $scope.taskTable = [1,2,3,4,5];
 
     if (Phased.SET_UP)
-      $scope.countActiveTasks = countActiveTasks();
+      //$scope.countActiveTasks = countActiveTasks();
+      console.log('here');
     else {
       $scope.$on('Phased:setup', function() {
-        $scope.countActiveTasks = countActiveTasks();
+        //$scope.countActiveTasks = countActiveTasks();
       });
     }
-
+    $scope.goTo = function(location){
+      $location.path(location);
+    }
     $scope.addTask = function(update) {
 
       ga('send', 'event', 'Update', 'submited');
@@ -163,11 +167,11 @@ angular.module('webappApp')
       Phased.activateTask(task.key);
 
       $scope.activeStream = Phased.assignments.to_me;
-      $scope.activeStatusFilter = Phased.TASK_STATUS_ID.ASSIGNED;
+      $scope.activeStatusFilter = Phased.task.STATUS_ID.ASSIGNED;
     }
 
     $scope.setTaskCompleted = function(assignmentID) {
-      Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
+      Phased.setAssignmentStatus(assignmentID, Phased.task.STATUS_ID.COMPLETE);
     }
 
     $scope.selectedTask = {};
@@ -285,26 +289,49 @@ angular.module('webappApp')
     }
 
 
-    $scope.likeStatus = function(item){
+    $scope.likeStatus = function(item,key){
+      console.log(item);
+      console.log(key);
       mixpanel.track("Liked Status");
       var ref = new Firebase(FURL);
       //check if user has liked status
       if (item.likes) {
         if (item.likes[Phased.user.uid]) {
           //remove like;
-          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(null);
+          ref.child('team').child(Phased.team.uid).child('statuses').child(key).child('likes').child(Phased.user.uid).set(null);
 
         }else{
           //push like to status
-          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
-
+          ref.child('team').child(Phased.team.uid).child('statuses').child(key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+          likeNotif(item.user, Phased.user.uid);
         }
       }else{
         //push like to status
-        ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+        ref.child('team').child(Phased.team.uid).child('statuses').child(key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+        likeNotif(item.user, Phased.user.uid);
 
       }
 
+
+    }
+
+    function likeNotif(user,likedUser){
+
+      if (user != likedUser) {
+        // not self loving post
+        var u1 = {}, u2 = {};
+        u1.name = Phased.team.members[user].name;
+        u1.email = Phased.team.members[user].email;
+
+        u2.name = Phased.team.members[likedUser].name;
+        u2.email = Phased.team.members[likedUser].email;
+
+        console.log(u1,u2);
+        $http.post('./api/notification/like', {user: u1,likedUser:u2})
+          .then(function(res){
+            console.log(res);
+          });
+      }
 
     }
 
@@ -332,8 +359,9 @@ angular.module('webappApp')
 
     //Comments
 
-    $scope.getCommentStatus = function(status){
+    $scope.getCommentStatus = function(status,key){
       $scope.statusComment = status;
+      $scope.statusComment.key = key;
     }
     $scope.postComment = function(comment){
       mixpanel.track("Posted Comment");
@@ -348,12 +376,29 @@ angular.module('webappApp')
 
   	    };
         ref.child('team').child(Phased.team.uid).child('statuses').child(status.key).child('comments').push(comment);
+        commentNotif(Phased.user.uid,status,comment);
         $scope.comment ="";
 
       }
     }
 
+    function commentNotif(user,status,comment){
+      if (user != status.user) {
+        // not self loving post
+        var u1 = {}, u2 = {};
+        u1.name = Phased.team.members[Phased.user.uid].name;
+        u1.email = Phased.team.members[Phased.user.uid].email;
 
+        u2.name = Phased.team.members[status.user].name;
+        u2.email = Phased.team.members[status.user].email;
+
+        console.log(u1,u2);
+        $http.post('./api/notification/comment', {commentingUser: u1,statusOwner:u2,message:comment.name,status:status.name})
+          .then(function(res){
+            console.log(res);
+          });
+      }
+    }
 
     //change feed filter
     $scope.filterFeed = 'recent';

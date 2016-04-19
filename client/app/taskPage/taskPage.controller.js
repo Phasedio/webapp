@@ -12,11 +12,11 @@ angular.module('webappApp')
     $scope.taskInfo = {}; // Task information for the description area
     $scope.today = new Date().getTime(); // min date for deadline datepicker
     $scope.eventSources = [];//needed for the calendar
-    $scope.taskPriorities = Phased.TASK_PRIORITIES; // in new task modal
-    $scope.taskStatuses = Phased.TASK_STATUSES; // in new task modal
-    $scope.taskPriorityID = Phased.TASK_PRIORITY_ID;
-    $scope.taskStatusID = Phased.TASK_STATUS_ID;
-    $scope.taskHistType = Phased.TASK_HISTORY_CHANGES;
+    $scope.taskPriorities = Phased.task.PRIORITY; // in new task modal
+    $scope.taskStatuses = []; // in new task modal
+    $scope.taskPriorityID = Phased.task.PRIORITY_ID;
+    $scope.taskStatusID = Phased.task.STATUS_ID;
+    $scope.taskHistType = Phased.task.HISTORY_ID;
     $scope.myID = Auth.user.uid;
     $scope.edit = false;
 
@@ -78,7 +78,7 @@ angular.module('webappApp')
       Phased.activateTask(task.key);
 
       $scope.activeStream = Phased.assignments.to_me;
-      $scope.setStatusFilter('!' + Phased.TASK_STATUS_ID.COMPLETE);
+      $scope.setStatusFilter('!' + Phased.task.STATUS_ID.COMPLETE);
     }
 
     $scope.moveToArchive = function(assignmentID) {
@@ -95,8 +95,10 @@ angular.module('webappApp')
       Phased.getArchiveFor(address);
     }
 
-    $scope.setTaskCompleted = function(assignmentID) {
-      Phased.setAssignmentStatus(assignmentID, Phased.TASK_STATUS_ID.COMPLETE);
+    $scope.setTaskCompleted = function(task) {
+      mixpanel.track("Complete task");
+      Phased.completeTask(task.key, task, "Has completed task: ");
+      toaster.pop('success', 'Success!', "You completed a task!");
     }
 
     // Broadcasts that user is working on Task

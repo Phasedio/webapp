@@ -2,11 +2,19 @@
   <div class="col-lg-6 col-xs-offset-3">
     <div class="ph-card">
       <div>
-        <a href="#" class="pull-right">Log out</a>
+        <a href="#" class="pull-right" ng-click="logout()">Log out</a>
       </div>
-      <h1 class="page-header">Thank you!</h1>
+      <h1 class="page-header">Thank you {{teamName}}!</h1>
       <p>Thank you for trying Phased! Your trial has expired, if you wish to continue using the product please enter a valid payment card below. If you have any questions please contact us by email.</p>
-
+      <p>
+        Or switch teams
+      </p>
+      <div ng-if="Phased.user.teams">
+        <h3>Please select a team to join</h3>
+        <li ng-repeat="otherTeam in Phased.user.teams">
+          <a href="#" ng-click="switchTeam(otherTeam.id)">{{::otherTeam.name}}</a>
+        </li>
+      </div>
       <div class="panel panel-default">
         <!-- Default panel contents -->
         <div class="panel-heading">Basic Plan</div>

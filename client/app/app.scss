@@ -117,6 +117,10 @@ body{
   color:$darkBlack;
   -webkit-font-smoothing:antialiased;
 }
+.limit__900{
+  width: 900px !important;
+  margin:0 auto;
+}
 h1,h2,h3,.semi__lower{
   font-family: 'open_sanssemibold';
   color:$boldText;
@@ -133,6 +137,10 @@ h4,h5,h6,.semi{
   color:#8c8c8c;
 }
 
+input[type="text"], textarea {
+  background-color: #FFF;
+}
+
 p{
   font-family: 'open_sansregular';
   //color:$textColor;
@@ -146,6 +154,10 @@ p{
 
 .clickable{
   cursor: pointer;
+}
+.clear__background{
+  background: transparent !important;
+  border: none !important;
 }
 .no-padding{
   padding:0!important;
@@ -522,7 +534,12 @@ div[ng-include*="sidebar.html"] {
 @import 'tasks/tasks.scss';
 @import 'modal/modal.scss';
 // endinjector
-
+.navbar{
+  min-height: 45px;
+}
+.navbar-brand{
+  padding-top: 10px;
+}
 
 .ph-update-area{
   width: 82%;
@@ -645,7 +662,7 @@ div[ng-include*="sidebar.html"] {
   .content-main {
     float: left;
     padding:0 !important;
-    width: 590px;
+    width: 450px;
     margin: 0 10px;
   }
   .box{

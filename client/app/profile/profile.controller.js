@@ -41,6 +41,7 @@ angular.module('webappApp')
 			Phased.getGoogleCalendars(function(res) {
 				$scope.calendarList = res;
 			});
+      console.log($scope.currentUser);
 		}
 		initProfileUser();
 
@@ -227,4 +228,130 @@ angular.module('webappApp')
         }
       }
     };
+
+
+
+    $scope.enableNotifs = function(){
+      if (!Phased.team.members[Auth.user.uid].notif) {
+
+        new Firebase(FURL).child('team').child(Phased.team.uid).child('members').child(Auth.user.uid).child('notif').set(true);
+        // notification not enabled. Set notif to true
+      }else{
+        new Firebase(FURL).child('team').child(Phased.team.uid).child('members').child(Auth.user.uid).child('notif').set(null);
+        // turn notif off
+      }
+    }
+
+
+
+    //feed controls
+
+    $scope.likeStatus = function(item){
+      mixpanel.track("Liked Status");
+      var ref = new Firebase(FURL);
+      //check if user has liked status
+      if (item.likes) {
+        if (item.likes[Phased.user.uid]) {
+          //remove like;
+          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(null);
+
+        }else{
+          //push like to status
+          ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+          likeNotif(item.user, Phased.user.uid);
+        }
+      }else{
+        //push like to status
+        ref.child('team').child(Phased.team.uid).child('statuses').child(item.key).child('likes').child(Phased.user.uid).set(Phased.user.uid);
+        likeNotif(item.user, Phased.user.uid);
+
+      }
+
+
+    }
+
+    function likeNotif(user,likedUser){
+
+      if (user != likedUser) {
+        // not self loving post
+        var u1 = {}, u2 = {};
+        u1.name = Phased.team.members[user].name;
+        u1.email = Phased.team.members[user].email;
+
+        u2.name = Phased.team.members[likedUser].name;
+        u2.email = Phased.team.members[likedUser].email;
+
+        console.log(u1,u2);
+        $http.post('./api/notification/like', {user: u1,likedUser:u2})
+          .then(function(res){
+            console.log(res);
+          });
+      }
+
+    }
+
+    $scope.countInts = function(likes){
+      if(likes){
+        return Object.keys(likes).length;
+      }else{
+        return "";
+      }
+
+    }
+    $scope.showLikers = function(likes){
+      if(likes){
+        var keys = Object.keys(likes);
+        var str = "";
+        for (var i = 0; i < keys.length; i++) {
+           str += Phased.team.members[keys[i]].name + "\n";
+        }
+        return str;
+      }
+
+
+    }
+
+
+    //Comments
+
+    $scope.getCommentStatus = function(status){
+      $scope.statusComment = status;
+    }
+    $scope.postComment = function(comment){
+      mixpanel.track("Posted Comment");
+      if (comment) {
+        var status = $scope.statusComment;
+        var ref = new Firebase(FURL);
+
+        var comment = {
+  	      name: comment,
+  	      time: new Date().getTime(),
+  	      user: Auth.user.uid,
+
+  	    };
+        ref.child('team').child(Phased.team.uid).child('statuses').child(status.key).child('comments').push(comment);
+
+        $scope.comment ="";
+        commentNotif(Phased.user.uid,status,comment);
+
+      }
+    }
+    function commentNotif(user,status,comment){
+      if (user != status.user) {
+        // not self loving post
+        var u1 = {}, u2 = {};
+        u1.name = Phased.team.members[Phased.user.uid].name;
+        u1.email = Phased.team.members[Phased.user.uid].email;
+
+        u2.name = Phased.team.members[status.user].name;
+        u2.email = Phased.team.members[status.user].email;
+
+        console.log(u1,u2);
+        $http.post('./api/notification/comment', {commentingUser: u1,statusOwner:u2,message:comment.name,status:status.name})
+          .then(function(res){
+            console.log(res);
+          });
+      }
+    }
+
 });

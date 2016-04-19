@@ -1,258 +1,472 @@
 
 <div ng-include="'components/content-nav/content-nav.html'"></div>
-<section class="container-fluid">
+<section class="container">
   <div class="row">
-    <div class="content__area">
 
-      <div class="col-xs-10">
-        <div class="profile-holder transparent">
-          <div class="col-xs-6 profile-user">
-            <img ng-src="{{::currentUser.gravatar}}" alt="" height="40px" width="40px" />
-            <h2>{{::currentUser.name}}</h2>
-          </div>
-          <div class="col-xs-6 profile-user">
-            <ul>
-              <li><span>updates</span><span>{{::team.statuses | updatesFor : currentUserID | length}}</span></li>
-              <li><span>email</span><span>{{::currentUser.email}}</span></li>
-              <li><span>tel</span><span>{{::currentUser.tel | tel}}</span></li>
-              <!-- <li><span>slack</span><span>@brian</span></li> -->
-
-            </ul>
-          </div>
-        </div>
-        <div class="profile-holder">
-          <div class="profile-nav">
-            <ul class="" role="tablist" id="myTabs">
-              <li role="presentation" class="active"><a href="#history" aria-controls="home" role="tab" data-toggle="tab">History</a></li>
-              <li><a href="#backlog" aria-controls="home" role="tab" data-toggle="tab">Tasks</a></li>
-              <li><a href="#stats" aria-controls="home" role="tab" data-toggle="tab">Stats</a></li>
-              <li><a href="#settings" aria-controls="home" role="tab" data-toggle="tab">edit</a></li>
-              <li><a href="#google-calendar" aria-controls="home" role="tab" data-toggle="tab">Google Calendar</a></li>
-            </ul>
-          </div>
-
-
-          <!-- Tab panes -->
-          <div class="tab-content">
-            <div role="tabpanel" class="tab-pane active" id="history">
-
-              <!-- HISTORY -->
-              <div class="profile-history">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>
-                        Task
-                      </th>
-                      <th>
-                        Category
-                      </th>
-                      <th>
-                        Time
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr sly-repeat="item in team.statuses | orderObjectBy : 'time':true " ng-if="item.user == currentUser.uid">
-                      <td>
-                        {{::item.name}}
-                      </td>
-                      <td>
-                        {{::$parent.team.categoryObj[item.cat].name}}
-                      </td>
-                      <td>
-                        <span>{{::item.time | amDateFormat:'MM.DD.YYYY HH:mm:ss'}}</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <div status-lazy-loader></div>
-                <h6 ng-show="team.history.length == 0" align="center"> No updates for time period</h6>
-              </div>
-            </div>
-
-            <!-- BACKLOG -->
-            <div role="tabpanel" class="tab-pane" id="backlog">
-              <div class="profile-backlog">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>
-                        Task
-                      </th>
-                      <th>
-                        Priority
-                      </th>
-                      <th>
-                        Due
-                      </th>
-                      <th>
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr sly-repeat="item in phased.get.tasks | backlogFor : currentUserID | orderObjectBy : 'time'">
-                      <td>
-                        {{::item.name}}
-                      </td>
-                      <td>
-                        {{::phased.task.PRIORITY[item.priority]}}
-                      </td>
-                      <td>
-                         <span ng-if="item.deadline">{{::item.deadline | amDateFormat:'MMM d '}}</span>
-                         <span ng-if="!item.deadline">Not Set</span>
-                      </td>
-                      <td>
-                        {{::phased.task.STATUS[item.status]}}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-  					<!-- Stats -->
-            <div role="tabpanel" class="tab-pane" id="stats">
-  						<div class="row">
-  			        <div class="col-xs-6">
-  								<div>
-  									<h5>Total Updates</h5>
-  									<h1>{{team.statuses | updatesFor : currentUserID | length}}</h1>
-  								</div>
-  							</div>
-  							<div class="col-xs-6">
-  								<div>
-  									<h5>Total Tasks completed</h5>
-  									<h1>{{phased.get.tasks | tasksFor : currentUserID | tasksCompletedForTime : 'ever' | length}}</h1>
-  								</div>
-  							</div>
-  						</div>
-  						<div class="row">
-  			        <div class="col-xs-6">
-  								<div>
-  									<h5>Total Updates this week</h5>
-  									<h1>{{phased.team.statuses | updatesFor : currentUserID | updatesForTime : 'week' | length}}</h1>
-  								</div>
-  							</div>
-  							<div class="col-xs-6">
-  								<div>
-  									<h5>Total Tasks completed this week</h5>
-  									<h1>{{phased.get.tasks | tasksFor : currentUserID | tasksCompletedForTime : 'week' | length}}</h1>
-  								</div>
-  							</div>
-  						</div>
-  						<div class="row">
-  			        <div class="col-xs-6">
-  								<div>
-  									<h5>Total Updates today</h5>
-  									<h1>{{team.statuses | updatesFor : currentUserID | updatesForTime : 'today' | length}}</h1>
-  								</div>
-  							</div>
-  							<div class="col-xs-6">
-  								<div>
-  									<h5>Total Tasks completed today</h5>
-  									<h1>{{phased.get.tasks | tasksFor : currentUserID | tasksCompletedForTime : 'today' | length}}</h1>
-  								</div>
-  							</div>
-  						</div>
-
-
-  					</div>
-            <!-- EDIT -->
-            <div role="tabpanel" class="tab-pane" id="settings" ng-if="isSelf">
-  						<div class = "row">
-  			        <div class="col-xs-12">
-  			          <img style="height: 120px; width: 120px; border-radius: 50%;margin: 0 auto; display:block;" ng-src="{{::currentUser.gravatar}}">
-
-  			        </div>
-  			        <div class="col-xs-12">
-
-                  <div class="" style=" width: 120px; margin: 0 auto; display:block;">
-                    <input class="" type="file" accept="image/*" capture="camera" id="file-upload" ng-model="fileUp" ng-change="handleFileSelect(fileUp)"><br>
-    			          <button ng-click="changeImage()" class="btn btn-phased-blue btn-block ">Change Image</button>
-                    <p>
-                      <small>Photos under 2 MBs please!</small>
-                    </p>
-                  </div>
-
-
-  			        </div>
-        			</div>
-  						<form name="updateForm" ng-submit="updateUser(update)" novalidate>
-
-              <div class="login login-drk" style="background:transparent;">
-                <div class="item item-input item-stacked-label">
-                  <label class="input-label" for="name">name</label>
-                  <input class="loginInput" type="text" id="name" ng-model="update.name" placeholder="{{::currentUser.name}}">
-                </div>
-  							<div class="item item-input item-stacked-label">
-                  <label class="input-label" for="tel">tel</label>
-                  <input class="loginInput" type="tel" id="tel" ng-model="update.tel" placeholder="{{::currentUser.tel | tel}}">
-                </div>
-                <div class="item item-input item-stacked-label">
-                  <label class="input-label" for="email">email</label>
-                  <input class="loginInput" type="email" id="email" ng-model="update.email" placeholder="{{::currentUser.email}}">
-                </div>
-
-                <div class="item item-input item-stacked-label">
-                  <label class="input-label" for="oldpassword">old password</label>
-                  <input class="loginInput" type="password" id='oldpassword' ng-model="update.oldPass" placeholder="">
-                </div>
-                <div class="item item-input item-stacked-label">
-                  <label class="input-label" for="newpassword">new password</label>
-                  <input class="loginInput" type="password" id='newpassword' ng-model="update.newPass" placeholder="">
-                </div>
-                <div class="item">
-                  <input type="submit" class="btn btn-phased-blue btn-block " value="Update Account">
-                </div>
-              </div>
-            	</form>
-  						<button class="btn btn-phased-blue btn-block " ng-click="logout()">logout</button>
-  					</div>
-
-  					<!-- GOOGLE CAL -->
-  					<div role="tabpanel" class="tab-pane" id="google-calendar" ng-if="isSelf">
-  						<div class="google-calendar">
-  							<p ng-if="!phased.user.googleAuth">
-  								<a href="#" ng-click="startGoogleAuth($event)">Authenticate with Google</a> to automatically post status updates when an event on a calendar begins (for example, for every event on a company "meetings" calendar). <em>This will only take effect for this team; to manage your calendar status updates for another team, switch to that team.</em>
-  							</p>
-  							<p ng-if="!calendarList">
-  								<a href="#" ng-click="getCals($event)">Get calendars</a>
-  							</p>
-
-  							<div ng-if="calendarList">
-  								<h5>Calendars</h5>
-  								<ul>
-  									<li
-  										sly-repeat="cal in calendarList"
-  										class="calendar-item"
-  										ng-class="{ 'registered-calendar' : isCalRegistered(cal) }">
-  										<a
-  											href="#"
-  											ng-click="toggleCalRegistered(cal, $event)">
-  											<span
-  												class="block"
-  												style="background-color:{{cal.backgroundColor}};"
-  											></span>
-  											{{cal.summary}}
-  										</a>
-  									</li>
-  								</ul>
-  							</div>
-  						</div>
-  					</div>
-  					<!-- end GOOGLE CAL -->
-
-
-          </div>
-
-
-
-        </div>
+    <div class="hidden-xs col-sm-4 dashboard">
+      <div class="feed__team__name box profile__identity clearfix">
+        <img ng-src="{{::currentUser.gravatar}}" alt=""  />
+        <h3>{{::currentUser.name}}</h3>
+        <ul>
+          <!-- <li><span>updates</span><span>{{team.statuses | updatesFor : currentUserID | length}}</span></li> -->
+          <li><span>email</span><span><a href="mailto:{{::currentUser.email}}">{{::currentUser.email}}</a></span></li>
+          <li><span>tel</span><span><a href="tel:{{::currentUser.tel}}">{{::currentUser.tel | tel}}</a></span></li>
+          <!-- <li><span>slack</span><span>@brian</span></li> -->
+        </ul>
+        <ul ng-if="currentUser.aliases">
+          <li ng-if="currentUser.aliases.github"><span>github</span><span><a href="https://github.com/{{::currentUser.aliases.github[0]}}">{{::currentUser.aliases.github[0]}}</a></span></li>
+        </ul>
       </div>
+
+    </div>
+
+    <div class="col-xs-12 col-sm-8 col-md-7  ">
+      <div class=" profile__info">
+        <div class="profile-nav box__color">
+          <ul class="" role="tablist" id="myTabs">
+            <li role="presentation" class="active"><a href="#history" aria-controls="home" role="tab" data-toggle="tab">History</a></li>
+            <li><a href="#backlog" aria-controls="home" role="tab" data-toggle="tab">Tasks</a></li>
+            <li><a href="#settings" aria-controls="home" role="tab" data-toggle="tab" ng-if="isSelf">edit</a></li>
+            <li><a href="#google-calendar" aria-controls="home" role="tab" data-toggle="tab" ng-if="isSelf">Google Calendar</a></li>
+          </ul>
+        </div>
+
+
+        <!-- Tab panes -->
+        <div class="tab-content">
+          <div role="tabpanel" class="tab-pane active" id="history">
+
+            <div
+						ng-show="filterFeed == 'recent'"
+						ng-repeat="item in team.statuses | orderObjectBy : 'time' : true | limitTo : 100 "
+							class="member__activity profile__card type-{{meta.status.TYPE[item.type]}} source-{{meta.status.SOURCE[item.source]}}"
+              ng-if="item.user == currentUserID"
+							>
+							<div class="activity__person clearfix">
+								<img ng-src="{{::$parent.team.members[item.user].pic}}" alt="{{::$parent.team.members[item.user].name}}" />
+								<div class="activity__info">
+									<h5 class="">
+										<a ng-href="/profile/{{::item.user}}">{{::$parent.team.members[item.user].name}}</a>
+										<span class="activity__tag" ng-if="item.task.name">
+											<a ng-href="/tasks/{{::item.task.project}}/{{::item.task.column}}/{{::item.task.card}}/{{::item.task.id}}">
+												<small>
+													<i class="fa fa-tasks"></i>
+													{{::item.task.name | limitTo:50}}
+												</small>
+											</a>
+										</span>
+									</h5>
+									<p class="activity__meta">
+										<span am-time-ago="item.time"></span>
+									</p>
+								</div>
+								<div class="activity__options" ng-if="item.user == myID">
+									<div class="btn-group">
+										<button type="button" class="btn btn-drop-chevron dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+											<i class="fa fa-angle-down"></i>
+										</button>
+										<ul class="dropdown-menu">
+											<li><a href="#" data-toggle="modal" data-target="#editModal" ng-click="editStatusSelected(item)">Edit status</a></li>
+											<li ng-if="item.user == myID" role="separator" class="divider"></li>
+											<li ng-if="item.user == myID"><a href="#" data-toggle="modal" data-target="#deleteModal" ng-click="deleteSelected(item)">Delete Status</a></li>
+										</ul>
+									</div>
+								</div>
+							</div>
+
+							<div class="activity__content">
+								<p class="">{{::item.name}}</p>
+
+							</div>
+							<div class="activity__attachment" ng-if="item.attachment">
+								<a class="" ng-href="{{::item.attachment.url}}" target="_blank">
+									<h5>{{::item.attachment.title | limitTo:50 }}</h5>
+									<p>
+										{{::item.attachment.discript}}
+									</p>
+								</a>
+							</div>
+
+							<div class="activity__int">
+								<button type="button" class="btn activity__int__btn activity__int__like" ng-class="{active : item.likes[myID]}" name="button" ng-click="likeStatus(item)" data-toggle="tooltip" data-placement="bottom" title="{{showLikers(item.likes)}}"><i class="fa fa-thumbs-o-up"></i> Like <span class="badge" ng-if="countInts(item.likes) > 0">{{countInts(item.likes)}}</span></button>
+								<button type="button" class="btn activity__int__btn activity__int__comment" name="button" data-toggle="modal" data-target="#commentModal" ng-click="getCommentStatus(item)"><i class="fa fa-comment-o"></i> Comment <span class="badge" ng-if="countInts(item.comments) > 0">{{countInts(item.comments)}}</span></button>
+							</div>
+						</div>
+          </div>
+
+          <!-- BACKLOG -->
+          <div role="tabpanel" class="tab-pane" id="backlog">
+            <div class="profile-backlog box__color">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>
+                      Task
+                    </th>
+                    <th>
+                      Priority
+                    </th>
+                    <th>
+                      Due
+                    </th>
+                    <th>
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr sly-repeat="item in phased.get.tasks | backlogFor : currentUserID | orderObjectBy : 'time'">
+                    <td>
+                      {{::item.name}}
+                    </td>
+                    <td>
+                      {{::phased.task.PRIORITY[item.priority]}}
+                    </td>
+                    <td>
+                       <span ng-if="item.deadline">{{::item.deadline | amDateFormat:'MMM d '}}</span>
+                       <span ng-if="!item.deadline">Not Set</span>
+                    </td>
+                    <td>
+                      {{::phased.task.STATUS[item.status]}}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- EDIT -->
+          <div role="tabpanel" class="tab-pane box__color profile__tab__padding" id="settings" ng-if="isSelf">
+            <div class = "row ">
+              <div class="col-xs-12">
+                <img style="height: 120px; width: 120px; border-radius: 50%;margin: 0 auto; display:block;" ng-src="{{::currentUser.gravatar}}">
+
+              </div>
+              <div class="col-xs-12">
+
+                <div class="" style=" width: 120px; margin: 0 auto; display:block;">
+                  <input class="" type="file" accept="image/*" capture="camera" id="file-upload" ng-model="fileUp" ng-change="handleFileSelect(fileUp)"><br>
+                  <button ng-click="changeImage()" class="btn btn__phased__fb btn-block ">Change Image</button>
+                  <p>
+                    <small>Photos under 2 MBs please!</small>
+                  </p>
+                </div>
+
+
+              </div>
+            </div>
+            <form name="updateForm" ng-submit="updateUser(update)" novalidate>
+
+            <div class="login login-drk" style="background:transparent;">
+              <div class="item item-input item-stacked-label">
+                <label class="input-label" for="name">name</label>
+                <input class="loginInput" type="text" id="name" ng-model="update.name" placeholder="{{::currentUser.name}}">
+              </div>
+              <div class="item item-input item-stacked-label">
+                <label class="input-label" for="tel">tel</label>
+                <input class="loginInput" type="tel" id="tel" ng-model="update.tel" placeholder="{{::currentUser.tel | tel}}">
+              </div>
+              <div class="item item-input item-stacked-label">
+                <label class="input-label" for="email">email</label>
+                <input class="loginInput" type="email" id="email" ng-model="update.email" placeholder="{{::currentUser.email}}">
+              </div>
+
+              <div class="item item-input item-stacked-label">
+                <label class="input-label" for="oldpassword">old password</label>
+                <input class="loginInput" type="password" id='oldpassword' ng-model="update.oldPass" placeholder="">
+              </div>
+              <div class="item item-input item-stacked-label">
+                <label class="input-label" for="newpassword">new password</label>
+                <input class="loginInput" type="password" id='newpassword' ng-model="update.newPass" placeholder="">
+              </div>
+              <div class="item">
+                <input type="submit" class="btn btn__phased__fb btn-block " value="Update Account">
+              </div>
+            </div>
+            </form>
+
+            <!-- <button type="button" name="button" ng-click="enableNotifs()"> click this button to enable email notifications</button> -->
+            <button class="btn btn__phased__fb btn-block " ng-click="logout()">logout</button>
+          </div>
+
+          <!-- GOOGLE CAL -->
+          <div role="tabpanel" class="tab-pane" id="google-calendar" ng-if="isSelf">
+            <div class="google-calendar box__color profile__tab__padding">
+              <p ng-if="!phased.user.googleAuth">
+                <a href="#" ng-click="startGoogleAuth($event)">Authenticate with Google</a> to automatically post status updates when an event on a calendar begins (for example, for every event on a company "meetings" calendar). <em>This will only take effect for this team; to manage your calendar status updates for another team, switch to that team.</em>
+              </p>
+              <p ng-if="!calendarList">
+                <a href="#" ng-click="getCals($event)">Get calendars</a>
+              </p>
+
+              <div ng-if="calendarList">
+                <h5>Calendars</h5>
+                <ul>
+                  <li
+                    sly-repeat="cal in calendarList"
+                    class="calendar-item"
+                    ng-class="{ 'registered-calendar' : isCalRegistered(cal) }">
+                    <a
+                      href="#"
+                      ng-click="toggleCalRegistered(cal, $event)">
+                      <span
+                        class="block"
+                        style="background-color:{{cal.backgroundColor}};"
+                      ></span>
+                      {{cal.summary}}
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!-- end GOOGLE CAL -->
+
+
+        </div>
+
+      </div>
+
     </div>
 
 
   </div>
+
+  <!--Comment Modal-->
+	<div class="modal fade" id="commentModal">
+		<div class="modal-dialog modal-sm" style="max-width: 496px;">
+			<div class="modal-content">
+
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title no-shadow">Comments</h4>
+				</div>
+				<div class="modal-body">
+
+
+					<div class="comment__holder">
+
+						<div class="comment__message clearfix" ng-repeat="item in statusComment.comments">
+							<div class="comment__id">
+								<img ng-src="{{team.members[item.user].pic}}" alt="" />
+							</div>
+							<div class="comment__msg">
+								<p class="comment__name">
+									<strong>{{team.members[item.user].name}}</strong>
+								</p>
+								<p>
+									{{item.name}}
+								</p>
+							</div>
+							<div class="comment__time">
+								<p class="comment__name">
+									<span am-time-ago="item.time"></span>
+								</p>
+							</div>
+						</div>
+					</div>
+					<div class="comment__int">
+						<form name="commentForm" ng-submit="postComment(comment)" novalidate>
+							<div class="form-group">
+
+								<input type="text" class="form-control" name="comment" autocomplete="off" ng-model="comment" placeholder="Write a comment...">
+							</div>
+
+							<button type="submit" class="btn btn-block btn-primary">Comment</button>
+						</form>
+					</div>
+
+
+
+				</div>
+				<div class="modal-footer">
+
+				</div>
+
+			</div>
+			<!-- /.modal-content -->
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+
+
+	<!--Categories Modal-->
+	<div class="modal fade" id="catModal">
+		<div class="modal-dialog" >
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title no-shadow">Choose a Category </h4>
+				</div>
+				<div class="modal-body switchTeam">
+					<div ng-repeat="(key, category) in team.categoryObj">
+						<button class="btn btn-block button-phased" style="outline: none; " ng-click="categoryChoice(key,true)">
+							<div class="row" style="padding:2%;">
+								<div class="col-xs-1" style="padding-top:1%">
+									<div class="feed-cat-color" style="width: 1rem; height: 1rem; display: inline-block; background-color:{{category.color}}"></div>
+								</div>
+								<div style="text-align:left; padding-left:2%; padding-top:6px;" class="col-xs-10">
+									<h5>{{category.name}}</h5>
+								</div>
+							</div>
+						</button>
+					</div>
+					<div>
+						<button class="btn btn-block button-phased" style="outline: none; " ng-click="addNewCat()">
+							<div class="row" style="padding:2%;">
+								<div class="col-xs-1" style="padding-top:1%">
+									<div class="feed-cat-color" style="width: 1rem; height: 1rem; display: inline-block; background-color:{{category.color}}"></div>
+								</div>
+								<div style="text-align:left; padding-left:2%; padding-top:6px;" class="col-xs-10">
+									<h5>Add or Modify a Category</h5>
+								</div>
+							</div>
+						</button>
+					</div>
+				</div>
+			</div>
+			<!-- /.modal-content -->
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+
+	<!--Tasks Modal-->
+	<div class="modal fade" id="taskModal">
+		<div class="modal-dialog" >
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title no-shadow">Choose a Task </h4>
+				</div>
+				<div class="modal-body ">
+					<ul>
+						<li class="modal__task__item" ng-if="selectedTask.name" ng-click="cleartaskChoice()">
+							<div class="task__item__title">
+								<h4>clear selection</h4>
+							</div>
+						</li>
+						<li class="modal__task__item" sly-repeat="assignment in getUserTasks | orderObjectBy : 'time' : true" ng-click="taskChoice(assignment)">
+							<div class="task__item__title">
+								<h4>{{assignment.name}}</h4>
+							</div>
+							<div class="">
+								<p>
+									{{Phased.task.STATUS[assignment.status]}} {{assignment.deadline | date : 'd MMM yy'}}
+								</p>
+							</div>
+						</li>
+					</ul>
+
+				</div>
+			</div>
+			<!-- /.modal-content -->
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+
+	<!--Delete Modal-->
+	<div class="modal fade" id="deleteModal">
+		<div class="modal-dialog" >
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title no-shadow">Delete Post</h4>
+				</div>
+				<div class="modal-body ">
+					<p>
+						Are you sure you want to delete this?
+					</p>
+
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="deleteTask(deleteHolder)">Delete Post</button>
+				</div>
+			</div>
+			<!-- /.modal-content -->
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+
+	<!--Edit Modal-->
+	<div class="modal fade" id="editModal">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<form ng-submit="editStatus()">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title no-shadow">Edit Status Post</h4>
+					</div>
+					<div class="modal-body ">
+
+						<div class="form-group">
+							<label for="exampleInputEmail1">What are you up to?</label>
+							<textarea class="form-control" rows="3" ng-model="editHolder.name">{{editHolder.name}}</textarea>
+						</div>
+						<div class="form-group">
+							<label for="exampleInputFile">Category</label>
+							<select class="form-control" ng-model="editHolder.cat">
+								<option>None</option>
+								<option ng-repeat="(key, category) in team.categoryObj" value="{{key}}">{{category.name}} </option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label for="exampleInputFile">Task</label>
+							<select class="form-control" ng-model="editHolder.task.id">
+								<option>None</option>
+								<option sly-repeat="assignment in getUserTasks | orderObjectBy : 'time' : true" value="{{assignment.id}}">{{assignment.name}}</option>
+
+							</select>
+						</div>
+
+
+
+
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary">Submit</button>
+					</div>
+				</form>
+			</div>
+			<!-- /.modal-content -->
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+
+	<!-- add member -->
+	<div class="modal fade addmember" id="addMemberModal">
+	  <div class="modal-dialog">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        <h4 style="color:#000;" class="modal-title no-shadow">Add member</h4>
+	      </div>
+	      <div class="modal-body ">
+
+	        <p>{{::team.name}} has <b>{{numMembers}} / 10 </b>  members.</p>
+	        <p>Your team can only hold <b>10 members</b>. For more information on what your plan provides check out <a href="http://www.phased.io/pricing" target="_blank">this page</a></p>
+
+	        <p>If you need to remove members please contact <a href="mailto:support@phased.io">support@phased.io</a></p>
+	        <form name="addmember" ng-submit="addMembers(user)" novalidation ng-if="canAddMembers">
+	          <div class="form-group">
+	            <label ffor="addEmail">Email address</label>
+	            <input type="email" class="form-control" iid="addEmail" ng-model="user.email" placeholder="email" required>
+	          </div>
+	          <div class="addMember-btnHolder">
+	            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	            <input type="submit" class="btn btn-primary" value="Add member">
+	          </div>
+	        </form>
+
+	      </div>
+	    </div><!-- /.modal-content -->
+	  </div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
 
 </section>

@@ -3,7 +3,21 @@
 angular.module('webappApp')
   .controller('TeamExpiredCtrl', function ($scope, $http, Auth, FURL,Phased,$location) {
     $scope.message = 'Hello';
+    $scope.teamName = Phased.team.name;
     console.log(Phased);
+    setTimeout(function(){ Phased.doAsync() }, 2000);
+
+    $scope.$on('Phased:setup', function() {
+      $scope.teamName = Phased.team.name;
+      $scope.Phased = Phased;
+      console.log(Phased);
+    });
+
+    $scope.switchTeam = function(id){
+      Phased.switchTeam(id);
+      $location.path("/feed");
+    }
+    
     $scope.ccSubmited = false;
 
     $scope.charge = function (card) {
@@ -55,4 +69,9 @@ angular.module('webappApp')
       }
 
     };
+    $scope.logout = function(){
+      console.log('logging you out');
+      Auth.logout();
+      $location.path('/login');
+    }
   });

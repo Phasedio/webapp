@@ -6,8 +6,9 @@ angular.module('webappApp')
     ga('send', 'pageview', '/tasks');
 
     $scope.viewType = Phased.viewType;
-    $scope.myID = Auth.user.uid;
+    $scope.user = Phased.user;
     $scope.currentFilter = 'My Tasks';
+    $scope.actionPlaceholder = "What needs to be done?";
 
     $scope.today = new Date().getTime();
     var FBRef = new Firebase(FURL);
@@ -121,6 +122,18 @@ angular.module('webappApp')
     $scope.setFilter = function(filter){
       $scope.filtersToShow = filter;
     }
+    $scope.setUserFilter = function(uid){
+      if (uid === Phased.user.uid) {
+        $scope.userFilter = '';
+        $scope.actionPlaceholder ="What needs to be done?";
+        $scope.setFilter('me');
+      }else{
+        $scope.actionPlaceholder ="Assign task to " + $scope.team.members[uid].name;
+        $scope.userFilter = uid;
+
+      }
+
+    }
     $scope.getFilter = function(assignment){
 
       if ($scope.filtersToShow == 'me') {
@@ -141,6 +154,13 @@ angular.module('webappApp')
           return false;
         }
 
+      }else if ($scope.filtersToShow == 'someone') {
+        if (assignment.assigned_to == $scope.userFilter && assignment.status != Phased.task.STATUS_ID.COMPLETE) {
+
+          return true;
+        }else{
+          return false;
+        }
       }else{
         $scope.currentFilter ="All Tasks";
         return true;
@@ -260,7 +280,7 @@ angular.module('webappApp')
       var status = {
         name: newTask.name,
         cat : newTask.category ? newTask.category : '',
-        assigned_by : $scope.myID,
+        assigned_by : Phased.user.uid,
         status: Phased.task.STATUS_ID.ASSIGNED,
         priority : parseInt($scope.newTask.priority)
       };
@@ -286,25 +306,47 @@ angular.module('webappApp')
 
 
     // shorthand for a quick self-assigned task
-    $scope.addTodo = function () {
-      mixpanel.track("Added Self-assigned task");
-			var newTodo = {
-				name: $scope.newTodo.trim(),
-				completed: false
-			};
-      if (!newTodo.name) {
-				return;
-			}
-      var status = {
-        name: newTodo.name,
-        assigned_by : $scope.myID,
-        status: Phased.task.STATUS_ID.ASSIGNED,
-        priority : Phased.task.PRIORITY_ID.MEDIUM,
-        assigned_to : $scope.myID
-      };
+    $scope.addTodo = function (uid) {
+      if(uid){
+        mixpanel.track("Added task to user");
+        var newTodo = {
+  				name: $scope.newTodo.trim(),
+  				completed: false
+  			};
+        if (!newTodo.name) {
+  				return;
+  			}
+        var status = {
+          name: newTodo.name,
+          assigned_by : Phased.user.uid,
+          status: Phased.task.STATUS_ID.ASSIGNED,
+          priority : Phased.task.PRIORITY_ID.MEDIUM,
+          assigned_to : uid
+        };
 
-      Phased.addTask(status);
-      $scope.newTodo = '';
+        Phased.addTask(status);
+        $scope.newTodo = '';
+      }else{
+        mixpanel.track("Added Self-assigned task");
+  			var newTodo = {
+  				name: $scope.newTodo.trim(),
+  				completed: false
+  			};
+        if (!newTodo.name) {
+  				return;
+  			}
+        var status = {
+          name: newTodo.name,
+          assigned_by : Phased.user.uid,
+          status: Phased.task.STATUS_ID.ASSIGNED,
+          priority : Phased.task.PRIORITY_ID.MEDIUM,
+          assigned_to : Phased.user.uid
+        };
+
+        Phased.addTask(status);
+        $scope.newTodo = '';
+      }
+
 		};
 
     // then starts it
