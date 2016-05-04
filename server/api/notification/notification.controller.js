@@ -4,6 +4,7 @@ var FBRef = require('../../components/phasedFBRef').getRef();
 var moment = require('moment');
 var mandrill = require('mandrill-api/mandrill');
 var mandrill_client = new mandrill.Mandrill('B0N7XKd4RDy6Q7nWP2eFAA');
+var sendgrid  = require('sendgrid')('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');
 
 
 //email templates
@@ -17,36 +18,57 @@ function sendNewTaskNotif(assignedBy, assignedTo, teamID, taskName){
 				FBRef.child('profile').child(inviterUser).once('value',function(snap){
 					if(snap){
 						inviterUser = snap.val();
+						
+						// SENDGRID 
+						var email = new sendgrid.Email();
+						
+						email.addTo(issueUser.email);
+						email.subject = "New task assigned to you";
+						email.from = 'no-reply@send.phased.io';
+						email.setFromName(inviterUser.name + " via Phased");
+						email.html = "New task assigned to you";
+						email.text = "New task assigned to you";
+						email.setSubstitutions({issuerName: [inviterUser.name],taskName:[taskName]});
 
-						// Now send email.
-						var template_name = "new-task-assigned-to-you";
-						var template_content = [{
-							"name": "issuerName",
-							"content": inviterUser.name
-						},
-						{
-							"name": "taskName",
-							"content": taskName
-						}];
-
-						var message = {
-
-							"subject": "New task assigned to you",
-							"to": [{
-										 "email": issueUser.email,
-										 "type": "to"
-								 }],
-							"from_name": inviterUser.name + " via Phased",
-						};
-
-						mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
-					    console.log(result);
-
-						}, function(e) {
-						    // Mandrill returns the error as an object with name and message keys
-						    console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
-						    // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+						// add filter settings one at a time
+						email.addFilter('templates', 'enable', 1);
+						email.addFilter('templates', 'template_id', 'cbe396f3-d38d-4816-a1dc-e26a80418089');
+						
+						sendgrid.send(email, function(err, json) {
+							if (err) { return console.error(err); }
+							console.log(json);
 						});
+						
+						
+						// // Now send email.
+						// var template_name = "new-task-assigned-to-you";
+						// var template_content = [{
+						// 	"name": "issuerName",
+						// 	"content": inviterUser.name
+						// },
+						// {
+						// 	"name": "taskName",
+						// 	"content": taskName
+						// }];
+
+						// var message = {
+
+						// 	"subject": "New task assigned to you",
+						// 	"to": [{
+						// 				 "email": issueUser.email,
+						// 				 "type": "to"
+						// 		 }],
+						// 	"from_name": inviterUser.name + " via Phased",
+						// };
+
+						// mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+					    // console.log(result);
+
+						// }, function(e) {
+						//     // Mandrill returns the error as an object with name and message keys
+						//     console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+						//     // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+						// });
 				}
 
 		});
@@ -253,25 +275,44 @@ exports.like = function(req, res) {
 		"content": user.name
 	}];
 
-	var message = {
+	// var message = {
 
-		"subject": likedUser.name + " has liked your status",
-		"to": [{
-					 "email": user.email,
-					 "type": "to"
-			 }],
-		"from_name": likedUser.name + " via Phased",
-	};
+	// 	"subject": likedUser.name + " has liked your status",
+	// 	"to": [{
+	// 				 "email": user.email,
+	// 				 "type": "to"
+	// 		 }],
+	// 	"from_name": likedUser.name + " via Phased",
+	// };
 
-	mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
-		console.log(result);
+	// mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+	// 	console.log(result);
 
-	}, function(e) {
-			// Mandrill returns the error as an object with name and message keys
-			console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
-			// A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	// }, function(e) {
+	// 		// Mandrill returns the error as an object with name and message keys
+	// 		console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+	// 		// A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	// });
+
+	
+	// SENDGRID 
+	var email = new sendgrid.Email();
+	email.addTo(user.email);
+	email.subject = likedUser.name + " has liked your status";
+	email.from = 'no-reply@send.phased.io';
+	email.setFromName(likedUser.name + " via Phased");
+	email.html = likedUser.name + " has liked your status";
+	email.text = likedUser.name + " has liked your status";
+	email.setSubstitutions({likername: [likedUser.name]});
+
+	// add filter settings one at a time
+	email.addFilter('templates', 'enable', 1);
+	email.addFilter('templates', 'template_id', 'b3b7ddd6-aec2-4311-9713-6f7ed8def8d3');
+	
+	sendgrid.send(email, function(err, json) {
+		if (err) { return console.error(err); }
+		console.log(json);
 	});
-
 	res.send({
 		success : true,
 		message : 'like sent'
@@ -289,40 +330,68 @@ exports.comment = function(req, res) {
 		statusOwner = req.body.statusOwner,
 		message = req.body.message,
 		status = req.body.status;
-	var template_name = "new-comment";
-	var template_content = [{
-		"name": "ogStatus",
-		"content": status
-	},{
-		"name": "commentUser",
-		"content": commentingUser.name
-	},{
-		"name": "commentText",
-		"content": message
-	}];
+		
+		
+		
+	// SENDGRID 
+	var email = new sendgrid.Email();
+	email.addTo(statusOwner.email);
+	email.subject = commentingUser.name + " has commented your status";
+	email.from = 'no-reply@send.phased.io';
+	email.setFromName(commentingUser.name + " via Phased");
+	email.html = commentingUser.name + " has commented your status";
+	email.setSubstitutions({ogStatus: [status],commentUser: [commentingUser.name],commentText: [message]});
 
-	var message = {
-
-		"subject": commentingUser.name + " has commented your status",
-		"to": [{
-					 "email": statusOwner.email,
-					 "type": "to"
-			 }],
-		"from_name": commentingUser.name + " via Phased",
-	};
-
-	mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
-		console.log(result);
-
-	}, function(e) {
-			// Mandrill returns the error as an object with name and message keys
-			console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
-			// A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	// add filter settings one at a time
+	email.addFilter('templates', 'enable', 1);
+	email.addFilter('templates', 'template_id', 'e4a0c89d-990b-44aa-8afa-0b3c1e6849fd');
+						
+	sendgrid.send(email, function(err, json) {
+		if (err) { return console.error(err); }
+		console.log(json);
 	});
-
 	res.send({
 		success : true,
 		message : 'like sent'
 	});
+	
+	
+	
+		
+	// var template_name = "new-comment";
+	// var template_content = [{
+	// 	"name": "ogStatus",
+	// 	"content": status
+	// },{
+	// 	"name": "commentUser",
+	// 	"content": commentingUser.name
+	// },{
+	// 	"name": "commentText",
+	// 	"content": message
+	// }];
+
+	// var message = {
+
+	// 	"subject": commentingUser.name + " has commented your status",
+	// 	"to": [{
+	// 				 "email": statusOwner.email,
+	// 				 "type": "to"
+	// 		 }],
+	// 	"from_name": commentingUser.name + " via Phased",
+	// };
+
+	// mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+	// 	console.log(result);
+
+	// }, function(e) {
+	// 		// Mandrill returns the error as an object with name and message keys
+	// 		console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+	// 		// A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	// });
+
+	// res.send({
+	// 	success : true,
+	// 	message : 'like sent'
+	// });
 
 };

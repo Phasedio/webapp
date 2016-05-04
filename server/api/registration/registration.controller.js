@@ -9,6 +9,8 @@ var FBRef = require('../../components/phasedFBRef').getRef();
 var stripe = require('stripe')('sk_live_nKZ1ouWkI3WuiVGK2hIvZUH1');
 var mandrill = require('mandrill-api/mandrill');
 var mandrill_client = new mandrill.Mandrill('B0N7XKd4RDy6Q7nWP2eFAA');
+var sendgrid  = require('sendgrid')('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');
+
 
 
 function sendInvite(args){
@@ -17,35 +19,53 @@ function sendInvite(args){
 		teamName = args.teamName,
 		inviterEmail = args.inviterEmail,
 		inviterName = args.inviterName;
+  // SENDGRID 
+						var email = new sendgrid.Email();
+						
+						email.addTo(invitedEmail);
+						email.subject = "Invited";
+						email.from = 'no-reply@send.phased.io';
+						email.setFromName(inviterName + " via Phased");
+						email.html = "Invited";
+						email.text = "Invited";
+						email.setSubstitutions({teamName: [teamName],inviterName:[inviterName]});
 
-	var template_name = "you-re-invited-1";
-	var template_content = [{
-		"name": "team-name",
-		"content": teamName
-	},
-	{
-		"name": "inviter-name",
-		"content": inviterName
-	}];
+						// add filter settings one at a time
+						email.addFilter('templates', 'enable', 1);
+						email.addFilter('templates', 'template_id', '8f5564e8-b9fd-48c9-a3cc-b650d147522d');
+						
+						sendgrid.send(email, function(err, json) {
+							if (err) { return console.error(err); }
+							console.log(json);
+						});  
+	// var template_name = "you-re-invited-1";
+	// var template_content = [{
+	// 	"name": "team-name",
+	// 	"content": teamName
+	// },
+	// {
+	// 	"name": "inviter-name",
+	// 	"content": inviterName
+	// }];
 
-	var message = {
+	// var message = {
 
-		"subject": "Invited",
-		"to": [{
-					 "email": invitedEmail,
-					 "type": "to"
-			 }],
-		"from_name": inviterName + " via Phased",
-	};
+	// 	"subject": "Invited",
+	// 	"to": [{
+	// 				 "email": invitedEmail,
+	// 				 "type": "to"
+	// 		 }],
+	// 	"from_name": inviterName + " via Phased",
+	// };
 
-	mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
-    console.log(result);
+	// mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message}, function(result) {
+  //   console.log(result);
 
-	}, function(e) {
-	    // Mandrill returns the error as an object with name and message keys
-	    console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
-	    // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
-	});
+	// }, function(e) {
+	//     // Mandrill returns the error as an object with name and message keys
+	//     console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+	//     // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+	// });
 }
 
 
