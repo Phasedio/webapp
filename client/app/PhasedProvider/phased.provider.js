@@ -891,37 +891,39 @@ angular.module('webappApp')
     **/
     var checkPlanStatus = function(stripeid,subid) {
       if (typeof stripeid == 'string' && stripeid.length > 0) {
-        $http.post('./api/pays/find', {customer: stripeid,sub:subid})
-          .then(function(res){
-        		var data = res.data;
-            if (data.err) {
-              console.log(data.err);
-              // handle error
-            }
+        PhasedProvider.viewType = 'active';
+//         $http.post('./api/pays/find', {customer: stripeid,sub:subid})
+//           .then(function(res){
+//         		var data = res.data;
+//             if (data.err) {
+//               console.log(data.err);
+//               // handle error
+//             }
 
-            if (data.status == "active") {
-              //Show thing for active
-              PhasedProvider.viewType = 'active';
+//             if (data.status == "active") {
+//               //Show thing for active
+//               PhasedProvider.viewType = 'active';
 
-            } else if (data.status == "trialing") {
-              //Show thing for problem with account
-              PhasedProvider.viewType = 'trialing';
-            } else if (data.status == 'past_due' || data.status == 'unpaid') {
-              //Show thing for problem with account
-              PhasedProvider.viewType = 'problem';
-            } else if (data.status == 'canceled') {
-              //Show thing for problem with canceled
-              PhasedProvider.viewType = 'canceled';
-            }
+//             } else if (data.status == "trialing") {
+//               //Show thing for problem with account
+//               PhasedProvider.viewType = 'trialing';
+//             } else if (data.status == 'past_due' || data.status == 'unpaid') {
+//               //Show thing for problem with account
+//               PhasedProvider.viewType = 'problem';
+//             } else if (data.status == 'canceled') {
+//               //Show thing for problem with canceled
+//               PhasedProvider.viewType = 'canceled';
+//             }
 
-            _maybeBounceTeam()
-            $rootScope.$broadcast('Phased:PaymentInfo');
-          }, function(data){
-            console.log(data);
-          });
+//             _maybeBounceTeam()
+//             $rootScope.$broadcast('Phased:PaymentInfo');
+//           }, function(data){
+//             console.log(data);
+//           });
       } else {
-        PhasedProvider.viewType = 'notPaid';
-        _maybeBounceTeam();
+        PhasedProvider.viewType = 'active';
+        //PhasedProvider.viewType = 'notPaid';
+        //_maybeBounceTeam();
       }
     }
 
